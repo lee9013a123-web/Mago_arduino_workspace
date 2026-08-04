@@ -1,0 +1,38 @@
+flowchart TB
+  b__root_["(root)<br/>1 ops · 0 MAC<br/>w 0 B"]
+  b_head["head<br/>7 ops · 0 MAC<br/>w 15 B"]
+  b_head_conv1["head/conv1<br/>2 ops · 2.3 M MAC<br/>w 591 B"]
+  b_head_layer1["head/layer1<br/>20 ops · 148.5 M MAC<br/>w 38 KB"]
+  b_head_layer2["head/layer2<br/>20 ops · 74.3 M MAC<br/>w 38 KB"]
+  b_head_conv2["head/conv2<br/>2 ops · 9.0 M MAC<br/>w 9 KB"]
+  b_xvector_tdnn["xvector/tdnn<br/>3 ops · 10.0 M MAC<br/>w 201 KB"]
+  b_xvector_block1["xvector/block1<br/>312 ops · 36.1 M MAC<br/>w 803 KB"]
+  b_xvector_transit1["xvector/transit1<br/>5 ops · 6.4 M MAC<br/>w 137 KB"]
+  b_xvector_block2["xvector/block2<br/>624 ops · 120.4 M MAC<br/>w 2.6 MB"]
+  b_xvector_transit2["xvector/transit2<br/>5 ops · 25.7 M MAC<br/>w 531 KB"]
+  b_xvector_block3["xvector/block3<br/>416 ops · 93.1 M MAC<br/>w 2.0 MB"]
+  b_xvector_transit3["xvector/transit3<br/>5 ops · 25.7 M MAC<br/>w 533 KB"]
+  b_xvector_out_nonlinear["xvector/out_nonlinear<br/>1 ops · 0 MAC<br/>w 0 B"]
+  b_xvector_stats["xvector/stats<br/>9 ops · 0 MAC<br/>w 0 B"]
+  b_xvector_dense["xvector/dense<br/>6 ops · 196.6 K MAC<br/>w 194 KB"]
+  b_input(["feature"])
+  b_output(["embedding"])
+  b__root_ -->|31 KB| b_head
+  b_head -->|8 KB| b_head_conv1
+  b_head_conv1 -->|980 KB| b_head
+  b_head -->|490 KB| b_head_layer1
+  b_head_layer1 -->|245 KB| b_head_layer2
+  b_head_layer2 -->|61 KB| b_head_conv2
+  b_head_conv2 -->|122 KB| b_head
+  b_head -->|31 KB| b_xvector_tdnn
+  b_xvector_tdnn -->|49 KB| b_xvector_block1
+  b_xvector_block1 -->|98 KB| b_xvector_transit1
+  b_xvector_transit1 -->|98 KB| b_xvector_block2
+  b_xvector_block2 -->|196 KB| b_xvector_transit2
+  b_xvector_transit2 -->|196 KB| b_xvector_block3
+  b_xvector_block3 -->|196 KB| b_xvector_transit3
+  b_xvector_transit3 -->|98 KB| b_xvector_out_nonlinear
+  b_xvector_out_nonlinear -->|294 KB| b_xvector_stats
+  b_xvector_stats -->|4 KB| b_xvector_dense
+  b_input -->|31 KB| b__root_
+  b_xvector_dense -->|768 B| b_output

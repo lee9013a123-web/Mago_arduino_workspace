@@ -1,0 +1,161 @@
+flowchart TB
+  n581["Unsqueeze<br/>Unsqueeze<br/>1x1x80x998"]
+  n582["QuantizeLinear<br/>Unsqueeze_output_0_QuantizeLinear<br/>1x1x80x998"]
+  n583["QLinearConv<br/>Conv_quant<br/>1x32x80x998"]
+  n584["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x80x998"]
+  n585["Relu<br/>Relu<br/>1x32x80x998"]
+  n586["QuantizeLinear<br/>Relu_output_0_QuantizeLinear<br/>1x32x80x998"]
+  n587["QLinearConv<br/>Conv_quant<br/>1x32x40x998"]
+  n588["QLinearConv<br/>Conv_quant<br/>1x32x40x998"]
+  n589["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x40x998"]
+  n590["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x40x998"]
+  n591["Relu<br/>Relu<br/>1x32x40x998"]
+  n592["QuantizeLinear<br/>Relu_output_0_QuantizeLinear<br/>1x32x40x998"]
+  n593["QLinearConv<br/>Conv_quant<br/>1x32x40x998"]
+  n594["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x40x998"]
+  n595["Add<br/>Add<br/>1x32x40x998"]
+  n596["Relu<br/>Relu_1<br/>1x32x40x998"]
+  n597["QuantizeLinear<br/>Relu_1_output_0_QuantizeLinear<br/>1x32x40x998"]
+  n598["QLinearConv<br/>Conv_quant<br/>1x32x40x998"]
+  n599["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x40x998"]
+  n600["Relu<br/>Relu<br/>1x32x40x998"]
+  n601["QuantizeLinear<br/>Relu_output_0_QuantizeLinear<br/>1x32x40x998"]
+  n602["QLinearConv<br/>Conv_quant<br/>1x32x40x998"]
+  n603["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x40x998"]
+  n604["Add<br/>Add<br/>1x32x40x998"]
+  n605["Relu<br/>Relu_1<br/>1x32x40x998"]
+  n606["QuantizeLinear<br/>Relu_1_output_0_QuantizeLinear<br/>1x32x40x998"]
+  n607["QLinearConv<br/>Conv_quant<br/>1x32x20x998"]
+  n608["QLinearConv<br/>Conv_quant<br/>1x32x20x998"]
+  n609["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x20x998"]
+  n610["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x20x998"]
+  n611["Relu<br/>Relu<br/>1x32x20x998"]
+  n612["QuantizeLinear<br/>Relu_output_0_QuantizeLinear<br/>1x32x20x998"]
+  n613["QLinearConv<br/>Conv_quant<br/>1x32x20x998"]
+  n614["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x20x998"]
+  n615["Add<br/>Add<br/>1x32x20x998"]
+  n616["Relu<br/>Relu_1<br/>1x32x20x998"]
+  n617["QuantizeLinear<br/>Relu_1_output_0_QuantizeLinear<br/>1x32x20x998"]
+  n618["QLinearConv<br/>Conv_quant<br/>1x32x20x998"]
+  n619["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x20x998"]
+  n620["Relu<br/>Relu<br/>1x32x20x998"]
+  n621["QuantizeLinear<br/>Relu_output_0_QuantizeLinear<br/>1x32x20x998"]
+  n622["QLinearConv<br/>Conv_quant<br/>1x32x20x998"]
+  n623["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x20x998"]
+  n624["Add<br/>Add<br/>1x32x20x998"]
+  n625["Relu<br/>Relu_1<br/>1x32x20x998"]
+  n626["QuantizeLinear<br/>Relu_1_output_0_QuantizeLinear<br/>1x32x20x998"]
+  n627["QLinearConv<br/>Conv_quant<br/>1x32x10x998"]
+  n628["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x10x998"]
+  n629["Relu<br/>Relu_1<br/>1x32x10x998"]
+  n643["Reshape<br/>Reshape<br/>1x320x998"]
+  n644["QuantizeLinear<br/>Reshape_output_0_QuantizeLinear<br/>1x320x998"]
+  n581 --> n582
+  n582 --> n583
+  n583 --> n584
+  n584 --> n585
+  n585 --> n586
+  n586 --> n587
+  n586 --> n588
+  n587 --> n589
+  n588 --> n590
+  n589 --> n591
+  n590 --> n595
+  n591 --> n592
+  n592 --> n593
+  n593 --> n594
+  n594 --> n595
+  n595 --> n596
+  n596 --> n597
+  n596 --> n604
+  n597 --> n598
+  n598 --> n599
+  n599 --> n600
+  n600 --> n601
+  n601 --> n602
+  n602 --> n603
+  n603 --> n604
+  n604 --> n605
+  n605 --> n606
+  n606 --> n607
+  n606 --> n608
+  n607 --> n609
+  n608 --> n610
+  n609 --> n611
+  n610 --> n615
+  n611 --> n612
+  n612 --> n613
+  n613 --> n614
+  n614 --> n615
+  n615 --> n616
+  n616 --> n617
+  n616 --> n624
+  n617 --> n618
+  n618 --> n619
+  n619 --> n620
+  n620 --> n621
+  n621 --> n622
+  n622 --> n623
+  n623 --> n624
+  n624 --> n625
+  n625 --> n626
+  n626 --> n627
+  n627 --> n628
+  n628 --> n629
+  n629 --> n643
+  n643 --> n644
+  class n581 k_move;
+  class n582 k_compute;
+  class n583 k_compute;
+  class n584 k_compute;
+  class n585 k_compute;
+  class n586 k_compute;
+  class n587 k_compute;
+  class n588 k_compute;
+  class n589 k_compute;
+  class n590 k_compute;
+  class n591 k_compute;
+  class n592 k_compute;
+  class n593 k_compute;
+  class n594 k_compute;
+  class n595 k_compute;
+  class n596 k_compute;
+  class n597 k_compute;
+  class n598 k_compute;
+  class n599 k_compute;
+  class n600 k_compute;
+  class n601 k_compute;
+  class n602 k_compute;
+  class n603 k_compute;
+  class n604 k_compute;
+  class n605 k_compute;
+  class n606 k_compute;
+  class n607 k_compute;
+  class n608 k_compute;
+  class n609 k_compute;
+  class n610 k_compute;
+  class n611 k_compute;
+  class n612 k_compute;
+  class n613 k_compute;
+  class n614 k_compute;
+  class n615 k_compute;
+  class n616 k_compute;
+  class n617 k_compute;
+  class n618 k_compute;
+  class n619 k_compute;
+  class n620 k_compute;
+  class n621 k_compute;
+  class n622 k_compute;
+  class n623 k_compute;
+  class n624 k_compute;
+  class n625 k_compute;
+  class n626 k_compute;
+  class n627 k_compute;
+  class n628 k_compute;
+  class n629 k_compute;
+  class n643 k_move;
+  class n644 k_compute;
+  classDef k_compute fill:#3b7dd822,stroke:#3b7dd8;
+  classDef k_move fill:#8a8f9822,stroke:#8a8f98;
+  classDef k_shape fill:#c9a22722,stroke:#c9a227;
+  classDef k_other fill:#a05ec422,stroke:#a05ec4;

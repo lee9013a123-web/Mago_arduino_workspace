@@ -1,0 +1,81 @@
+flowchart TB
+  n1229["BatchNormalization<br/>BatchNormalization<br/>1x256x149"]
+  n1230["Relu<br/>Relu<br/>1x256x149"]
+  n1231["QuantizeLinear<br/>Relu_output_0_QuantizeLinear<br/>1x256x149"]
+  n1232["QLinearConv<br/>Conv_quant<br/>1x128x149"]
+  n1233["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x128x149"]
+  n1234["Relu<br/>Relu<br/>1x128x149"]
+  n1235["QuantizeLinear<br/>Relu_output_0_QuantizeLinear<br/>1x128x149"]
+  n1236["ReduceMean<br/>ReduceMean<br/>1x128x1"]
+  n1237["AveragePool<br/>AveragePool<br/>1x128x2"]
+  n1239["QLinearConv<br/>Conv_quant<br/>1x32x149"]
+  n1243["Unsqueeze<br/>Unsqueeze<br/>1x128x2x1"]
+  n1245["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x149"]
+  n1263["Expand<br/>Expand<br/>1x128x2x100"]
+  n1264["Reshape<br/>Reshape_1<br/>1x128x200"]
+  n1265["Slice<br/>Slice<br/>1x128x149"]
+  n1266["Add<br/>Add<br/>1x128x149"]
+  n1267["QuantizeLinear<br/>Add_output_0_QuantizeLinear<br/>1x128x149"]
+  n1268["QLinearConv<br/>Conv_quant<br/>1x64x149"]
+  n1269["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x64x149"]
+  n1270["Relu<br/>Relu<br/>1x64x149"]
+  n1271["QuantizeLinear<br/>Relu_output_0_QuantizeLinear<br/>1x64x149"]
+  n1272["QLinearConv<br/>Conv_quant<br/>1x32x149"]
+  n1273["DequantizeLinear<br/>Conv_output_0_DequantizeLinear<br/>1x32x149"]
+  n1274["Sigmoid<br/>Sigmoid<br/>1x32x149"]
+  n1275["Mul<br/>Mul_1<br/>1x32x149"]
+  n1229 --> n1230
+  n1230 --> n1231
+  n1231 --> n1232
+  n1232 --> n1233
+  n1233 --> n1234
+  n1234 --> n1235
+  n1234 --> n1236
+  n1234 --> n1237
+  n1235 --> n1239
+  n1236 --> n1266
+  n1237 --> n1243
+  n1239 --> n1245
+  n1243 --> n1263
+  n1245 --> n1275
+  n1263 --> n1264
+  n1264 --> n1265
+  n1265 --> n1266
+  n1266 --> n1267
+  n1267 --> n1268
+  n1268 --> n1269
+  n1269 --> n1270
+  n1270 --> n1271
+  n1271 --> n1272
+  n1272 --> n1273
+  n1273 --> n1274
+  n1274 --> n1275
+  class n1229 k_compute;
+  class n1230 k_compute;
+  class n1231 k_compute;
+  class n1232 k_compute;
+  class n1233 k_compute;
+  class n1234 k_compute;
+  class n1235 k_compute;
+  class n1236 k_compute;
+  class n1237 k_compute;
+  class n1239 k_compute;
+  class n1243 k_move;
+  class n1245 k_compute;
+  class n1263 k_move;
+  class n1264 k_move;
+  class n1265 k_move;
+  class n1266 k_compute;
+  class n1267 k_compute;
+  class n1268 k_compute;
+  class n1269 k_compute;
+  class n1270 k_compute;
+  class n1271 k_compute;
+  class n1272 k_compute;
+  class n1273 k_compute;
+  class n1274 k_compute;
+  class n1275 k_compute;
+  classDef k_compute fill:#3b7dd822,stroke:#3b7dd8;
+  classDef k_move fill:#8a8f9822,stroke:#8a8f98;
+  classDef k_shape fill:#c9a22722,stroke:#c9a227;
+  classDef k_other fill:#a05ec422,stroke:#a05ec4;

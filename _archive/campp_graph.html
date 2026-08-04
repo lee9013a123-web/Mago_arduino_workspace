@@ -1,0 +1,830 @@
+<title>CAM++ 정적 그래프 리포트 — QRB2210</title>
+<style>
+  :root {
+    color-scheme: light dark;
+
+    --ink:        #0d1618;
+    --ink-2:      #33474b;
+    --ink-3:      #64797e;
+    --paper:      #f7f9f9;
+    --paper-2:    #ffffff;
+    --rule:       #dbe3e4;
+    --rule-soft:  #e9eeee;
+
+    --keep:       #0e6d75;   /* 남는 것: 실제 연산 */
+    --keep-soft:  #0e6d7514;
+    --drop:       #a8501c;   /* 사라지는 것: 정적 폴딩 */
+    --drop-soft:  #a8501c14;
+    --flag:       #7a3f8f;
+
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Malgun Gothic", sans-serif;
+    --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+
+    --measure: 68ch;
+    --wide: 1040px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink:       #e4ecec;
+      --ink-2:     #a7bbbd;
+      --ink-3:     #74898d;
+      --paper:     #0b1214;
+      --paper-2:   #111a1c;
+      --rule:      #233033;
+      --rule-soft: #1a2426;
+
+      --keep:      #4fb3ba;
+      --keep-soft: #4fb3ba1a;
+      --drop:      #d98a58;
+      --drop-soft: #d98a581a;
+      --flag:      #b98ccb;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink:       #e4ecec;
+    --ink-2:     #a7bbbd;
+    --ink-3:     #74898d;
+    --paper:     #0b1214;
+    --paper-2:   #111a1c;
+    --rule:      #233033;
+    --rule-soft: #1a2426;
+    --keep:      #4fb3ba;
+    --keep-soft: #4fb3ba1a;
+    --drop:      #d98a58;
+    --drop-soft: #d98a581a;
+    --flag:      #b98ccb;
+  }
+
+  :root[data-theme="light"] {
+    --ink:       #0d1618;
+    --ink-2:     #33474b;
+    --ink-3:     #64797e;
+    --paper:     #f7f9f9;
+    --paper-2:   #ffffff;
+    --rule:      #dbe3e4;
+    --rule-soft: #e9eeee;
+    --keep:      #0e6d75;
+    --keep-soft: #0e6d7514;
+    --drop:      #a8501c;
+    --drop-soft: #a8501c14;
+    --flag:      #7a3f8f;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: var(--wide);
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4.5rem) clamp(1.1rem, 4vw, 2.5rem) 6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.25rem;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead { display: flex; flex-direction: column; gap: .9rem; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(2rem, 5.2vw, 3.1rem);
+    line-height: 1.1;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .dek {
+    max-width: var(--measure);
+    color: var(--ink-2);
+    font-size: 1.02rem;
+  }
+
+  .meta {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--ink-3);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem 1.25rem;
+    padding-top: .6rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  /* ---------- stat rail ---------- */
+
+  .rail {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+
+  .stat {
+    background: var(--paper-2);
+    padding: 1.15rem 1.2rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+  }
+
+  .stat dt {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .stat dd {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 1.95rem;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+
+  .stat .from { color: var(--drop); }
+  .stat .to { color: var(--keep); }
+  .stat .arrow { color: var(--ink-3); font-family: var(--sans); font-size: 1.2rem; }
+  .stat small {
+    font-family: var(--mono);
+    font-size: .73rem;
+    color: var(--ink-3);
+    line-height: 1.45;
+  }
+
+  /* ---------- sections ---------- */
+
+  section { display: flex; flex-direction: column; gap: 1.1rem; }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.55rem;
+    letter-spacing: -.01em;
+    margin: 0;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: .7rem;
+  }
+
+  h2 .num {
+    font-family: var(--mono);
+    font-size: .78rem;
+    color: var(--keep);
+    letter-spacing: .1em;
+  }
+
+  h3 {
+    font-family: var(--sans);
+    font-weight: 650;
+    font-size: .95rem;
+    letter-spacing: .01em;
+    margin: 0;
+    color: var(--ink-2);
+  }
+
+  p { margin: 0; max-width: var(--measure); color: var(--ink-2); }
+  p strong { color: var(--ink); font-weight: 650; }
+
+  code {
+    font-family: var(--mono);
+    font-size: .87em;
+    background: var(--rule-soft);
+    padding: .1em .34em;
+    border-radius: 2px;
+    color: var(--ink);
+  }
+
+  ul { margin: 0; padding-left: 1.15rem; max-width: var(--measure); color: var(--ink-2); }
+  li { margin-bottom: .35rem; }
+  li::marker { color: var(--ink-3); }
+
+  /* ---------- tables ---------- */
+
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); background: var(--paper-2); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .855rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th, td {
+    padding: .55rem .8rem;
+    text-align: right;
+    border-bottom: 1px solid var(--rule-soft);
+    white-space: nowrap;
+  }
+
+  th {
+    font-family: var(--mono);
+    font-size: .69rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    font-weight: 500;
+    border-bottom: 1px solid var(--rule);
+    position: sticky;
+    top: 0;
+    background: var(--paper-2);
+  }
+
+  th:first-child, td:first-child { text-align: left; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.total td { border-top: 1px solid var(--rule); font-weight: 650; color: var(--ink); }
+
+  td.op { font-family: var(--mono); font-size: .82rem; color: var(--ink); }
+  td.gone { color: var(--drop); }
+  td.kept { color: var(--keep); }
+  td.zero { color: var(--ink-3); }
+  td.wrapnote { white-space: normal; min-width: 15rem; color: var(--ink-2); }
+
+  /* share bar inside cells */
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    justify-content: flex-end;
+  }
+  .bar span { min-width: 3.2em; }
+  .bar i {
+    display: block;
+    height: 7px;
+    background: var(--keep);
+    border-radius: 1px;
+  }
+  .bar b { display: block; width: 90px; background: var(--rule-soft); border-radius: 1px; }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .12rem .45rem;
+    border-radius: 2px;
+  }
+  .pill.gpu { background: var(--drop-soft); color: var(--drop); border: 1px solid var(--drop); }
+  .pill.cpu { background: var(--keep-soft); color: var(--keep); border: 1px solid var(--keep); }
+
+  /* ---------- diagram ---------- */
+
+  .diagram {
+    border: 1px solid var(--rule);
+    background: var(--paper-2);
+    padding: 1.25rem;
+    overflow-x: auto;
+  }
+
+  .caption {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--ink-3);
+    line-height: 1.55;
+    max-width: var(--measure);
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* ---------- callout ---------- */
+
+  .note {
+    border-left: 3px solid var(--keep);
+    background: var(--keep-soft);
+    padding: .95rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+  }
+  .note .label {
+    font-family: var(--mono);
+    font-size: .69rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--keep);
+  }
+  .note p { max-width: none; }
+
+  .note.correction { border-left-color: var(--drop); background: var(--drop-soft); }
+  .note.correction .label { color: var(--drop); }
+
+  .wrong-right {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin-top: .3rem;
+  }
+  .wrong-right > div {
+    background: var(--paper-2);
+    padding: .85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+  }
+  .wrong-right .tag {
+    font-family: var(--mono);
+    font-size: .68rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+  .wrong-right .tag.x { color: var(--drop); }
+  .wrong-right .tag.o { color: var(--keep); }
+  .wrong-right p { font-size: .9rem; max-width: none; }
+
+  /* ---------- next steps ---------- */
+
+  ol.steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-top: 1px solid var(--rule);
+  }
+  ol.steps li {
+    display: grid;
+    grid-template-columns: 4.5rem 1fr;
+    gap: 1rem;
+    padding: .95rem .2rem;
+    border-bottom: 1px solid var(--rule);
+    margin: 0;
+    align-items: baseline;
+  }
+  ol.steps .stage {
+    font-family: var(--mono);
+    font-size: .7rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  ol.steps .what { color: var(--ink-2); }
+  ol.steps .what b { color: var(--ink); font-weight: 650; }
+
+  footer {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--ink-3);
+    border-top: 1px solid var(--rule);
+    padding-top: 1rem;
+    line-height: 1.7;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">Stage 0 · Graph Generation</div>
+    <h1>CAM++ 정적 실행 그래프</h1>
+    <p class="dek">
+      동적 shape로 export된 CAM++ ONNX를 입력 길이별로 고정(freeze)해서,
+      보드에서 실제로 실행해야 하는 노드만 남긴 정적 IR과
+      <strong>실행 가능한 정적 ONNX 4개</strong>를 만들었다.
+      아래 숫자는 전부 QRB2210(Arduino UNO Q) 위에서 뽑았고,
+      shape는 실제 ORT 실행값과 대조 검증했다.
+    </p>
+    <div class="meta">
+      <span>models/campplus_int8_static_qop.onnx</span>
+      <span>opset 11 · INT8 QOperator</span>
+      <span>feature[1,T,80] → embedding[1,192]</span>
+      <span>arduino,imola / qcom,qrb2210</span>
+    </div>
+  </header>
+
+  <dl class="rail">
+    <div class="stat">
+      <dt>실행 노드</dt>
+      <dd><span class="from">3180</span> <span class="arrow">→</span> <span class="to">1438</span></dd>
+      <small>1742개(55%)가 shape 연산 · 상수<br/>= 보드에서 아예 실행 안 함</small>
+    </div>
+    <div class="stat">
+      <dt>Tensor Arena (3초)</dt>
+      <dd><span class="from">137.8</span> <span class="arrow">→</span> <span class="to">5.8</span></dd>
+      <small>MB · 오프라인 배치로 23.7배 축소<br/>이론 하한과 오버헤드 0.0%</small>
+    </div>
+    <div class="stat">
+      <dt>커널 호출</dt>
+      <dd class="to">−1059</dd>
+      <small>fan-out 없는 직선 구간 224개를<br/>융합하면 런타임 노드의 74% 소멸</small>
+    </div>
+    <div class="stat">
+      <dt>정적 ONNX 검증</dt>
+      <dd class="to">0.0e+00</dd>
+      <small>원본 대비 max|diff| · cosine 1.000000000<br/>4개 버킷 전부 비트 단위 동일</small>
+    </div>
+  </dl>
+
+  <section>
+    <h2><span class="num">01</span> 실행 가능한 정적 ONNX</h2>
+    <p>
+      <code>ir_*.json</code>은 분석용 IR이라 그것만으로는 추론할 수 없다.
+      정적화 효과를 ORT 안에서 실제로 재기 위해, 버킷마다 돌아가는 모델을 따로 뽑았다.
+      최종 배포 포맷이 아니라 <strong>중간 산출물</strong>이다.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>파일</th><th>버킷</th><th>노드</th><th>폴딩</th><th>initializer</th><th>크기</th><th>max|diff|</th><th>cosine</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="op">campp_static_98.onnx</td><td>1 초</td><td>3180 → <span style="color:var(--keep)">1438</span></td><td class="gone">−1742</td><td>1963 → 2280</td><td>8.16 MB</td><td class="kept">0.0e+00</td><td class="kept">1.000000000</td></tr>
+          <tr><td class="op">campp_static_298.onnx</td><td>3 초</td><td>3180 → <span style="color:var(--keep)">1438</span></td><td class="gone">−1742</td><td>1963 → 2280</td><td>8.17 MB</td><td class="kept">0.0e+00</td><td class="kept">1.000000000</td></tr>
+          <tr><td class="op">campp_static_498.onnx</td><td>5 초</td><td>3180 → <span style="color:var(--keep)">1438</span></td><td class="gone">−1742</td><td>1963 → 2280</td><td>8.17 MB</td><td class="kept">0.0e+00</td><td class="kept">1.000000000</td></tr>
+          <tr><td class="op">campp_static_998.onnx</td><td>10 초</td><td>3180 → <span style="color:var(--keep)">1438</span></td><td class="gone">−1742</td><td>1963 → 2280</td><td>8.17 MB</td><td class="kept">0.0e+00</td><td class="kept">1.000000000</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead><tr><th>요구 조건</th><th>확인 방법</th><th>결과</th></tr></thead>
+        <tbody>
+          <tr><td>입력 shape 완전 고정</td><td class="wrapnote">다른 프레임 수를 넣어 ORT 반응 확인</td><td class="kept"><code>feature[1,F,80]</code> · 오입력은 InvalidArgument로 거부</td></tr>
+          <tr><td>shape 연산 상수화</td><td class="wrapnote">잔존 <code>Shape</code>/<code>Gather</code>/<code>Constant</code> 카운트</td><td class="kept">0개 — 전부 initializer로 접힘</td></tr>
+          <tr><td>Dead node 제거</td><td class="wrapnote">graph output에서 역방향 도달성 검사</td><td class="kept">도달 불가 노드·initializer 제거 (원본엔 shape 도메인 외 dead 없음)</td></tr>
+          <tr><td>가중치·양자화 파라미터 유지</td><td class="wrapnote">QLinearConv / scale / zero_point 카운트</td><td class="kept">225 / 450 / 448 — 원본과 동일</td></tr>
+          <tr><td>출력 유지</td><td class="wrapnote">graph output 이름과 shape</td><td class="kept"><code>embedding[1,192]</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">
+      생성: <code>campp_acceleration/graph/export_static.py</code> ·
+      shape 도메인 노드를 ORT로 1회 평가해 그 값을 initializer로 굳히고,
+      graph output에서 도달 불가한 노드와 initializer를 정리한다.
+      folding 대상 텐서는 initializer와 <code>Shape</code> 출력에서만 파생되므로
+      값이 오디오에 의존하지 않는다 — 평가 입력으로 0을 써도 안전하다.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> 왜 노드의 절반이 사라지는가</h2>
+    <p>
+      CAM++ export 그래프는 모델 안에서 자기 shape를 매번 다시 계산한다.
+      <code>Shape → Gather → Concat → Reshape</code> 체인이 CAM layer마다 박혀 있고,
+      그 결과 <strong>연산과 무관한 노드가 전체의 55%</strong>다.
+      입력 길이를 버킷으로 고정하는 순간 이 값들은 전부 컴파일 타임에 결정된다.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>연산자</th><th>원본</th><th>정적화 후</th><th>제거</th><th>성격</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="op">Constant</td><td>580</td><td class="zero">0</td><td class="gone">−580</td><td>shape 상수</td></tr>
+          <tr><td class="op">Unsqueeze</td><td>369</td><td class="kept">54</td><td class="gone">−315</td><td>대부분 shape 조립</td></tr>
+          <tr><td class="op">Shape</td><td>265</td><td class="zero">0</td><td class="gone">−265</td><td>shape 조회</td></tr>
+          <tr><td class="op">Gather</td><td>213</td><td class="zero">0</td><td class="gone">−213</td><td>차원 인덱싱</td></tr>
+          <tr><td class="op">Concat</td><td>158</td><td class="kept">53</td><td class="gone">−105</td><td>53개는 dense 연결</td></tr>
+          <tr><td class="op">Reshape</td><td>105</td><td class="kept">53</td><td class="gone">−52</td><td>타깃이 동적이었음</td></tr>
+          <tr><td class="op">ConstantOfShape / Equal / Where</td><td>156</td><td class="zero">0</td><td class="gone">−156</td><td>Expand 브로드캐스트 보조</td></tr>
+          <tr><td class="op">Mul</td><td>107</td><td class="kept">54</td><td class="gone">−53</td><td>53개는 shape 산술</td></tr>
+          <tr><td class="op">QLinearConv</td><td>225</td><td class="kept">225</td><td class="zero">0</td><td>실연산</td></tr>
+          <tr><td class="op">Quantize / DequantizeLinear</td><td>448</td><td class="kept">448</td><td class="zero">0</td><td>양자화 경계</td></tr>
+          <tr><td class="op">Relu / Sigmoid / BN / Add</td><td>335</td><td class="kept">335</td><td class="zero">0</td><td>실연산</td></tr>
+          <tr><td class="op">AveragePool / ReduceMean / Expand / Slice</td><td>211</td><td class="kept">211</td><td class="zero">0</td><td>CAM 컨텍스트 브로드캐스트</td></tr>
+          <tr><td class="op">Sub / Transpose / Div / Sqrt / Squeeze / Cast / ReduceProd</td><td>8</td><td class="kept">5</td><td class="gone">−3</td><td>stats pooling 및 입출력 정형</td></tr>
+          <tr class="total"><td>합계</td><td>3180</td><td>1438</td><td class="gone">−1742</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="caption">
+      Quantize/DequantizeLinear 448개는 정적화만으로는 안 줄어든다. 인접 커널이
+      스케일을 합의하는 융합 단계에서 사라진다 — 아래 04 참조.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span> 블록 단위 데이터플로우</h2>
+    <p>
+      3초 입력(fbank 298 프레임) 기준. 화살표 위 숫자는 그 경계를 통과하는 activation 바이트,
+      박스 안 숫자는 해당 스코프의 런타임 노드 수와 MAC이다.
+    </p>
+    <div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  IN(["feature<br/>1x298x80 · 93 KB"])
+  H0["head 입력 정형<br/>Transpose · Unsqueeze · Quantize"]
+  H1["head/conv1<br/>2 ops · 6.9 M MAC"]
+  H2["head/layer1<br/>20 ops · 451.6 M MAC · 26.9%"]
+  H3["head/layer2<br/>20 ops · 225.8 M MAC · 13.5%"]
+  H4["head/conv2<br/>2 ops · 27.5 M MAC"]
+  X0["xvector/tdnn<br/>3 ops · 30.5 M MAC"]
+  B1["xvector/block1<br/>312 ops · 109.9 M MAC · 6.6%"]
+  T1["transit1<br/>19.5 M MAC"]
+  B2["xvector/block2<br/>624 ops · 366.2 M MAC · 21.8%"]
+  T2["transit2<br/>78.1 M MAC"]
+  B3["xvector/block3<br/>416 ops · 283.2 M MAC · 16.9%"]
+  T3["transit3<br/>78.1 M MAC"]
+  ST["xvector/stats<br/>mean + std pooling"]
+  DE["xvector/dense<br/>0.2 M MAC"]
+  OUT(["embedding<br/>1x192 · 768 B"])
+
+  IN -->|93 KB| H0
+  H0 -->|23 KB| H1
+  H1 -->|2.9 MB| H2
+  H2 -->|745 KB| H3
+  H3 -->|186 KB| H4
+  H4 -->|372 KB| X0
+  X0 -->|149 KB| B1
+  B1 -->|298 KB| T1
+  T1 -->|298 KB| B2
+  B2 -->|596 KB| T2
+  T2 -->|596 KB| B3
+  B3 -->|596 KB| T3
+  T3 -->|894 KB| ST
+  ST -->|4 KB| DE
+  DE -->|768 B| OUT
+
+  classDef fcm fill:#a8501c1f,stroke:#a8501c,stroke-width:1px;
+  classDef xv fill:#0e6d751f,stroke:#0e6d75,stroke-width:1px;
+  classDef io fill:#7a3f8f1f,stroke:#7a3f8f,stroke-width:1px;
+  class H0,H1,H2,H3,H4 fcm;
+  class X0,B1,T1,B2,T2,B3,T3,ST,DE xv;
+  class IN,OUT io;
+</pre>
+    </div>
+    <div class="note">
+      <div class="label">이 그래프에서 나온 가장 중요한 사실</div>
+      <p>
+        <strong>head(FCM) 스코프는 런타임 노드의 3.6%(52개)인데 MAC의 42.4%를 쓴다.</strong>
+        반대로 xvector는 노드의 96.4%(1386개)를 차지하면서 MAC은 57.6%다.
+        노드당 평균 연산량이 head 13.69 M, xvector 0.70 M으로 <strong>20배</strong> 차이난다.
+        CPU/GPU 배치를 고민할 지점이 여기서 그대로 나온다 —
+        큰 2D conv 덩어리인 head는 <span class="pill gpu">GPU 후보</span>,
+        작은 1D conv가 수백 개 이어지는 xvector는 커널 호출 비용이 지배하므로
+        <span class="pill cpu">CPU NEON + 융합</span>이 맞다.
+      </p>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>스코프</th><th>런타임 노드</th><th>MAC (3초)</th><th>비중</th><th>가중치</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="op">head/layer1</td><td>20</td><td>451.6 M</td>
+              <td><div class="bar"><span>26.9%</span><b><i style="width:100%"></i></b></div></td><td>38 KB</td></tr>
+          <tr><td class="op">xvector/block2</td><td>624</td><td>366.2 M</td>
+              <td><div class="bar"><span>21.8%</span><b><i style="width:81%"></i></b></div></td><td>2.6 MB</td></tr>
+          <tr><td class="op">xvector/block3</td><td>416</td><td>283.2 M</td>
+              <td><div class="bar"><span>16.9%</span><b><i style="width:63%"></i></b></div></td><td>2.0 MB</td></tr>
+          <tr><td class="op">head/layer2</td><td>20</td><td>225.8 M</td>
+              <td><div class="bar"><span>13.5%</span><b><i style="width:50%"></i></b></div></td><td>38 KB</td></tr>
+          <tr><td class="op">xvector/block1</td><td>312</td><td>109.9 M</td>
+              <td><div class="bar"><span>6.6%</span><b><i style="width:24%"></i></b></div></td><td>803 KB</td></tr>
+          <tr><td class="op">xvector/transit2</td><td>5</td><td>78.1 M</td>
+              <td><div class="bar"><span>4.7%</span><b><i style="width:17%"></i></b></div></td><td>531 KB</td></tr>
+          <tr><td class="op">xvector/transit3</td><td>5</td><td>78.1 M</td>
+              <td><div class="bar"><span>4.7%</span><b><i style="width:17%"></i></b></div></td><td>533 KB</td></tr>
+          <tr><td class="op">xvector/tdnn</td><td>3</td><td>30.5 M</td>
+              <td><div class="bar"><span>1.8%</span><b><i style="width:7%"></i></b></div></td><td>201 KB</td></tr>
+          <tr><td class="op">head/conv2</td><td>2</td><td>27.5 M</td>
+              <td><div class="bar"><span>1.6%</span><b><i style="width:6%"></i></b></div></td><td>9 KB</td></tr>
+          <tr><td class="op">xvector/transit1</td><td>5</td><td>19.5 M</td>
+              <td><div class="bar"><span>1.2%</span><b><i style="width:4%"></i></b></div></td><td>137 KB</td></tr>
+          <tr><td class="op">head/conv1</td><td>2</td><td>6.9 M</td>
+              <td><div class="bar"><span>0.4%</span><b><i style="width:2%"></i></b></div></td><td>591 B</td></tr>
+          <tr><td class="op">xvector/dense</td><td>6</td><td>0.2 M</td>
+              <td><div class="bar"><span>0.0%</span><b><i style="width:1%"></i></b></div></td><td>194 KB</td></tr>
+          <tr><td class="op">head 정형 · out_nonlinear · stats</td><td>18</td><td>0.0 M</td>
+              <td><div class="bar"><span>0.0%</span><b></b></div></td><td>15 B</td></tr>
+          <tr class="total"><td>합계</td><td>1438</td><td>1677.5 M</td><td>100%</td><td>7.08 MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> 융합 커널</h2>
+    <p>
+      fan-out이 없는 직선 구간 <strong>224개</strong>가 런타임 노드 1438개 중 1283개를 덮는다.
+      각 구간을 커널 하나로 합치면 <strong>커널 호출 1059회</strong>와
+      그만큼의 LPDDR 왕복이 사라진다. 이름은 <code>analyze.py</code>의
+      <code>FUSION_PATTERNS</code>가 단일 출처다. 3초 기준 중간 텐서 트래픽 순.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>패턴</th><th>개수</th><th>중간 트래픽</th><th>커널</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="op">BN → Relu → Q → QLinearConv → DQ → Relu</td>
+            <td>52</td><td class="gone">43.93 MB</td>
+            <td><code>BNAffineReluQuantConvPack</code></td>
+          </tr>
+          <tr>
+            <td class="op">Add → Q → Conv → DQ → Relu → Q → Conv → DQ → Sigmoid</td>
+            <td>52</td><td class="gone">10.64 MB</td>
+            <td><code>CAMMaskGen</code></td>
+          </tr>
+          <tr>
+            <td class="op">AveragePool → Unsqueeze → Expand → Reshape → Slice</td>
+            <td>52</td><td class="gone">10.26 MB</td>
+            <td><code>SegmentContextConsumerFusion</code></td>
+          </tr>
+          <tr>
+            <td class="op">Transpose → Unsqueeze → Q → QLinearConv → DQ → Relu → Q</td>
+            <td>1</td><td class="gone">6.75 MB</td>
+            <td><code>ConvReluRequant</code> · FCM 입구</td>
+          </tr>
+          <tr>
+            <td class="op">Q → QLinearConv → DQ → Relu → Q → QLinearConv → DQ</td>
+            <td>2</td><td class="gone">6.55 MB</td>
+            <td><code>ConvReluRequant</code> · FCM 잔차 블록</td>
+          </tr>
+          <tr>
+            <td class="op">Concat → BN → Relu → Q → QLinearConv → DQ</td>
+            <td>2</td><td class="gone">2.95 MB</td>
+            <td><code>DenseConcatBNReluQuantConvPack</code></td>
+          </tr>
+          <tr>
+            <td class="op">Q → QLinearConv → DQ</td>
+            <td>52</td><td class="gone">1.18 MB</td>
+            <td><code>RequantBoundary</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note correction">
+      <div class="label">교정 1 — BN은 conv 가중치에 접히지 않는다</div>
+      <p>
+        가장 큰 패턴의 실제 순서는 <code>BatchNormalization → Relu → Quantize → QLinearConv</code>다.
+        BN과 conv 사이에 <strong>ReLU라는 비선형</strong>이 있으므로 BN을 뒤 conv 가중치로 접을 수 없다.
+        앞으로도 못 접는다 — BN의 입력이 dense <code>Concat</code> 출력이라
+        생산자가 여러 레이어로 갈라진다.
+      </p>
+      <div class="wrong-right">
+        <div>
+          <span class="tag x">잘못된 설명</span>
+          <p>BN을 Conv 가중치에 folding</p>
+        </div>
+        <div>
+          <span class="tag o">실제 구현</span>
+          <p>
+            BN affine + ReLU + Quantize를 <strong>QLinearConv 입력 패킹 과정과 하나로 융합.</strong>
+            float BN 출력과 float ReLU 출력을 따로 만들지 않고 int8 conv 입력을 바로 생성한다.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="note correction">
+      <div class="label">교정 2 — 브로드캐스트 제거에는 소비자가 필요하다</div>
+      <p>
+        <code>AveragePool → Unsqueeze → Expand → Reshape → Slice</code>를 주소 계산만으로 없애려면
+        그 결과를 읽는 <code>Add</code>(그리고 그 뒤 CAM mask conv)까지 같은 커널에 넣어야 한다.
+        일반 ORT 텐서로 넘기면서 <code>Expand</code>만 삭제하면,
+        소비자가 요구하는 연속 텐서를 결국 써야 하므로 아무것도 절약되지 않는다.
+      </p>
+      <div class="wrong-right">
+        <div>
+          <span class="tag x">SegmentContextView</span>
+          <p>view만 만들고 소비자는 그대로 두는 설계 — 성립하지 않음</p>
+        </div>
+        <div>
+          <span class="tag o">SegmentContextConsumerFusion</span>
+          <p>브로드캐스트와 소비자를 한 커널로 — 이때만 메모리 트래픽이 0이 된다</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div style="display:flex;flex-direction:column;gap:.9rem">
+        <h3>TDNN-Dense 유닛 하나 (block2/tdnnd1, 3초)</h3>
+        <p class="caption">
+          CAM layer가 왜 이렇게 노드가 많은지 보여주는 구간.
+          점선 박스가 세그먼트 컨텍스트를 프레임 축으로 되돌리는 순수 데이터 이동이고,
+          바로 아래 <code>Add</code>가 그 소비자다. 이 둘을 함께 융합해야
+          위 교정 2가 성립한다.
+        </p>
+        <p class="caption">
+          입력 채널이 유닛마다 256 → 288 → … → 832로 자라는 게 dense 연결이고,
+          지금은 매번 Concat으로 새 텐서를 만든다. 채널 공간을 처음부터
+          잡아두고 각 유닛이 자기 슬라이스에 쓰면 Concat 53개가 통째로 없어진다.
+        </p>
+      </div>
+      <div class="diagram">
+<pre class="mermaid">
+flowchart TB
+  BN["BatchNormalization<br/>1x256x149"]
+  R1["Relu"]
+  C1["QLinearConv linear1<br/>256→128 · 4.88 M MAC"]
+  R2["Relu · 1x128x149"]
+  RM["ReduceMean<br/>1x128x1 · 전역 컨텍스트"]
+  AP["AveragePool<br/>1x128x2 · 세그먼트"]
+  EX["Unsqueeze→Expand→Reshape→Slice<br/>1x128x149"]
+  LL["QLinearConv linear_local<br/>128→32 · 1.83 M MAC"]
+  AD["Add · 컨텍스트 합"]
+  C2["QLinearConv linear1<br/>128→64 · 1.22 M MAC"]
+  C3["QLinearConv linear2<br/>64→32 · 0.31 M MAC"]
+  SG["Sigmoid · mask"]
+  MU["Mul · 1x32x149"]
+
+  BN --> R1 --> C1 --> R2
+  R2 --> LL
+  R2 --> RM
+  R2 --> AP --> EX
+  RM --> AD
+  EX --> AD
+  AD --> C2 --> C3 --> SG --> MU
+  LL --> MU
+
+  classDef comp fill:#0e6d751f,stroke:#0e6d75,stroke-width:1px;
+  classDef move fill:#8a8f9822,stroke:#8a8f98,stroke-dasharray:3 3;
+  class BN,R1,C1,R2,RM,AP,LL,AD,C2,C3,SG,MU comp;
+  class EX move;
+</pre>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Tensor Arena</h2>
+    <p>
+      런타임 텐서마다 생존 구간을 계산하고 오프라인에서 오프셋을 배정했다.
+      추론 중 <code>malloc</code>/<code>free</code>가 사라지고, 실제 예약량은
+      이론 하한(동시 생존 바이트의 최대값)과 정확히 일치한다 — 단편화 0%.
+    </p>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>버킷</th><th>fbank 프레임</th><th>MAC</th>
+            <th>텐서마다 개별 할당</th><th>Arena</th><th>이론 하한</th><th>가중치</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="op">1 초</td><td>98</td><td>552 M</td><td class="gone">47.12 MB</td><td class="kept">1.91 MB</td><td>1.91 MB</td><td>7.08 MB</td></tr>
+          <tr><td class="op">3 초</td><td>298</td><td>1677 M</td><td class="gone">137.82 MB</td><td class="kept">5.82 MB</td><td>5.82 MB</td><td>7.08 MB</td></tr>
+          <tr><td class="op">5 초</td><td>498</td><td>2803 M</td><td class="gone">228.53 MB</td><td class="kept">9.73 MB</td><td>9.73 MB</td><td>7.08 MB</td></tr>
+          <tr><td class="op">10 초</td><td>998</td><td>5617 M</td><td class="gone">452.74 MB</td><td class="kept">19.49 MB</td><td>19.49 MB</td><td>7.08 MB</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      피크를 만드는 건 FCM 입구의 <code>/head/conv1/Conv_output_0</code>과 그 Relu 출력
+      두 개다 — 3초에서 각각 약 2.9 MB. 즉 <strong>arena 크기는 사실상 FCM 앞단이 결정한다</strong>.
+      MAC 비중(42%)과 메모리 피크가 같은 곳을 가리키므로, 최적화 1순위도 여기다.
+    </p>
+    <p class="caption">
+      MAC과 arena 모두 입력 길이에 거의 정비례한다(10초 = 1초의 10.2배).
+      버킷을 1/3/5/10초로 끊는 정책이 실제로 의미가 있다는 뜻이다.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> 다음 단계 <span class="num">— 승인 대기</span></h2>
+    <ol class="steps">
+      <li><span class="stage">다음</span><span class="what"><b>정적화 효과 실측.</b> 원본 동적 모델 vs <code>campp_static_*.onnx</code>를 같은 버킷에서 ORT CPU INT8로 돌려 p50/p95를 비교한다. 노드 55% 제거가 실제 지연시간에서 몇 %인지가 여기서 나온다.</span></li>
+      <li><span class="stage">그 다음</span><span class="what"><b>스코프별 프로파일.</b> ORT node-level profiling으로 head vs xvector 실제 시간 배분을 확인한다. MAC 비율(42:58)과 시간 비율이 크게 어긋나면 그 자체가 커널 효율 지표다.</span></li>
+      <li><span class="stage">패키징</span><span class="what"><b>packed_model.bin.</b> 검증된 shape·arena 오프셋·양자화 스케일을 버킷별로 직렬화한다. 이미 IR JSON에 다 들어있다.</span></li>
+      <li><span class="stage">커널</span><span class="what"><b>융합 커널 착수.</b> <code>BNAffineReluQuantConvPack</code>(52회, 43.9 MB)부터. <code>SegmentContextConsumerFusion</code>은 소비자까지 묶는 설계라 먼저 인터페이스를 정해야 한다.</span></li>
+      <li><span class="stage">확인 필요</span><span class="what"><b>FP32 원본이 로컬에 없다.</b> GPU FP16 Vulkan 경로를 비교하려면 INT8 이전 모델이 필요하다. 지금 저장소에는 <code>campplus_int8_static_qop.onnx</code>만 있다.</span></li>
+    </ol>
+  </section>
+
+  <footer>
+    생성: campp_acceleration/graph/{build_graph.py, export_static.py} · 산출물: campp_acceleration/out/graph/ (ir_{1,3,5,10}s.json, graph_report.md, blocks_*.dot|mmd, scope_*.dot|mmd), campp_acceleration/out/static/ (campp_static_{98,298,498,998}.onnx)<br/>
+    측정 환경: Arduino UNO Q (arduino,imola / qcom,qrb2210), 4코어 aarch64, RAM 3.6 GB, onnxruntime 1.27.0, onnx 1.22.0
+  </footer>
+
+</div>
