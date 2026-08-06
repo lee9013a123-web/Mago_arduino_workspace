@@ -1,0 +1,789 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-08-06T06:49:21.557207+00:00",
+  "purpose": "CAM++ canonical ONNX and static bucket freeze",
+  "reference_policy": "The INT8 QOperator ONNX is canonical; PyTorch parity is out of scope.",
+  "git": {
+    "git_root": "/home/arduino/workspace/egs/accelerate_CAM",
+    "git_commit": "7a27de7ecd9c4ce851de2fce2ac19f5086c90c85",
+    "git_branch": "research/cam-acceleration",
+    "reference_path_label": "models/source/campplus_int8_static_qop.onnx",
+    "reference_git_tracked": true
+  },
+  "runtime": {
+    "python": "3.13.5",
+    "onnx": "1.22.0",
+    "onnxruntime": "1.27.0",
+    "numpy": "2.4.6",
+    "threads": 1,
+    "provider": "CPUExecutionProvider"
+  },
+  "canonical_model": {
+    "path": "/home/arduino/workspace/egs/accelerate_CAM/models/source/campplus_int8_static_qop.onnx",
+    "sha256": "1ea9a4806a3c410046e7e785cfa81fb1393550b2f016b1e94581056b1c092048",
+    "size_bytes": 8520399,
+    "ir_version": 6,
+    "opsets": {
+      "ai.onnx": 11
+    },
+    "producer_name": "onnx.quantize",
+    "producer_version": "0.1.0",
+    "node_count": 3180,
+    "initializer_count": 1963,
+    "operator_counts": {
+      "Add": 56,
+      "AveragePool": 52,
+      "BatchNormalization": 56,
+      "Cast": 1,
+      "Concat": 158,
+      "Constant": 580,
+      "ConstantOfShape": 52,
+      "DequantizeLinear": 225,
+      "Div": 1,
+      "Equal": 52,
+      "Expand": 52,
+      "Gather": 213,
+      "Mul": 107,
+      "QLinearConv": 225,
+      "QuantizeLinear": 223,
+      "ReduceMean": 55,
+      "ReduceProd": 1,
+      "Relu": 171,
+      "Reshape": 105,
+      "Shape": 265,
+      "Sigmoid": 52,
+      "Slice": 52,
+      "Sqrt": 1,
+      "Squeeze": 1,
+      "Sub": 2,
+      "Transpose": 1,
+      "Unsqueeze": 369,
+      "Where": 52
+    },
+    "inputs": [
+      {
+        "name": "feature",
+        "shape": [
+          "batch_size",
+          "frame_num",
+          80
+        ],
+        "dtype": "FLOAT"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "embedding",
+        "shape": [
+          "batch_size",
+          192
+        ],
+        "dtype": "FLOAT"
+      }
+    ],
+    "topology_sha256": "8b1c5b57ba60c5b4f202ffe94ada518e236f94c6584fb7706da8ed364a47af00",
+    "named_scale_initializers": 673,
+    "named_zero_point_initializers": 673
+  },
+  "buckets": [
+    {
+      "seconds": 1.0,
+      "frames": 98,
+      "static_model": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_98.onnx",
+        "sha256": "3fccf7b5bf6a79fa445a9006c9628ab22fdceb559d76df48bb2ea747eb4579be",
+        "size_bytes": 8164401,
+        "ir_version": 6,
+        "opsets": {
+          "ai.onnx": 11
+        },
+        "producer_name": "campp_acceleration.export_static",
+        "producer_version": "frames=98",
+        "node_count": 1438,
+        "initializer_count": 2280,
+        "operator_counts": {
+          "Add": 56,
+          "AveragePool": 52,
+          "BatchNormalization": 56,
+          "Concat": 53,
+          "DequantizeLinear": 225,
+          "Div": 1,
+          "Expand": 52,
+          "Mul": 54,
+          "QLinearConv": 225,
+          "QuantizeLinear": 223,
+          "ReduceMean": 55,
+          "Relu": 171,
+          "Reshape": 53,
+          "Sigmoid": 52,
+          "Slice": 52,
+          "Sqrt": 1,
+          "Squeeze": 1,
+          "Sub": 1,
+          "Transpose": 1,
+          "Unsqueeze": 54
+        },
+        "inputs": [
+          {
+            "name": "feature",
+            "shape": [
+              1,
+              98,
+              80
+            ],
+            "dtype": "FLOAT"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "embedding",
+            "shape": [
+              1,
+              192
+            ],
+            "dtype": "FLOAT"
+          }
+        ],
+        "topology_sha256": "19729c8b1c5652bbb1b7f1e4561f9497e7be6698050b8359536728dc87f6cc45",
+        "named_scale_initializers": 673,
+        "named_zero_point_initializers": 673
+      },
+      "parameter_preservation": {
+        "reference_parameter_count": 1963,
+        "candidate_parameter_count": 1963,
+        "missing": [],
+        "mismatched": [],
+        "passed": true
+      },
+      "validation": {
+        "case_count": 5,
+        "exact_case_count": 5,
+        "all_exact": true,
+        "maximum_abs_diff": 0.0,
+        "cases": [
+          {
+            "name": "zeros",
+            "feature_sha256": "dbcf849c8529bcd9395fd13944374a09824f5459c11397dbdcd8bd87f49ed6f8",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "85570f44f5978c5f3e5e763bc8862aea740f650df25416e7621a55e6d11c7598",
+            "candidate_embedding_sha256": "85570f44f5978c5f3e5e763bc8862aea740f650df25416e7621a55e6d11c7598"
+          },
+          {
+            "name": "ones",
+            "feature_sha256": "bd4332c587063b1dae8871e8e306fc99c1c80b37db1aca29287252516e7c2594",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "ef423827db51ae869000efc700e1f73fc9bdea7d349b649ac96261b91eb26880",
+            "candidate_embedding_sha256": "ef423827db51ae869000efc700e1f73fc9bdea7d349b649ac96261b91eb26880"
+          },
+          {
+            "name": "random_seed_0",
+            "feature_sha256": "915a86657a5ce338797b7cb411a9482b3a0a4ad8e353563253ea1c3152fc459b",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "ec15b2445e717e902e60c35f0f0a8d8475e80582ece128a7cee9d43bb0d5350d",
+            "candidate_embedding_sha256": "ec15b2445e717e902e60c35f0f0a8d8475e80582ece128a7cee9d43bb0d5350d"
+          },
+          {
+            "name": "random_seed_1",
+            "feature_sha256": "8d1b75ffc1919606393863c317a9c614db0698181d9bf010114e0e68408dac2d",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0,
+            "reference_embedding_sha256": "1a74f2f30916523f2b8b5b9414af5655c2ed7cda77711704f80ccf6ad87dc342",
+            "candidate_embedding_sha256": "1a74f2f30916523f2b8b5b9414af5655c2ed7cda77711704f80ccf6ad87dc342"
+          },
+          {
+            "name": "random_seed_2",
+            "feature_sha256": "d641e9165c3a3e99e4280cde57bbad2bdf83c34c41f14b495167ce0d6d355ed3",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0000000000000002,
+            "reference_embedding_sha256": "2b170ff2765999615a5be9640c70b8a52e8b703b2a0b22b5cd10aa5c663365d5",
+            "candidate_embedding_sha256": "2b170ff2765999615a5be9640c70b8a52e8b703b2a0b22b5cd10aa5c663365d5"
+          }
+        ]
+      }
+    },
+    {
+      "seconds": 3.0,
+      "frames": 298,
+      "static_model": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_298.onnx",
+        "sha256": "c8078e299df7c3d3329f22f438eb767b6c5151ee95a0201368ecb2c92a4b7fdb",
+        "size_bytes": 8165620,
+        "ir_version": 6,
+        "opsets": {
+          "ai.onnx": 11
+        },
+        "producer_name": "campp_acceleration.export_static",
+        "producer_version": "frames=298",
+        "node_count": 1438,
+        "initializer_count": 2280,
+        "operator_counts": {
+          "Add": 56,
+          "AveragePool": 52,
+          "BatchNormalization": 56,
+          "Concat": 53,
+          "DequantizeLinear": 225,
+          "Div": 1,
+          "Expand": 52,
+          "Mul": 54,
+          "QLinearConv": 225,
+          "QuantizeLinear": 223,
+          "ReduceMean": 55,
+          "Relu": 171,
+          "Reshape": 53,
+          "Sigmoid": 52,
+          "Slice": 52,
+          "Sqrt": 1,
+          "Squeeze": 1,
+          "Sub": 1,
+          "Transpose": 1,
+          "Unsqueeze": 54
+        },
+        "inputs": [
+          {
+            "name": "feature",
+            "shape": [
+              1,
+              298,
+              80
+            ],
+            "dtype": "FLOAT"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "embedding",
+            "shape": [
+              1,
+              192
+            ],
+            "dtype": "FLOAT"
+          }
+        ],
+        "topology_sha256": "19729c8b1c5652bbb1b7f1e4561f9497e7be6698050b8359536728dc87f6cc45",
+        "named_scale_initializers": 673,
+        "named_zero_point_initializers": 673
+      },
+      "parameter_preservation": {
+        "reference_parameter_count": 1963,
+        "candidate_parameter_count": 1963,
+        "missing": [],
+        "mismatched": [],
+        "passed": true
+      },
+      "validation": {
+        "case_count": 5,
+        "exact_case_count": 5,
+        "all_exact": true,
+        "maximum_abs_diff": 0.0,
+        "cases": [
+          {
+            "name": "zeros",
+            "feature_sha256": "6ad6cb2fe05c650108ad56d941c24bff1d5893a0a48d7e1fe7caba9f5c297179",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0000000000000002,
+            "reference_embedding_sha256": "da393adeb4f76f75ac581ba139c8ef6562151e9ea960436d05fbecff3e04d603",
+            "candidate_embedding_sha256": "da393adeb4f76f75ac581ba139c8ef6562151e9ea960436d05fbecff3e04d603"
+          },
+          {
+            "name": "ones",
+            "feature_sha256": "9ced152b3f92f87965d1847c403f6b19aa3eba22e9541b2a4f35bbf81ab0f244",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "bf151bef9a6c9f88a8f3c2dd2e308384d68f6bd58f4b1c9822fe2234843dca3d",
+            "candidate_embedding_sha256": "bf151bef9a6c9f88a8f3c2dd2e308384d68f6bd58f4b1c9822fe2234843dca3d"
+          },
+          {
+            "name": "random_seed_0",
+            "feature_sha256": "b0d94acf6c939fa93d693aee23bb09f43036769a12dbb5c875921ce3bad04d3e",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "687cab8c0c82d41aa275ac45761123793dff916295546c5e024399b598f174dd",
+            "candidate_embedding_sha256": "687cab8c0c82d41aa275ac45761123793dff916295546c5e024399b598f174dd"
+          },
+          {
+            "name": "random_seed_1",
+            "feature_sha256": "f2d1916ab9897c639528bd9edd7edc2efb8454f6ee9f2f1847deb5c286de0d57",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0000000000000002,
+            "reference_embedding_sha256": "f59811e4e2f708397267aadb125f880dfe109feddd15821c5f136d32f045d907",
+            "candidate_embedding_sha256": "f59811e4e2f708397267aadb125f880dfe109feddd15821c5f136d32f045d907"
+          },
+          {
+            "name": "random_seed_2",
+            "feature_sha256": "777f28f793157353468b6c274d1ee3cf7a62a694492068855e75f606f869fddf",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "2a35f39808acc9027ec3d26b7fc30a1e71b9f8a2b8b4888ed163322c8a150186",
+            "candidate_embedding_sha256": "2a35f39808acc9027ec3d26b7fc30a1e71b9f8a2b8b4888ed163322c8a150186"
+          }
+        ]
+      }
+    },
+    {
+      "seconds": 5.0,
+      "frames": 498,
+      "static_model": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_498.onnx",
+        "sha256": "d88ddac44a0baa3fec924585a86c9f48f69c9e758c8300de1d04f9b1cc0b7bdc",
+        "size_bytes": 8165620,
+        "ir_version": 6,
+        "opsets": {
+          "ai.onnx": 11
+        },
+        "producer_name": "campp_acceleration.export_static",
+        "producer_version": "frames=498",
+        "node_count": 1438,
+        "initializer_count": 2280,
+        "operator_counts": {
+          "Add": 56,
+          "AveragePool": 52,
+          "BatchNormalization": 56,
+          "Concat": 53,
+          "DequantizeLinear": 225,
+          "Div": 1,
+          "Expand": 52,
+          "Mul": 54,
+          "QLinearConv": 225,
+          "QuantizeLinear": 223,
+          "ReduceMean": 55,
+          "Relu": 171,
+          "Reshape": 53,
+          "Sigmoid": 52,
+          "Slice": 52,
+          "Sqrt": 1,
+          "Squeeze": 1,
+          "Sub": 1,
+          "Transpose": 1,
+          "Unsqueeze": 54
+        },
+        "inputs": [
+          {
+            "name": "feature",
+            "shape": [
+              1,
+              498,
+              80
+            ],
+            "dtype": "FLOAT"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "embedding",
+            "shape": [
+              1,
+              192
+            ],
+            "dtype": "FLOAT"
+          }
+        ],
+        "topology_sha256": "19729c8b1c5652bbb1b7f1e4561f9497e7be6698050b8359536728dc87f6cc45",
+        "named_scale_initializers": 673,
+        "named_zero_point_initializers": 673
+      },
+      "parameter_preservation": {
+        "reference_parameter_count": 1963,
+        "candidate_parameter_count": 1963,
+        "missing": [],
+        "mismatched": [],
+        "passed": true
+      },
+      "validation": {
+        "case_count": 5,
+        "exact_case_count": 5,
+        "all_exact": true,
+        "maximum_abs_diff": 0.0,
+        "cases": [
+          {
+            "name": "zeros",
+            "feature_sha256": "a4e0d454b96a01e7c491700c2a78b7491f35f3b0d2715cb2f4a0113aab3f62aa",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0000000000000002,
+            "reference_embedding_sha256": "52065a509dd7257c5fdc934781294c9d3b2e175437138870b320a963caed9ffa",
+            "candidate_embedding_sha256": "52065a509dd7257c5fdc934781294c9d3b2e175437138870b320a963caed9ffa"
+          },
+          {
+            "name": "ones",
+            "feature_sha256": "51e0941538a6a77b24281e3fda171c270099a1129fda1d5f436feb183bd2cd89",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0000000000000002,
+            "reference_embedding_sha256": "e58b86d8863ce913e2f41bda55617794ea31c6ebafc18406fd3ff9a580a1da94",
+            "candidate_embedding_sha256": "e58b86d8863ce913e2f41bda55617794ea31c6ebafc18406fd3ff9a580a1da94"
+          },
+          {
+            "name": "random_seed_0",
+            "feature_sha256": "1867f64bcea3c6d79eab688cbb7059f320ba81f7a55cc3eeb700496e847335fe",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "df4316785b65aa1c7b10c92b4e5de3a5e09f2fe099798b31b9ab442887d004e2",
+            "candidate_embedding_sha256": "df4316785b65aa1c7b10c92b4e5de3a5e09f2fe099798b31b9ab442887d004e2"
+          },
+          {
+            "name": "random_seed_1",
+            "feature_sha256": "3c0fc141b781394b1e4b9c1c14eef2b0383735c00ec00964fb42b7256bc13b37",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0000000000000002,
+            "reference_embedding_sha256": "286e8ee40d480d55c22b5641b574d0ca574dc69dce869fcd75c2511f87cf53bd",
+            "candidate_embedding_sha256": "286e8ee40d480d55c22b5641b574d0ca574dc69dce869fcd75c2511f87cf53bd"
+          },
+          {
+            "name": "random_seed_2",
+            "feature_sha256": "4ae260d0e189a604872b1bb9853fbaef87e23dc14672eeb44754d155e3bbd2e0",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0,
+            "reference_embedding_sha256": "88f18cc9329e09694267dd0f8cfc09a9ef65ddd55627e997cb6de6f0b9d3c23b",
+            "candidate_embedding_sha256": "88f18cc9329e09694267dd0f8cfc09a9ef65ddd55627e997cb6de6f0b9d3c23b"
+          }
+        ]
+      }
+    },
+    {
+      "seconds": 10.0,
+      "frames": 998,
+      "static_model": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_998.onnx",
+        "sha256": "4b210b5e72d99e6c262385fc20bb74acc70fb35a41d506302e8be0a0f30c3c83",
+        "size_bytes": 8165620,
+        "ir_version": 6,
+        "opsets": {
+          "ai.onnx": 11
+        },
+        "producer_name": "campp_acceleration.export_static",
+        "producer_version": "frames=998",
+        "node_count": 1438,
+        "initializer_count": 2280,
+        "operator_counts": {
+          "Add": 56,
+          "AveragePool": 52,
+          "BatchNormalization": 56,
+          "Concat": 53,
+          "DequantizeLinear": 225,
+          "Div": 1,
+          "Expand": 52,
+          "Mul": 54,
+          "QLinearConv": 225,
+          "QuantizeLinear": 223,
+          "ReduceMean": 55,
+          "Relu": 171,
+          "Reshape": 53,
+          "Sigmoid": 52,
+          "Slice": 52,
+          "Sqrt": 1,
+          "Squeeze": 1,
+          "Sub": 1,
+          "Transpose": 1,
+          "Unsqueeze": 54
+        },
+        "inputs": [
+          {
+            "name": "feature",
+            "shape": [
+              1,
+              998,
+              80
+            ],
+            "dtype": "FLOAT"
+          }
+        ],
+        "outputs": [
+          {
+            "name": "embedding",
+            "shape": [
+              1,
+              192
+            ],
+            "dtype": "FLOAT"
+          }
+        ],
+        "topology_sha256": "19729c8b1c5652bbb1b7f1e4561f9497e7be6698050b8359536728dc87f6cc45",
+        "named_scale_initializers": 673,
+        "named_zero_point_initializers": 673
+      },
+      "parameter_preservation": {
+        "reference_parameter_count": 1963,
+        "candidate_parameter_count": 1963,
+        "missing": [],
+        "mismatched": [],
+        "passed": true
+      },
+      "validation": {
+        "case_count": 5,
+        "exact_case_count": 5,
+        "all_exact": true,
+        "maximum_abs_diff": 0.0,
+        "cases": [
+          {
+            "name": "zeros",
+            "feature_sha256": "dbd8521ae6bf1dfbdf080f0432deefb557522095a0f9d4948d228cf75fbdb526",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999998,
+            "reference_embedding_sha256": "80786d642ed0aeee00db99311176e9762f014ee2691a9236bc16d5cb48f8d60a",
+            "candidate_embedding_sha256": "80786d642ed0aeee00db99311176e9762f014ee2691a9236bc16d5cb48f8d60a"
+          },
+          {
+            "name": "ones",
+            "feature_sha256": "296dfb94b4a9c6c9e494418c692d77fe47711db22b8bd90f5da8705e06977b80",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0000000000000002,
+            "reference_embedding_sha256": "8b3bc2dbdabe5d73c35d59c9282a453aa51c7008b7b60409a55141f1032fcb28",
+            "candidate_embedding_sha256": "8b3bc2dbdabe5d73c35d59c9282a453aa51c7008b7b60409a55141f1032fcb28"
+          },
+          {
+            "name": "random_seed_0",
+            "feature_sha256": "ccc57f2b7cdae95003aefec50a4733d19d55f888ffb49ab847a828995c72b529",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "e92b45f6aa275f41230689612f6abbeea44b1806f5ad9a1049ec01a180ac231e",
+            "candidate_embedding_sha256": "e92b45f6aa275f41230689612f6abbeea44b1806f5ad9a1049ec01a180ac231e"
+          },
+          {
+            "name": "random_seed_1",
+            "feature_sha256": "c540440d5767b22e70d7b874fd5594fd61e1ad53a4981c2aacb348dafe8ac4e0",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 1.0,
+            "reference_embedding_sha256": "07bec61985887ffc684f79198ed3cb2dca922c6dfaa020d299a8e2e3c405f18b",
+            "candidate_embedding_sha256": "07bec61985887ffc684f79198ed3cb2dca922c6dfaa020d299a8e2e3c405f18b"
+          },
+          {
+            "name": "random_seed_2",
+            "feature_sha256": "d182f1558a72952153c8f7cd0ce96e4441804e42588d63b3ec58c06ed7810047",
+            "shape_match": true,
+            "reference_shape": [
+              1,
+              192
+            ],
+            "candidate_shape": [
+              1,
+              192
+            ],
+            "exact": true,
+            "max_abs_diff": 0.0,
+            "mean_abs_diff": 0.0,
+            "cosine_similarity": 0.9999999999999999,
+            "reference_embedding_sha256": "ee01fd877dd30520e20a9a677d9c890f78853a227b608602111a4406c4f6e7ad",
+            "candidate_embedding_sha256": "ee01fd877dd30520e20a9a677d9c890f78853a227b608602111a4406c4f6e7ad"
+          }
+        ]
+      }
+    }
+  ],
+  "freeze_gate": {
+    "static_topology_sha256": "19729c8b1c5652bbb1b7f1e4561f9497e7be6698050b8359536728dc87f6cc45",
+    "all_static_topologies_equal": true,
+    "all_arithmetic_parameters_preserved": true,
+    "all_outputs_bit_exact": true,
+    "passed": true
+  }
+}
