@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mago.local/schemas/campp-benchmark-result-v1.json",
+  "title": "CAM++ ONNX benchmark result",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "generated_at_utc",
+    "git_commit",
+    "runtime",
+    "model",
+    "configuration",
+    "input",
+    "environment",
+    "cold",
+    "warm"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "generated_at_utc": { "type": "string", "format": "date-time" },
+    "git_commit": { "type": ["string", "null"] },
+    "runtime": { "const": "onnxruntime-cpu" },
+    "model": {
+      "type": "object",
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "required": [
+        "threads",
+        "warmup",
+        "repeat",
+        "cold_runs",
+        "cv_threshold_pct",
+        "cosine_threshold"
+      ],
+      "properties": {
+        "threads": { "type": "integer", "minimum": 1 },
+        "warmup": { "type": "integer", "minimum": 0 },
+        "repeat": { "type": "integer", "minimum": 1 },
+        "cold_runs": { "type": "integer", "minimum": 0 },
+        "cv_threshold_pct": { "type": "number", "minimum": 0 },
+        "cosine_threshold": { "type": "number", "minimum": -1, "maximum": 1 }
+      }
+    },
+    "input": { "type": "object" },
+    "environment": { "type": "object" },
+    "cold": {
+      "type": ["object", "null"]
+    },
+    "warm": {
+      "type": ["object", "null"],
+      "properties": {
+        "warmup_count": { "type": "integer", "minimum": 0 },
+        "measured_count": { "type": "integer", "minimum": 1 },
+        "timings_ms": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "latency": {
+          "type": "object",
+          "required": ["mean_ms", "p50_ms", "p95_ms", "p99_ms", "cv_pct"]
+        },
+        "rtf": {
+          "type": "object",
+          "required": ["mean", "p50", "p95", "p99"]
+        },
+        "stability_gate": {
+          "type": "object",
+          "required": ["threshold_cv_pct", "passed"]
+        },
+        "memory": { "type": "object" },
+        "accuracy": { "type": "object" }
+      }
+    }
+  }
+}
