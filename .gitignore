@@ -1,3 +1,14 @@
 __pycache__/
 *.py[cod]
 .env
+
+# Runtime bundle exporter가 생성하는 binary
+models/compiled/reference/*.bin
+models/compiled/reference/manifest.json
+models/compiled/reference/execution_plans/*.bin
+
+# Runtime 검증 과정의 대용량 Tensor dump와 trace
+runs/runtime/ort_reference/*
+!runs/runtime/ort_reference/README.md
+runs/runtime/c_reference/*
+!runs/runtime/c_reference/README.md
