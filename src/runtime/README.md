@@ -7,6 +7,7 @@ Arduino UNO Q의 QRB2210 Linux 영역에서 CAM++ 정적 실행 계획을 수행
 | 디렉터리 | 역할 |
 |---|---|
 | `include/campp_runtime/` | 공개 API와 Tensor, Operator, binary descriptor 선언 |
+| `internal/` | Runtime 내부 구조체. 로드된 모델, 실행 상태, kernel view와 registry |
 | `model_loading/` | `weights.bin`과 `plan_*.bin` 로딩 및 검증 |
 | `execution/` | execution table 순회, Tensor 연결, kernel dispatch |
 | `memory_management/` | 초기 Tensor별 독립 버퍼와 이후 정적 Tensor Arena 관리 |
