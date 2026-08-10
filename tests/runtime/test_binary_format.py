@@ -11,8 +11,18 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
 from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
+    ATTRIBUTE_BLOCK_HEADER_SIZE,
+    ATTRIBUTE_KEY_NAMES,
+    ATTRIBUTE_MAX_VALUE_COUNT,
+    ATTRIBUTE_RECORD_HEADER_SIZE,
+    ATTRIBUTE_VALUE_SIZE,
+    AttributeKey,
+    AttributeRecord,
+    AttributeValueType,
     BackendId,
     BinaryFormatError,
+    decode_attribute_block,
+    encode_attribute_block,
     DEFAULT_KERNEL_ID,
     INVALID_DATA_OFFSET,
     INVALID_OPERATOR_INDEX,
@@ -282,6 +292,63 @@ class OperatorDescriptorTests(unittest.TestCase):
             invalid.pack()
 
 
+class AttributeBlockTests(unittest.TestCase):
+    def test_round_trip_preserves_values(self) -> None:
+        attributes = {
+            "kernel_shape": (3, 3),
+            "pads": (1, 1, 1, 1),
+            "strides": (1, 1),
+            "dilations": (1, 1),
+            "group": 1,
+        }
+        block = encode_attribute_block(attributes)
+        decoded = decode_attribute_block(block)
+        self.assertEqual(decoded["kernel_shape"], (3, 3))
+        self.assertEqual(decoded["pads"], (1, 1, 1, 1))
+        # 스칼라는 원소 1개짜리 튜플로 돌아온다. opcode가 arity를 알고 있다.
+        self.assertEqual(decoded["group"], (1,))
+
+    def test_empty_attributes_produce_no_block(self) -> None:
+        self.assertEqual(encode_attribute_block({}), b"")
+
+    def test_block_size_matches_the_header(self) -> None:
+        block = encode_attribute_block({"perm": (0, 2, 1)})
+        expected = (
+            ATTRIBUTE_BLOCK_HEADER_SIZE
+            + ATTRIBUTE_RECORD_HEADER_SIZE
+            + 3 * ATTRIBUTE_VALUE_SIZE
+        )
+        self.assertEqual(len(block), expected)
+        self.assertEqual(len(block) % 8, 0)
+
+    def test_identical_attributes_encode_identically(self) -> None:
+        first = encode_attribute_block({"strides": (1, 1), "group": 1})
+        second = encode_attribute_block({"group": 1, "strides": (1, 1)})
+        self.assertEqual(first, second)
+
+    def test_float_type_comes_from_the_key_not_the_value(self) -> None:
+        """epsilon이 정수값이어도 FLOAT으로 기록되어야 한다."""
+
+        block = encode_attribute_block({"epsilon": 1.0})
+        record = AttributeRecord.unpack_from(block, ATTRIBUTE_BLOCK_HEADER_SIZE)
+        self.assertIs(record.key, AttributeKey.EPSILON)
+        self.assertIs(record.value_type, AttributeValueType.FLOAT)
+        self.assertEqual(decode_attribute_block(block)["epsilon"], (1.0,))
+
+    def test_negative_axis_survives(self) -> None:
+        decoded = decode_attribute_block(encode_attribute_block({"axis": -1}))
+        self.assertEqual(decoded["axis"], (-1,))
+
+    def test_rejects_unknown_attribute_name(self) -> None:
+        with self.assertRaises(BinaryFormatError):
+            encode_attribute_block({"auto_pad": "SAME_UPPER"})
+
+    def test_rejects_truncated_block(self) -> None:
+        block = encode_attribute_block({"perm": (0, 2, 1)})
+        with self.assertRaises(BinaryFormatError):
+            decode_attribute_block(block[:-8])
+
+
 class CHeaderParityTests(unittest.TestCase):
     @staticmethod
     def read_header(name: str) -> str:
@@ -322,6 +389,27 @@ class CHeaderParityTests(unittest.TestCase):
         self.assertRegex(text, r"CAMPP_OP_QLINEAR_CONV\s*=\s*1")
         self.assertRegex(text, r"CAMPP_OP_UNSQUEEZE\s*=\s*20")
         self.assertRegex(text, r"CAMPP_BACKEND_CPU_REFERENCE\s*=\s*1")
+
+    def test_attribute_section_matches_python_schema(self) -> None:
+        text = self.read_header("operator_descriptor.h")
+        self.assert_macro(
+            text, "CAMPP_ATTRIBUTE_BLOCK_HEADER_SIZE", ATTRIBUTE_BLOCK_HEADER_SIZE
+        )
+        self.assert_macro(
+            text, "CAMPP_ATTRIBUTE_RECORD_HEADER_SIZE", ATTRIBUTE_RECORD_HEADER_SIZE
+        )
+        self.assert_macro(text, "CAMPP_ATTRIBUTE_VALUE_SIZE", ATTRIBUTE_VALUE_SIZE)
+        self.assert_macro(
+            text, "CAMPP_ATTRIBUTE_MAX_VALUE_COUNT", ATTRIBUTE_MAX_VALUE_COUNT
+        )
+        self.assertRegex(text, r"CAMPP_ATTR_VALUE_INT\s*=\s*1")
+        self.assertRegex(text, r"CAMPP_ATTR_VALUE_FLOAT\s*=\s*2")
+        # 모든 attribute key가 같은 숫자값으로 양쪽에 존재해야 한다.
+        for name, key in ATTRIBUTE_KEY_NAMES.items():
+            with self.subTest(attribute=name):
+                self.assertRegex(
+                    text, rf"CAMPP_ATTR_{key.name}\s*=\s*{int(key)}\b"
+                )
 
 
 if __name__ == "__main__":

@@ -72,11 +72,84 @@ typedef struct CamppOperatorDescriptor {
     uint16_t kernel_id;
 } CamppOperatorDescriptor;
 
+/*
+ * Attribute section 인코딩.
+ *
+ * attribute를 가진 operator마다 block 하나가 있고, block은 record가 이어진
+ * 형태다. 이름 문자열은 싣지 않고 CamppAttributeKey로만 식별한다.
+ *
+ *   block  = { uint32 record_count; uint32 total_size; } record[record_count]
+ *   record = { uint16 key; uint8 value_type; uint8 value_count; uint32 reserved; }
+ *            value[value_count]
+ *
+ * value는 종류와 무관하게 항상 8바이트다(INT는 int64, FLOAT은 double). 덕분에
+ * block 시작이 8바이트 정렬이면 모든 record와 값도 8바이트 정렬을 유지한다.
+ * record는 key 오름차순으로 기록되므로 같은 attribute 조합은 항상 같은
+ * 바이트열이 되고, exporter는 그 block을 여러 operator가 공유하게 할 수 있다.
+ */
+#define CAMPP_ATTRIBUTE_BLOCK_HEADER_SIZE 8u
+#define CAMPP_ATTRIBUTE_RECORD_HEADER_SIZE 8u
+#define CAMPP_ATTRIBUTE_VALUE_SIZE 8u
+#define CAMPP_ATTRIBUTE_MAX_VALUE_COUNT 255u
+
+/* Python AttributeKey와 숫자값을 동일하게 유지한다. */
+typedef enum CamppAttributeKey {
+    CAMPP_ATTR_INVALID = 0,
+    CAMPP_ATTR_KERNEL_SHAPE = 1,
+    CAMPP_ATTR_PADS = 2,
+    CAMPP_ATTR_STRIDES = 3,
+    CAMPP_ATTR_DILATIONS = 4,
+    CAMPP_ATTR_GROUP = 5,
+    CAMPP_ATTR_AXIS = 6,
+    CAMPP_ATTR_AXES = 7,
+    CAMPP_ATTR_KEEPDIMS = 8,
+    CAMPP_ATTR_PERM = 9,
+    CAMPP_ATTR_EPSILON = 10,
+    CAMPP_ATTR_MOMENTUM = 11,
+    CAMPP_ATTR_CEIL_MODE = 12,
+    CAMPP_ATTR_COUNT_INCLUDE_PAD = 13
+} CamppAttributeKey;
+
+/* Python AttributeValueType와 숫자값을 동일하게 유지한다. */
+typedef enum CamppAttributeValueType {
+    CAMPP_ATTR_VALUE_INVALID = 0,
+    CAMPP_ATTR_VALUE_INT = 1,
+    CAMPP_ATTR_VALUE_FLOAT = 2
+} CamppAttributeValueType;
+
+typedef struct CamppAttributeBlockHeader {
+    uint32_t record_count;
+    uint32_t total_size;
+} CamppAttributeBlockHeader;
+
+typedef struct CamppAttributeRecordHeader {
+    uint16_t key;
+    uint8_t value_type;
+    uint8_t value_count;
+    uint32_t reserved;
+} CamppAttributeRecordHeader;
+
 #if defined(__cplusplus)
 #define CAMPP_OPERATOR_STATIC_ASSERT(condition, message) static_assert(condition, message)
 #else
 #define CAMPP_OPERATOR_STATIC_ASSERT(condition, message) _Static_assert(condition, message)
 #endif
+
+CAMPP_OPERATOR_STATIC_ASSERT(
+    sizeof(CamppAttributeBlockHeader) == CAMPP_ATTRIBUTE_BLOCK_HEADER_SIZE,
+    "CamppAttributeBlockHeader must remain exactly 8 bytes");
+CAMPP_OPERATOR_STATIC_ASSERT(
+    sizeof(CamppAttributeRecordHeader) == CAMPP_ATTRIBUTE_RECORD_HEADER_SIZE,
+    "CamppAttributeRecordHeader must remain exactly 8 bytes");
+CAMPP_OPERATOR_STATIC_ASSERT(
+    offsetof(CamppAttributeRecordHeader, key) == 0u,
+    "attribute key offset does not match the disk ABI");
+CAMPP_OPERATOR_STATIC_ASSERT(
+    offsetof(CamppAttributeRecordHeader, value_type) == 2u,
+    "attribute value_type offset does not match the disk ABI");
+CAMPP_OPERATOR_STATIC_ASSERT(
+    offsetof(CamppAttributeRecordHeader, value_count) == 3u,
+    "attribute value_count offset does not match the disk ABI");
 
 CAMPP_OPERATOR_STATIC_ASSERT(
     sizeof(CamppOperatorDescriptor) == CAMPP_OPERATOR_DESCRIPTOR_SIZE,

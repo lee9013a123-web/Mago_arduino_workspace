@@ -31,6 +31,7 @@ from .binary_format_schema import (
 from .graph_ir_reader import DTYPE_BYTE_SIZE, GraphIRView, cross_validate
 from .runtime_ir import (
     AttributeValue,
+    InitializerScope,
     RuntimeGraph,
     RuntimeInitializer,
     RuntimeOperator,
@@ -585,6 +586,28 @@ def _contiguous_byte_strides(
     return tuple(strides)
 
 
+def _initializer_scope(name: str, ir: GraphIRView) -> InitializerScope:
+    """initializer 하나가 bucket 사이에서 공유되는 값인지 IR 구조로 판정한다.
+
+    reader는 한 번에 bucket 하나만 보므로 "값이 다르면 bucket-local"이라는 규칙은
+    쓸 수 없다. 대신 그 상수가 어디서 왔는지로 나눈다. 원본 ONNX가 들고 있던
+    initializer는 학습 parameter이므로 ``SHARED``이고, ``export_static``이
+    shape 도메인 node를 접어 만든 상수는 frame 수에 따라 달라질 수 있으므로
+    ``BUCKET_LOCAL``이다.
+    """
+
+    tensor = ir.tensor(name)
+    if tensor.is_initializer and tensor.producer is None:
+        return InitializerScope.SHARED
+    if tensor.producer is not None and ir.node(tensor.producer).is_static:
+        return InitializerScope.BUCKET_LOCAL
+    raise StaticModelError(
+        f"initializer {name!r}의 출처를 IR에서 판정할 수 없다 "
+        f"(is_initializer={tensor.is_initializer}, producer={tensor.producer!r}). "
+        "학습 weight도 shape 도메인 상수도 아니면 분류 규칙을 먼저 정해야 한다"
+    )
+
+
 def build_runtime_graph(
     static: StaticModelView,
     ir: GraphIRView,
@@ -687,6 +710,7 @@ def build_runtime_graph(
             dtype=initializer.dtype,
             shape=initializer.shape,
             raw_data=initializer.raw_data,
+            scope=_initializer_scope(initializer.name, ir),
         )
         for initializer in static.initializers.values()
     )

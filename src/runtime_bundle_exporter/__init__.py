@@ -1,6 +1,7 @@
 """CAM++ Runtime bundle exporter."""
 
 from .runtime_ir import (
+    InitializerScope,
     RuntimeBundle,
     RuntimeGraph,
     RuntimeInitializer,
@@ -10,6 +11,7 @@ from .runtime_ir import (
 )
 
 __all__ = [
+    "InitializerScope",
     "RuntimeBundle",
     "RuntimeGraph",
     "RuntimeInitializer",

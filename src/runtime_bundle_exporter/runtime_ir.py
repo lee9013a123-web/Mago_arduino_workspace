@@ -8,6 +8,7 @@ source model format and gives both writers one validated graph contract.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
 import math
 from types import MappingProxyType
 from typing import Mapping, TypeAlias
@@ -40,6 +41,20 @@ _DTYPE_BYTE_SIZE: Mapping[TensorDType, int] = MappingProxyType(
 
 AttributeScalar: TypeAlias = int | float | bool | str | bytes | None
 AttributeValue: TypeAlias = AttributeScalar | tuple["AttributeValue", ...]
+
+
+class InitializerScope(Enum):
+    """How far one initializer's bytes reach across a bundle's buckets.
+
+    ``SHARED`` is a trained parameter: every bucket must see the same bytes, so
+    an accidental divergence is an error.  ``BUCKET_LOCAL`` is a constant the
+    static export folded out of the shape domain (a Reshape target, a Slice
+    bound, a pooling length); it is allowed - not required - to differ per
+    bucket, and the weight blob stores one copy per bucket.
+    """
+
+    SHARED = "shared"
+    BUCKET_LOCAL = "bucket_local"
 
 
 class RuntimeIRError(ValueError):
@@ -263,6 +278,7 @@ class RuntimeInitializer:
     dtype: TensorDType
     shape: tuple[int, ...]
     raw_data: bytes
+    scope: InitializerScope = InitializerScope.SHARED
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -271,6 +287,12 @@ class RuntimeInitializer:
         object.__setattr__(self, "shape", _coerce_shape(self.shape))
         if isinstance(self.raw_data, (bytearray, memoryview)):
             object.__setattr__(self, "raw_data", bytes(self.raw_data))
+        try:
+            object.__setattr__(self, "scope", InitializerScope(self.scope))
+        except ValueError as exc:
+            raise RuntimeIRError(
+                f"unsupported initializer scope: {self.scope!r}"
+            ) from exc
         self.validate()
 
     @property
@@ -520,7 +542,14 @@ class RuntimeGraph:
 
 @dataclass(frozen=True, slots=True)
 class RuntimeBundle:
-    """Graphs whose execution plans share one immutable initializer set."""
+    """Graphs whose execution plans share one immutable weight blob.
+
+    Every graph carries the same initializer names in the same order.  The
+    ``SHARED`` ones are byte-identical across buckets and the blob stores one
+    copy; the ``BUCKET_LOCAL`` ones are stored once per bucket, so a plan's
+    Tensor descriptor points at its own bucket's offset.  The Tensor ID and the
+    ``CONSTANT -> weights_base + data_offset`` rule are unchanged either way.
+    """
 
     graphs: tuple[RuntimeGraph, ...]
     format_version: int = PLAN_FORMAT_VERSION
@@ -533,8 +562,25 @@ class RuntimeBundle:
         self.validate()
 
     @property
-    def initializers(self) -> tuple[RuntimeInitializer, ...]:
-        return self.graphs[0].initializers
+    def shared_initializers(self) -> tuple[RuntimeInitializer, ...]:
+        """Initializers written to the weight blob exactly once."""
+
+        return tuple(
+            item
+            for item in self.graphs[0].initializers
+            if item.scope is InitializerScope.SHARED
+        )
+
+    def bucket_initializers(
+        self, bucket_frames: int
+    ) -> tuple[RuntimeInitializer, ...]:
+        """Initializers the weight blob stores separately for this bucket."""
+
+        return tuple(
+            item
+            for item in self.graph_for_bucket(bucket_frames).initializers
+            if item.scope is InitializerScope.BUCKET_LOCAL
+        )
 
     def graph_for_bucket(self, bucket_frames: int) -> RuntimeGraph:
         for graph in self.graphs:
@@ -561,17 +607,50 @@ class RuntimeBundle:
         ]
         if len(set(buckets)) != len(buckets):
             raise RuntimeIRError("RuntimeBundle contains duplicate bucket sizes")
-        shared_initializers = self.graphs[0].initializers
+        self._validate_initializer_scopes()
+
+    def _validate_initializer_scopes(self) -> None:
+        """Hold SHARED initializers byte-identical and let BUCKET_LOCAL vary.
+
+        A trained parameter that silently changed between buckets would slip
+        through a plain "may differ" rule, so the scope - not the observed
+        difference - decides what is allowed.
+        """
+
+        reference = {item.name: item for item in self.graphs[0].initializers}
         for graph in self.graphs[1:]:
-            if graph.initializers != shared_initializers:
+            current = {item.name: item for item in graph.initializers}
+            if set(current) != set(reference):
+                missing = sorted(set(reference) - set(current))
+                added = sorted(set(current) - set(reference))
                 raise RuntimeIRError(
-                    "all graphs in a RuntimeBundle must share identical initializers"
+                    "every graph in a RuntimeBundle must carry the same "
+                    f"initializer names (missing {missing[:3]}, extra {added[:3]})"
                 )
+            for name, item in current.items():
+                expected = reference[name]
+                if item.scope is not expected.scope:
+                    raise RuntimeIRError(
+                        f"initializer {name!r} is {expected.scope.value} in one "
+                        f"graph and {item.scope.value} in another"
+                    )
+                if item.scope is not InitializerScope.SHARED:
+                    continue
+                if (
+                    item.dtype != expected.dtype
+                    or item.shape != expected.shape
+                    or item.raw_data != expected.raw_data
+                ):
+                    raise RuntimeIRError(
+                        f"SHARED initializer {name!r} differs between buckets; "
+                        "a trained parameter must not depend on the bucket"
+                    )
 
 
 __all__ = [
     "AttributeScalar",
     "AttributeValue",
+    "InitializerScope",
     "RuntimeBundle",
     "RuntimeGraph",
     "RuntimeInitializer",

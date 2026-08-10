@@ -12,7 +12,8 @@ from enum import IntEnum, IntFlag
 import hashlib
 import hmac
 import struct
-from typing import Final
+from types import MappingProxyType
+from typing import Final, Mapping, Sequence
 
 
 PLAN_MAGIC: Final[bytes] = b"CAMPLAN\x00" #PLAN_MAGIC: 해당 파일이 CAM++ 실행 계획 파일인지 확인하는 8바이트 값
@@ -41,6 +42,20 @@ OPERATOR_DESCRIPTOR_STRUCT: Final[struct.Struct] = struct.Struct(
 OPERATOR_DESCRIPTOR_SIZE: Final[int] = OPERATOR_DESCRIPTOR_STRUCT.size
 OPERATOR_INPUT_CAPACITY: Final[int] = 9
 OPERATOR_OUTPUT_CAPACITY: Final[int] = 1
+
+# Attribute section: operator당 block 하나, block 안에 record가 이어진다.
+# 2I: record_count, total_size (block 자기 자신을 포함한 byte 수)
+ATTRIBUTE_BLOCK_HEADER_STRUCT: Final[struct.Struct] = struct.Struct("<II")
+ATTRIBUTE_BLOCK_HEADER_SIZE: Final[int] = ATTRIBUTE_BLOCK_HEADER_STRUCT.size
+# H + 2B + I: key, value_type, value_count, reserved
+ATTRIBUTE_RECORD_HEADER_STRUCT: Final[struct.Struct] = struct.Struct("<HBBI")
+ATTRIBUTE_RECORD_HEADER_SIZE: Final[int] = ATTRIBUTE_RECORD_HEADER_STRUCT.size
+# 값은 항상 8바이트다. int는 int64, float은 float64로 넓혀 저장해 record 전체가
+# 8바이트 정렬을 유지하게 하고, C가 정렬 걱정 없이 순회할 수 있게 한다.
+ATTRIBUTE_VALUE_SIZE: Final[int] = 8
+ATTRIBUTE_INT_STRUCT: Final[struct.Struct] = struct.Struct("<q")
+ATTRIBUTE_FLOAT_STRUCT: Final[struct.Struct] = struct.Struct("<d")
+ATTRIBUTE_MAX_VALUE_COUNT: Final[int] = 255
 
 UINT32_MAX: Final[int] = (1 << 32) - 1
 UINT64_MAX: Final[int] = (1 << 64) - 1
@@ -123,6 +138,63 @@ class OperatorCode(IntEnum):
     TRANSPOSE = 18
     SQUEEZE = 19
     UNSQUEEZE = 20
+
+
+class AttributeKey(IntEnum):
+    """Attribute 이름을 대신하는 고정 ID다. plan에는 문자열을 싣지 않는다."""
+
+    INVALID = 0
+    KERNEL_SHAPE = 1
+    PADS = 2
+    STRIDES = 3
+    DILATIONS = 4
+    GROUP = 5
+    AXIS = 6
+    AXES = 7
+    KEEPDIMS = 8
+    PERM = 9
+    EPSILON = 10
+    MOMENTUM = 11
+    CEIL_MODE = 12
+    COUNT_INCLUDE_PAD = 13
+
+
+class AttributeValueType(IntEnum):
+    """Attribute record 하나가 담은 값의 종류다."""
+
+    INVALID = 0
+    INT = 1
+    FLOAT = 2
+
+
+# ONNX attribute 이름과 plan의 고정 ID를 잇는 유일한 표다.
+ATTRIBUTE_KEY_NAMES: Final[Mapping[str, AttributeKey]] = MappingProxyType(
+    {
+        "kernel_shape": AttributeKey.KERNEL_SHAPE,
+        "pads": AttributeKey.PADS,
+        "strides": AttributeKey.STRIDES,
+        "dilations": AttributeKey.DILATIONS,
+        "group": AttributeKey.GROUP,
+        "axis": AttributeKey.AXIS,
+        "axes": AttributeKey.AXES,
+        "keepdims": AttributeKey.KEEPDIMS,
+        "perm": AttributeKey.PERM,
+        "epsilon": AttributeKey.EPSILON,
+        "momentum": AttributeKey.MOMENTUM,
+        "ceil_mode": AttributeKey.CEIL_MODE,
+        "count_include_pad": AttributeKey.COUNT_INCLUDE_PAD,
+    }
+)
+
+ATTRIBUTE_KEY_BY_ID: Final[Mapping[AttributeKey, str]] = MappingProxyType(
+    {key: name for name, key in ATTRIBUTE_KEY_NAMES.items()}
+)
+
+# 값의 종류는 key가 정한다. 값을 보고 고르면 epsilon이 우연히 1.0일 때 INT로
+# 기록되어, FLOAT을 기대하는 kernel이 같은 8바이트를 다른 수로 읽게 된다.
+ATTRIBUTE_FLOAT_KEYS: Final[frozenset[AttributeKey]] = frozenset(
+    {AttributeKey.EPSILON, AttributeKey.MOMENTUM}
+)
 
 
 class BackendId(IntEnum):
@@ -591,6 +663,181 @@ class OperatorDescriptor:
         return descriptor
 
 
+@dataclass(frozen=True, slots=True)
+class AttributeRecord:
+    """Attribute 하나의 host-side 표현."""
+
+    key: AttributeKey
+    value_type: AttributeValueType
+    values: tuple[int, ...] | tuple[float, ...]
+
+    def validate(self) -> None:
+        _require_enum("attribute key", int(self.key), AttributeKey)
+        if int(self.key) == AttributeKey.INVALID:
+            raise BinaryFormatError("attribute key must not be INVALID")
+        _require_enum("attribute value_type", int(self.value_type), AttributeValueType)
+        if int(self.value_type) == AttributeValueType.INVALID:
+            raise BinaryFormatError("attribute value_type must not be INVALID")
+        if not isinstance(self.values, tuple):
+            raise BinaryFormatError("attribute values must be a tuple")
+        if not 1 <= len(self.values) <= ATTRIBUTE_MAX_VALUE_COUNT:
+            raise BinaryFormatError(
+                f"attribute {self.key.name} must carry 1..{ATTRIBUTE_MAX_VALUE_COUNT} "
+                f"values: {len(self.values)}"
+            )
+
+    @property
+    def byte_size(self) -> int:
+        return ATTRIBUTE_RECORD_HEADER_SIZE + len(self.values) * ATTRIBUTE_VALUE_SIZE
+
+    def pack(self) -> bytes:
+        """Record를 header + 8바이트 값들로 직렬화한다."""
+
+        self.validate()
+        parts = [
+            ATTRIBUTE_RECORD_HEADER_STRUCT.pack(
+                int(self.key), int(self.value_type), len(self.values), 0
+            )
+        ]
+        if int(self.value_type) == AttributeValueType.INT:
+            for value in self.values:
+                if isinstance(value, float) and not value.is_integer():
+                    raise BinaryFormatError(
+                        f"attribute {self.key.name} holds a non-integer value: {value}"
+                    )
+                try:
+                    parts.append(ATTRIBUTE_INT_STRUCT.pack(int(value)))
+                except struct.error as exc:
+                    raise BinaryFormatError(
+                        f"attribute {self.key.name} value does not fit in int64: "
+                        f"{value}"
+                    ) from exc
+        else:
+            for value in self.values:
+                parts.append(ATTRIBUTE_FLOAT_STRUCT.pack(float(value)))
+        return b"".join(parts)
+
+    @classmethod
+    def unpack_from(
+        cls, data: bytes | bytearray | memoryview, offset: int = 0
+    ) -> "AttributeRecord":
+        """바이트 배열에서 record 하나를 읽고 검증한다."""
+
+        _require_record_available(
+            "attribute record", data, offset, ATTRIBUTE_RECORD_HEADER_SIZE
+        )
+        key, value_type, value_count, reserved = (
+            ATTRIBUTE_RECORD_HEADER_STRUCT.unpack_from(data, offset)
+        )
+        if reserved != 0:
+            raise BinaryFormatError(f"attribute record reserved must be 0: {reserved}")
+
+        payload = offset + ATTRIBUTE_RECORD_HEADER_SIZE
+        _require_record_available(
+            "attribute values", data, payload, value_count * ATTRIBUTE_VALUE_SIZE
+        )
+        item = (
+            ATTRIBUTE_INT_STRUCT
+            if value_type == AttributeValueType.INT
+            else ATTRIBUTE_FLOAT_STRUCT
+        )
+        values = tuple(
+            item.unpack_from(data, payload + index * ATTRIBUTE_VALUE_SIZE)[0]
+            for index in range(value_count)
+        )
+        record = cls(
+            key=AttributeKey(key),
+            value_type=AttributeValueType(value_type),
+            values=values,
+        )
+        record.validate()
+        return record
+
+
+def _attribute_record_for(name: str, value: object) -> AttributeRecord:
+    key = ATTRIBUTE_KEY_NAMES.get(name)
+    if key is None:
+        raise BinaryFormatError(f"plan에 실을 수 없는 attribute 이름: {name!r}")
+
+    items: Sequence[object]
+    items = value if isinstance(value, (tuple, list)) else (value,)
+    if not items:
+        raise BinaryFormatError(f"attribute {name!r} is empty")
+
+    for item in items:
+        if isinstance(item, bool) or not isinstance(item, (int, float)):
+            raise BinaryFormatError(
+                f"attribute {name!r} holds an unsupported value: {item!r}"
+            )
+
+    if key in ATTRIBUTE_FLOAT_KEYS:
+        return AttributeRecord(
+            key=key,
+            value_type=AttributeValueType.FLOAT,
+            values=tuple(float(item) for item in items),
+        )
+    return AttributeRecord(
+        key=key, value_type=AttributeValueType.INT, values=tuple(items)
+    )
+
+
+def encode_attribute_block(attributes: Mapping[str, object]) -> bytes:
+    """Operator 하나의 attribute를 attribute section에 실을 block으로 만든다.
+
+    record는 :class:`AttributeKey` 순서로 정렬해 같은 내용이면 항상 같은 바이트가
+    나오게 한다. attribute가 없으면 빈 바이트열을 반환하고, 그 operator는
+    ``attribute_offset``과 ``attribute_size``를 모두 0으로 기록한다.
+
+    형식은 스칼라와 원소 1개짜리 목록을 구분하지 않는다. ``group=1``과
+    ``group=(1,)``은 같은 바이트가 되고 :func:`decode_attribute_block`은 항상
+    튜플로 돌려준다. 어느 쪽인지는 opcode가 이미 알고 있으므로 kernel이 헷갈릴
+    일은 없다.
+    """
+
+    if not attributes:
+        return b""
+
+    records = sorted(
+        (_attribute_record_for(name, value) for name, value in attributes.items()),
+        key=lambda record: int(record.key),
+    )
+    seen: set[AttributeKey] = set()
+    for record in records:
+        if record.key in seen:
+            raise BinaryFormatError(f"attribute {record.key.name}가 중복되었다")
+        seen.add(record.key)
+
+    payload = b"".join(record.pack() for record in records)
+    total_size = ATTRIBUTE_BLOCK_HEADER_SIZE + len(payload)
+    _require_uint("attribute block size", total_size, UINT32_MAX)
+    return ATTRIBUTE_BLOCK_HEADER_STRUCT.pack(len(records), total_size) + payload
+
+
+def decode_attribute_block(
+    data: bytes | bytearray | memoryview, offset: int = 0
+) -> dict[str, tuple[int, ...] | tuple[float, ...]]:
+    """attribute block을 이름 -> 값 튜플로 되돌린다. C loader의 참조 구현이다."""
+
+    _require_record_available(
+        "attribute block", data, offset, ATTRIBUTE_BLOCK_HEADER_SIZE
+    )
+    record_count, total_size = ATTRIBUTE_BLOCK_HEADER_STRUCT.unpack_from(data, offset)
+    _require_record_available("attribute block", data, offset, total_size)
+
+    decoded: dict[str, tuple[int, ...] | tuple[float, ...]] = {}
+    cursor = offset + ATTRIBUTE_BLOCK_HEADER_SIZE
+    for _ in range(record_count):
+        record = AttributeRecord.unpack_from(data, cursor)
+        decoded[ATTRIBUTE_KEY_BY_ID[record.key]] = record.values
+        cursor += record.byte_size
+    if cursor != offset + total_size:
+        raise BinaryFormatError(
+            f"attribute block size mismatch: header says {total_size}, "
+            f"records consume {cursor - offset}"
+        )
+    return decoded
+
+
 if PLAN_HEADER_SIZE != 80:
     raise AssertionError(f"PlanHeader ABI changed unexpectedly: {PLAN_HEADER_SIZE}")
 if TENSOR_DESCRIPTOR_SIZE != 80:
@@ -600,4 +847,9 @@ if TENSOR_DESCRIPTOR_SIZE != 80:
 if OPERATOR_DESCRIPTOR_SIZE != 64:
     raise AssertionError(
         f"OperatorDescriptor ABI changed unexpectedly: {OPERATOR_DESCRIPTOR_SIZE}"
+    )
+if ATTRIBUTE_BLOCK_HEADER_SIZE != 8 or ATTRIBUTE_RECORD_HEADER_SIZE != 8:
+    raise AssertionError(
+        "attribute section ABI changed unexpectedly: "
+        f"{ATTRIBUTE_BLOCK_HEADER_SIZE}, {ATTRIBUTE_RECORD_HEADER_SIZE}"
     )

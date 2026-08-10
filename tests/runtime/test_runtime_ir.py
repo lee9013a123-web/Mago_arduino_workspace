@@ -16,6 +16,7 @@ from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
     TensorStorageType,
 )
 from runtime_bundle_exporter.runtime_ir import (  # noqa: E402
+    InitializerScope,
     RuntimeBundle,
     RuntimeGraph,
     RuntimeInitializer,
@@ -200,9 +201,12 @@ class RuntimeBundleTests(unittest.TestCase):
         second = replace(first, name="campp_3s", bucket_frames=298)
         bundle = RuntimeBundle((first, second))
         self.assertEqual(bundle.graph_for_bucket(298), second)
-        self.assertEqual(bundle.initializers, first.initializers)
+        self.assertEqual(bundle.shared_initializers, first.initializers)
+        self.assertEqual(bundle.bucket_initializers(298), ())
 
-    def test_rejects_different_initializer_data_between_buckets(self) -> None:
+    def test_rejects_different_shared_initializer_data_between_buckets(self) -> None:
+        """학습 weight가 bucket에 따라 달라지면 조립 시점에 막아야 한다."""
+
         first = make_graph(bucket_frames=98)
         changed = replace(
             first.initializers[0], raw_data=struct.pack("<2f", 9.0, 10.0)
@@ -214,7 +218,47 @@ class RuntimeBundleTests(unittest.TestCase):
             name="campp_3s",
             bucket_frames=298,
         )
-        with self.assertRaisesRegex(RuntimeIRError, "identical initializers"):
+        with self.assertRaisesRegex(RuntimeIRError, "SHARED initializer"):
+            RuntimeBundle((first, second))
+
+    def test_allows_bucket_local_initializer_data_to_differ(self) -> None:
+        """shape 도메인에서 접힌 상수는 bucket마다 달라도 된다."""
+
+        base = make_graph(bucket_frames=98)
+        local = replace(base.initializers[0], scope=InitializerScope.BUCKET_LOCAL)
+        first = replace(base, initializers=(local,))
+        second = RuntimeGraph(
+            tensors=base.tensors,
+            operators=base.operators,
+            initializers=(replace(local, raw_data=struct.pack("<2f", 9.0, 10.0)),),
+            name="campp_3s",
+            bucket_frames=298,
+        )
+
+        bundle = RuntimeBundle((first, second))
+        self.assertEqual(bundle.shared_initializers, ())
+        self.assertEqual(
+            bundle.bucket_initializers(98)[0].raw_data, local.raw_data
+        )
+        self.assertEqual(
+            bundle.bucket_initializers(298)[0].raw_data,
+            struct.pack("<2f", 9.0, 10.0),
+        )
+
+    def test_rejects_a_scope_that_disagrees_between_buckets(self) -> None:
+        first = make_graph(bucket_frames=98)
+        second = RuntimeGraph(
+            tensors=first.tensors,
+            operators=first.operators,
+            initializers=(
+                replace(
+                    first.initializers[0], scope=InitializerScope.BUCKET_LOCAL
+                ),
+            ),
+            name="campp_3s",
+            bucket_frames=298,
+        )
+        with self.assertRaisesRegex(RuntimeIRError, "bucket_local"):
             RuntimeBundle((first, second))
 
 
