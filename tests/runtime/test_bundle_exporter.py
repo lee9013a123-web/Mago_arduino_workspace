@@ -11,8 +11,10 @@
 from __future__ import annotations
 
 import dataclasses
+import hashlib
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 
@@ -31,6 +33,9 @@ from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
     INVALID_TENSOR_ID,
     OPERATOR_DESCRIPTOR_SIZE,
     OPERATOR_INPUT_CAPACITY,
+    PLAN_FORMAT_VERSION,
+    PLAN_HEADER_SIZE,
+    PLAN_MAGIC,
     PLAN_SECTION_ALIGNMENT,
     TENSOR_DESCRIPTOR_SIZE,
     TENSOR_MAX_RANK,
@@ -38,6 +43,28 @@ from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
     TensorDType,
     TensorFlags,
     TensorStorageType,
+)
+from runtime_bundle_exporter.bundle_manifest_writer import (  # noqa: E402
+    MANIFEST_FILE_NAME,
+    BundleManifestError,
+    verify_bundle_manifest,
+    write_bundle_manifest,
+)
+from runtime_bundle_exporter.execution_plan_writer import (  # noqa: E402
+    EXECUTION_PLAN_DIR_NAME,
+    ExecutionPlanError,
+    plan_file_name,
+    read_execution_plan,
+    verify_plan,
+    write_execution_plan,
+)
+from runtime_bundle_exporter.weight_blob_writer import (  # noqa: E402
+    WEIGHT_BLOB_FILE_NAME,
+    WeightBlobError,
+    build_weight_blob,
+    read_weight_blob,
+    verify_weight_blob,
+    write_weight_blob,
 )
 from runtime_bundle_exporter.graph_ir_reader import DTYPE_BYTE_SIZE  # noqa: E402
 from runtime_bundle_exporter.operator_table_builder import (  # noqa: E402
@@ -79,6 +106,7 @@ REFERENCE_BUCKET_LOCAL_INITIALIZERS = 317
 
 STATIC_DIR = ROOT / "results" / "static"
 GRAPH_DIR = ROOT / "results" / "graph"
+MODEL_FILE_NAME = "campplus_int8_static_qop.onnx"
 
 
 def static_path(frames: int) -> Path:
@@ -950,6 +978,224 @@ class ExecutionOrderValidatorTests(unittest.TestCase):
         )
         with self.assertRaises(OperatorTableError):
             validate_execution_order(graph)
+
+
+@unittest.skipUnless(ONNX_AVAILABLE, "onnx가 설치되어 있지 않다")
+@unittest.skipUnless(artifacts_present(), "정적 ONNX 또는 graph IR 산출물이 없다")
+class BundleSerializationTests(unittest.TestCase):
+    """단계 6의 완료 조건: 쓴 파일을 되읽으면 원본 RuntimeGraph와 일치한다."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.bundle = reference_bundle()
+        cls.layout = plan_weight_blob(cls.bundle)
+        cls._directory = tempfile.TemporaryDirectory()
+        cls.root = Path(cls._directory.name)
+
+        cls.weights = write_weight_blob(
+            cls.bundle, cls.layout, cls.root / WEIGHT_BLOB_FILE_NAME
+        )
+        cls.plans = tuple(
+            write_execution_plan(
+                graph,
+                cls.layout,
+                cls.root
+                / EXECUTION_PLAN_DIR_NAME
+                / plan_file_name(graph.bucket_frames),
+            )
+            for graph in cls.bundle.graphs
+        )
+        cls.manifest = write_bundle_manifest(
+            cls.root / MANIFEST_FILE_NAME,
+            bundle=cls.bundle,
+            layout=cls.layout,
+            weights=cls.weights,
+            plans=cls.plans,
+            canonical_model=ROOT / "models" / "source" / MODEL_FILE_NAME,
+            graph_manifest=GRAPH_DIR / "campp_graph_manifest.json",
+        )
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls._directory.cleanup()
+
+    # -- weights.bin -------------------------------------------------------
+
+    def test_weight_blob_round_trips_every_initializer(self) -> None:
+        blob = read_weight_blob(self.root / WEIGHT_BLOB_FILE_NAME)
+        self.assertEqual(len(blob), self.layout.total_bytes)
+        verify_weight_blob(blob, self.bundle, self.layout, records=self.weights.records)
+
+        for graph in self.bundle.graphs:
+            for item in graph.initializers:
+                offset = self.layout.offset_of(graph.bucket_frames, item.tensor_id)
+                with self.subTest(bucket=graph.bucket_frames, name=item.name):
+                    self.assertEqual(
+                        blob[offset : offset + item.byte_size], item.raw_data
+                    )
+
+    def test_weight_blob_is_deterministic(self) -> None:
+        first, _ = build_weight_blob(self.bundle, self.layout)
+        second, _ = build_weight_blob(self.bundle, self.layout)
+        self.assertEqual(first, second)
+        self.assertEqual(
+            hashlib.sha256(first).hexdigest(), self.weights.sha256
+        )
+
+    def test_weight_records_describe_every_entry(self) -> None:
+        self.assertEqual(len(self.weights.records), len(self.layout.entries))
+        blob = read_weight_blob(self.root / WEIGHT_BLOB_FILE_NAME)
+        for record in self.weights.records:
+            with self.subTest(name=record.name, bucket=record.bucket_frames):
+                stored = blob[record.offset : record.offset + record.byte_size]
+                self.assertEqual(
+                    hashlib.sha256(stored).hexdigest(), record.sha256
+                )
+                expected = DTYPE_BYTE_SIZE[record.dtype]
+                for dimension in record.shape:
+                    expected *= dimension
+                self.assertEqual(record.byte_size, expected)
+
+    def test_padding_between_entries_is_zero(self) -> None:
+        blob = read_weight_blob(self.root / WEIGHT_BLOB_FILE_NAME)
+        spans = sorted(
+            (entry.offset, entry.offset + entry.byte_size)
+            for entry in self.layout.entries
+        )
+        for (_, end), (start, _) in zip(spans, spans[1:]):
+            if end != start:
+                self.assertEqual(blob[end:start], b"\x00" * (start - end))
+
+    def test_corrupted_weight_bytes_are_detected(self) -> None:
+        blob = bytearray(read_weight_blob(self.root / WEIGHT_BLOB_FILE_NAME))
+        target = self.weights.records[0]
+        blob[target.offset] ^= 0xFF
+        with self.assertRaises(WeightBlobError):
+            verify_weight_blob(bytes(blob), self.bundle, self.layout)
+
+    # -- plan_*.bin --------------------------------------------------------
+
+    def test_plan_round_trips_into_the_original_graph(self) -> None:
+        for graph in self.bundle.graphs:
+            with self.subTest(bucket=graph.bucket_frames):
+                loaded = read_execution_plan(
+                    self.root
+                    / EXECUTION_PLAN_DIR_NAME
+                    / plan_file_name(graph.bucket_frames)
+                )
+                verify_plan(loaded, graph, self.layout)
+
+    def test_plan_header_describes_the_sections(self) -> None:
+        graph = self.bundle.graph_for_bucket(REFERENCE_FRAMES)
+        loaded = read_execution_plan(
+            self.root / EXECUTION_PLAN_DIR_NAME / plan_file_name(REFERENCE_FRAMES)
+        )
+        header = loaded.header
+        self.assertEqual(header.magic, PLAN_MAGIC)
+        self.assertEqual(header.format_version, PLAN_FORMAT_VERSION)
+        self.assertEqual(header.bucket_frames, REFERENCE_FRAMES)
+        self.assertEqual(header.tensor_count, len(graph.tensors))
+        self.assertEqual(header.operator_count, len(graph.operators))
+        self.assertEqual(header.tensor_table_offset, PLAN_HEADER_SIZE)
+        self.assertEqual(
+            header.operator_table_offset,
+            header.tensor_table_offset + header.tensor_count * TENSOR_DESCRIPTOR_SIZE,
+        )
+        self.assertEqual(
+            header.attribute_section_offset,
+            header.operator_table_offset
+            + header.operator_count * OPERATOR_DESCRIPTOR_SIZE,
+        )
+        for offset in (
+            header.tensor_table_offset,
+            header.operator_table_offset,
+            header.attribute_section_offset,
+        ):
+            self.assertEqual(offset % PLAN_SECTION_ALIGNMENT, 0)
+
+    def test_plans_differ_per_bucket_but_share_the_shape_of_the_table(self) -> None:
+        digests = {plan.sha256 for plan in self.plans}
+        self.assertEqual(len(digests), len(self.plans))
+        self.assertEqual({plan.byte_size for plan in self.plans}, {390800})
+        self.assertEqual({plan.tensor_count for plan in self.plans}, {3719})
+        self.assertEqual(
+            {plan.operator_count for plan in self.plans},
+            {REFERENCE_RUNTIME_NODES},
+        )
+
+    def test_corrupted_plan_payload_fails_the_checksum(self) -> None:
+        path = self.root / EXECUTION_PLAN_DIR_NAME / "tampered.bin"
+        data = bytearray(
+            (
+                self.root
+                / EXECUTION_PLAN_DIR_NAME
+                / plan_file_name(REFERENCE_FRAMES)
+            ).read_bytes()
+        )
+        data[PLAN_HEADER_SIZE + 16] ^= 0xFF
+        path.write_bytes(bytes(data))
+        with self.assertRaises(ExecutionPlanError):
+            read_execution_plan(path)
+
+    def test_plan_mismatch_against_another_bucket_is_reported(self) -> None:
+        loaded = read_execution_plan(
+            self.root / EXECUTION_PLAN_DIR_NAME / plan_file_name(REFERENCE_FRAMES)
+        )
+        other = self.bundle.graph_for_bucket(998)
+        with self.assertRaises(ExecutionPlanError):
+            verify_plan(loaded, other, self.layout)
+
+    # -- manifest.json -----------------------------------------------------
+
+    def test_manifest_records_the_whole_bundle(self) -> None:
+        document = self.manifest.document
+        self.assertEqual(document["format_version"], PLAN_FORMAT_VERSION)
+        self.assertEqual(document["weights"]["sha256"], self.weights.sha256)
+        self.assertEqual(document["weights"]["entry_count"], len(self.layout.entries))
+        self.assertEqual(
+            [entry["bucket_frames"] for entry in document["plans"]],
+            sorted(frames for frames, _ in BUCKETS),
+        )
+        for entry, plan in zip(
+            document["plans"], sorted(self.plans, key=lambda item: item.bucket_frames)
+        ):
+            self.assertEqual(entry["sha256"], plan.sha256)
+            self.assertEqual(entry["operator_count"], REFERENCE_RUNTIME_NODES)
+        self.assertEqual(len(document["canonical_model"]["sha256"]), 64)
+        self.assertEqual(len(document["graph_manifest"]["sha256"]), 64)
+
+    def test_manifest_paths_are_relative(self) -> None:
+        document = self.manifest.document
+        self.assertEqual(document["weights"]["path"], WEIGHT_BLOB_FILE_NAME)
+        for entry in document["plans"]:
+            self.assertFalse(Path(entry["path"]).is_absolute())
+        self.assertFalse(Path(document["canonical_model"]["path"]).is_absolute())
+
+    def test_manifest_verifies_the_files_it_points_at(self) -> None:
+        verify_bundle_manifest(self.root / MANIFEST_FILE_NAME)
+
+    def test_manifest_detects_a_changed_file(self) -> None:
+        target = self.root / EXECUTION_PLAN_DIR_NAME / plan_file_name(998)
+        original = target.read_bytes()
+        try:
+            target.write_bytes(original[:-1])
+            with self.assertRaises(BundleManifestError):
+                verify_bundle_manifest(self.root / MANIFEST_FILE_NAME)
+        finally:
+            target.write_bytes(original)
+
+    def test_weight_index_can_be_left_out(self) -> None:
+        lean = write_bundle_manifest(
+            self.root / "manifest_lean.json",
+            bundle=self.bundle,
+            layout=self.layout,
+            weights=self.weights,
+            plans=self.plans,
+            include_weight_index=False,
+        )
+        self.assertNotIn("weight_index", lean.document)
+        self.assertIn("weight_index", self.manifest.document)
+        self.assertLess(lean.byte_size, self.manifest.byte_size // 100)
 
 
 if __name__ == "__main__":
