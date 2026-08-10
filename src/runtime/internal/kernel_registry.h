@@ -33,16 +33,18 @@ struct CamppRuntimeModel;
 /*
  * kernel 하나의 실행 함수.
  *
- * kernel은 view만 본다. Tensor ID, storage_type, weights base는 executor가
- * 이미 풀어 두었다. inputs는 descriptor의 input_count만큼 순서대로 채워지며,
- * ONNX 입력 순서를 그대로 따른다. 예를 들어 QLinearConv는 항상
+ * kernel은 Tensor data에 접근할 때 view만 본다. Tensor ID, storage_type,
+ * weights base를 이용한 주소 해석은 executor가 이미 끝냈다. model과 op는
+ * attribute를 읽는 데만 사용하는 읽기 전용 정보이며 실행 상태는 노출하지
+ * 않는다. inputs는 descriptor의 input_count만큼 순서대로 채워지며, ONNX 입력
+ * 순서를 그대로 따른다. 예를 들어 QLinearConv는 항상
  * (x, x_scale, x_zp, w, w_scale, w_zp, y_scale, y_zp, [B]) 순이다.
  *
  * scratch는 campp_kernel_scratch_bytes가 요구한 크기만큼 확보된 임시 버퍼이며,
  * 호출마다 내용이 보장되지 않는다. 필요 없으면 NULL이다.
  */
 typedef CamppStatus (*CamppKernelRun)(
-    struct CamppRuntimeContext *context,
+    const struct CamppRuntimeModel *model,
     const CamppOperatorDescriptor *op,
     const CamppTensorView *inputs, uint8_t input_count,
     CamppTensorView *outputs, uint8_t output_count,
@@ -79,6 +81,15 @@ typedef struct CamppKernelRegistry {
 } CamppKernelRegistry;
 
 /*
+ * backend 선택 규칙.
+ *
+ * Operator가 CAMPP_BACKEND_AUTO이면 전달된 registry를 사용할 수 있다. 그 외에는
+ * operator.backend_id와 registry.backend_id가 반드시 같아야 한다. 현재 reference
+ * plan은 CAMPP_BACKEND_CPU_REFERENCE를 명시하므로 NEON registry로 바꾸려면 plan을
+ * AUTO 또는 AARCH64 backend로 다시 내보내야 한다.
+ */
+
+/*
  * opcode와 kernel_id로 구현을 찾는다.
  *
  * 찾지 못하면 CAMPP_STATUS_MISSING_KERNEL이다. 실행 도중이 아니라 로드 직후에
@@ -95,12 +106,13 @@ CamppStatus campp_kernel_registry_validate(const CamppKernelRegistry *registry);
 /*
  * model이 쓰는 모든 opcode에 구현이 있는지 확인한다.
  *
- * 없으면 CAMPP_STATUS_MISSING_KERNEL을 돌려주고, out_missing_opcode에 처음
- * 빠진 opcode를 적어 어떤 kernel을 만들어야 하는지 바로 알 수 있게 한다.
+ * backend가 맞지 않으면 CAMPP_STATUS_BACKEND_MISMATCH, 구현이 없으면
+ * CAMPP_STATUS_MISSING_KERNEL을 돌려준다. out_failing_operator_id와
+ * out_missing_opcode에는 처음 실패한 Operator와 opcode를 적는다.
  */
 CamppStatus campp_kernel_registry_covers_model(
     const CamppKernelRegistry *registry, const struct CamppRuntimeModel *model,
-    uint16_t *out_missing_opcode);
+    uint32_t *out_failing_operator_id, uint16_t *out_missing_opcode);
 
 /*
  * CPU Reference backend의 표.

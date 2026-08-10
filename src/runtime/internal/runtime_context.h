@@ -84,6 +84,14 @@ typedef struct CamppRuntimeContext {
     uint16_t backend_id;
     const CamppKernelRegistry *registry;
 
+    /*
+     * operator_id로 바로 찾는 실행 함수 표. model->operator_count 길이이며 context가
+     * 배열을 소유한다. create 때 registry lookup을 모두 끝내므로 inference 중에는
+     * opcode 검색이 발생하지 않는다. 각 entry 자체는 registry가 소유한다.
+     */
+    const CamppKernelEntry **resolved_kernels;
+    uint32_t resolved_kernel_count;
+
     CamppDiagnosticsState diagnostics;
 
     /* 마지막으로 실패한 원인. 성공하면 CAMPP_STATUS_OK다. */
@@ -94,8 +102,10 @@ typedef struct CamppRuntimeContext {
  * 생성과 해제.
  *
  * create는 model을 훑어 Tensor view를 채우고, activation 버퍼와 scratch를
- * 미리 잡고, registry가 model의 모든 opcode를 덮는지 확인한다. 즉 실행 중에
- * 새로 할당하거나 새로 조회하는 일이 없도록 여기서 다 끝낸다.
+ * 미리 잡고, registry가 model의 모든 backend/opcode/kernel_id를 덮는지 확인한
+ * 뒤 resolved_kernels를 채운다. 즉 실행 중에 새로 할당하거나 registry를
+ * 조회하는 일이 없도록 여기서 다 끝낸다. registry는 context보다 오래 살아야
+ * 하며 보통 backend가 제공하는 정적 객체다.
  */
 CamppStatus campp_runtime_context_create(
     const CamppRuntimeModel *model, const CamppKernelRegistry *registry,
@@ -115,14 +125,15 @@ CamppStatus campp_runtime_context_reset(CamppRuntimeContext *context);
  * 입출력 연결.
  *
  * bind_input은 외부 버퍼를 INPUT Tensor에 그대로 연결한다. 복사하지 않으므로
- * 호출자가 실행이 끝날 때까지 버퍼를 살려 두어야 한다. shape와 dtype이 plan과
- * 다르면 CAMPP_STATUS_SHAPE_MISMATCH로 거절한다. 길이가 bucket과 맞지 않는
- * 경우는 CAMPP_STATUS_BUCKET_MISMATCH로 따로 구분해, 다른 bucket의 plan을
- * 골랐다는 사실이 shape 오류에 묻히지 않게 한다.
+ * 호출자가 실행이 끝날 때까지 버퍼를 살려 두어야 한다. dtype, rank,
+ * dimensions, byte_size를 descriptor와 모두 비교한다. 시간축 길이만 현재 plan의
+ * bucket과 다르면 CAMPP_STATUS_BUCKET_MISMATCH, 그 밖의 형식 차이는
+ * CAMPP_STATUS_SHAPE_MISMATCH로 거절한다.
  */
 CamppStatus campp_runtime_context_bind_input(
     CamppRuntimeContext *context, uint32_t tensor_id, void *data,
-    size_t byte_size);
+    size_t byte_size, uint8_t dtype, uint8_t rank,
+    const uint32_t dimensions[CAMPP_TENSOR_MAX_RANK]);
 
 CamppStatus campp_runtime_context_output(
     const CamppRuntimeContext *context, uint32_t tensor_id,

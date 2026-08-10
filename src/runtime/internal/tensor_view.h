@@ -8,7 +8,8 @@
  * data_offset과 storage_type만 들고 있다. kernel이 그때마다 weights base나
  * activation buffer를 찾아 더하게 하면 storage 규칙이 kernel마다 흩어진다.
  * 그래서 executor가 descriptor를 한 번 풀어 pointer가 박힌 view를 만들고,
- * kernel은 view만 본다. kernel은 storage_type도 tensor_id도 알 필요가 없다.
+ * kernel은 실제 Tensor 접근에는 view만 사용한다. Tensor ID와 storage 종류에
+ * 따른 주소 해석은 executor에서 끝나며 kernel마다 반복하지 않는다.
  *
  * view는 값 타입이다. 실행 중에 executor가 채워 넣고 kernel은 읽기만 한다.
  * 소유권은 없다. data가 가리키는 메모리는 model이나 context가 소유한다.
@@ -32,14 +33,16 @@
  */
 typedef struct CamppTensorView {
     void *data;
-    uint32_t tensor_id;
     uint8_t dtype;
     uint8_t rank;
-    uint8_t storage_type;
     uint8_t flags;
+    uint8_t reserved;
     uint32_t dimensions[CAMPP_TENSOR_MAX_RANK];
     uint32_t byte_strides[CAMPP_TENSOR_MAX_RANK];
-    uint64_t byte_size;
+    /* shape와 dtype으로 표현되는 Tensor 전체의 논리적 크기. */
+    uint64_t logical_byte_size;
+    /* data부터 실제로 접근 가능한 저장 영역. 비연속 VIEW의 범위 검사에 쓴다. */
+    uint64_t storage_span_bytes;
 } CamppTensorView;
 
 /* dtype 하나가 차지하는 byte 수. 알 수 없는 dtype이면 0을 돌려준다. */
