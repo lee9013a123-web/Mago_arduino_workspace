@@ -15,10 +15,10 @@ import struct
 from typing import Final
 
 
-PLAN_MAGIC: Final[bytes] = b"CAMPLAN\x00"
-PLAN_FORMAT_VERSION: Final[int] = 1
-PLAN_CHECKSUM_SIZE: Final[int] = hashlib.sha256().digest_size
-PLAN_SECTION_ALIGNMENT: Final[int] = 8
+PLAN_MAGIC: Final[bytes] = b"CAMPLAN\x00" #PLAN_MAGIC: 해당 파일이 CAM++ 실행 계획 파일인지 확인하는 8바이트 값
+PLAN_FORMAT_VERSION: Final[int] = 1 #binary 형식 버전
+PLAN_CHECKSUM_SIZE: Final[int] = hashlib.sha256().digest_size #항상 32바이트
+PLAN_SECTION_ALIGNMENT: Final[int] = 8 #각 데이터 구역은 8바이트에서 시작
 
 # 8s: magic
 # 4I: format_version, bucket_frames, tensor_count, operator_count
