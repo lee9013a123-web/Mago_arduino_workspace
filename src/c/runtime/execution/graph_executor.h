@@ -10,4 +10,12 @@
  */
 CamppStatus campp_graph_execute(CamppRuntimeContext *context);
 
+/*
+ * context를 reset하거나 앞 Operator를 실행하지 않고 operator_id 하나만
+ * 실행한다. ORT 입력을 주입한 독립 Operator replay에서 전체 graph와 같은
+ * bounds 검사와 dispatch 경로를 재사용하기 위한 내부 API다.
+ */
+CamppStatus campp_graph_execute_operator(
+    CamppRuntimeContext *context, uint32_t operator_id);
+
 #endif /* CAMPP_RUNTIME_EXECUTION_GRAPH_EXECUTOR_H */

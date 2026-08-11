@@ -41,6 +41,8 @@ build_target() {
 
 build_target campp_reference_dump \
     "${ROOT}/tests/runtime/operator_replay_tests/campp_reference_dump.c"
+build_target campp_operator_replay \
+    "${ROOT}/tests/runtime/operator_replay_tests/campp_operator_replay.c"
 build_target test_graph_executor \
     "${ROOT}/tests/runtime/operator_replay_tests/test_graph_executor.c"
 

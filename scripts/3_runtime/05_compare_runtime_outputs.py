@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
-"""Phase 3의 다섯 번째 실행 스크립트다.
+"""ORT 기준 출력과 C Runtime dump를 Operator 출력 Tensor 단위로 비교한다.
 
-ORT 기준 출력과 C Reference Runtime 덤프를 Tensor 단위로 대조한다.
-plan에는 이름이 없으므로 exporter의 RuntimeGraph를 다시 만들어
-tensor_id와 ONNX Tensor 이름을 잇는다.
-
-dtype과 shape를 먼저 확인하고, 그다음 max absolute error, relative error,
-cosine similarity를 계산한다. topological order상 처음 허용 오차를 넘은
-operator를 보고한다. INT8 정수 출력과 FP32 출력은 서로 다른 허용 오차를 쓴다.
+전체 graph dump와 독립 Operator replay dump가 같은 ``c_{frames}.bin/json``
+index 형식을 사용하므로 이 도구 하나로 두 실행 방식을 모두 판정할 수 있다.
+비교 순서는 Tensor ID, dtype, shape, 원소 수, 수치 순서다.
 """
 
 from __future__ import annotations
@@ -30,21 +26,22 @@ BUCKETS: tuple[tuple[int, str], ...] = (
     (998, "10s"),
 )
 
-# C 덤프의 dtype 코드는 CamppTensorDType와 같은 값이다.
 DTYPE_BY_CODE = {
-    1: np.float32,
-    2: np.uint8,
-    3: np.int8,
-    4: np.int32,
-    5: np.int64,
-    6: np.bool_,
-    7: np.float16,
+    1: np.dtype(np.float32),
+    2: np.dtype(np.uint8),
+    3: np.dtype(np.int8),
+    4: np.dtype(np.int32),
+    5: np.dtype(np.int64),
+    6: np.dtype(np.bool_),
+    7: np.dtype(np.float16),
 }
-
-# 정수 Tensor는 한 눈금이라도 어긋나면 양자화 경로가 갈린 것이므로 0을 요구한다.
 INTEGER_CODES = {2, 3, 4, 5, 6}
 FLOAT_ATOL = 1e-4
 FLOAT_RTOL = 1e-3
+
+
+class RuntimeComparisonError(RuntimeError):
+    """Dump 파일 자체가 손상됐거나 index와 payload가 다를 때 발생한다."""
 
 
 def load_runtime_graph(frames: int, tag: str):
@@ -56,48 +53,85 @@ def load_runtime_graph(frames: int, tag: str):
         read_static_model,
     )
 
-    static = read_static_model(ROOT / "results" / "static" / f"campp_static_{frames}.onnx")
+    static = read_static_model(
+        ROOT / "results" / "static" / f"campp_static_{frames}.onnx"
+    )
     graph_ir = read_graph_ir(ROOT / "results" / "graph" / f"ir_{tag}.json")
-    return build_runtime_graph(static, graph_ir, validate=True, name=f"campp_{frames}f")
+    return build_runtime_graph(
+        static, graph_ir, validate=True, name=f"campp_{frames}f"
+    )
 
 
 def load_c_dump(prefix: Path) -> tuple[dict, dict[int, np.ndarray]]:
-    index = json.loads((prefix.with_suffix(".json")).read_text(encoding="utf-8"))
-    payload = np.fromfile(prefix.with_suffix(".bin"), dtype=np.uint8)
+    index_path = prefix.with_suffix(".json")
+    payload_path = prefix.with_suffix(".bin")
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    payload = np.fromfile(payload_path, dtype=np.uint8)
     tensors: dict[int, np.ndarray] = {}
-    for entry in index["tensors"]:
-        dtype = DTYPE_BY_CODE.get(entry["dtype"])
+
+    for entry in index.get("tensors", []):
+        tensor_id = int(entry["tensor_id"])
+        dtype = DTYPE_BY_CODE.get(int(entry["dtype"]))
         if dtype is None:
-            continue
-        start = entry["offset"]
-        stop = start + entry["byte_size"]
+            raise RuntimeComparisonError(
+                f"Tensor {tensor_id} has unsupported dtype code {entry['dtype']}"
+            )
+        if tensor_id in tensors:
+            raise RuntimeComparisonError(f"duplicate Tensor ID {tensor_id} in C dump")
+        shape = tuple(int(dimension) for dimension in entry["shape"])
+        element_count = int(np.prod(shape, dtype=np.int64)) if shape else 1
+        expected_bytes = element_count * dtype.itemsize
+        start = int(entry["offset"])
+        byte_size = int(entry["byte_size"])
+        stop = start + byte_size
+        if start < 0 or byte_size != expected_bytes or stop > payload.size:
+            raise RuntimeComparisonError(
+                f"Tensor {tensor_id} index is outside C payload or has wrong size"
+            )
         raw = payload[start:stop]
-        array = raw.view(dtype)
-        shape = tuple(entry["shape"]) if entry["shape"] else ()
-        tensors[entry["tensor_id"]] = array.reshape(shape)
+        tensors[tensor_id] = raw.view(dtype).reshape(shape)
     return index, tensors
 
 
-def compare_arrays(reference: np.ndarray, actual: np.ndarray, dtype_code: int) -> dict:
-    """두 배열의 오차 지표를 계산한다. shape가 다르면 비교하지 않는다."""
+def _cosine_similarity(left: np.ndarray, right: np.ndarray) -> float:
+    left_norm = float(np.linalg.norm(left))
+    right_norm = float(np.linalg.norm(right))
+    if left_norm > 0.0 and right_norm > 0.0:
+        return float(np.dot(left, right) / (left_norm * right_norm))
+    return 1.0 if left_norm == right_norm else 0.0
 
+
+def compare_arrays(
+    reference: np.ndarray,
+    actual: np.ndarray,
+    dtype_code: int,
+    *,
+    float_atol: float = FLOAT_ATOL,
+    float_rtol: float = FLOAT_RTOL,
+) -> dict:
+    """Tensor 구조를 확인한 뒤 요청된 모든 수치 지표를 계산한다."""
+
+    expected_dtype = DTYPE_BY_CODE.get(dtype_code)
     result: dict[str, object] = {
         "reference_dtype": str(reference.dtype),
         "actual_dtype": str(actual.dtype),
         "reference_shape": list(reference.shape),
         "actual_shape": list(actual.shape),
+        "reference_element_count": int(reference.size),
+        "actual_element_count": int(actual.size),
     }
+    if expected_dtype is None:
+        result["status"] = "unsupported_dtype"
+        return result
+    if reference.dtype != expected_dtype or actual.dtype != expected_dtype:
+        result["expected_dtype"] = str(expected_dtype)
+        result["status"] = "dtype_mismatch"
+        return result
     if reference.shape != actual.shape:
         result["status"] = "shape_mismatch"
         return result
-
-    if dtype_code in INTEGER_CODES:
-        difference = reference.astype(np.int64) - actual.astype(np.int64)
-        mismatched = int(np.count_nonzero(difference))
-        result["max_abs_error"] = float(np.abs(difference).max()) if difference.size else 0.0
-        result["mismatched_elements"] = mismatched
-        result["element_count"] = int(reference.size)
-        result["status"] = "exact" if mismatched == 0 else "integer_mismatch"
+    if reference.size != actual.size:
+        result["status"] = "element_count_mismatch"
         return result
 
     left = reference.astype(np.float64).ravel()
@@ -109,97 +143,122 @@ def compare_arrays(reference: np.ndarray, actual: np.ndarray, dtype_code: int) -
         return result
 
     absolute = np.abs(left - right)
-    max_abs = float(absolute.max()) if absolute.size else 0.0
-    denominator = np.maximum(np.abs(left), 1e-12)
-    max_rel = float((absolute / denominator).max()) if absolute.size else 0.0
-    left_norm = float(np.linalg.norm(left))
-    right_norm = float(np.linalg.norm(right))
-    if left_norm > 0.0 and right_norm > 0.0:
-        cosine = float(np.dot(left, right) / (left_norm * right_norm))
-    else:
-        cosine = 1.0 if left_norm == right_norm else 0.0
-
-    result["max_abs_error"] = max_abs
-    result["max_rel_error"] = max_rel
-    result["cosine_similarity"] = cosine
+    relative = absolute / np.maximum(np.abs(left), 1e-12)
+    result["max_abs_error"] = float(absolute.max()) if absolute.size else 0.0
+    result["mean_abs_error"] = float(absolute.mean()) if absolute.size else 0.0
+    result["max_rel_error"] = float(relative.max()) if relative.size else 0.0
+    result["cosine_similarity"] = _cosine_similarity(left, right)
     result["element_count"] = int(left.size)
-    # 허용 오차만 보면 quantize 경계에서 .5 tie를 뒤집는 미세 차이가 가려진다.
-    # 비트 단위로 몇 개가 다른지 따로 센다.
-    differing = int(np.count_nonzero(reference.astype(np.float32) != actual.astype(np.float32)))
+
+    if dtype_code in INTEGER_CODES:
+        mismatched = int(np.count_nonzero(reference != actual))
+        result["mismatched_elements"] = mismatched
+        result["bitwise_identical"] = mismatched == 0
+        result["status"] = "exact" if mismatched == 0 else "integer_mismatch"
+        return result
+
+    reference_bytes = np.ascontiguousarray(reference).view(np.uint8).reshape(
+        reference.size, reference.dtype.itemsize
+    )
+    actual_bytes = np.ascontiguousarray(actual).view(np.uint8).reshape(
+        actual.size, actual.dtype.itemsize
+    )
+    differing = int(
+        np.count_nonzero(np.any(reference_bytes != actual_bytes, axis=1))
+    )
     result["bitwise_differing_elements"] = differing
     result["bitwise_identical"] = differing == 0
-    tolerated = np.allclose(left, right, atol=FLOAT_ATOL, rtol=FLOAT_RTOL)
+    tolerated = np.allclose(
+        left, right, atol=float_atol, rtol=float_rtol, equal_nan=False
+    )
     result["status"] = "within_tolerance" if tolerated else "float_mismatch"
     return result
 
 
-def compare_bucket(frames: int, tag: str, ort_dir: Path, c_dir: Path) -> dict:
+def _missing_result(operator, tensor_id: int, name: str | None, status: str) -> dict:
+    return {
+        "operator_id": operator.operator_id,
+        "operator_name": operator.name,
+        "opcode": operator.opcode.name,
+        "tensor_id": tensor_id,
+        "tensor_name": name,
+        "status": status,
+    }
+
+
+def compare_bucket(
+    frames: int,
+    tag: str,
+    ort_dir: Path,
+    c_dir: Path,
+    *,
+    float_atol: float = FLOAT_ATOL,
+    float_rtol: float = FLOAT_RTOL,
+) -> tuple[dict, list[dict]]:
     graph = load_runtime_graph(frames, tag)
     name_by_id = {tensor.tensor_id: tensor.name for tensor in graph.tensors}
-    producer_by_id = {
-        tensor.tensor_id: tensor.producer for tensor in graph.tensors
-    }
-    operator_by_id = {op.operator_id: op for op in graph.operators}
-
-    ort_tensors = np.load(ort_dir / f"ort_{frames}.npz")
-    _index, c_tensors = load_c_dump(c_dir / f"c_{frames}")
-    c_dtype_by_id = {
-        entry["tensor_id"]: entry["dtype"]
-        for entry in json.loads((c_dir / f"c_{frames}.json").read_text(encoding="utf-8"))["tensors"]
-    }
+    c_index, c_tensors = load_c_dump(c_dir / f"c_{frames}")
+    c_entries = {int(entry["tensor_id"]): entry for entry in c_index["tensors"]}
 
     comparisons: list[dict] = []
-    for operator in graph.operators:
-        for tensor_id in operator.output_tensor_ids:
-            name = name_by_id.get(tensor_id)
-            if name is None or name not in ort_tensors:
-                continue
-            if tensor_id not in c_tensors:
-                comparisons.append(
+    with np.load(ort_dir / f"ort_{frames}.npz") as ort_tensors:
+        for operator in graph.operators:
+            for tensor_id in operator.output_tensor_ids:
+                name = name_by_id.get(tensor_id)
+                if name is None:
+                    comparisons.append(
+                        _missing_result(
+                            operator, tensor_id, None, "missing_tensor_mapping"
+                        )
+                    )
+                    continue
+                if name not in ort_tensors.files:
+                    comparisons.append(
+                        _missing_result(operator, tensor_id, name, "missing_in_ort")
+                    )
+                    continue
+                if tensor_id not in c_tensors or tensor_id not in c_entries:
+                    comparisons.append(
+                        _missing_result(operator, tensor_id, name, "missing_in_c")
+                    )
+                    continue
+
+                metrics = compare_arrays(
+                    np.asarray(ort_tensors[name]),
+                    c_tensors[tensor_id],
+                    int(c_entries[tensor_id]["dtype"]),
+                    float_atol=float_atol,
+                    float_rtol=float_rtol,
+                )
+                metrics.update(
                     {
                         "operator_id": operator.operator_id,
                         "operator_name": operator.name,
                         "opcode": operator.opcode.name,
                         "tensor_id": tensor_id,
                         "tensor_name": name,
-                        "status": "missing_in_c",
                     }
                 )
-                continue
-            metrics = compare_arrays(
-                np.asarray(ort_tensors[name]),
-                c_tensors[tensor_id],
-                c_dtype_by_id[tensor_id],
-            )
-            metrics.update(
-                {
-                    "operator_id": operator.operator_id,
-                    "operator_name": operator.name,
-                    "opcode": operator.opcode.name,
-                    "tensor_id": tensor_id,
-                    "tensor_name": name,
-                }
-            )
-            comparisons.append(metrics)
+                comparisons.append(metrics)
 
     comparisons.sort(key=lambda item: (item["operator_id"], item["tensor_id"]))
     good = {"exact", "within_tolerance"}
     failures = [item for item in comparisons if item["status"] not in good]
-
-    embedding_name = graph.tensors[-1].name
     embedding = next(
-        (item for item in comparisons if item["tensor_name"] == "embedding"), None
+        (item for item in comparisons if item["tensor_name"] == "embedding"),
+        None,
     )
-
     summary = {
+        "mode": c_index.get("mode", "full_graph"),
         "bucket_frames": frames,
         "compared_tensors": len(comparisons),
         "failed_tensors": len(failures),
         "first_failure": failures[0] if failures else None,
         "embedding": embedding,
         "all_match": not failures,
+        "float_atol": float_atol,
+        "float_rtol": float_rtol,
     }
-    del embedding_name, producer_by_id, operator_by_id
     return summary, comparisons
 
 
@@ -208,13 +267,17 @@ def print_bucket_report(summary: dict) -> None:
     total = summary["compared_tensors"]
     failed = summary["failed_tensors"]
     mark = "PASS" if summary["all_match"] else "FAIL"
-    print(f"\n[{frames} frames] {mark}  비교 {total}개 중 불일치 {failed}개")
+    print(
+        f"\n[{frames} frames] {mark} mode={summary['mode']} "
+        f"compared={total} failed={failed}"
+    )
 
     embedding = summary["embedding"]
     if embedding is not None:
         print(
             f"  embedding: status={embedding['status']} "
             f"max_abs={embedding.get('max_abs_error', float('nan')):.6e} "
+            f"mean_abs={embedding.get('mean_abs_error', float('nan')):.6e} "
             f"max_rel={embedding.get('max_rel_error', float('nan')):.6e} "
             f"cos={embedding.get('cosine_similarity', float('nan')):.9f}"
         )
@@ -222,7 +285,7 @@ def print_bucket_report(summary: dict) -> None:
     first = summary["first_failure"]
     if first is not None:
         print(
-            f"  첫 불일치 operator #{first['operator_id']} "
+            f"  first failure: operator #{first['operator_id']} "
             f"{first['opcode']} {first['operator_name']}"
         )
         print(
@@ -230,9 +293,12 @@ def print_bucket_report(summary: dict) -> None:
             f"status={first['status']}"
         )
         for key in (
+            "reference_dtype",
+            "actual_dtype",
             "reference_shape",
             "actual_shape",
             "max_abs_error",
+            "mean_abs_error",
             "max_rel_error",
             "cosine_similarity",
             "mismatched_elements",
@@ -245,10 +311,14 @@ def print_bucket_report(summary: dict) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--ort-dir", type=Path, default=ROOT / "runs" / "runtime" / "ort_reference"
+        "--ort-dir",
+        type=Path,
+        default=ROOT / "runs" / "runtime" / "ort_reference",
     )
     parser.add_argument(
-        "--c-dir", type=Path, default=ROOT / "runs" / "runtime" / "c_reference"
+        "--c-dir",
+        type=Path,
+        default=ROOT / "runs" / "runtime" / "c_reference",
     )
     parser.add_argument(
         "--results-dir", type=Path, default=ROOT / "results" / "runtime"
@@ -256,33 +326,59 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--buckets", type=int, nargs="*", default=[frames for frames, _ in BUCKETS]
     )
+    parser.add_argument("--float-atol", type=float, default=FLOAT_ATOL)
+    parser.add_argument("--float-rtol", type=float, default=FLOAT_RTOL)
     parser.add_argument(
-        "--max-report", type=int, default=20, help="보고할 불일치 operator 개수"
+        "--max-report", type=int, default=20, help="출력할 실패 Operator 개수"
     )
     args = parser.parse_args(argv)
 
     args.results_dir.mkdir(parents=True, exist_ok=True)
-    summaries = []
+    summaries: list[dict] = []
     all_pass = True
     for frames, tag in BUCKETS:
         if frames not in args.buckets:
             continue
-        if not (args.c_dir / f"c_{frames}.json").is_file():
-            print(f"C 덤프가 없다: {args.c_dir / f'c_{frames}.json'}", file=sys.stderr)
+        required = (
+            args.c_dir / f"c_{frames}.json",
+            args.c_dir / f"c_{frames}.bin",
+            args.ort_dir / f"ort_{frames}.npz",
+        )
+        missing = [path for path in required if not path.is_file()]
+        if missing:
+            print(
+                "comparison inputs are missing:\n  "
+                + "\n  ".join(str(path) for path in missing),
+                file=sys.stderr,
+            )
             return 1
-        summary, comparisons = compare_bucket(frames, tag, args.ort_dir, args.c_dir)
+        try:
+            summary, comparisons = compare_bucket(
+                frames,
+                tag,
+                args.ort_dir,
+                args.c_dir,
+                float_atol=args.float_atol,
+                float_rtol=args.float_rtol,
+            )
+        except (OSError, ValueError, RuntimeComparisonError) as exc:
+            print(f"[{frames} frames] comparison failed: {exc}", file=sys.stderr)
+            return 1
         print_bucket_report(summary)
         summaries.append(summary)
         all_pass = all_pass and summary["all_match"]
 
-        good = {"exact", "within_tolerance"}
-        failures = [item for item in comparisons if item["status"] not in good]
+        failures = [
+            item
+            for item in comparisons
+            if item["status"] not in {"exact", "within_tolerance"}
+        ]
         if failures:
-            print(f"  불일치 상위 {min(len(failures), args.max_report)}개:")
+            print(f"  failures (first {min(len(failures), args.max_report)}):")
             for item in failures[: args.max_report]:
                 print(
                     f"    #{item['operator_id']:>5} {item['opcode']:<20} "
-                    f"{item['status']:<18} {item['tensor_name']}"
+                    f"{item['status']:<22} {item['tensor_name']}"
                 )
         (args.results_dir / f"compare_{frames}.json").write_text(
             json.dumps(comparisons, indent=2), encoding="utf-8"
@@ -291,8 +387,8 @@ def main(argv: list[str] | None = None) -> int:
     (args.results_dir / "compare_summary.json").write_text(
         json.dumps(summaries, indent=2), encoding="utf-8"
     )
-    print(f"\n전체 결과: {'PASS' if all_pass else 'FAIL'}")
-    print(f"상세 결과: {args.results_dir}")
+    print(f"\noverall: {'PASS' if all_pass else 'FAIL'}")
+    print(f"results: {args.results_dir}")
     return 0 if all_pass else 1
 
 
