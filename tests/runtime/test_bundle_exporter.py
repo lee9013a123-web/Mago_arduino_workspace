@@ -19,7 +19,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "src" / "python"))
 
 try:
     import onnx  # noqa: F401
@@ -1196,7 +1196,7 @@ class BundleSerializationTests(unittest.TestCase):
             target.write_bytes(original)
 
     def test_dump_format_is_pinned_to_the_c_program(self) -> None:
-        """이 형식은 campp_reference_infer.c의 출력과 문자 단위로 같아야 한다.
+        """이 형식은 campp_compiled_model_inspect.c 출력과 문자 단위로 같아야 한다.
 
         한쪽만 바꾸면 C와 Python 대조가 조용히 무의미해진다. 그래서 대표 줄을
         문자열로 고정해 둔다. 이 테스트가 깨지면 C 쪽도 함께 고쳐야 한다.
@@ -1242,6 +1242,11 @@ class BundleSerializationTests(unittest.TestCase):
         self.assertNotIn("weight_index", lean.document)
         self.assertIn("weight_index", self.manifest.document)
         self.assertLess(lean.byte_size, self.manifest.byte_size // 100)
+
+    def test_manifest_size_and_newlines_match_written_file(self) -> None:
+        data = self.manifest.path.read_bytes()
+        self.assertEqual(self.manifest.byte_size, len(data))
+        self.assertNotIn(b"\r\n", data)
 
 
 if __name__ == "__main__":

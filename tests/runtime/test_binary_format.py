@@ -8,7 +8,7 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "src"))
+sys.path.insert(0, str(ROOT / "src" / "python"))
 
 from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
     ATTRIBUTE_BLOCK_HEADER_SIZE,
@@ -113,6 +113,7 @@ class PlanHeaderTests(unittest.TestCase):
         header_path = (
             ROOT
             / "src"
+            / "c"
             / "runtime"
             / "include"
             / "campp_runtime"
@@ -355,6 +356,7 @@ class CHeaderParityTests(unittest.TestCase):
         return (
             ROOT
             / "src"
+            / "c"
             / "runtime"
             / "include"
             / "campp_runtime"

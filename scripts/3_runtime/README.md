@@ -1,6 +1,6 @@
 # Phase 3: Reference Runtime
 
-이 폴더에는 `src/runtime_bundle_exporter/`와 `src/runtime/`를 순서대로 실행하는 얇은 CLI와 shell script만 둔다. 모델 변환 로직이나 C kernel 구현을 이 폴더에 직접 작성하지 않는다.
+이 폴더에는 `src/python/runtime_bundle_exporter/`와 `src/c/runtime/`를 순서대로 실행하는 얇은 CLI와 shell script만 둔다. 모델 변환 로직이나 C kernel 구현을 이 폴더에 직접 작성하지 않는다.
 
 ## 예정 실행 순서
 
