@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <math.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,6 +8,7 @@
 #include "campp_runtime/operator_descriptor.h"
 #include "campp_runtime/status_code.h"
 #include "campp_runtime/tensor_descriptor.h"
+#include "backends/cpu_reference/reference_kernel_utils.h"
 #include "execution/graph_executor.h"
 #include "internal/kernel_registry.h"
 #include "internal/runtime_context.h"
@@ -57,10 +59,10 @@ static void init_tensor_descriptor(
     descriptor->last_use = 0u;
 }
 
-static int test_synthetic_first_dispatch(void)
+static int test_synthetic_execution(void)
 {
     uint8_t unused_weights = 0u;
-    float input[2] = {1.0f, 2.0f};
+    float input[2] = {-1.0f, 2.0f};
     uint32_t dimensions[CAMPP_TENSOR_MAX_RANK] = {1u, 2u, 1u, 1u};
     CamppTensorDescriptor tensors[2];
     CamppOperatorDescriptor operator_descriptor;
@@ -75,7 +77,7 @@ static int test_synthetic_first_dispatch(void)
 
     memset(&operator_descriptor, 0, sizeof(operator_descriptor));
     operator_descriptor.operator_id = 0u;
-    operator_descriptor.opcode = CAMPP_OP_TRANSPOSE;
+    operator_descriptor.opcode = CAMPP_OP_RELU;
     operator_descriptor.input_count = 1u;
     operator_descriptor.output_count = 1u;
     operator_descriptor.input_tensor_ids[0] = 0u;
@@ -105,20 +107,22 @@ static int test_synthetic_first_dispatch(void)
         CAMPP_STATUS_OK);
     CHECK_TRUE(context.resolved_kernel_count == 1u);
     CHECK_TRUE(context.resolved_kernels[0] != NULL);
-    CHECK_TRUE(context.resolved_kernels[0]->opcode == CAMPP_OP_TRANSPOSE);
+    CHECK_TRUE(context.resolved_kernels[0]->opcode == CAMPP_OP_RELU);
     CHECK_TRUE(
-        strcmp(context.resolved_kernels[0]->name, "transpose_reference") == 0);
+        strcmp(context.resolved_kernels[0]->name, "relu_reference") == 0);
 
-    CHECK_STATUS(campp_graph_execute(&context), CAMPP_STATUS_NOT_IMPLEMENTED);
+    CHECK_STATUS(campp_graph_execute(&context), CAMPP_STATUS_OK);
     CHECK_TRUE(context.diagnostics.current_operator_id == 0u);
-    CHECK_TRUE(context.diagnostics.executed_operator_count == 0u);
-    CHECK_TRUE(context.last_status == CAMPP_STATUS_NOT_IMPLEMENTED);
+    CHECK_TRUE(context.diagnostics.executed_operator_count == 1u);
+    CHECK_TRUE(context.last_status == CAMPP_STATUS_OK);
+    CHECK_TRUE(((const float *)context.tensors[1].data)[0] == 0.0f);
+    CHECK_TRUE(((const float *)context.tensors[1].data)[1] == 2.0f);
 
     campp_runtime_context_release(&context);
     return 0;
 }
 
-static int test_compiled_plan_first_dispatch(
+static int test_compiled_plan_execution(
     const char *plan_path, const char *weights_path)
 {
     CamppRuntimeModel model;
@@ -127,6 +131,8 @@ static int test_compiled_plan_first_dispatch(
     const CamppTensorDescriptor *input_descriptor;
     uint32_t input_tensor_id;
     void *input_data;
+    const CamppTensorView *output_view;
+    uint64_t output_index;
     CamppStatus status;
 
     memset(&model, 0, sizeof(model));
@@ -170,14 +176,33 @@ static int test_compiled_plan_first_dispatch(
         return 1;
     }
 
-    CHECK_STATUS(campp_graph_execute(&context), CAMPP_STATUS_NOT_IMPLEMENTED);
-    CHECK_TRUE(context.diagnostics.current_operator_id == 0u);
-    CHECK_TRUE(context.diagnostics.executed_operator_count == 0u);
-    CHECK_TRUE(context.last_status == CAMPP_STATUS_NOT_IMPLEMENTED);
+    CHECK_STATUS(campp_graph_execute(&context), CAMPP_STATUS_OK);
+    CHECK_TRUE(
+        context.diagnostics.current_operator_id == model.operator_count - 1u);
+    CHECK_TRUE(
+        context.diagnostics.executed_operator_count == model.operator_count);
+    CHECK_TRUE(context.last_status == CAMPP_STATUS_OK);
+    CHECK_TRUE(model.output_count == 1u);
+    CHECK_STATUS(
+        campp_runtime_context_output(
+            &context, model.output_tensor_ids[0], &output_view),
+        CAMPP_STATUS_OK);
+    CHECK_TRUE(output_view->dtype == CAMPP_DTYPE_FLOAT32);
+    CHECK_TRUE(campp_tensor_view_element_count(output_view) == 192u);
+    for (output_index = 0u; output_index < 192u; ++output_index) {
+        float value;
+        const uint64_t offset =
+            campp_reference_offset_for_linear(output_view, output_index);
+        memcpy(
+            &value, (const uint8_t *)output_view->data + offset,
+            sizeof(value));
+        CHECK_TRUE(isfinite(value));
+    }
     printf(
         "plan dispatch: bucket=%" PRIu32 " operators=%" PRIu32
-        " first=TRANSPOSE result=NOT_IMPLEMENTED\n",
-        model.bucket_frames, model.operator_count);
+        " executed=%" PRIu32 " embedding=192\n",
+        model.bucket_frames, model.operator_count,
+        context.diagnostics.executed_operator_count);
 
     free(input_data);
     campp_runtime_context_release(&context);
@@ -187,11 +212,11 @@ static int test_compiled_plan_first_dispatch(
 
 int main(int argc, char **argv)
 {
-    if (test_synthetic_first_dispatch() != 0) {
+    if (test_synthetic_execution() != 0) {
         return 1;
     }
     if (argc == 3 &&
-        test_compiled_plan_first_dispatch(argv[1], argv[2]) != 0) {
+        test_compiled_plan_execution(argv[1], argv[2]) != 0) {
         return 1;
     }
     if (argc != 1 && argc != 3) {

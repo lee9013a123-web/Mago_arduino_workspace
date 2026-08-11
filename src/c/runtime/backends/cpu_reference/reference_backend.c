@@ -6,49 +6,7 @@
 #include <stdint.h>
 
 #include "internal/runtime_model.h"
-
-/*
- * NULL 함수로 등록하면 Context 생성이 MISSING_KERNEL에서 끝난다. 모든 opcode에
- * 실행 가능한 스텁을 등록하고 실제 호출 지점에서 NOT_IMPLEMENTED를 반환한다.
- */
-#define CAMPP_DEFINE_REFERENCE_STUB(function_name)                             \
-    static CamppStatus function_name(                                          \
-        const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,      \
-        const CamppTensorView *inputs, uint8_t input_count,                     \
-        CamppTensorView *outputs, uint8_t output_count, void *scratch,          \
-        size_t scratch_size)                                                    \
-    {                                                                           \
-        (void)model;                                                            \
-        (void)op;                                                               \
-        (void)inputs;                                                           \
-        (void)input_count;                                                      \
-        (void)outputs;                                                          \
-        (void)output_count;                                                     \
-        (void)scratch;                                                          \
-        (void)scratch_size;                                                     \
-        return CAMPP_STATUS_NOT_IMPLEMENTED;                                   \
-    }
-
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_qlinear_conv)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_quantize_linear)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_dequantize_linear)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_batch_normalization)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_relu)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_sigmoid)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_average_pool)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_reduce_mean)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_add)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_mul)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_sub)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_div)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_sqrt)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_concat)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_expand)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_slice)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_reshape)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_transpose)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_squeeze)
-CAMPP_DEFINE_REFERENCE_STUB(campp_reference_unsqueeze)
+#include "reference_kernels.h"
 
 #define CAMPP_REFERENCE_ENTRY(opcode_value, function_name, display_name)       \
     {                                                                          \
@@ -109,7 +67,6 @@ static const CamppKernelRegistry CAMPP_CPU_REFERENCE_REGISTRY = {
 };
 
 #undef CAMPP_REFERENCE_ENTRY
-#undef CAMPP_DEFINE_REFERENCE_STUB
 
 const CamppKernelRegistry *campp_cpu_reference_registry(void)
 {
