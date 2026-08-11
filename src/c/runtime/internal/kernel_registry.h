@@ -7,10 +7,11 @@
  *   CAMPP_OP_QLINEAR_CONV -> campp_qlinear_convolution_reference()
  *   CAMPP_OP_RELU         -> campp_relu_reference()
  *
- * 정적 그래프에는 node가 1,438개 있지만 opcode는 20종뿐이다. dispatcher는
- * operator마다 이 표를 한 번 찾고 같은 함수를 반복 호출한다. node마다 함수를
- * 만들지 않는 이유가 여기 있다. QLinearConv 225개는 kernel 함수 하나를 225번
- * 부르는 것이지 225개의 코드가 아니다.
+ * 정적 그래프에는 node가 1,438개 있지만 opcode는 20종뿐이다. context를 만들 때
+ * operator마다 이 표를 한 번 조회하여 resolved_kernels 배열에 실행 함수 주소를
+ * 저장한다. 추론 중에는 표를 다시 검색하지 않고 저장된 주소를 바로 호출한다.
+ * QLinearConv 225개는 kernel 함수 하나를 225번 부르는 것이지 225개의 코드가
+ * 아니다.
  *
  * backend는 자기 표 하나를 내놓는다. 표를 바꿔 끼우는 것이 backend 교체이며,
  * executor는 어느 backend가 붙었는지 알 필요가 없다.
@@ -87,9 +88,9 @@ typedef struct CamppKernelRegistry {
  * backend 선택 규칙.
  *
  * Operator가 CAMPP_BACKEND_AUTO이면 전달된 registry를 사용할 수 있다. 그 외에는
- * operator.backend_id와 registry.backend_id가 반드시 같아야 한다. 현재 reference
- * plan은 CAMPP_BACKEND_CPU_REFERENCE를 명시하므로 NEON registry로 바꾸려면 plan을
- * AUTO 또는 AARCH64 backend로 다시 내보내야 한다.
+ * operator.backend_id와 registry.backend_id가 반드시 같아야 한다. 현재 생성되는
+ * plan은 AUTO이므로 CPU Reference 또는 이후의 AArch64 registry를 context 생성 때
+ * 선택할 수 있다. 미래에 특정 backend로 고정한 plan은 같은 backend만 허용한다.
  */
 
 /*
