@@ -27,7 +27,10 @@
 /* 현재 동결된 opcode 수. CAMPP_OP_INVALID는 세지 않는다. */
 #define CAMPP_KERNEL_OPCODE_COUNT 20u
 
-struct CamppRuntimeContext;
+/*
+ * kernel은 실행 상태를 보지 않는다. 그래서 이 헤더는 CamppRuntimeContext를
+ * 전방 선언조차 하지 않는다.
+ */
 struct CamppRuntimeModel;
 
 /*

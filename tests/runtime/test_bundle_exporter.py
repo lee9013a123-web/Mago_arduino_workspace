@@ -39,6 +39,7 @@ from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
     PLAN_SECTION_ALIGNMENT,
     TENSOR_DESCRIPTOR_SIZE,
     TENSOR_MAX_RANK,
+    BackendId,
     OperatorCode,
     TensorDType,
     TensorFlags,
@@ -53,6 +54,9 @@ from runtime_bundle_exporter.bundle_manifest_writer import (  # noqa: E402
 from runtime_bundle_exporter.execution_plan_writer import (  # noqa: E402
     EXECUTION_PLAN_DIR_NAME,
     ExecutionPlanError,
+    format_operator_dump,
+    format_summary,
+    format_tensor_dump,
     plan_file_name,
     read_execution_plan,
     verify_plan,
@@ -829,7 +833,14 @@ class OperatorTableTests(unittest.TestCase):
         ]
         self.assertEqual(len(convs), 225)
         self.assertEqual({descriptor.kernel_id for descriptor in convs}, {0})
-        self.assertEqual({descriptor.backend_id for descriptor in convs}, {1})
+
+    def test_plan_does_not_pin_a_backend(self) -> None:
+        """backend는 배포 선택이다. plan 하나가 어느 backend에서든 돌아야 한다."""
+
+        self.assertEqual(
+            {descriptor.backend_id for descriptor in self.table.descriptors},
+            {int(BackendId.AUTO)},
+        )
 
     def test_attributes_survive_the_round_trip(self) -> None:
         transpose = self.table.id_of("/Transpose")
@@ -1183,6 +1194,41 @@ class BundleSerializationTests(unittest.TestCase):
                 verify_bundle_manifest(self.root / MANIFEST_FILE_NAME)
         finally:
             target.write_bytes(original)
+
+    def test_dump_format_is_pinned_to_the_c_program(self) -> None:
+        """이 형식은 campp_reference_infer.c의 출력과 문자 단위로 같아야 한다.
+
+        한쪽만 바꾸면 C와 Python 대조가 조용히 무의미해진다. 그래서 대표 줄을
+        문자열로 고정해 둔다. 이 테스트가 깨지면 C 쪽도 함께 고쳐야 한다.
+        """
+
+        loaded = read_execution_plan(
+            self.root / EXECUTION_PLAN_DIR_NAME / plan_file_name(REFERENCE_FRAMES)
+        )
+        tensors = format_tensor_dump(loaded).splitlines()
+        operators = format_operator_dump(loaded).splitlines()
+        summary = format_summary(loaded, self.weights.byte_size).splitlines()
+
+        self.assertEqual(len(tensors), loaded.header.tensor_count)
+        self.assertEqual(len(operators), loaded.header.operator_count)
+        self.assertEqual(
+            tensors[0],
+            "T 0 FLOAT32 rank=3 INPUT flags=0x02 dims=1,298,80,1 "
+            "strides=95360,320,4,0 offset=18446744073709551615 "
+            "logical=95360 span=95360 alias=4294967295 quant=4294967295 "
+            "first=0 last=0",
+        )
+        self.assertEqual(
+            operators[0], "O 0 opcode=18 backend=0 kernel=0 in=0 out=2281 attr=40@0"
+        )
+        self.assertEqual(summary[0], "Loaded plan: 298 frames")
+        self.assertEqual(summary[2], "Operator count: 1438")
+        self.assertEqual(
+            summary[6], "Input tensor: id 0 FLOAT32 [1, 298, 80] 95360 bytes"
+        )
+        self.assertEqual(
+            summary[7], "Output tensor: id 3718 FLOAT32 [1, 192] 768 bytes"
+        )
 
     def test_weight_index_can_be_left_out(self) -> None:
         lean = write_bundle_manifest(

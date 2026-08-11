@@ -126,9 +126,22 @@ CamppStatus campp_runtime_context_reset(CamppRuntimeContext *context);
  *
  * bind_input은 외부 버퍼를 INPUT Tensor에 그대로 연결한다. 복사하지 않으므로
  * 호출자가 실행이 끝날 때까지 버퍼를 살려 두어야 한다. dtype, rank,
- * dimensions, byte_size를 descriptor와 모두 비교한다. 시간축 길이만 현재 plan의
- * bucket과 다르면 CAMPP_STATUS_BUCKET_MISMATCH, 그 밖의 형식 차이는
- * CAMPP_STATUS_SHAPE_MISMATCH로 거절한다.
+ * dimensions, byte_size를 descriptor와 모두 비교한다.
+ *
+ * dimensions는 rank와 무관하게 항상 CAMPP_TENSOR_MAX_RANK개를 넘긴다. rank
+ * 이후의 자리는 descriptor와 같은 규칙으로 1을 채운다. C에서 배열 인자는
+ * pointer로 붕괴하므로 원소 수가 강제되지 않는다. 짧게 넘기면 범위 밖을 읽는다.
+ *
+ * 두 오류를 가르는 규칙:
+ *
+ *   descriptor와 값이 다른 축이 정확히 하나이고, 그 축의 descriptor 값이
+ *   model->bucket_frames와 같으면 CAMPP_STATUS_BUCKET_MISMATCH.
+ *   그 밖의 모든 차이는 CAMPP_STATUS_SHAPE_MISMATCH.
+ *
+ * 형식은 어느 축이 시간축인지 따로 기록하지 않는다. bucket_frames와 일치하는
+ * 축이 곧 시간축이라는 뜻이다. 이 규칙을 정해 두지 않으면 구현마다 축을
+ * 다르게 추측하게 된다. CAM++ 입력은 (1, frames, 80)이고 frames는 98, 298,
+ * 498, 998이라 나머지 축(1, 80)과 겹치지 않는다.
  */
 CamppStatus campp_runtime_context_bind_input(
     CamppRuntimeContext *context, uint32_t tensor_id, void *data,

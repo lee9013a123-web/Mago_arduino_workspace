@@ -109,12 +109,17 @@ def _padded_input_ids(operator_id: int, input_ids: tuple[int, ...]) -> tuple[int
 def build_operator_table(
     graph: RuntimeGraph,
     *,
-    backend_id: BackendId = BackendId.CPU_REFERENCE,
+    backend_id: BackendId = BackendId.AUTO,
     kernel_id: int = DEFAULT_KERNEL_ID,
 ) -> OperatorTable:
     """RuntimeGraph 하나를 실행 명령 표로 굳힌다.
 
     attribute가 같은 operator는 attribute section의 같은 block을 가리킨다.
+
+    ``backend_id``는 기본이 ``AUTO``다. backend는 모델의 성질이 아니라 배포할 때
+    고르는 것이므로, plan 하나가 어느 backend에서든 실행되게 두고 실제 선택은
+    Runtime이 한다. 특정 backend로 못박으면 그 plan은 다른 backend에서 거부되고,
+    같은 plan으로 backend만 바꿔 값을 대조하는 검증 경로가 막힌다.
     """
 
     validate_execution_order(graph)

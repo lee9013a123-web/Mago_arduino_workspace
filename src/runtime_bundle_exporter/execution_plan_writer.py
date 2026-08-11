@@ -45,6 +45,7 @@ from .binary_format_schema import (
     OperatorDescriptor,
     PlanHeader,
     TensorDescriptor,
+    TensorDType,
     TensorStorageType,
     decode_attribute_block,
 )
@@ -103,7 +104,7 @@ def build_plan_bytes(
     graph: RuntimeGraph,
     layout: WeightBlobLayout,
     *,
-    backend_id: BackendId = BackendId.CPU_REFERENCE,
+    backend_id: BackendId = BackendId.AUTO,
     kernel_id: int = DEFAULT_KERNEL_ID,
 ) -> tuple[bytes, int, int]:
     """plan 파일 내용을 메모리에서 만든다.
@@ -158,7 +159,7 @@ def write_execution_plan(
     layout: WeightBlobLayout,
     path: Path | str,
     *,
-    backend_id: BackendId = BackendId.CPU_REFERENCE,
+    backend_id: BackendId = BackendId.AUTO,
     kernel_id: int = DEFAULT_KERNEL_ID,
 ) -> ExecutionPlanResult:
     """한 bucket의 plan 파일을 쓴다."""
@@ -317,6 +318,110 @@ def verify_plan(
             )
 
 
+_DTYPE_NAMES: Mapping[int, str] = {
+    TensorDType.FLOAT32: "FLOAT32",
+    TensorDType.UINT8: "UINT8",
+    TensorDType.INT8: "INT8",
+    TensorDType.INT32: "INT32",
+    TensorDType.INT64: "INT64",
+    TensorDType.BOOL: "BOOL",
+    TensorDType.FLOAT16: "FLOAT16",
+}
+
+_STORAGE_NAMES: Mapping[int, str] = {
+    TensorStorageType.INPUT: "INPUT",
+    TensorStorageType.OUTPUT: "OUTPUT",
+    TensorStorageType.CONSTANT: "CONSTANT",
+    TensorStorageType.ACTIVATION: "ACTIVATION",
+    TensorStorageType.VIEW: "VIEW",
+}
+
+
+def format_tensor_dump(loaded: LoadedPlan) -> str:
+    """C의 ``--dump-tensors`` 출력과 문자 단위로 같은 문자열을 만든다.
+
+    C Runtime이 같은 plan을 같은 값으로 읽는지 확인하는 기준이다. 형식을 바꾸면
+    ``campp_reference_infer.c``의 출력도 함께 바꿔야 한다.
+    """
+
+    lines = []
+    for descriptor in loaded.tensors:
+        dimensions = ",".join(str(value) for value in descriptor.dimensions)
+        strides = ",".join(str(value) for value in descriptor.byte_strides)
+        lines.append(
+            f"T {descriptor.tensor_id} "
+            f"{_DTYPE_NAMES[descriptor.dtype]} "
+            f"rank={descriptor.rank} "
+            f"{_STORAGE_NAMES[descriptor.storage_type]} "
+            f"flags=0x{descriptor.flags:02x} "
+            f"dims={dimensions} strides={strides} "
+            f"offset={descriptor.data_offset} "
+            f"logical={descriptor.logical_byte_size} "
+            f"span={descriptor.storage_span_bytes} "
+            f"alias={descriptor.alias_of_tensor_id} "
+            f"quant={descriptor.quantization_index} "
+            f"first={descriptor.first_use} last={descriptor.last_use}"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def format_operator_dump(loaded: LoadedPlan) -> str:
+    """C의 ``--dump-operators`` 출력과 문자 단위로 같은 문자열을 만든다."""
+
+    lines = []
+    for descriptor in loaded.operators:
+        used = descriptor.input_tensor_ids[: descriptor.input_count]
+        inputs = ",".join(str(value) for value in used)
+        lines.append(
+            f"O {descriptor.operator_id} "
+            f"opcode={descriptor.opcode} "
+            f"backend={descriptor.backend_id} "
+            f"kernel={descriptor.kernel_id} "
+            f"in={inputs} "
+            f"out={descriptor.output_tensor_ids[0]} "
+            f"attr={descriptor.attribute_size}@{descriptor.attribute_offset}"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def format_summary(loaded: LoadedPlan, weights_size: int) -> str:
+    """C가 인자 없이 실행됐을 때의 요약 출력과 같은 문자열을 만든다."""
+
+    def shape_of(descriptor: TensorDescriptor) -> str:
+        return "[" + ", ".join(
+            str(value) for value in descriptor.dimensions[: descriptor.rank]
+        ) + "]"
+
+    constant_bytes = sum(
+        descriptor.logical_byte_size
+        for descriptor in loaded.tensors
+        if descriptor.storage_type == TensorStorageType.CONSTANT
+    )
+    lines = [
+        f"Loaded plan: {loaded.header.bucket_frames} frames",
+        f"Tensor count: {loaded.header.tensor_count}",
+        f"Operator count: {loaded.header.operator_count}",
+        f"Weight bytes: {weights_size}",
+        f"Constant bytes in use: {constant_bytes}",
+        f"Attribute section bytes: {len(loaded.attribute_section)}",
+    ]
+    for descriptor in loaded.tensors:
+        if descriptor.storage_type == TensorStorageType.INPUT:
+            lines.append(
+                f"Input tensor: id {descriptor.tensor_id} "
+                f"{_DTYPE_NAMES[descriptor.dtype]} {shape_of(descriptor)} "
+                f"{descriptor.logical_byte_size} bytes"
+            )
+    for descriptor in loaded.tensors:
+        if descriptor.storage_type == TensorStorageType.OUTPUT:
+            lines.append(
+                f"Output tensor: id {descriptor.tensor_id} "
+                f"{_DTYPE_NAMES[descriptor.dtype]} {shape_of(descriptor)} "
+                f"{descriptor.logical_byte_size} bytes"
+            )
+    return "\n".join(lines) + "\n"
+
+
 __all__ = [
     "EXECUTION_PLAN_DIR_NAME",
     "ExecutionPlanError",
@@ -324,6 +429,9 @@ __all__ = [
     "LoadedPlan",
     "PLAN_FILE_NAME_TEMPLATE",
     "build_plan_bytes",
+    "format_operator_dump",
+    "format_summary",
+    "format_tensor_dump",
     "plan_file_name",
     "read_execution_plan",
     "verify_plan",

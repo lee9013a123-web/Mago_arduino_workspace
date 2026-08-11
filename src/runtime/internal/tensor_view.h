@@ -30,12 +30,18 @@
  *
  * 입력은 const CamppTensorView *로 넘긴다. view 자체는 kernel이 바꿀 수 없고,
  * 출력 view의 data만 쓰기 대상이다.
+ *
+ * flags의 CAMPP_TENSOR_FLAG_CONTIGUOUS는 executor가
+ * campp_tensor_view_is_contiguous()로 직접 계산해 넣는다. descriptor의 값을
+ * 그대로 복사하지 않는다. 연속성의 근거를 stride 하나로 두어야 flag와 실제
+ * stride가 어긋난 view가 생기지 않는다.
  */
 typedef struct CamppTensorView {
     void *data;
     uint8_t dtype;
     uint8_t rank;
     uint8_t flags;
+    /* 명시적 padding. 항상 0으로 채운다. 나중에 필드로 승격할 자리다. */
     uint8_t reserved;
     uint32_t dimensions[CAMPP_TENSOR_MAX_RANK];
     uint32_t byte_strides[CAMPP_TENSOR_MAX_RANK];
