@@ -318,9 +318,11 @@ CamppStatus campp_reference_qlinear_conv(
         }
         multiplier = x_scale * weight_scale / y_scale;
         if (!isfinite(multiplier)) return CAMPP_STATUS_KERNEL_FAILED;
+        /* ONNX QLinearConv은 accumulator에 multiplier를 곱한 값을 nearest-even으로
+         * 반올림한 뒤 정수 zero point를 더한다. zero point를 반올림 전에 더하면
+         * float32가 소수부를 잃어 없던 .5 tie가 생기고 결과가 1만큼 어긋난다. */
         {
-            const float scaled = (float)(int32_t)accumulator * multiplier +
-                                 (float)y_zero;
+            const float scaled = (float)(int32_t)accumulator * multiplier;
             if (scaled <= -2147483648.0f) {
                 rounded = INT32_MIN;
             } else if (scaled >= 2147483520.0f) {
@@ -328,6 +330,7 @@ CamppStatus campp_reference_qlinear_conv(
             } else {
                 rounded = (int64_t)nearbyintf(scaled);
             }
+            rounded += y_zero;
         }
         status = campp_reference_write_quantized(y, output_index, rounded);
         if (status != CAMPP_STATUS_OK) return status;

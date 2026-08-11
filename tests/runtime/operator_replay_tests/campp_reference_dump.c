@@ -1,0 +1,236 @@
+/*
+ * plan 하나를 실제 입력으로 실행하고 모든 Tensor를 dense 순서로 덤프한다.
+ *
+ * usage: campp_reference_dump <plan.bin> <weights.bin> <input.f32> <out_prefix>
+ *
+ * 출력:
+ *   <out_prefix>.bin   각 Tensor의 payload를 C 순서로 이어 붙인 것
+ *   <out_prefix>.json  tensor_id, dtype, shape, offset, byte_size 색인
+ */
+
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "campp_runtime/status_code.h"
+#include "campp_runtime/tensor_descriptor.h"
+#include "backends/cpu_reference/reference_kernel_utils.h"
+#include "execution/graph_executor.h"
+#include "internal/kernel_registry.h"
+#include "internal/runtime_context.h"
+#include "internal/runtime_model.h"
+
+static int read_entire_file(const char *path, uint8_t **out_data, size_t *out_size)
+{
+    FILE *file = fopen(path, "rb");
+    long length;
+    uint8_t *buffer;
+
+    if (file == NULL) {
+        fprintf(stderr, "cannot open %s\n", path);
+        return 1;
+    }
+    if (fseek(file, 0, SEEK_END) != 0 || (length = ftell(file)) < 0) {
+        fclose(file);
+        return 1;
+    }
+    rewind(file);
+    buffer = (uint8_t *)malloc((size_t)length);
+    if (buffer == NULL) {
+        fclose(file);
+        return 1;
+    }
+    if (fread(buffer, 1u, (size_t)length, file) != (size_t)length) {
+        free(buffer);
+        fclose(file);
+        return 1;
+    }
+    fclose(file);
+    *out_data = buffer;
+    *out_size = (size_t)length;
+    return 0;
+}
+
+/* view를 논리적 C 순서로 모아 file에 쓴다. 비연속 VIEW도 dense로 펴진다. */
+static int write_dense_payload(FILE *sink, const CamppTensorView *view)
+{
+    const uint32_t element_size = campp_dtype_byte_size(view->dtype);
+    const uint64_t element_count = campp_tensor_view_element_count(view);
+    uint64_t index;
+
+    if (element_size == 0u) {
+        return 1;
+    }
+    if (campp_tensor_view_is_contiguous(view)) {
+        const size_t total = (size_t)element_count * element_size;
+        return fwrite(view->data, 1u, total, sink) == total ? 0 : 1;
+    }
+    for (index = 0u; index < element_count; ++index) {
+        const uint64_t offset = campp_reference_offset_for_linear(view, index);
+        if (fwrite((const uint8_t *)view->data + offset, 1u, element_size, sink) !=
+            element_size) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int main(int argc, char **argv)
+{
+    CamppRuntimeModel model;
+    CamppRuntimeContext context;
+    const CamppKernelRegistry *registry = campp_cpu_reference_registry();
+    const CamppTensorDescriptor *input_descriptor;
+    uint32_t input_tensor_id;
+    uint8_t *input_data = NULL;
+    size_t input_size = 0u;
+    CamppStatus status;
+    char path[4096];
+    FILE *payload_sink;
+    FILE *index_sink;
+    uint64_t running_offset = 0u;
+    uint32_t tensor_id;
+    int first_entry = 1;
+
+    if (argc != 5) {
+        fprintf(stderr,
+                "usage: %s <plan.bin> <weights.bin> <input.f32> <out_prefix>\n",
+                argv[0]);
+        return 2;
+    }
+
+    memset(&model, 0, sizeof(model));
+    status = campp_runtime_model_load(argv[1], argv[2], &model);
+    if (status != CAMPP_STATUS_OK) {
+        fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
+        return 1;
+    }
+
+    memset(&context, 0, sizeof(context));
+    status = campp_runtime_context_create(&model, registry, &context);
+    if (status != CAMPP_STATUS_OK) {
+        fprintf(stderr, "context create failed: %s\n", campp_status_name(status));
+        campp_runtime_model_release(&model);
+        return 1;
+    }
+
+    if (model.input_count != 1u) {
+        fprintf(stderr, "expected exactly one graph input, got %" PRIu32 "\n",
+                model.input_count);
+        campp_runtime_context_release(&context);
+        campp_runtime_model_release(&model);
+        return 1;
+    }
+    input_tensor_id = model.input_tensor_ids[0];
+    input_descriptor = &model.tensors[input_tensor_id];
+
+    if (read_entire_file(argv[3], &input_data, &input_size) != 0) {
+        campp_runtime_context_release(&context);
+        campp_runtime_model_release(&model);
+        return 1;
+    }
+    if (input_size != (size_t)input_descriptor->storage_span_bytes) {
+        fprintf(stderr,
+                "input size mismatch: file %zu bytes, plan expects %" PRIu64 "\n",
+                input_size, input_descriptor->storage_span_bytes);
+        free(input_data);
+        campp_runtime_context_release(&context);
+        campp_runtime_model_release(&model);
+        return 1;
+    }
+
+    status = campp_runtime_context_bind_input(
+        &context, input_tensor_id, input_data, input_size,
+        input_descriptor->dtype, input_descriptor->rank,
+        input_descriptor->dimensions);
+    if (status != CAMPP_STATUS_OK) {
+        fprintf(stderr, "input bind failed: %s\n", campp_status_name(status));
+        free(input_data);
+        campp_runtime_context_release(&context);
+        campp_runtime_model_release(&model);
+        return 1;
+    }
+
+    status = campp_graph_execute(&context);
+    if (status != CAMPP_STATUS_OK) {
+        fprintf(stderr,
+                "execute failed at operator %" PRIu32 ": %s\n",
+                context.diagnostics.current_operator_id,
+                campp_status_name(status));
+        free(input_data);
+        campp_runtime_context_release(&context);
+        campp_runtime_model_release(&model);
+        return 1;
+    }
+
+    snprintf(path, sizeof(path), "%s.bin", argv[4]);
+    payload_sink = fopen(path, "wb");
+    snprintf(path, sizeof(path), "%s.json", argv[4]);
+    index_sink = fopen(path, "wb");
+    if (payload_sink == NULL || index_sink == NULL) {
+        fprintf(stderr, "cannot open output files for prefix %s\n", argv[4]);
+        if (payload_sink != NULL) { fclose(payload_sink); }
+        if (index_sink != NULL) { fclose(index_sink); }
+        free(input_data);
+        campp_runtime_context_release(&context);
+        campp_runtime_model_release(&model);
+        return 1;
+    }
+
+    fprintf(index_sink,
+            "{\"bucket_frames\": %" PRIu32 ", \"operator_count\": %" PRIu32
+            ", \"executed\": %" PRIu32 ", \"tensors\": [",
+            model.bucket_frames, model.operator_count,
+            context.diagnostics.executed_operator_count);
+
+    for (tensor_id = 0u; tensor_id < context.tensor_count; ++tensor_id) {
+        const CamppTensorView *view = &context.tensors[tensor_id];
+        uint64_t byte_size;
+        uint8_t axis;
+
+        if (view->data == NULL) {
+            continue;
+        }
+        byte_size = campp_tensor_view_element_count(view) *
+                    campp_dtype_byte_size(view->dtype);
+        if (write_dense_payload(payload_sink, view) != 0) {
+            fprintf(stderr, "payload write failed at tensor %" PRIu32 "\n",
+                    tensor_id);
+            fclose(payload_sink);
+            fclose(index_sink);
+            free(input_data);
+            campp_runtime_context_release(&context);
+            campp_runtime_model_release(&model);
+            return 1;
+        }
+        fprintf(index_sink,
+                "%s{\"tensor_id\": %" PRIu32 ", \"dtype\": %u, \"rank\": %u,"
+                " \"shape\": [",
+                first_entry ? "" : ", ", tensor_id, view->dtype, view->rank);
+        for (axis = 0u; axis < view->rank; ++axis) {
+            fprintf(index_sink, "%s%" PRIu32, axis == 0u ? "" : ", ",
+                    view->dimensions[axis]);
+        }
+        fprintf(index_sink,
+                "], \"offset\": %" PRIu64 ", \"byte_size\": %" PRIu64 "}",
+                running_offset, byte_size);
+        running_offset += byte_size;
+        first_entry = 0;
+    }
+    fprintf(index_sink, "]}\n");
+
+    fclose(payload_sink);
+    fclose(index_sink);
+
+    printf("dumped bucket=%" PRIu32 " operators=%" PRIu32 " payload=%" PRIu64
+           " bytes\n",
+           model.bucket_frames, context.diagnostics.executed_operator_count,
+           running_offset);
+
+    free(input_data);
+    campp_runtime_context_release(&context);
+    campp_runtime_model_release(&model);
+    return 0;
+}

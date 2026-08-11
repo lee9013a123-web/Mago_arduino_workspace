@@ -239,6 +239,62 @@ static int test_qconv_1x1_bias_per_channel(void)
     return 0;
 }
 
+/*
+ * zero point는 반올림 뒤에 더해야 한다.
+ *
+ * acc*multiplier가 10.499997이면 반올림 결과는 10이고 zero point 143을 더해
+ * 153이 된다. zero point를 먼저 더하면 float32가 소수부를 잃어 정확히 153.5가
+ * 되고 nearest-even이 154로 올려 ORT와 1만큼 어긋난다. 실제 CAM++ 그래프의
+ * /head/conv1/Conv_quant에서 250,880개 중 1개가 이 경로로 갈렸다.
+ */
+static int test_qconv_zero_point_applied_after_rounding(void)
+{
+    const uint32_t x_dims[3] = {1u, 1u, 1u};
+    const uint32_t w_dims[3] = {1u, 1u, 1u};
+    const uint32_t channel_dims[1] = {1u};
+    uint8_t x[1] = {0};
+    int8_t weight[1] = {0};
+    float x_scale = 1.0f;
+    uint8_t x_zero = 0u;
+    float weight_scale[1] = {0.0011385813f};
+    int8_t weight_zero[1] = {0};
+    float y_scale = 1.0f;
+    uint8_t y_zero = 143u;
+    int32_t bias[1] = {9222};
+    uint8_t output[1] = {0};
+    const uint8_t expected[1] = {153};
+    CamppTensorView inputs[9];
+    CamppTensorView outputs[1];
+    CamppRuntimeModel model;
+    CamppOperatorDescriptor op;
+    uint8_t attribute_buffer[256];
+    const IntegerAttribute attributes[5] = {
+        {CAMPP_ATTR_KERNEL_SHAPE, 1u, {1, 0, 0, 0}},
+        {CAMPP_ATTR_PADS, 2u, {0, 0, 0, 0}},
+        {CAMPP_ATTR_STRIDES, 1u, {1, 0, 0, 0}},
+        {CAMPP_ATTR_DILATIONS, 1u, {1, 0, 0, 0}},
+        {CAMPP_ATTR_GROUP, 1u, {1, 0, 0, 0}}
+    };
+
+    init_qconv_model(&model, &op, attribute_buffer, attributes, 5u);
+    init_view(&inputs[0], x, CAMPP_DTYPE_UINT8, 3u, x_dims);
+    init_view(&inputs[1], &x_scale, CAMPP_DTYPE_FLOAT32, 0u, x_dims);
+    init_view(&inputs[2], &x_zero, CAMPP_DTYPE_UINT8, 0u, x_dims);
+    init_view(&inputs[3], weight, CAMPP_DTYPE_INT8, 3u, w_dims);
+    init_view(&inputs[4], weight_scale, CAMPP_DTYPE_FLOAT32, 1u, channel_dims);
+    init_view(&inputs[5], weight_zero, CAMPP_DTYPE_INT8, 1u, channel_dims);
+    init_view(&inputs[6], &y_scale, CAMPP_DTYPE_FLOAT32, 0u, x_dims);
+    init_view(&inputs[7], &y_zero, CAMPP_DTYPE_UINT8, 0u, x_dims);
+    init_view(&inputs[8], bias, CAMPP_DTYPE_INT32, 1u, channel_dims);
+    init_view(&outputs[0], output, CAMPP_DTYPE_UINT8, 3u, x_dims);
+    CHECK_STATUS(
+        campp_reference_qlinear_conv(
+            &model, &op, inputs, 9u, outputs, 1u, NULL, 0u),
+        CAMPP_STATUS_OK);
+    CHECK_TRUE(memcmp(output, expected, sizeof(expected)) == 0);
+    return 0;
+}
+
 static int test_qconv_padding_stride(void)
 {
     const uint32_t x_dims[3] = {1u, 1u, 5u};
@@ -414,6 +470,7 @@ int main(void)
     if (test_quantize_and_dequantize() != 0) return 1;
     if (test_per_axis_quantization() != 0) return 1;
     if (test_qconv_1x1_bias_per_channel() != 0) return 1;
+    if (test_qconv_zero_point_applied_after_rounding() != 0) return 1;
     if (test_qconv_padding_stride() != 0) return 1;
     if (test_qconv_grouped() != 0) return 1;
     if (test_qconv_dilation() != 0) return 1;
