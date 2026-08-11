@@ -31,10 +31,15 @@
  * 그 판단에 필요한 수명 정보(first_use/last_use)는 이미 plan에 들어 있다.
  */
 typedef struct CamppActivationStorage {
-    /* tensor_count 길이. CONSTANT와 INPUT 자리는 NULL이다. */
+    /*
+     * buffer_count(= model->tensor_count) 길이. CONSTANT와 INPUT 자리는 NULL이다.
+     * non-NULL 값은 64-byte 앞 guard 다음의 실제 payload를 가리킨다.
+     */
     void **buffers;
     size_t *buffer_sizes;
+    /* buffers와 buffer_sizes 배열의 길이. 소유 buffer 개수가 아니다. */
     uint32_t buffer_count;
+    /* guard를 제외한 ACTIVATION/OUTPUT payload의 합계다. */
     size_t total_bytes;
 } CamppActivationStorage;
 
