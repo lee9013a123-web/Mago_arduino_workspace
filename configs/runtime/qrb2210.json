@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "profile": "qrb2210",
+  "buckets": [98, 298, 498, 998],
+  "seed": 20260811,
+  "backend": "cpu_reference",
+  "paths": {
+    "workspace_root": "runs/runtime/pipelines/qrb2210",
+    "canonical_model": "models/source/campplus_int8_static_qop.onnx",
+    "static_dir": "results/static",
+    "graph_dir": "results/graph"
+  },
+  "bundle": {
+    "include_weight_index": false
+  },
+  "build": {
+    "cc": "gcc",
+    "cflags": "-std=c11 -O3 -Wall -Wextra"
+  },
+  "diagnostics": {
+    "enabled": true,
+    "dump_tensor_ids": "all",
+    "checkpoint_tensor_ids": [2281, 2332, 2647, 3276, 3697, 3712, 3718],
+    "max_failure_report": 20
+  },
+  "tolerances": {
+    "float_atol": 0.0001,
+    "float_rtol": 0.001,
+    "embedding_cosine_min": 0.999
+  },
+  "target": {
+    "alignment_bytes": 64,
+    "threads": 1
+  }
+}

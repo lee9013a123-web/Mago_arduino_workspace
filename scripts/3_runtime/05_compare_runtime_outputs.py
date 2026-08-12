@@ -38,13 +38,19 @@ DTYPE_BY_CODE = {
 INTEGER_CODES = {2, 3, 4, 5, 6}
 FLOAT_ATOL = 1e-4
 FLOAT_RTOL = 1e-3
+EMBEDDING_COSINE_MIN = 0.999999
 
 
 class RuntimeComparisonError(RuntimeError):
     """Dump 파일 자체가 손상됐거나 index와 payload가 다를 때 발생한다."""
 
 
-def load_runtime_graph(frames: int, tag: str):
+def load_runtime_graph(
+    frames: int,
+    tag: str,
+    static_dir: Path | None = None,
+    graph_dir: Path | None = None,
+):
     if str(PYTHON_SOURCE) not in sys.path:
         sys.path.insert(0, str(PYTHON_SOURCE))
     from runtime_bundle_exporter.reader.graph_ir_reader import read_graph_ir
@@ -53,10 +59,10 @@ def load_runtime_graph(frames: int, tag: str):
         read_static_model,
     )
 
-    static = read_static_model(
-        ROOT / "results" / "static" / f"campp_static_{frames}.onnx"
-    )
-    graph_ir = read_graph_ir(ROOT / "results" / "graph" / f"ir_{tag}.json")
+    static_root = static_dir or ROOT / "results" / "static"
+    graph_root = graph_dir or ROOT / "results" / "graph"
+    static = read_static_model(static_root / f"campp_static_{frames}.onnx")
+    graph_ir = read_graph_ir(graph_root / f"ir_{tag}.json")
     return build_runtime_graph(
         static, graph_ir, validate=True, name=f"campp_{frames}f"
     )
@@ -192,10 +198,13 @@ def compare_bucket(
     ort_dir: Path,
     c_dir: Path,
     *,
+    static_dir: Path | None = None,
+    graph_dir: Path | None = None,
     float_atol: float = FLOAT_ATOL,
     float_rtol: float = FLOAT_RTOL,
+    embedding_cosine_min: float = EMBEDDING_COSINE_MIN,
 ) -> tuple[dict, list[dict]]:
-    graph = load_runtime_graph(frames, tag)
+    graph = load_runtime_graph(frames, tag, static_dir, graph_dir)
     name_by_id = {tensor.tensor_id: tensor.name for tensor in graph.tensors}
     c_index, c_tensors = load_c_dump(c_dir / f"c_{frames}")
     c_entries = {int(entry["tensor_id"]): entry for entry in c_index["tensors"]}
@@ -248,14 +257,28 @@ def compare_bucket(
         (item for item in comparisons if item["tensor_name"] == "embedding"),
         None,
     )
+    embedding_cosine = (
+        float(embedding.get("cosine_similarity", float("nan")))
+        if embedding is not None
+        else float("nan")
+    )
+    embedding_cosine_passed = (
+        embedding is not None and embedding_cosine >= embedding_cosine_min
+    )
+    first_failure = failures[0] if failures else None
+    if first_failure is None and not embedding_cosine_passed:
+        first_failure = dict(embedding) if embedding is not None else {}
+        first_failure["status"] = "embedding_cosine_below_threshold"
     summary = {
         "mode": c_index.get("mode", "full_graph"),
         "bucket_frames": frames,
         "compared_tensors": len(comparisons),
         "failed_tensors": len(failures),
-        "first_failure": failures[0] if failures else None,
+        "first_failure": first_failure,
         "embedding": embedding,
-        "all_match": not failures,
+        "embedding_cosine_min": embedding_cosine_min,
+        "embedding_cosine_passed": embedding_cosine_passed,
+        "all_match": not failures and embedding_cosine_passed,
         "float_atol": float_atol,
         "float_rtol": float_rtol,
     }
@@ -324,10 +347,19 @@ def main(argv: list[str] | None = None) -> int:
         "--results-dir", type=Path, default=ROOT / "results" / "runtime"
     )
     parser.add_argument(
+        "--static-dir", type=Path, default=ROOT / "results" / "static"
+    )
+    parser.add_argument(
+        "--graph-dir", type=Path, default=ROOT / "results" / "graph"
+    )
+    parser.add_argument(
         "--buckets", type=int, nargs="*", default=[frames for frames, _ in BUCKETS]
     )
     parser.add_argument("--float-atol", type=float, default=FLOAT_ATOL)
     parser.add_argument("--float-rtol", type=float, default=FLOAT_RTOL)
+    parser.add_argument(
+        "--embedding-cosine-min", type=float, default=EMBEDDING_COSINE_MIN
+    )
     parser.add_argument(
         "--max-report", type=int, default=20, help="출력할 실패 Operator 개수"
     )
@@ -358,8 +390,11 @@ def main(argv: list[str] | None = None) -> int:
                 tag,
                 args.ort_dir,
                 args.c_dir,
+                static_dir=args.static_dir,
+                graph_dir=args.graph_dir,
                 float_atol=args.float_atol,
                 float_rtol=args.float_rtol,
+                embedding_cosine_min=args.embedding_cosine_min,
             )
         except (OSError, ValueError, RuntimeComparisonError) as exc:
             print(f"[{frames} frames] comparison failed: {exc}", file=sys.stderr)

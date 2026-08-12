@@ -1,19 +1,57 @@
 # Phase 3: Reference Runtime
 
-이 폴더에는 `src/python/runtime_bundle_exporter/`와 `src/c/runtime/`를 순서대로 실행하는 얇은 CLI와 shell script만 둔다. 모델 변환 로직이나 C kernel 구현을 이 폴더에 직접 작성하지 않는다.
+이 폴더의 스크립트는 `src/python/runtime_bundle_exporter/`와
+`src/c/runtime/`의 기능을 순서대로 호출한다. 모델 변환이나 kernel 계산을
+스크립트에 다시 구현하지 않는다.
 
-## 예정 실행 순서
+## 수동 재현: 다섯 명령
 
-1. `01_export_reference_bundle.py`
-   - 정적 ONNX와 graph IR을 읽는다.
-   - `weights.bin`, bucket별 `plan_*.bin`, `manifest.json`을 생성한다.
-2. `02_dump_ort_references.py`
-   - 동일 입력에 대한 ORT 중간 Tensor와 최종 embedding을 저장한다.
-3. `03_build_reference_runtime.sh`
-   - Arduino에서 CMake로 Reference Runtime을 빌드한다.
-4. `04_run_reference_runtime.sh`
-   - 1, 3, 5, 10초 bucket을 C Runtime으로 실행한다.
-5. `05_compare_runtime_outputs.py`
-   - ORT와 C Runtime 출력을 비교하고 첫 불일치 operator를 찾는다.
+기존 `models/compiled/reference`를 보호하기 위해 별도 작업 폴더를 사용한다.
 
-스크립트가 생성하는 원시 출력은 `runs/runtime/`, 통과 결과와 보고서는 `results/runtime/`에 저장한다.
+```bash
+RUN_ROOT="$PWD/runs/runtime/pipelines/manual-reference"
+
+python3 scripts/3_runtime/01_export_reference_bundle.py --output-dir "$RUN_ROOT/bundle"
+python3 scripts/3_runtime/02_dump_ort_references.py --output-dir "$RUN_ROOT/ort_reference" --buckets 98 298 498 998
+BUILD_DIR="$RUN_ROOT/build" bash scripts/3_runtime/03_build_reference_runtime.sh
+BUILD_DIR="$RUN_ROOT/build" BUNDLE_DIR="$RUN_ROOT/bundle" ORT_DIR="$RUN_ROOT/ort_reference" OUT_DIR="$RUN_ROOT/c_reference" BUCKETS="98 298 498 998" bash scripts/3_runtime/04_run_reference_runtime.sh
+python3 scripts/3_runtime/05_compare_runtime_outputs.py --ort-dir "$RUN_ROOT/ort_reference" --c-dir "$RUN_ROOT/c_reference" --results-dir "$RUN_ROOT/results" --buckets 98 298 498 998
+```
+
+위 순서는 bundle 생성, ORT 정답, C build, C 실행, 수치 비교를 재현한다.
+
+## 자동 재현: 06
+
+먼저 실행할 명령과 경로만 확인한다. 이 명령은 파일을 만들지 않는다.
+
+```bash
+python3 scripts/3_runtime/06_run_reference_pipeline.py \
+  --config configs/runtime/reference.json \
+  --dry-run
+```
+
+전체 파이프라인 실행:
+
+```bash
+python3 scripts/3_runtime/06_run_reference_pipeline.py \
+  --config configs/runtime/reference.json
+```
+
+매 실행은 다음과 같은 고유 UTC timestamp 폴더에 저장된다.
+
+```text
+runs/runtime/pipelines/reference/reference-YYYYMMDDTHHMMSSZ/
+├── bundle/
+├── ort_reference/
+├── build/
+├── c_reference/
+├── results/
+│   └── verification_report.json
+├── resolved_config.json
+└── pipeline_summary.json
+```
+
+`06`은 `models/compiled/reference`에 쓰지 않으며 실행 전후 SHA-256 snapshot이
+같은지도 확인한다. 같은 `--run-id`를 재사용하려면 `--resume`을 명시해야 한다.
+검증된 staging bundle을 canonical 위치로 배포하는 기능은 의도적으로 포함하지
+않았다.
