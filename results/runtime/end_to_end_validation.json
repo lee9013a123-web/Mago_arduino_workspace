@@ -1,24 +1,23 @@
 {
   "schema_version": 1,
-  "baseline_id": "campp-reference-v1-b4092e6bfdcf5443",
+  "baseline_id": "campp-reference-v1-c7dc2bd1ce91c061",
   "source_revision": {
-    "sha": "23f4f504c99aa257dd0d300021ebd112976b863f",
-    "commit_time": "2026-08-12T12:09:47+09:00",
+    "sha": "f48cb50604a1df4ba28f8972509e526e98c2405d",
+    "commit_time": "2026-08-12T15:18:04+09:00",
     "worktree_clean_excluding_generated_reports": false,
     "worktree_changes_excluding_generated_reports": [
-      "M results/runtime/README.md",
-      " M scripts/3_runtime/README.md",
-      "?? scripts/3_runtime/07_freeze_reference_results.py",
-      "?? src/python/runtime_bundle_exporter/reporting/__init__.py",
-      "?? src/python/runtime_bundle_exporter/reporting/reference_result_freezer.py",
-      "?? tests/runtime/test_reference_result_freezer.py"
+      "M results/runtime/end_to_end_298.json",
+      "?? results/runtime/end_to_end_498.json",
+      "?? results/runtime/end_to_end_98.json",
+      "?? results/runtime/end_to_end_998.json",
+      "?? results/runtime/end_to_end_summary.json"
     ]
   },
   "model": {
     "canonical_path": "models/source/campplus_int8_static_qop.onnx",
     "canonical_sha256": "1ea9a4806a3c410046e7e785cfa81fb1393550b2f016b1e94581056b1c092048",
     "manifest_path": "models/compiled/reference/manifest.json",
-    "manifest_sha256": "22291304a4ab54b4a95980d0dac2a9b90cdd1bdf9fa33c72043d88f45948de34",
+    "manifest_sha256": "daf8c54abc2e62ba66c84e706f311c68d4bb8fdbec392be760b4d36e6712aaed",
     "weights_path": "models/compiled/reference/weights.bin",
     "weights_sha256": "595d308c035eccbd338eeba72a7b3b23dd878878cf74418f0730bf60264aecb9",
     "binary_format_version": 1,
@@ -77,9 +76,9 @@
       "executed_operator_count": 1438,
       "execution_passed": true,
       "execution_evidence": {
-        "kind": "inferred_from_complete_runtime_tensor_dump_comparison",
-        "path": "results/runtime/compare_98.json",
-        "sha256": "fb28910b8b02b00f0f43f8a9cfa0a30b40e4c62543cd0b5569fdb1352138c164"
+        "kind": "dedicated_end_to_end_report",
+        "path": "results/runtime/end_to_end_98.json",
+        "sha256": "334d8b20f07dd0024ca664c734ddb2826bf0c68ea474e725c3592bac4f85ce38"
       },
       "compared_tensors": 1438,
       "failed_tensors": 0,
@@ -330,7 +329,7 @@
       "execution_evidence": {
         "kind": "dedicated_end_to_end_report",
         "path": "results/runtime/end_to_end_298.json",
-        "sha256": "0a1810c28f58289d153800231c693fc99d1cf4c58da446e6c574437d9d86115d"
+        "sha256": "7c08fd806703d8a726e646f5d6ab29bae82a529a0363df0669377ca5f01cc405"
       },
       "compared_tensors": 1438,
       "failed_tensors": 0,
@@ -579,9 +578,9 @@
       "executed_operator_count": 1438,
       "execution_passed": true,
       "execution_evidence": {
-        "kind": "inferred_from_complete_runtime_tensor_dump_comparison",
-        "path": "results/runtime/compare_498.json",
-        "sha256": "000e93fa71cb024663df34bec7255741a206031334cd072a4f59922dbb1a5669"
+        "kind": "dedicated_end_to_end_report",
+        "path": "results/runtime/end_to_end_498.json",
+        "sha256": "f1ab76a3fb5469b7eac2374b9b16ea7cd377661eef8b4e7e320dc1f3724d49e3"
       },
       "compared_tensors": 1438,
       "failed_tensors": 0,
@@ -830,9 +829,9 @@
       "executed_operator_count": 1438,
       "execution_passed": true,
       "execution_evidence": {
-        "kind": "inferred_from_complete_runtime_tensor_dump_comparison",
-        "path": "results/runtime/compare_998.json",
-        "sha256": "31211cdc6a7e5a88953a2ad55168f4b8622d8b1d97893e31662380f27f019322"
+        "kind": "dedicated_end_to_end_report",
+        "path": "results/runtime/end_to_end_998.json",
+        "sha256": "3acbd0cefbdb3d90c4d145c378fe9b469cf85cbe646ba18f95d74140e3232162"
       },
       "compared_tensors": 1438,
       "failed_tensors": 1059,
@@ -1114,18 +1113,45 @@
   ],
   "all_buckets_executed": true,
   "all_buckets_numerically_passed": false,
-  "dedicated_end_to_end_reports_complete": false,
+  "dedicated_end_to_end_reports_complete": true,
   "cross_bucket_rejection": {
-    "recorded": false,
-    "passed": false,
-    "reason": "end_to_end_summary.json이 없어 잘못된 bucket 입력 거부 증거를 고정하지 못했습니다",
-    "checks": []
+    "recorded": true,
+    "passed": true,
+    "checks": [
+      {
+        "plan_frames": 98,
+        "feature_frames": 298,
+        "status": "BUCKET_MISMATCH",
+        "rejected": true
+      },
+      {
+        "plan_frames": 298,
+        "feature_frames": 498,
+        "status": "BUCKET_MISMATCH",
+        "rejected": true
+      },
+      {
+        "plan_frames": 498,
+        "feature_frames": 998,
+        "status": "BUCKET_MISMATCH",
+        "rejected": true
+      },
+      {
+        "plan_frames": 998,
+        "feature_frames": 98,
+        "status": "BUCKET_MISMATCH",
+        "rejected": true
+      }
+    ],
+    "errors": [],
+    "source": {
+      "path": "results/runtime/end_to_end_summary.json",
+      "sha256": "b730170b4638c7db8f994b39fd14995a6686b13079fa81047315f3ed95e9c654"
+    }
   },
   "phase4_ready": false,
   "phase4_blockers": [
     "수치 허용 기준을 통과하지 못한 bucket이 있습니다: [998].",
-    "네 bucket의 전용 end_to_end_*.json이 모두 고정되지 않았습니다. 없는 bucket은 전체 Tensor dump 비교로 실행 완료를 추론했습니다.",
-    "잘못된 frame 수를 BUCKET_MISMATCH로 거부한 증거가 고정되지 않았습니다.",
     "생성 보고서를 제외한 Git working tree가 깨끗하지 않습니다."
   ]
 }
