@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""298-frame CAM++ Reference Runtime end-to-end validation.
+"""Run the same CAM++ C Reference Runtime binary with all four bucket plans.
 
-This module runs the C runtime with the same feature tensor used by ORT, compares
-every operator output, and then reports the graph boundaries that are useful when
-diagnosing a three-second inference failure.
+For each bucket this module executes the complete graph, compares all operator
+outputs with ORT, reports fixed graph boundaries, and writes a per-bucket JSON
+report.  It also verifies that a plan rejects a feature tensor from a different
+bucket with ``BUCKET_MISMATCH``.
 """
 
 from __future__ import annotations
@@ -21,12 +22,25 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[3]
-FRAMES = 298
-TAG = "3s"
-EXPECTED_INPUT_SHAPE = (1, 298, 80)
-EXPECTED_INPUT_BYTES = 1 * 298 * 80 * 4
+FEATURE_DIM = 80
+FLOAT32_BYTES = 4
 EXPECTED_OPERATOR_COUNT = 1438
 GOOD_STATUSES = {"exact", "within_tolerance"}
+
+
+@dataclass(frozen=True)
+class BucketSpec:
+    frames: int
+    tag: str
+
+
+BUCKETS = (
+    BucketSpec(98, "1s"),
+    BucketSpec(298, "3s"),
+    BucketSpec(498, "5s"),
+    BucketSpec(998, "10s"),
+)
+BUCKET_BY_FRAMES = {bucket.frames: bucket for bucket in BUCKETS}
 
 
 @dataclass(frozen=True)
@@ -39,70 +53,60 @@ class Checkpoint:
     tensor_name: str
 
 
-# These are graph boundaries, not arbitrary samples.  The IDs come from the
-# canonical 298-frame RuntimeGraph produced by the exporter.
+# Topology and Tensor IDs are identical in all four static buckets.  Only Tensor
+# shapes and the offsets of bucket-local constants differ between plans.
 CHECKPOINTS = (
     Checkpoint(
-        "input_transform",
-        "input transpose output",
-        0,
-        "TRANSPOSE",
-        2281,
+        "input_transform", "input transpose output", 0, "TRANSPOSE", 2281,
         "/Transpose_output_0",
     ),
     Checkpoint(
-        "head",
-        "head output",
-        51,
-        "QUANTIZE_LINEAR",
-        2332,
+        "head", "head output", 51, "QUANTIZE_LINEAR", 2332,
         "/head/Reshape_output_0_quantized",
     ),
     Checkpoint(
-        "dense_block_1",
-        "Dense block 1 final concatenation",
-        366,
-        "CONCAT",
-        2647,
-        "/xvector/block1/Concat_11_output_0",
+        "dense_block_1", "Dense block 1 final concatenation", 366, "CONCAT",
+        2647, "/xvector/block1/Concat_11_output_0",
     ),
     Checkpoint(
-        "dense_block_2",
-        "Dense block 2 final concatenation",
-        995,
-        "CONCAT",
-        3276,
-        "/xvector/block2/Concat_23_output_0",
+        "dense_block_2", "Dense block 2 final concatenation", 995, "CONCAT",
+        3276, "/xvector/block2/Concat_23_output_0",
     ),
     Checkpoint(
-        "dense_block_3",
-        "Dense block 3 final concatenation",
-        1416,
-        "CONCAT",
-        3697,
-        "/xvector/block3/Concat_15_output_0",
+        "dense_block_3", "Dense block 3 final concatenation", 1416, "CONCAT",
+        3697, "/xvector/block3/Concat_15_output_0",
     ),
     Checkpoint(
-        "statistics_pooling",
-        "statistics pooling concatenated mean/std",
-        1431,
-        "CONCAT",
-        3712,
-        "/xvector/stats/Concat_output_0",
+        "statistics_pooling", "statistics pooling concatenated mean/std", 1431,
+        "CONCAT", 3712, "/xvector/stats/Concat_output_0",
     ),
     Checkpoint(
-        "embedding",
-        "final speaker embedding",
-        1437,
-        "BATCH_NORMALIZATION",
-        3718,
-        "embedding",
+        "embedding", "final speaker embedding", 1437, "BATCH_NORMALIZATION",
+        3718, "embedding",
     ),
 )
 
 
 class EndToEndError(RuntimeError):
-    """The end-to-end test inputs or generated dump are inconsistent."""
+    """The multi-bucket test inputs or generated dumps are inconsistent."""
+
+
+def bucket_spec(frames: int) -> BucketSpec:
+    try:
+        return BUCKET_BY_FRAMES[frames]
+    except KeyError as exc:
+        supported = ", ".join(str(bucket.frames) for bucket in BUCKETS)
+        raise EndToEndError(
+            f"unsupported bucket {frames}; supported buckets: {supported}"
+        ) from exc
+
+
+def input_shape(frames: int) -> tuple[int, int, int]:
+    return (1, frames, FEATURE_DIM)
+
+
+def expected_input_bytes(frames: int) -> int:
+    return frames * FEATURE_DIM * FLOAT32_BYTES
 
 
 def _load_comparator():
@@ -120,37 +124,58 @@ def _default_dump_tool() -> Path:
     if os.name == "nt":
         candidates = [
             ROOT / "build" / "campp_reference_dump.exe",
+            ROOT / "build" / "runtime_phase17" / "campp_reference_dump.exe",
             ROOT / "build" / "runtime_phase15" / "campp_reference_dump.exe",
         ]
     return next((path for path in candidates if path.is_file()), candidates[0])
 
 
-def _required_source_files(ort_dir: Path) -> tuple[Path, ...]:
+def _plan_path(bundle_dir: Path, frames: int) -> Path:
+    return bundle_dir / "execution_plans" / f"plan_{frames}.bin"
+
+
+def _feature_path(ort_dir: Path, frames: int) -> Path:
+    return ort_dir / f"feature_{frames}.f32"
+
+
+def _required_source_files(bucket: BucketSpec, ort_dir: Path) -> tuple[Path, ...]:
     return (
-        ROOT / "results" / "static" / "campp_static_298.onnx",
-        ROOT / "results" / "graph" / "ir_3s.json",
-        ort_dir / "ort_298.npz",
+        ROOT / "results" / "static" / f"campp_static_{bucket.frames}.onnx",
+        ROOT / "results" / "graph" / f"ir_{bucket.tag}.json",
+        ort_dir / f"ort_{bucket.frames}.npz",
     )
 
 
+def _validate_feature(feature: Path, frames: int) -> None:
+    if not feature.is_file():
+        raise EndToEndError(f"feature input is missing: {feature}")
+    actual = feature.stat().st_size
+    expected = expected_input_bytes(frames)
+    if actual != expected:
+        raise EndToEndError(
+            f"feature size is {actual} bytes; FLOAT32{input_shape(frames)} "
+            f"requires {expected} bytes"
+        )
+
+
 def _run_c_runtime(
+    bucket: BucketSpec,
     dump_tool: Path,
     plan: Path,
     weights: Path,
     feature: Path,
     output_prefix: Path,
 ) -> None:
-    required = (dump_tool, plan, weights, feature)
+    required = (dump_tool, plan, weights)
     missing = [str(path) for path in required if not path.is_file()]
     if missing:
-        raise EndToEndError("required runtime files are missing:\n  " + "\n  ".join(missing))
-    if feature.stat().st_size != EXPECTED_INPUT_BYTES:
         raise EndToEndError(
-            f"feature size is {feature.stat().st_size} bytes; "
-            f"{EXPECTED_INPUT_SHAPE} FLOAT32 requires {EXPECTED_INPUT_BYTES} bytes"
+            "required runtime files are missing:\n  " + "\n  ".join(missing)
         )
+    _validate_feature(feature, bucket.frames)
 
     output_prefix.parent.mkdir(parents=True, exist_ok=True)
+    print(f"[{bucket.frames} frames] C Reference Runtime start", flush=True)
     completed = subprocess.run(
         [str(dump_tool), str(plan), str(weights), str(feature), str(output_prefix)],
         check=False,
@@ -164,10 +189,58 @@ def _run_c_runtime(
             f"stdout: {completed.stdout.strip()}\n"
             f"stderr: {completed.stderr.strip()}"
         )
+    print(f"[{bucket.frames} frames] C Reference Runtime complete", flush=True)
+
+
+def verify_bucket_mismatch(
+    *,
+    plan_bucket: BucketSpec,
+    feature_bucket: BucketSpec,
+    dump_tool: Path,
+    bundle_dir: Path,
+    ort_dir: Path,
+    output_prefix: Path,
+) -> dict:
+    """Run one wrong plan/input pair and require BUCKET_MISMATCH."""
+
+    if plan_bucket.frames == feature_bucket.frames:
+        raise EndToEndError("bucket mismatch check requires two different buckets")
+    plan = _plan_path(bundle_dir, plan_bucket.frames)
+    weights = bundle_dir / "weights.bin"
+    feature = _feature_path(ort_dir, feature_bucket.frames)
+    required = (dump_tool, plan, weights, feature)
+    missing = [str(path) for path in required if not path.is_file()]
+    if missing:
+        raise EndToEndError(
+            "bucket mismatch inputs are missing:\n  " + "\n  ".join(missing)
+        )
+    _validate_feature(feature, feature_bucket.frames)
+
+    output_prefix.parent.mkdir(parents=True, exist_ok=True)
+    completed = subprocess.run(
+        [str(dump_tool), str(plan), str(weights), str(feature), str(output_prefix)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    message = "\n".join((completed.stdout, completed.stderr)).strip()
+    rejected = completed.returncode != 0 and "BUCKET_MISMATCH" in message
+    if not rejected:
+        raise EndToEndError(
+            f"plan_{plan_bucket.frames} accepted feature_{feature_bucket.frames} "
+            "or returned the wrong error\n"
+            f"return code: {completed.returncode}\noutput: {message}"
+        )
+    return {
+        "plan_frames": plan_bucket.frames,
+        "feature_frames": feature_bucket.frames,
+        "status": "BUCKET_MISMATCH",
+        "rejected": True,
+    }
 
 
 def select_checkpoints(comparisons: list[dict]) -> list[dict]:
-    """Select and verify the seven fixed graph-boundary tensors."""
+    """Select and verify the seven stable graph-boundary tensors."""
 
     by_key = {
         (int(item["operator_id"]), int(item["tensor_id"])): item
@@ -218,10 +291,9 @@ def format_first_failure(failure: dict | None) -> str:
 
 def run_end_to_end(
     *,
+    bucket: BucketSpec,
     dump_tool: Path,
-    plan: Path,
-    weights: Path,
-    feature: Path,
+    bundle_dir: Path,
     ort_dir: Path,
     c_dir: Path,
     skip_runtime: bool = False,
@@ -229,8 +301,11 @@ def run_end_to_end(
     float_rtol: float = 1e-3,
     embedding_cosine_min: float = 0.999999,
 ) -> dict:
-    """Run 298-frame inference and return a serializable validation report."""
+    """Run one bucket and return its serializable numerical report."""
 
+    plan = _plan_path(bundle_dir, bucket.frames)
+    weights = bundle_dir / "weights.bin"
+    feature = _feature_path(ort_dir, bucket.frames)
     missing_inputs = [
         str(path) for path in (plan, weights, feature) if not path.is_file()
     ]
@@ -239,14 +314,12 @@ def run_end_to_end(
             "compiled model/input files are missing:\n  "
             + "\n  ".join(missing_inputs)
         )
-    if feature.stat().st_size != EXPECTED_INPUT_BYTES:
-        raise EndToEndError(
-            f"feature size is {feature.stat().st_size} bytes; "
-            f"{EXPECTED_INPUT_SHAPE} FLOAT32 requires {EXPECTED_INPUT_BYTES} bytes"
-        )
+    _validate_feature(feature, bucket.frames)
 
     missing_sources = [
-        str(path) for path in _required_source_files(ort_dir) if not path.is_file()
+        str(path)
+        for path in _required_source_files(bucket, ort_dir)
+        if not path.is_file()
     ]
     if missing_sources:
         raise EndToEndError(
@@ -254,13 +327,16 @@ def run_end_to_end(
             + "\n  ".join(missing_sources)
         )
 
-    output_prefix = c_dir / "c_298"
+    output_prefix = c_dir / f"c_{bucket.frames}"
     if not skip_runtime:
-        _run_c_runtime(dump_tool, plan, weights, feature, output_prefix)
+        _run_c_runtime(bucket, dump_tool, plan, weights, feature, output_prefix)
     else:
         missing_dump = [
             str(path)
-            for path in (output_prefix.with_suffix(".bin"), output_prefix.with_suffix(".json"))
+            for path in (
+                output_prefix.with_suffix(".bin"),
+                output_prefix.with_suffix(".json"),
+            )
             if not path.is_file()
         ]
         if missing_dump:
@@ -271,9 +347,10 @@ def run_end_to_end(
 
     comparator = _load_comparator()
     c_index, _ = comparator.load_c_dump(output_prefix)
-    if int(c_index.get("bucket_frames", -1)) != FRAMES:
+    if int(c_index.get("bucket_frames", -1)) != bucket.frames:
         raise EndToEndError(
-            f"C dump bucket is {c_index.get('bucket_frames')}, expected {FRAMES}"
+            f"C dump bucket is {c_index.get('bucket_frames')}, "
+            f"expected {bucket.frames}"
         )
     operator_count = int(c_index.get("operator_count", -1))
     executed = int(c_index.get("executed", -1))
@@ -284,8 +361,8 @@ def run_end_to_end(
         )
 
     summary, comparisons = comparator.compare_bucket(
-        FRAMES,
-        TAG,
+        bucket.frames,
+        bucket.tag,
         ort_dir,
         c_dir,
         float_atol=float_atol,
@@ -308,7 +385,7 @@ def run_end_to_end(
         for entry in checkpoints
     )
     comparison_count_ok = int(summary["compared_tensors"]) == operator_count
-    passed = bool(
+    numerical_passed = bool(
         summary["all_match"]
         and comparison_count_ok
         and all_checkpoints_match
@@ -342,18 +419,21 @@ def run_end_to_end(
         )
 
     return {
-        "phase": 16,
-        "bucket_frames": FRAMES,
+        "phase": 17,
+        "bucket_frames": bucket.frames,
+        "bucket_tag": bucket.tag,
         "input": {
             "path": str(feature),
             "dtype": "FLOAT32",
-            "shape": list(EXPECTED_INPUT_SHAPE),
+            "shape": list(input_shape(bucket.frames)),
             "byte_size": feature.stat().st_size,
         },
         "plan": str(plan),
         "weights": str(weights),
+        "runtime_binary": str(dump_tool),
         "operator_count": operator_count,
         "executed_operator_count": executed,
+        "execution_passed": executed == operator_count,
         "compared_tensors": int(summary["compared_tensors"]),
         "failed_tensors": int(summary["failed_tensors"]),
         "float_atol": float_atol,
@@ -362,13 +442,17 @@ def run_end_to_end(
         "embedding": embedding,
         "checkpoints": checkpoints,
         "first_failure": first_failure,
-        "passed": passed,
+        "numerical_passed": numerical_passed,
+        # Backward-compatible name used by the former Phase 16 report.
+        "passed": numerical_passed,
     }
 
 
 def _print_report(report: dict) -> None:
+    frames = report["bucket_frames"]
     print(
-        f"[298 frames] {'PASS' if report['passed'] else 'FAIL'} "
+        f"[{frames} frames] "
+        f"{'PASS' if report['numerical_passed'] else 'NUMERICAL FAIL'} "
         f"operators={report['executed_operator_count']}/{report['operator_count']} "
         f"compared={report['compared_tensors']} failed={report['failed_tensors']}"
     )
@@ -384,7 +468,24 @@ def _print_report(report: dict) -> None:
     print(f"  first failure: {format_first_failure(report['first_failure'])}")
 
 
-class CheckpointDefinitionTests(unittest.TestCase):
+def _cyclic_mismatch_pairs(
+    buckets: tuple[BucketSpec, ...],
+) -> tuple[tuple[BucketSpec, BucketSpec], ...]:
+    if len(buckets) < 2:
+        return ()
+    return tuple(
+        (bucket, buckets[(index + 1) % len(buckets)])
+        for index, bucket in enumerate(buckets)
+    )
+
+
+class BucketDefinitionTests(unittest.TestCase):
+    def test_all_supported_input_sizes_are_distinct(self) -> None:
+        self.assertEqual(
+            len({expected_input_bytes(bucket.frames) for bucket in BUCKETS}),
+            len(BUCKETS),
+        )
+
     def test_select_checkpoints_requires_exact_graph_boundaries(self) -> None:
         comparisons = [
             {
@@ -397,79 +498,104 @@ class CheckpointDefinitionTests(unittest.TestCase):
             for checkpoint in CHECKPOINTS
         ]
         selected = select_checkpoints(comparisons)
-        self.assertEqual([item["checkpoint"]["key"] for item in selected],
-                         [checkpoint.key for checkpoint in CHECKPOINTS])
+        self.assertEqual(
+            [item["checkpoint"]["key"] for item in selected],
+            [checkpoint.key for checkpoint in CHECKPOINTS],
+        )
+
+    def test_cyclic_mismatch_pairs_cover_every_plan_once(self) -> None:
+        pairs = _cyclic_mismatch_pairs(BUCKETS)
+        self.assertEqual(
+            {plan.frames for plan, _feature in pairs},
+            {bucket.frames for bucket in BUCKETS},
+        )
+        self.assertTrue(
+            all(plan.frames != feature.frames for plan, feature in pairs)
+        )
 
 
 class ReferenceRuntimeEndToEndTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.dump_tool = _default_dump_tool()
-        cls.plan = ROOT / "models" / "compiled" / "reference" / "execution_plans" / "plan_298.bin"
-        cls.weights = ROOT / "models" / "compiled" / "reference" / "weights.bin"
-        cls.feature = ROOT / "runs" / "runtime" / "ort_reference" / "feature_298.f32"
+        cls.bundle_dir = ROOT / "models" / "compiled" / "reference"
         cls.ort_dir = ROOT / "runs" / "runtime" / "ort_reference"
-        required = (
-            cls.dump_tool,
-            cls.plan,
-            cls.weights,
-            cls.feature,
-            *_required_source_files(cls.ort_dir),
-        )
+        required = [cls.dump_tool, cls.bundle_dir / "weights.bin"]
+        for bucket in BUCKETS:
+            required.extend(
+                (
+                    _plan_path(cls.bundle_dir, bucket.frames),
+                    _feature_path(cls.ort_dir, bucket.frames),
+                    *_required_source_files(bucket, cls.ort_dir),
+                )
+            )
         missing = [path for path in required if not path.is_file()]
         if missing:
             raise unittest.SkipTest(
-                "integration artifacts are not present: "
+                "multi-bucket integration artifacts are not present: "
                 + ", ".join(str(path) for path in missing)
             )
-        cls.temporary = tempfile.TemporaryDirectory(prefix="campp_e2e_")
-        cls.report = run_end_to_end(
-            dump_tool=cls.dump_tool,
-            plan=cls.plan,
-            weights=cls.weights,
-            feature=cls.feature,
-            ort_dir=cls.ort_dir,
-            c_dir=Path(cls.temporary.name),
-        )
+
+        cls.temporary = tempfile.TemporaryDirectory(prefix="campp_e2e_buckets_")
+        cls.c_dir = Path(cls.temporary.name) / "c"
+        cls.reports = [
+            run_end_to_end(
+                bucket=bucket,
+                dump_tool=cls.dump_tool,
+                bundle_dir=cls.bundle_dir,
+                ort_dir=cls.ort_dir,
+                c_dir=cls.c_dir,
+            )
+            for bucket in BUCKETS
+        ]
 
     @classmethod
     def tearDownClass(cls) -> None:
         if hasattr(cls, "temporary"):
             cls.temporary.cleanup()
 
-    def test_three_second_graph_matches_ort(self) -> None:
-        self.assertTrue(
-            self.report["passed"],
-            format_first_failure(self.report["first_failure"]),
+    def test_same_binary_executes_all_four_plans(self) -> None:
+        self.assertEqual(
+            {report["bucket_frames"] for report in self.reports},
+            {bucket.frames for bucket in BUCKETS},
         )
+        self.assertEqual(
+            {report["runtime_binary"] for report in self.reports},
+            {str(self.dump_tool)},
+        )
+        for report in self.reports:
+            self.assertTrue(report["execution_passed"], report["bucket_frames"])
 
-    def test_all_graph_boundaries_match(self) -> None:
-        for entry in self.report["checkpoints"]:
-            self.assertIn(
-                entry["comparison"]["status"],
-                GOOD_STATUSES,
-                entry["checkpoint"]["key"],
-            )
+    def test_every_bucket_has_a_complete_comparison_report(self) -> None:
+        for report in self.reports:
+            self.assertEqual(report["compared_tensors"], EXPECTED_OPERATOR_COUNT)
+            self.assertEqual(len(report["checkpoints"]), len(CHECKPOINTS))
+            self.assertEqual(report["embedding"]["actual_shape"], [1, 192])
 
-    def test_embedding_shape_and_cosine(self) -> None:
-        embedding = self.report["embedding"]
-        self.assertEqual(embedding["actual_shape"], [1, 192])
-        self.assertGreaterEqual(embedding["cosine_similarity"], 0.999999)
+    def test_wrong_bucket_inputs_are_rejected(self) -> None:
+        for plan_bucket, feature_bucket in _cyclic_mismatch_pairs(BUCKETS):
+            with self.subTest(
+                plan=plan_bucket.frames, feature=feature_bucket.frames
+            ):
+                result = verify_bucket_mismatch(
+                    plan_bucket=plan_bucket,
+                    feature_bucket=feature_bucket,
+                    dump_tool=self.dump_tool,
+                    bundle_dir=self.bundle_dir,
+                    ort_dir=self.ort_dir,
+                    output_prefix=(
+                        Path(self.temporary.name)
+                        / f"wrong_{plan_bucket.frames}_{feature_bucket.frames}"
+                    ),
+                )
+                self.assertTrue(result["rejected"])
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    bundle = ROOT / "models" / "compiled" / "reference"
+    default_bundle = ROOT / "models" / "compiled" / "reference"
     parser.add_argument("--dump-tool", type=Path, default=_default_dump_tool())
-    parser.add_argument(
-        "--plan", type=Path,
-        default=bundle / "execution_plans" / "plan_298.bin",
-    )
-    parser.add_argument("--weights", type=Path, default=bundle / "weights.bin")
-    parser.add_argument(
-        "--feature", type=Path,
-        default=ROOT / "runs" / "runtime" / "ort_reference" / "feature_298.f32",
-    )
+    parser.add_argument("--bundle-dir", type=Path, default=default_bundle)
     parser.add_argument(
         "--ort-dir", type=Path,
         default=ROOT / "runs" / "runtime" / "ort_reference",
@@ -479,37 +605,151 @@ def main(argv: list[str] | None = None) -> int:
         default=ROOT / "runs" / "runtime" / "c_reference",
     )
     parser.add_argument(
-        "--result", type=Path,
-        default=ROOT / "results" / "runtime" / "end_to_end_298.json",
+        "--results-dir", type=Path,
+        default=ROOT / "results" / "runtime",
+    )
+    parser.add_argument(
+        "--buckets",
+        type=int,
+        nargs="+",
+        default=[bucket.frames for bucket in BUCKETS],
     )
     parser.add_argument("--skip-runtime", action="store_true")
+    parser.add_argument("--skip-cross-bucket-check", action="store_true")
     parser.add_argument("--float-atol", type=float, default=1e-4)
     parser.add_argument("--float-rtol", type=float, default=1e-3)
     parser.add_argument("--embedding-cosine-min", type=float, default=0.999999)
     args = parser.parse_args(argv)
 
     try:
-        report = run_end_to_end(
-            dump_tool=args.dump_tool,
-            plan=args.plan,
-            weights=args.weights,
-            feature=args.feature,
-            ort_dir=args.ort_dir,
-            c_dir=args.c_dir,
-            skip_runtime=args.skip_runtime,
-            float_atol=args.float_atol,
-            float_rtol=args.float_rtol,
-            embedding_cosine_min=args.embedding_cosine_min,
-        )
-    except (EndToEndError, OSError, ValueError, ImportError) as exc:
+        selected = tuple(bucket_spec(frames) for frames in args.buckets)
+    except EndToEndError as exc:
         print(f"end-to-end validation could not run: {exc}", file=sys.stderr)
         return 2
+    if len({bucket.frames for bucket in selected}) != len(selected):
+        print("each --buckets value must be unique", file=sys.stderr)
+        return 2
 
-    args.result.parent.mkdir(parents=True, exist_ok=True)
-    args.result.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    _print_report(report)
-    print(f"  report: {args.result}")
-    return 0 if report["passed"] else 1
+    args.results_dir.mkdir(parents=True, exist_ok=True)
+    reports: list[dict] = []
+    errors: list[dict] = []
+    for bucket in selected:
+        try:
+            report = run_end_to_end(
+                bucket=bucket,
+                dump_tool=args.dump_tool,
+                bundle_dir=args.bundle_dir,
+                ort_dir=args.ort_dir,
+                c_dir=args.c_dir,
+                skip_runtime=args.skip_runtime,
+                float_atol=args.float_atol,
+                float_rtol=args.float_rtol,
+                embedding_cosine_min=args.embedding_cosine_min,
+            )
+        except (EndToEndError, OSError, ValueError, ImportError) as exc:
+            print(f"[{bucket.frames} frames] ERROR: {exc}", file=sys.stderr)
+            errors.append({"bucket_frames": bucket.frames, "error": str(exc)})
+            continue
+        reports.append(report)
+        result_path = args.results_dir / f"end_to_end_{bucket.frames}.json"
+        result_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+        _print_report(report)
+        print(f"  report: {result_path}")
+
+    mismatch_results: list[dict] = []
+    mismatch_errors: list[dict] = []
+    if not args.skip_cross_bucket_check:
+        for plan_bucket, feature_bucket in _cyclic_mismatch_pairs(selected):
+            try:
+                result = verify_bucket_mismatch(
+                    plan_bucket=plan_bucket,
+                    feature_bucket=feature_bucket,
+                    dump_tool=args.dump_tool,
+                    bundle_dir=args.bundle_dir,
+                    ort_dir=args.ort_dir,
+                    output_prefix=(
+                        args.c_dir
+                        / f"wrong_{plan_bucket.frames}_{feature_bucket.frames}"
+                    ),
+                )
+            except (EndToEndError, OSError, ValueError) as exc:
+                print(
+                    f"[plan {plan_bucket.frames} / feature "
+                    f"{feature_bucket.frames}] ERROR: {exc}",
+                    file=sys.stderr,
+                )
+                mismatch_errors.append(
+                    {
+                        "plan_frames": plan_bucket.frames,
+                        "feature_frames": feature_bucket.frames,
+                        "error": str(exc),
+                    }
+                )
+                continue
+            mismatch_results.append(result)
+            print(
+                f"[plan {plan_bucket.frames} / feature {feature_bucket.frames}] "
+                "BUCKET_MISMATCH"
+            )
+
+    selected_execution_passed = (
+        len(reports) == len(selected)
+        and not errors
+        and all(report["execution_passed"] for report in reports)
+    )
+    cross_check_expected = len(_cyclic_mismatch_pairs(selected))
+    cross_check_passed = (
+        not args.skip_cross_bucket_check
+        and len(mismatch_results) == cross_check_expected
+        and not mismatch_errors
+    )
+    all_four_selected = {bucket.frames for bucket in selected} == {
+        bucket.frames for bucket in BUCKETS
+    }
+    phase17_passed = bool(
+        all_four_selected and selected_execution_passed and cross_check_passed
+    )
+    summary = {
+        "phase": 17,
+        "runtime_binary": str(args.dump_tool),
+        "shared_weights": str(args.bundle_dir / "weights.bin"),
+        "selected_buckets": [bucket.frames for bucket in selected],
+        "bucket_results": [
+            {
+                "bucket_frames": report["bucket_frames"],
+                "execution_passed": report["execution_passed"],
+                "numerical_passed": report["numerical_passed"],
+                "failed_tensors": report["failed_tensors"],
+                "embedding_cosine_similarity": report["embedding"].get(
+                    "cosine_similarity"
+                ),
+            }
+            for report in reports
+        ],
+        "errors": errors,
+        "bucket_mismatch_checks": mismatch_results,
+        "bucket_mismatch_errors": mismatch_errors,
+        "selected_execution_passed": selected_execution_passed,
+        "cross_bucket_rejection_passed": cross_check_passed,
+        "cross_bucket_rejection_skipped": args.skip_cross_bucket_check,
+        "all_numerically_passed": bool(
+            reports and all(report["numerical_passed"] for report in reports)
+        ),
+        "phase17_passed": phase17_passed,
+    }
+    summary_path = args.results_dir / "end_to_end_summary.json"
+    summary_path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+    print()
+    print(
+        "Phase 17: "
+        f"{'PASS' if phase17_passed else 'INCOMPLETE'} "
+        f"executed={len(reports)}/{len(selected)} "
+        f"cross_bucket={'PASS' if cross_check_passed else 'FAIL'} "
+        f"numerical={'PASS' if summary['all_numerically_passed'] else 'CHECK'}"
+    )
+    print(f"summary: {summary_path}")
+    return 0 if phase17_passed else 1
 
 
 if __name__ == "__main__":

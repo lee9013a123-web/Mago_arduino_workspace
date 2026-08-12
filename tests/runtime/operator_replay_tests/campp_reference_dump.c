@@ -53,6 +53,66 @@ static int read_entire_file(const char *path, uint8_t **out_data, size_t *out_si
     return 0;
 }
 
+/*
+ * Raw feature files do not carry shape metadata.  When their byte size differs
+ * from the selected plan, derive the provided frame count from the one axis
+ * whose descriptor dimension equals bucket_frames.  bind_input can then return
+ * BUCKET_MISMATCH instead of the command-line harness hiding it behind a generic
+ * file-size error.
+ */
+static int infer_input_dimensions(
+    const CamppRuntimeModel *model,
+    const CamppTensorDescriptor *descriptor,
+    size_t input_size,
+    uint32_t dimensions[CAMPP_TENSOR_MAX_RANK])
+{
+    const uint32_t element_size = campp_dtype_byte_size(descriptor->dtype);
+    uint64_t fixed_elements = 1u;
+    uint64_t bytes_per_frame;
+    uint64_t provided_frames;
+    uint8_t time_axis = 0u;
+    uint8_t time_axis_count = 0u;
+    uint8_t axis;
+
+    if (model == NULL || descriptor == NULL || dimensions == NULL ||
+        element_size == 0u) {
+        return 1;
+    }
+    for (axis = 0u; axis < CAMPP_TENSOR_MAX_RANK; ++axis) {
+        dimensions[axis] = descriptor->dimensions[axis];
+    }
+    if ((uint64_t)input_size == descriptor->storage_span_bytes) {
+        return 0;
+    }
+
+    for (axis = 0u; axis < descriptor->rank; ++axis) {
+        const uint32_t dimension = descriptor->dimensions[axis];
+        if (dimension == model->bucket_frames) {
+            time_axis = axis;
+            time_axis_count += 1u;
+            continue;
+        }
+        if (dimension == 0u || fixed_elements > UINT64_MAX / dimension) {
+            return 1;
+        }
+        fixed_elements *= dimension;
+    }
+    if (time_axis_count != 1u ||
+        fixed_elements > UINT64_MAX / element_size) {
+        return 1;
+    }
+    bytes_per_frame = fixed_elements * element_size;
+    if (bytes_per_frame == 0u || (uint64_t)input_size % bytes_per_frame != 0u) {
+        return 1;
+    }
+    provided_frames = (uint64_t)input_size / bytes_per_frame;
+    if (provided_frames == 0u || provided_frames > UINT32_MAX) {
+        return 1;
+    }
+    dimensions[time_axis] = (uint32_t)provided_frames;
+    return 0;
+}
+
 /* view를 논리적 C 순서로 모아 file에 쓴다. 비연속 VIEW도 dense로 펴진다. */
 static int write_dense_payload(FILE *sink, const CamppTensorView *view)
 {
@@ -83,6 +143,7 @@ int main(int argc, char **argv)
     CamppRuntimeContext context;
     const CamppKernelRegistry *registry = campp_cpu_reference_registry();
     const CamppTensorDescriptor *input_descriptor;
+    uint32_t input_dimensions[CAMPP_TENSOR_MAX_RANK];
     uint32_t input_tensor_id;
     uint8_t *input_data = NULL;
     size_t input_size = 0u;
@@ -131,9 +192,11 @@ int main(int argc, char **argv)
         campp_runtime_model_release(&model);
         return 1;
     }
-    if (input_size != (size_t)input_descriptor->storage_span_bytes) {
+    if (infer_input_dimensions(
+            &model, input_descriptor, input_size, input_dimensions) != 0) {
         fprintf(stderr,
-                "input size mismatch: file %zu bytes, plan expects %" PRIu64 "\n",
+                "cannot derive input shape: file %zu bytes, plan expects %" PRIu64
+                "\n",
                 input_size, input_descriptor->storage_span_bytes);
         free(input_data);
         campp_runtime_context_release(&context);
@@ -144,7 +207,7 @@ int main(int argc, char **argv)
     status = campp_runtime_context_bind_input(
         &context, input_tensor_id, input_data, input_size,
         input_descriptor->dtype, input_descriptor->rank,
-        input_descriptor->dimensions);
+        input_dimensions);
     if (status != CAMPP_STATUS_OK) {
         fprintf(stderr, "input bind failed: %s\n", campp_status_name(status));
         free(input_data);
