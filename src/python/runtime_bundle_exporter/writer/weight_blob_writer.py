@@ -26,9 +26,9 @@ import hashlib
 from pathlib import Path
 from typing import Mapping, Sequence
 
-from .binary_format_schema import TensorDType
-from .runtime_ir import InitializerScope, RuntimeBundle, RuntimeInitializer
-from .tensor_table_builder import WeightBlobEntry, WeightBlobLayout
+from ..format.binary_format_schema import TensorDType
+from ..runtime_ir import InitializerScope, RuntimeBundle, RuntimeInitializer
+from ..builder.tensor_table_builder import WeightBlobEntry, WeightBlobLayout
 
 
 WEIGHT_BLOB_FILE_NAME: str = "weights.bin"

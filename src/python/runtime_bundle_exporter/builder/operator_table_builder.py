@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Mapping
 
-from .binary_format_schema import (
+from ..format.binary_format_schema import (
     DEFAULT_KERNEL_ID,
     INVALID_TENSOR_ID,
     OPERATOR_DESCRIPTOR_SIZE,
@@ -30,7 +30,7 @@ from .binary_format_schema import (
     decode_attribute_block,
     encode_attribute_block,
 )
-from .runtime_ir import RuntimeGraph
+from ..runtime_ir import RuntimeGraph
 
 
 class OperatorTableError(ValueError):

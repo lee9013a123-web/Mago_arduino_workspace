@@ -80,8 +80,8 @@ def align_up(value: int, alignment: int = REPLAY_ALIGNMENT) -> int:
 def load_runtime_graph(frames: int, tag: str):
     if str(PYTHON_SOURCE) not in sys.path:
         sys.path.insert(0, str(PYTHON_SOURCE))
-    from runtime_bundle_exporter.graph_ir_reader import read_graph_ir
-    from runtime_bundle_exporter.static_model_reader import (
+    from runtime_bundle_exporter.reader.graph_ir_reader import read_graph_ir
+    from runtime_bundle_exporter.reader.static_model_reader import (
         build_runtime_graph,
         read_static_model,
     )

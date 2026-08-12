@@ -30,10 +30,10 @@ import os
 from pathlib import Path
 from typing import Sequence
 
-from .binary_format_schema import PLAN_FORMAT_VERSION
+from ..format.binary_format_schema import PLAN_FORMAT_VERSION
 from .execution_plan_writer import ExecutionPlanResult
-from .runtime_ir import RuntimeBundle
-from .tensor_table_builder import WeightBlobLayout
+from ..runtime_ir import RuntimeBundle
+from ..builder.tensor_table_builder import WeightBlobLayout
 from .weight_blob_writer import WeightBlobResult
 
 

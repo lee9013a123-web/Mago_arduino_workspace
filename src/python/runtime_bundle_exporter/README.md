@@ -14,15 +14,16 @@
 - `models/compiled/reference/execution_plans/plan_{98,298,498,998}.bin`
 - `models/compiled/reference/manifest.json`
 
-## 예정 모듈
+## 모듈 구조
 
-- `binary_format_schema.py`: Python과 C가 공유할 binary 필드 규격
-- `static_model_reader.py`: ONNX node, initializer, attribute 추출
-- `graph_ir_reader.py`: graph IR의 Tensor shape와 실행 순서 로딩
-- `tensor_table_builder.py`: Tensor ID와 descriptor 생성
-- `operator_table_builder.py`: runtime operator table 생성
-- `weight_blob_writer.py`: weights binary 직렬화
-- `execution_plan_writer.py`: bucket별 execution plan 직렬화
-- `bundle_manifest_writer.py`: 모델 hash와 산출물 checksum 기록
+- `format/binary_format_schema.py`: Python과 C가 공유할 binary 필드 규격
+- `reader/static_model_reader.py`: ONNX node, initializer, attribute 추출
+- `reader/graph_ir_reader.py`: graph IR의 Tensor shape와 실행 순서 로딩
+- `builder/tensor_table_builder.py`: Tensor ID와 descriptor 생성
+- `builder/operator_table_builder.py`: runtime operator table 생성
+- `writer/weight_blob_writer.py`: weights binary 직렬화
+- `writer/execution_plan_writer.py`: bucket별 execution plan 직렬화
+- `writer/bundle_manifest_writer.py`: 모델 hash와 산출물 checksum 기록
+- `runtime_ir.py`: ONNX와 독립적인 Runtime 자료구조
 
 CLI 인자 처리와 실행 순서는 `scripts/3_runtime/`에 두며, 재사용 가능한 변환 로직만 이 폴더에 둔다.

@@ -18,7 +18,7 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import TYPE_CHECKING, Mapping
 
-from .binary_format_schema import TensorDType
+from ..format.binary_format_schema import TensorDType
 
 if TYPE_CHECKING:  # pragma: no cover - 순환 import와 onnx 의존을 피한다
     from .static_model_reader import StaticModelView

@@ -13,7 +13,7 @@ import math
 from types import MappingProxyType
 from typing import Mapping, TypeAlias
 
-from .binary_format_schema import (
+from .format.binary_format_schema import (
     OPERATOR_INPUT_CAPACITY,
     OPERATOR_OUTPUT_CAPACITY,
     PLAN_FORMAT_VERSION,

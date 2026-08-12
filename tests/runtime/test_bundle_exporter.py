@@ -28,7 +28,7 @@ try:
 except ImportError:  # pragma: no cover - onnx 없는 환경
     ONNX_AVAILABLE = False
 
-from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
+from runtime_bundle_exporter.format.binary_format_schema import (  # noqa: E402
     INVALID_DATA_OFFSET,
     INVALID_TENSOR_ID,
     OPERATOR_DESCRIPTOR_SIZE,
@@ -45,13 +45,13 @@ from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
     TensorFlags,
     TensorStorageType,
 )
-from runtime_bundle_exporter.bundle_manifest_writer import (  # noqa: E402
+from runtime_bundle_exporter.writer.bundle_manifest_writer import (  # noqa: E402
     MANIFEST_FILE_NAME,
     BundleManifestError,
     verify_bundle_manifest,
     write_bundle_manifest,
 )
-from runtime_bundle_exporter.execution_plan_writer import (  # noqa: E402
+from runtime_bundle_exporter.writer.execution_plan_writer import (  # noqa: E402
     EXECUTION_PLAN_DIR_NAME,
     ExecutionPlanError,
     format_operator_dump,
@@ -62,7 +62,7 @@ from runtime_bundle_exporter.execution_plan_writer import (  # noqa: E402
     verify_plan,
     write_execution_plan,
 )
-from runtime_bundle_exporter.weight_blob_writer import (  # noqa: E402
+from runtime_bundle_exporter.writer.weight_blob_writer import (  # noqa: E402
     WEIGHT_BLOB_FILE_NAME,
     WeightBlobError,
     build_weight_blob,
@@ -70,18 +70,18 @@ from runtime_bundle_exporter.weight_blob_writer import (  # noqa: E402
     verify_weight_blob,
     write_weight_blob,
 )
-from runtime_bundle_exporter.graph_ir_reader import DTYPE_BYTE_SIZE  # noqa: E402
-from runtime_bundle_exporter.operator_table_builder import (  # noqa: E402
+from runtime_bundle_exporter.reader.graph_ir_reader import DTYPE_BYTE_SIZE  # noqa: E402
+from runtime_bundle_exporter.builder.operator_table_builder import (  # noqa: E402
     OperatorTableError,
     build_operator_table,
     validate_execution_order,
 )
-from runtime_bundle_exporter.tensor_table_builder import (  # noqa: E402
+from runtime_bundle_exporter.builder.tensor_table_builder import (  # noqa: E402
     WEIGHT_BLOB_ALIGNMENT,
     build_tensor_table,
     plan_weight_blob,
 )
-from runtime_bundle_exporter.graph_ir_reader import (  # noqa: E402
+from runtime_bundle_exporter.reader.graph_ir_reader import (  # noqa: E402
     GraphIRMismatchError,
     read_graph_ir,
 )
@@ -94,7 +94,7 @@ from runtime_bundle_exporter.runtime_ir import (  # noqa: E402
 )
 
 if ONNX_AVAILABLE:
-    from runtime_bundle_exporter.static_model_reader import (  # noqa: E402
+    from runtime_bundle_exporter.reader.static_model_reader import (  # noqa: E402
         build_runtime_graph,
         read_static_model,
     )

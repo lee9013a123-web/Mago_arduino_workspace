@@ -104,26 +104,26 @@ def _load_exporter_api() -> dict[str, object]:
         sys.path.insert(0, source)
 
     try:
-        from runtime_bundle_exporter.bundle_manifest_writer import (
+        from runtime_bundle_exporter.writer.bundle_manifest_writer import (
             MANIFEST_FILE_NAME,
             verify_bundle_manifest,
             write_bundle_manifest,
         )
-        from runtime_bundle_exporter.execution_plan_writer import (
+        from runtime_bundle_exporter.writer.execution_plan_writer import (
             EXECUTION_PLAN_DIR_NAME,
             plan_file_name,
             read_execution_plan,
             verify_plan,
             write_execution_plan,
         )
-        from runtime_bundle_exporter.graph_ir_reader import read_graph_ir
+        from runtime_bundle_exporter.reader.graph_ir_reader import read_graph_ir
         from runtime_bundle_exporter.runtime_ir import RuntimeBundle
-        from runtime_bundle_exporter.static_model_reader import (
+        from runtime_bundle_exporter.reader.static_model_reader import (
             build_runtime_graph,
             read_static_model,
         )
-        from runtime_bundle_exporter.tensor_table_builder import plan_weight_blob
-        from runtime_bundle_exporter.weight_blob_writer import (
+        from runtime_bundle_exporter.builder.tensor_table_builder import plan_weight_blob
+        from runtime_bundle_exporter.writer.weight_blob_writer import (
             WEIGHT_BLOB_FILE_NAME,
             read_weight_blob,
             verify_weight_blob,

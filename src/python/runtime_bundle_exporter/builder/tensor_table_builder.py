@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Mapping
 
-from .binary_format_schema import (
+from ..format.binary_format_schema import (
     INVALID_DATA_OFFSET,
     INVALID_OPERATOR_INDEX,
     INVALID_QUANTIZATION_INDEX,
@@ -36,7 +36,7 @@ from .binary_format_schema import (
     TensorFlags,
     TensorStorageType,
 )
-from .runtime_ir import InitializerScope, RuntimeBundle, RuntimeGraph, RuntimeTensor
+from ..runtime_ir import InitializerScope, RuntimeBundle, RuntimeGraph, RuntimeTensor
 
 
 # weights.bin의 모든 항목을 8바이트 경계에 두어 C가 int64까지 그대로 읽게 한다.

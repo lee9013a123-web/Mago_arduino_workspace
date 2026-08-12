@@ -10,7 +10,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src" / "python"))
 
-from runtime_bundle_exporter.binary_format_schema import (  # noqa: E402
+from runtime_bundle_exporter.format.binary_format_schema import (  # noqa: E402
     ATTRIBUTE_BLOCK_HEADER_SIZE,
     ATTRIBUTE_KEY_NAMES,
     ATTRIBUTE_MAX_VALUE_COUNT,

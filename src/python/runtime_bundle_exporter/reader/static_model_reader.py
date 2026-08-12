@@ -21,7 +21,7 @@ import numpy as np
 import onnx
 from onnx import AttributeProto, TensorProto, numpy_helper
 
-from .binary_format_schema import (
+from ..format.binary_format_schema import (
     OPERATOR_INPUT_CAPACITY,
     TENSOR_MAX_RANK,
     OperatorCode,
@@ -29,7 +29,7 @@ from .binary_format_schema import (
     TensorStorageType,
 )
 from .graph_ir_reader import DTYPE_BYTE_SIZE, GraphIRView, cross_validate
-from .runtime_ir import (
+from ..runtime_ir import (
     AttributeValue,
     InitializerScope,
     RuntimeGraph,

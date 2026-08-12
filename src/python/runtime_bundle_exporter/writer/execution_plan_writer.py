@@ -34,7 +34,7 @@ import hashlib
 from pathlib import Path
 from typing import Mapping
 
-from .binary_format_schema import (
+from ..format.binary_format_schema import (
     OPERATOR_DESCRIPTOR_SIZE,
     PLAN_HEADER_SIZE,
     PLAN_SECTION_ALIGNMENT,
@@ -49,9 +49,9 @@ from .binary_format_schema import (
     TensorStorageType,
     decode_attribute_block,
 )
-from .operator_table_builder import build_operator_table
-from .runtime_ir import RuntimeGraph
-from .tensor_table_builder import WeightBlobLayout, build_tensor_table
+from ..builder.operator_table_builder import build_operator_table
+from ..runtime_ir import RuntimeGraph
+from ..builder.tensor_table_builder import WeightBlobLayout, build_tensor_table
 
 
 PLAN_FILE_NAME_TEMPLATE: str = "plan_{frames}.bin"
