@@ -23,5 +23,7 @@ Arduino UNO Q의 QRB2210 Linux 영역에서 CAM++ 정적 실행 계획을 수행
 3. Tensor별 독립 buffer를 사용하는 reference storage
 4. 현재 정적 그래프에 존재하는 CPU Reference operator
 5. 중간 Tensor dump와 ORT 결과 비교 지원
+6. exporter의 정적 offset을 사용하는 단일 Tensor Arena
 
-`tensor_arena`, AArch64 NEON, fused kernel은 Reference Runtime이 ORT 검증을 통과한 다음 단계에서 추가한다.
+AArch64 NEON과 fused kernel은 Reference Runtime 및 Tensor Arena 결과를 기준으로
+다음 단계에서 추가한다.

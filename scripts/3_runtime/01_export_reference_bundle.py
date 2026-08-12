@@ -97,7 +97,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--arena-alignment",
         type=int,
         default=64,
-        help="Tensor Arena byte 정렬 (기본: 64)",
+        help="Tensor Arena byte 정렬. 현재 C Runtime ABI는 64만 지원 (기본: 64)",
     )
     parser.add_argument(
         "--arena-budget-bytes",
@@ -203,6 +203,10 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
     if not args.tensor_arena and args.arena_budget_bytes is not None:
         raise BundleExportCliError(
             "--arena-budget-bytes는 --tensor-arena와 함께 사용해야 한다"
+        )
+    if args.tensor_arena and args.arena_alignment != 64:
+        raise BundleExportCliError(
+            "현재 C Runtime의 Tensor Arena alignment는 64바이트로 고정되어 있다"
         )
 
     api = _load_exporter_api()

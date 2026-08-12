@@ -6,6 +6,7 @@
 #include <stdint.h>
 
 #include "memory_management/reference_tensor_storage.h"
+#include "memory_management/tensor_arena.h"
 
 static int campp_u64_multiply_overflows(uint64_t left, uint64_t right)
 {
@@ -190,7 +191,7 @@ CamppStatus campp_memory_bounds_check_tensor(
     }
 
     case CAMPP_TENSOR_STORAGE_ACTIVATION:
-    case CAMPP_TENSOR_STORAGE_OUTPUT:
+    case CAMPP_TENSOR_STORAGE_OUTPUT: {
         if (context->activations.buffers == NULL ||
             context->activations.buffer_sizes == NULL ||
             tensor_id >= context->activations.buffer_count ||
@@ -199,8 +200,36 @@ CamppStatus campp_memory_bounds_check_tensor(
                 descriptor->storage_span_bytes) {
             return CAMPP_STATUS_BUFFER_OVERFLOW;
         }
+        if (context->activations.mode == CAMPP_ACTIVATION_STORAGE_ARENA) {
+            const uint8_t *expected;
+            uint64_t end;
+
+            if ((descriptor->flags & CAMPP_TENSOR_FLAG_DENSE_SLAB) == 0u ||
+                descriptor->data_offset == CAMPP_INVALID_DATA_OFFSET ||
+                campp_u64_add_overflows(
+                    descriptor->data_offset,
+                    descriptor->storage_span_bytes)) {
+                return CAMPP_STATUS_CORRUPT_PLAN;
+            }
+            end = descriptor->data_offset + descriptor->storage_span_bytes;
+            if (context->activations.arena_base == NULL ||
+                end > (uint64_t)context->activations.arena_size) {
+                return CAMPP_STATUS_BUFFER_OVERFLOW;
+            }
+            expected = context->activations.arena_base +
+                       (size_t)descriptor->data_offset;
+            if ((const void *)view->data != (const void *)expected) {
+                return CAMPP_STATUS_BUFFER_OVERFLOW;
+            }
+            return campp_tensor_arena_check_guards(&context->activations);
+        }
+        if ((descriptor->flags & CAMPP_TENSOR_FLAG_DENSE_SLAB) != 0u ||
+            descriptor->data_offset != CAMPP_INVALID_DATA_OFFSET) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
         return campp_reference_tensor_storage_check_guard(
             &context->activations, tensor_id);
+    }
 
     case CAMPP_TENSOR_STORAGE_VIEW:
         return CAMPP_STATUS_NOT_IMPLEMENTED;
@@ -273,6 +302,9 @@ CamppStatus campp_memory_bounds_check_guards(
 {
     if (context == NULL) {
         return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+    if (context->activations.mode == CAMPP_ACTIVATION_STORAGE_ARENA) {
+        return campp_tensor_arena_check_guards(&context->activations);
     }
     return campp_reference_tensor_storage_check_all_guards(
         &context->activations);

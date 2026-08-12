@@ -122,6 +122,23 @@ CamppStatus campp_graph_execute_operator(
         return campp_graph_fail(context, kernel_status);
     }
 
+    /*
+     * Arena에서는 이 출력 주소가 이후 Tensor에 재사용될 수 있다. 진단 도구는
+     * 값이 살아 있는 지금 복사해야 하므로 Operator 완료 직후 callback을 부른다.
+     */
+    if (context->diagnostics.tensor_ready != NULL) {
+        for (slot = 0u; slot < operator_descriptor->output_count; ++slot) {
+            const uint32_t tensor_id =
+                operator_descriptor->output_tensor_ids[slot];
+            status = context->diagnostics.tensor_ready(
+                context->diagnostics.tensor_ready_user_data,
+                operator_id, tensor_id, &context->tensors[tensor_id]);
+            if (status != CAMPP_STATUS_OK) {
+                return campp_graph_fail(context, status);
+            }
+        }
+    }
+
     context->diagnostics.executed_operator_count += 1u;
     context->last_status = CAMPP_STATUS_OK;
     return CAMPP_STATUS_OK;

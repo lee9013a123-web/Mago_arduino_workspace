@@ -45,5 +45,11 @@ build_target campp_operator_replay \
     "${ROOT}/tests/runtime/operator_replay_tests/campp_operator_replay.c"
 build_target test_graph_executor \
     "${ROOT}/tests/runtime/operator_replay_tests/test_graph_executor.c"
+build_target test_memory_bounds \
+    "${ROOT}/tests/runtime/memory_safety_tests/test_memory_bounds.c"
+build_target test_tensor_arena \
+    "${ROOT}/tests/runtime/memory_safety_tests/test_tensor_arena.c"
+build_target test_tensor_arena_equivalence \
+    "${ROOT}/tests/runtime/memory_safety_tests/test_tensor_arena_equivalence.c"
 
 echo "빌드 완료: ${BUILD_DIR}"

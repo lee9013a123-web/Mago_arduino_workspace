@@ -13,6 +13,7 @@
 
 #include "internal/runtime_model.h"
 #include "internal/tensor_view.h"
+#include "memory_management/tensor_arena.h"
 
 /* --------------------------------------------------------------------- */
 /* SHA-256                                                               */
@@ -474,6 +475,40 @@ CamppStatus campp_validate_tensor_descriptor(
         return CAMPP_STATUS_CORRUPT_PLAN;
     }
 
+    /* data_offset의 기준과 DENSE_SLAB 표시는 storage_type과 일치해야 한다. */
+    switch (descriptor->storage_type) {
+    case CAMPP_TENSOR_STORAGE_INPUT:
+        if (descriptor->data_offset != CAMPP_INVALID_DATA_OFFSET ||
+            (descriptor->flags & CAMPP_TENSOR_FLAG_DENSE_SLAB) != 0u) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        break;
+    case CAMPP_TENSOR_STORAGE_CONSTANT:
+        if (descriptor->data_offset == CAMPP_INVALID_DATA_OFFSET ||
+            (descriptor->flags & CAMPP_TENSOR_FLAG_DENSE_SLAB) != 0u) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        break;
+    case CAMPP_TENSOR_STORAGE_ACTIVATION:
+    case CAMPP_TENSOR_STORAGE_OUTPUT: {
+        const bool dense =
+            (descriptor->flags & CAMPP_TENSOR_FLAG_DENSE_SLAB) != 0u;
+        const bool has_offset =
+            descriptor->data_offset != CAMPP_INVALID_DATA_OFFSET;
+        if (dense != has_offset) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        break;
+    }
+    case CAMPP_TENSOR_STORAGE_VIEW:
+        if ((descriptor->flags & CAMPP_TENSOR_FLAG_DENSE_SLAB) != 0u) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        break;
+    default:
+        return CAMPP_STATUS_CORRUPT_PLAN;
+    }
+
     if (descriptor->storage_type == CAMPP_TENSOR_STORAGE_VIEW) {
         if (descriptor->alias_of_tensor_id >= tensor_count) {
             return CAMPP_STATUS_CORRUPT_PLAN;
@@ -579,10 +614,24 @@ CamppStatus campp_validate_model(const struct CamppRuntimeModel *model)
     uint8_t slot;
     CamppStatus status;
     uint8_t *produced;
+    bool uses_arena;
 
     if (target == NULL || target->tensors == NULL
         || target->operators == NULL) {
         return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+
+    status = campp_tensor_arena_model_uses_arena(target, &uses_arena);
+    if (status != CAMPP_STATUS_OK) {
+        return status;
+    }
+    if (uses_arena) {
+        size_t arena_size;
+        status = campp_tensor_arena_validate_layout(target, &arena_size);
+        if (status != CAMPP_STATUS_OK) {
+            return status;
+        }
+        (void)arena_size;
     }
 
     /* CONSTANT는 weights.bin 안을 가리켜야 한다. */

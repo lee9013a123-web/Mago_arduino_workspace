@@ -96,5 +96,26 @@ python3 scripts/3_runtime/01_export_reference_bundle.py \
 ```
 
 Arena plan은 `ACTIVATION/OUTPUT`의 `data_offset`과 `DENSE_SLAB` flag만 바꾸며
-descriptor 크기, weights와 graph 연산은 바꾸지 않는다. C의 `tensor_arena.c`가
-구현되기 전까지 이 출력은 Python 배치 및 직렬화 검증용이다.
+descriptor 크기, weights와 graph 연산은 바꾸지 않는다.
+
+## Tensor Arena C Runtime 검증: 08
+
+Arena plan을 만든 뒤 C Runtime을 다시 빌드하고, 기존 독립 buffer 실행과 Arena
+실행의 각 Operator 출력을 생성 직후 저장해 bit-exact 비교한다.
+
+```bash
+bash scripts/3_runtime/03_build_reference_runtime.sh
+python3 scripts/3_runtime/08_validate_tensor_arena.py
+```
+
+일부 bucket만 확인하려면 다음처럼 지정한다.
+
+```bash
+python3 scripts/3_runtime/08_validate_tensor_arena.py --buckets 298
+```
+
+결과는 `results/runtime/tensor_arena_validation.json`에 기록된다. Arena에서는
+중간 Tensor 주소가 재사용되므로 `campp_reference_dump`는 graph 종료 후가 아니라
+각 Operator 출력 직후 callback으로 값을 기록한다. 보드 디스크를 보호하기 위해
+bucket 하나를 비교해 통과하면 큰 binary dump 두 개를 즉시 삭제한다. 실패한
+bucket은 원인 분석을 위해 남기며, 통과한 dump도 보존하려면 `--keep-dumps`를 쓴다.

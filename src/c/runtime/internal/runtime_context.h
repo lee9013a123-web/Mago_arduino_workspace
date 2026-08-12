@@ -22,13 +22,17 @@
 #include "runtime_model.h"
 #include "tensor_view.h"
 
+typedef enum CamppActivationStorageMode {
+    CAMPP_ACTIVATION_STORAGE_REFERENCE = 0,
+    CAMPP_ACTIVATION_STORAGE_ARENA = 1
+} CamppActivationStorageMode;
+
 /*
  * activation 저장소.
  *
- * Phase 3은 Tensor마다 독립 버퍼를 잡는다. 느리고 메모리를 많이 쓰지만, 어떤
- * Tensor가 언제 덮어써졌는지 헷갈릴 일이 없어 ORT와 값을 맞출 때 유리하다.
- * Tensor Arena로 옮길 때는 buffers를 slab 하나와 offset 배열로 바꾸면 되고,
- * 그 판단에 필요한 수명 정보(first_use/last_use)는 이미 plan에 들어 있다.
+ * Reference plan은 Tensor마다 독립 buffer를 소유한다. Arena plan은 exporter가
+ * 기록한 data_offset을 사용해 arena_base 하나를 여러 Tensor가 공유한다.
+ * buffers/buffer_sizes는 두 모드 모두 Tensor ID로 바로 조회할 수 있게 유지한다.
  */
 typedef struct CamppActivationStorage {
     /*
@@ -39,9 +43,25 @@ typedef struct CamppActivationStorage {
     size_t *buffer_sizes;
     /* buffers와 buffer_sizes 배열의 길이. 소유 buffer 개수가 아니다. */
     uint32_t buffer_count;
-    /* guard를 제외한 ACTIVATION/OUTPUT payload의 합계다. */
+    /* Reference에서는 payload 합계, Arena에서는 slab 크기다. */
     size_t total_bytes;
+
+    CamppActivationStorageMode mode;
+
+    /* Arena 모드에서만 사용한다. allocation_base만 free할 수 있다. */
+    void *arena_allocation;
+    uint8_t *arena_base;
+    size_t arena_size;
 } CamppActivationStorage;
+
+/*
+ * Operator 출력이 완성된 직후 호출되는 진단 callback이다. Arena에서는 같은
+ * 주소가 다음 Tensor에 재사용되므로 전체 graph가 끝난 뒤가 아니라 이 시점에
+ * 중간값을 복사하거나 파일로 저장해야 한다.
+ */
+typedef CamppStatus (*CamppTensorReadyCallback)(
+    void *user_data, uint32_t operator_id, uint32_t tensor_id,
+    const CamppTensorView *view);
 
 /*
  * 실행 중 관찰 상태.
@@ -59,6 +79,9 @@ typedef struct CamppDiagnosticsState {
 
     /* dump 파일을 쓸 디렉터리. NULL이면 dump하지 않는다. */
     const char *dump_directory;
+
+    CamppTensorReadyCallback tensor_ready;
+    void *tensor_ready_user_data;
 } CamppDiagnosticsState;
 
 /* 한 번의 inference 상태 전체. */

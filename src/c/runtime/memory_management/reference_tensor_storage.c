@@ -15,6 +15,7 @@
 
 #include "execution/tensor_registry.h"
 #include "internal/kernel_registry.h"
+#include "memory_management/tensor_arena.h"
 
 static int campp_reference_storage_owns(uint8_t storage_type)
 {
@@ -72,6 +73,7 @@ CamppStatus campp_reference_tensor_storage_create(
     }
 
     memset(&staging, 0, sizeof(staging));
+    staging.mode = CAMPP_ACTIVATION_STORAGE_REFERENCE;
     if ((size_t)model->tensor_count > SIZE_MAX / sizeof(void *) ||
         (size_t)model->tensor_count > SIZE_MAX / sizeof(size_t)) {
         return CAMPP_STATUS_BUFFER_OVERFLOW;
@@ -126,7 +128,8 @@ void campp_reference_tensor_storage_release(CamppActivationStorage *storage)
     if (storage == NULL) {
         return;
     }
-    if (storage->buffers != NULL) {
+    if (storage->mode == CAMPP_ACTIVATION_STORAGE_REFERENCE &&
+        storage->buffers != NULL) {
         for (tensor_id = 0u; tensor_id < storage->buffer_count; ++tensor_id) {
             if (storage->buffers[tensor_id] != NULL) {
                 uint8_t *payload =
@@ -145,6 +148,7 @@ CamppStatus campp_reference_tensor_storage_buffer(
     void **out_buffer, size_t *out_size)
 {
     if (storage == NULL || out_buffer == NULL || out_size == NULL ||
+        storage->mode != CAMPP_ACTIVATION_STORAGE_REFERENCE ||
         storage->buffers == NULL || storage->buffer_sizes == NULL) {
         return CAMPP_STATUS_INVALID_ARGUMENT;
     }
@@ -169,6 +173,7 @@ CamppStatus campp_reference_tensor_storage_check_guard(
     size_t index;
 
     if (storage == NULL || storage->buffers == NULL ||
+        storage->mode != CAMPP_ACTIVATION_STORAGE_REFERENCE ||
         storage->buffer_sizes == NULL || tensor_id >= storage->buffer_count) {
         return CAMPP_STATUS_INVALID_ARGUMENT;
     }
@@ -222,6 +227,7 @@ CamppStatus campp_runtime_context_create(
     uint16_t missing_opcode;
     uint32_t operator_id;
     size_t maximum_scratch = 0u;
+    bool uses_arena;
 
     if (model == NULL || registry == NULL || context == NULL ||
         model->tensors == NULL || model->tensor_count == 0u ||
@@ -248,8 +254,16 @@ CamppStatus campp_runtime_context_create(
         return status;
     }
 
-    status = campp_reference_tensor_storage_create(
-        model, &staging.activations);
+    status = campp_tensor_arena_model_uses_arena(model, &uses_arena);
+    if (status != CAMPP_STATUS_OK) {
+        goto failed;
+    }
+    if (uses_arena) {
+        status = campp_tensor_arena_create(model, &staging.activations);
+    } else {
+        status = campp_reference_tensor_storage_create(
+            model, &staging.activations);
+    }
     if (status != CAMPP_STATUS_OK) {
         goto failed;
     }
@@ -327,7 +341,11 @@ void campp_runtime_context_release(CamppRuntimeContext *context)
     free(context->scratch);
     free(context->resolved_kernels);
     campp_tensor_registry_release(&context->tensors, &context->tensor_count);
-    campp_reference_tensor_storage_release(&context->activations);
+    if (context->activations.mode == CAMPP_ACTIVATION_STORAGE_ARENA) {
+        campp_tensor_arena_release(&context->activations);
+    } else {
+        campp_reference_tensor_storage_release(&context->activations);
+    }
     memset(context, 0, sizeof(*context));
 }
 

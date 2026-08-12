@@ -59,6 +59,30 @@ static void init_tensor_descriptor(
     descriptor->last_use = 0u;
 }
 
+typedef struct TestTensorReadyState {
+    uint32_t calls;
+    uint32_t operator_id;
+    uint32_t tensor_id;
+    float values[2];
+} TestTensorReadyState;
+
+static CamppStatus test_tensor_ready(
+    void *user_data, uint32_t operator_id, uint32_t tensor_id,
+    const CamppTensorView *view)
+{
+    TestTensorReadyState *state = (TestTensorReadyState *)user_data;
+    if (state == NULL || view == NULL || view->data == NULL ||
+        view->dtype != CAMPP_DTYPE_FLOAT32 ||
+        view->logical_byte_size != sizeof(state->values)) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+    state->calls += 1u;
+    state->operator_id = operator_id;
+    state->tensor_id = tensor_id;
+    memcpy(state->values, view->data, sizeof(state->values));
+    return CAMPP_STATUS_OK;
+}
+
 static int test_synthetic_execution(void)
 {
     uint8_t unused_weights = 0u;
@@ -68,6 +92,7 @@ static int test_synthetic_execution(void)
     CamppOperatorDescriptor operator_descriptor;
     CamppRuntimeModel model;
     CamppRuntimeContext context;
+    TestTensorReadyState ready_state;
     const CamppKernelRegistry *registry = campp_cpu_reference_registry();
 
     init_tensor_descriptor(
@@ -111,12 +136,21 @@ static int test_synthetic_execution(void)
     CHECK_TRUE(
         strcmp(context.resolved_kernels[0]->name, "relu_reference") == 0);
 
+    memset(&ready_state, 0, sizeof(ready_state));
+    context.diagnostics.tensor_ready = test_tensor_ready;
+    context.diagnostics.tensor_ready_user_data = &ready_state;
+
     CHECK_STATUS(campp_graph_execute(&context), CAMPP_STATUS_OK);
     CHECK_TRUE(context.diagnostics.current_operator_id == 0u);
     CHECK_TRUE(context.diagnostics.executed_operator_count == 1u);
     CHECK_TRUE(context.last_status == CAMPP_STATUS_OK);
     CHECK_TRUE(((const float *)context.tensors[1].data)[0] == 0.0f);
     CHECK_TRUE(((const float *)context.tensors[1].data)[1] == 2.0f);
+    CHECK_TRUE(ready_state.calls == 1u);
+    CHECK_TRUE(ready_state.operator_id == 0u);
+    CHECK_TRUE(ready_state.tensor_id == 1u);
+    CHECK_TRUE(ready_state.values[0] == 0.0f);
+    CHECK_TRUE(ready_state.values[1] == 2.0f);
 
     campp_runtime_context_release(&context);
     return 0;

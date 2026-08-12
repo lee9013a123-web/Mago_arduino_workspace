@@ -1,5 +1,6 @@
 /*
- * plan 하나를 실제 입력으로 실행하고 모든 Tensor를 dense 순서로 덤프한다.
+ * plan 하나를 실제 입력으로 실행하고 각 Operator 출력을 dense 순서로 덤프한다.
+ * Arena에서 중간값이 다음 Tensor에 덮어써지기 전에 즉시 기록한다.
  *
  * usage: campp_reference_dump <plan.bin> <weights.bin> <input.f32> <out_prefix>
  *
@@ -137,6 +138,54 @@ static int write_dense_payload(FILE *sink, const CamppTensorView *view)
     return 0;
 }
 
+typedef struct CamppDumpWriter {
+    FILE *payload_sink;
+    FILE *index_sink;
+    uint64_t running_offset;
+    int first_entry;
+} CamppDumpWriter;
+
+static CamppStatus dump_tensor_ready(
+    void *user_data, uint32_t operator_id, uint32_t tensor_id,
+    const CamppTensorView *view)
+{
+    CamppDumpWriter *writer = (CamppDumpWriter *)user_data;
+    uint64_t byte_size;
+    uint8_t axis;
+
+    if (writer == NULL || writer->payload_sink == NULL ||
+        writer->index_sink == NULL || view == NULL || view->data == NULL) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+    byte_size = campp_tensor_view_element_count(view) *
+                campp_dtype_byte_size(view->dtype);
+    if (write_dense_payload(writer->payload_sink, view) != 0) {
+        return CAMPP_STATUS_FILE_READ_FAILED;
+    }
+
+    fprintf(
+        writer->index_sink,
+        "%s{\"operator_id\": %" PRIu32 ", \"tensor_id\": %" PRIu32
+        ", \"dtype\": %u, \"rank\": %u, \"shape\": [",
+        writer->first_entry ? "" : ", ", operator_id, tensor_id,
+        view->dtype, view->rank);
+    for (axis = 0u; axis < view->rank; ++axis) {
+        fprintf(
+            writer->index_sink, "%s%" PRIu32,
+            axis == 0u ? "" : ", ", view->dimensions[axis]);
+    }
+    fprintf(
+        writer->index_sink,
+        "], \"offset\": %" PRIu64 ", \"byte_size\": %" PRIu64 "}",
+        writer->running_offset, byte_size);
+    if (ferror(writer->index_sink)) {
+        return CAMPP_STATUS_FILE_READ_FAILED;
+    }
+    writer->running_offset += byte_size;
+    writer->first_entry = 0;
+    return CAMPP_STATUS_OK;
+}
+
 int main(int argc, char **argv)
 {
     CamppRuntimeModel model;
@@ -151,9 +200,7 @@ int main(int argc, char **argv)
     char path[4096];
     FILE *payload_sink;
     FILE *index_sink;
-    uint64_t running_offset = 0u;
-    uint32_t tensor_id;
-    int first_entry = 1;
+    CamppDumpWriter writer;
 
     if (argc != 5) {
         fprintf(stderr,
@@ -216,18 +263,6 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    status = campp_graph_execute(&context);
-    if (status != CAMPP_STATUS_OK) {
-        fprintf(stderr,
-                "execute failed at operator %" PRIu32 ": %s\n",
-                context.diagnostics.current_operator_id,
-                campp_status_name(status));
-        free(input_data);
-        campp_runtime_context_release(&context);
-        campp_runtime_model_release(&model);
-        return 1;
-    }
-
     snprintf(path, sizeof(path), "%s.bin", argv[4]);
     payload_sink = fopen(path, "wb");
     snprintf(path, sizeof(path), "%s.json", argv[4]);
@@ -241,48 +276,38 @@ int main(int argc, char **argv)
         campp_runtime_model_release(&model);
         return 1;
     }
+    memset(&writer, 0, sizeof(writer));
+    writer.payload_sink = payload_sink;
+    writer.index_sink = index_sink;
+    writer.first_entry = 1;
+    fprintf(
+        index_sink,
+        "{\"mode\": \"full_graph\", \"memory_layout\": \"%s\", "
+        "\"activation_bytes\": %zu, \"bucket_frames\": %" PRIu32
+        ", \"operator_count\": %" PRIu32 ", \"tensors\": [",
+        context.activations.mode == CAMPP_ACTIVATION_STORAGE_ARENA
+            ? "tensor_arena" : "reference",
+        context.activations.total_bytes, model.bucket_frames,
+        model.operator_count);
+    context.diagnostics.tensor_ready = dump_tensor_ready;
+    context.diagnostics.tensor_ready_user_data = &writer;
 
-    fprintf(index_sink,
-            "{\"bucket_frames\": %" PRIu32 ", \"operator_count\": %" PRIu32
-            ", \"executed\": %" PRIu32 ", \"tensors\": [",
-            model.bucket_frames, model.operator_count,
-            context.diagnostics.executed_operator_count);
-
-    for (tensor_id = 0u; tensor_id < context.tensor_count; ++tensor_id) {
-        const CamppTensorView *view = &context.tensors[tensor_id];
-        uint64_t byte_size;
-        uint8_t axis;
-
-        if (view->data == NULL) {
-            continue;
-        }
-        byte_size = campp_tensor_view_element_count(view) *
-                    campp_dtype_byte_size(view->dtype);
-        if (write_dense_payload(payload_sink, view) != 0) {
-            fprintf(stderr, "payload write failed at tensor %" PRIu32 "\n",
-                    tensor_id);
-            fclose(payload_sink);
-            fclose(index_sink);
-            free(input_data);
-            campp_runtime_context_release(&context);
-            campp_runtime_model_release(&model);
-            return 1;
-        }
-        fprintf(index_sink,
-                "%s{\"tensor_id\": %" PRIu32 ", \"dtype\": %u, \"rank\": %u,"
-                " \"shape\": [",
-                first_entry ? "" : ", ", tensor_id, view->dtype, view->rank);
-        for (axis = 0u; axis < view->rank; ++axis) {
-            fprintf(index_sink, "%s%" PRIu32, axis == 0u ? "" : ", ",
-                    view->dimensions[axis]);
-        }
-        fprintf(index_sink,
-                "], \"offset\": %" PRIu64 ", \"byte_size\": %" PRIu64 "}",
-                running_offset, byte_size);
-        running_offset += byte_size;
-        first_entry = 0;
+    status = campp_graph_execute(&context);
+    if (status != CAMPP_STATUS_OK) {
+        fprintf(stderr,
+                "execute failed at operator %" PRIu32 ": %s\n",
+                context.diagnostics.current_operator_id,
+                campp_status_name(status));
+        fclose(payload_sink);
+        fclose(index_sink);
+        free(input_data);
+        campp_runtime_context_release(&context);
+        campp_runtime_model_release(&model);
+        return 1;
     }
-    fprintf(index_sink, "]}\n");
+    fprintf(
+        index_sink, "], \"executed\": %" PRIu32 "}\n",
+        context.diagnostics.executed_operator_count);
 
     fclose(payload_sink);
     fclose(index_sink);
@@ -290,7 +315,7 @@ int main(int argc, char **argv)
     printf("dumped bucket=%" PRIu32 " operators=%" PRIu32 " payload=%" PRIu64
            " bytes\n",
            model.bucket_frames, context.diagnostics.executed_operator_count,
-           running_offset);
+           writer.running_offset);
 
     free(input_data);
     campp_runtime_context_release(&context);

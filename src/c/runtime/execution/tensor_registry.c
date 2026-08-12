@@ -8,6 +8,7 @@
 
 #include "memory_management/memory_bounds_checker.h"
 #include "memory_management/reference_tensor_storage.h"
+#include "memory_management/tensor_arena.h"
 
 static void campp_tensor_view_copy_metadata(
     const CamppTensorDescriptor *descriptor, CamppTensorView *view)
@@ -92,8 +93,14 @@ CamppStatus campp_tensor_registry_create(
             void *buffer = NULL;
             size_t buffer_size = 0u;
 
-            status = campp_reference_tensor_storage_buffer(
-                activation_storage, tensor_id, &buffer, &buffer_size);
+            if (activation_storage->mode ==
+                CAMPP_ACTIVATION_STORAGE_ARENA) {
+                status = campp_tensor_arena_buffer(
+                    activation_storage, tensor_id, &buffer, &buffer_size);
+            } else {
+                status = campp_reference_tensor_storage_buffer(
+                    activation_storage, tensor_id, &buffer, &buffer_size);
+            }
             if (status != CAMPP_STATUS_OK) {
                 goto failed;
             }
