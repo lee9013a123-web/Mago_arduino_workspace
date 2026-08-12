@@ -1,0 +1,1131 @@
+{
+  "schema_version": 1,
+  "baseline_id": "campp-reference-v1-b4092e6bfdcf5443",
+  "source_revision": {
+    "sha": "23f4f504c99aa257dd0d300021ebd112976b863f",
+    "commit_time": "2026-08-12T12:09:47+09:00",
+    "worktree_clean_excluding_generated_reports": false,
+    "worktree_changes_excluding_generated_reports": [
+      "M results/runtime/README.md",
+      " M scripts/3_runtime/README.md",
+      "?? scripts/3_runtime/07_freeze_reference_results.py",
+      "?? src/python/runtime_bundle_exporter/reporting/__init__.py",
+      "?? src/python/runtime_bundle_exporter/reporting/reference_result_freezer.py",
+      "?? tests/runtime/test_reference_result_freezer.py"
+    ]
+  },
+  "model": {
+    "canonical_path": "models/source/campplus_int8_static_qop.onnx",
+    "canonical_sha256": "1ea9a4806a3c410046e7e785cfa81fb1393550b2f016b1e94581056b1c092048",
+    "manifest_path": "models/compiled/reference/manifest.json",
+    "manifest_sha256": "22291304a4ab54b4a95980d0dac2a9b90cdd1bdf9fa33c72043d88f45948de34",
+    "weights_path": "models/compiled/reference/weights.bin",
+    "weights_sha256": "595d308c035eccbd338eeba72a7b3b23dd878878cf74418f0730bf60264aecb9",
+    "binary_format_version": 1,
+    "plans": [
+      {
+        "bucket_frames": 98,
+        "path": "models/compiled/reference/execution_plans/plan_98.bin",
+        "size_bytes": 390800,
+        "sha256": "f39ed6727b1098e8ccb8b51124bd691add9e1f34c41dff7c82ca14c99af1666b",
+        "tensor_count": 3719,
+        "operator_count": 1438
+      },
+      {
+        "bucket_frames": 298,
+        "path": "models/compiled/reference/execution_plans/plan_298.bin",
+        "size_bytes": 390800,
+        "sha256": "4073e495a58bca43e4e93a119f518b00268cd2d83e4261875ede08a4f7caf51e",
+        "tensor_count": 3719,
+        "operator_count": 1438
+      },
+      {
+        "bucket_frames": 498,
+        "path": "models/compiled/reference/execution_plans/plan_498.bin",
+        "size_bytes": 390800,
+        "sha256": "ed41f282cc2745d13d43428c2bbc31fd28c1070fc3412ffc64768387b914ba8c",
+        "tensor_count": 3719,
+        "operator_count": 1438
+      },
+      {
+        "bucket_frames": 998,
+        "path": "models/compiled/reference/execution_plans/plan_998.bin",
+        "size_bytes": 390800,
+        "sha256": "fad66a36ebfd1f42707c368f84f3cf6aba81f5d5a7546357cd5d0b4fb94513a7",
+        "tensor_count": 3719,
+        "operator_count": 1438
+      }
+    ]
+  },
+  "validation_config": {
+    "path": "configs/runtime/reference.json",
+    "sha256": "81a39aa99cf34646c6a370bfa623d428646f415b86568b00f7fd2d19d369027f"
+  },
+  "validation_kind": "multi_bucket_end_to_end",
+  "tolerances": {
+    "float_atol": 0.0001,
+    "float_rtol": 0.001,
+    "embedding_cosine_min": 0.999999,
+    "integer_policy": "exact_element_match"
+  },
+  "shared_runtime_binary_requirement": true,
+  "shared_weights_requirement": true,
+  "buckets": [
+    {
+      "bucket_frames": 98,
+      "operator_count": 1438,
+      "executed_operator_count": 1438,
+      "execution_passed": true,
+      "execution_evidence": {
+        "kind": "inferred_from_complete_runtime_tensor_dump_comparison",
+        "path": "results/runtime/compare_98.json",
+        "sha256": "fb28910b8b02b00f0f43f8a9cfa0a30b40e4c62543cd0b5569fdb1352138c164"
+      },
+      "compared_tensors": 1438,
+      "failed_tensors": 0,
+      "numerical_passed": true,
+      "embedding": {
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding",
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "element_count": 192,
+        "status": "within_tolerance",
+        "max_abs_error": 2.384185791015625e-07,
+        "max_rel_error": 3.834247260577803e-06,
+        "cosine_similarity": 0.9999999999999981
+      },
+      "checkpoints": [
+        {
+          "key": "input_transform",
+          "description": "입력 Transpose 직후",
+          "tensor_id": 2281,
+          "comparison": {
+            "operator_id": 0,
+            "operator_name": "/Transpose",
+            "opcode": "TRANSPOSE",
+            "tensor_id": 2281,
+            "tensor_name": "/Transpose_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              80,
+              98
+            ],
+            "actual_shape": [
+              1,
+              80,
+              98
+            ],
+            "element_count": 7840,
+            "status": "within_tolerance",
+            "max_abs_error": 0.0,
+            "max_rel_error": 0.0,
+            "cosine_similarity": 1.0
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "head",
+          "description": "Head 출력",
+          "tensor_id": 2332,
+          "comparison": {
+            "operator_id": 51,
+            "operator_name": "/head/Reshape_output_0_QuantizeLinear",
+            "opcode": "QUANTIZE_LINEAR",
+            "tensor_id": 2332,
+            "tensor_name": "/head/Reshape_output_0_quantized",
+            "reference_dtype": "uint8",
+            "actual_dtype": "uint8",
+            "reference_shape": [
+              1,
+              320,
+              98
+            ],
+            "actual_shape": [
+              1,
+              320,
+              98
+            ],
+            "element_count": 31360,
+            "status": "exact",
+            "max_abs_error": 0.0,
+            "mismatched_elements": 0
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_1",
+          "description": "Dense block 1 경계",
+          "tensor_id": 2647,
+          "comparison": {
+            "operator_id": 366,
+            "operator_name": "/xvector/block1/Concat_11",
+            "opcode": "CONCAT",
+            "tensor_id": 2647,
+            "tensor_name": "/xvector/block1/Concat_11_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              512,
+              49
+            ],
+            "actual_shape": [
+              1,
+              512,
+              49
+            ],
+            "element_count": 25088,
+            "status": "within_tolerance",
+            "max_abs_error": 4.76837158203125e-07,
+            "max_rel_error": 2.0914910756075804e-05,
+            "cosine_similarity": 0.9999999999999952
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_2",
+          "description": "Dense block 2 경계",
+          "tensor_id": 3276,
+          "comparison": {
+            "operator_id": 995,
+            "operator_name": "/xvector/block2/Concat_23",
+            "opcode": "CONCAT",
+            "tensor_id": 3276,
+            "tensor_name": "/xvector/block2/Concat_23_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024,
+              49
+            ],
+            "actual_shape": [
+              1,
+              1024,
+              49
+            ],
+            "element_count": 50176,
+            "status": "within_tolerance",
+            "max_abs_error": 4.76837158203125e-07,
+            "max_rel_error": 6.255267844229292e-06,
+            "cosine_similarity": 0.9999999999999982
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_3",
+          "description": "Dense block 3 경계",
+          "tensor_id": 3697,
+          "comparison": {
+            "operator_id": 1416,
+            "operator_name": "/xvector/block3/Concat_15",
+            "opcode": "CONCAT",
+            "tensor_id": 3697,
+            "tensor_name": "/xvector/block3/Concat_15_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024,
+              49
+            ],
+            "actual_shape": [
+              1,
+              1024,
+              49
+            ],
+            "element_count": 50176,
+            "status": "within_tolerance",
+            "max_abs_error": 9.5367431640625e-07,
+            "max_rel_error": 0.5025472314582261,
+            "cosine_similarity": 0.9999999999999877
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "statistics_pooling",
+          "description": "Statistics pooling 출력",
+          "tensor_id": 3712,
+          "comparison": {
+            "operator_id": 1431,
+            "operator_name": "/xvector/stats/Concat",
+            "opcode": "CONCAT",
+            "tensor_id": 3712,
+            "tensor_name": "/xvector/stats/Concat_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024
+            ],
+            "actual_shape": [
+              1,
+              1024
+            ],
+            "element_count": 1024,
+            "status": "within_tolerance",
+            "max_abs_error": 3.5762786865234375e-07,
+            "max_rel_error": 1.0409606206679123e-06,
+            "cosine_similarity": 0.9999999999999907
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "embedding",
+          "description": "최종 embedding",
+          "tensor_id": 3718,
+          "comparison": {
+            "operator_id": 1437,
+            "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+            "opcode": "BATCH_NORMALIZATION",
+            "tensor_id": 3718,
+            "tensor_name": "embedding",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              192
+            ],
+            "actual_shape": [
+              1,
+              192
+            ],
+            "element_count": 192,
+            "status": "within_tolerance",
+            "max_abs_error": 2.384185791015625e-07,
+            "max_rel_error": 3.834247260577803e-06,
+            "cosine_similarity": 0.9999999999999981
+          },
+          "present": true,
+          "passed": true
+        }
+      ],
+      "first_failure": null
+    },
+    {
+      "bucket_frames": 298,
+      "operator_count": 1438,
+      "executed_operator_count": 1438,
+      "execution_passed": true,
+      "execution_evidence": {
+        "kind": "dedicated_end_to_end_report",
+        "path": "results/runtime/end_to_end_298.json",
+        "sha256": "0a1810c28f58289d153800231c693fc99d1cf4c58da446e6c574437d9d86115d"
+      },
+      "compared_tensors": 1438,
+      "failed_tensors": 0,
+      "numerical_passed": true,
+      "embedding": {
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding",
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "element_count": 192,
+        "status": "within_tolerance",
+        "max_abs_error": 2.384185791015625e-07,
+        "max_rel_error": 2.0535466179776828e-05,
+        "cosine_similarity": 0.9999999999999977
+      },
+      "checkpoints": [
+        {
+          "key": "input_transform",
+          "description": "입력 Transpose 직후",
+          "tensor_id": 2281,
+          "comparison": {
+            "operator_id": 0,
+            "operator_name": "/Transpose",
+            "opcode": "TRANSPOSE",
+            "tensor_id": 2281,
+            "tensor_name": "/Transpose_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              80,
+              298
+            ],
+            "actual_shape": [
+              1,
+              80,
+              298
+            ],
+            "element_count": 23840,
+            "status": "within_tolerance",
+            "max_abs_error": 0.0,
+            "max_rel_error": 0.0,
+            "cosine_similarity": 1.0
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "head",
+          "description": "Head 출력",
+          "tensor_id": 2332,
+          "comparison": {
+            "operator_id": 51,
+            "operator_name": "/head/Reshape_output_0_QuantizeLinear",
+            "opcode": "QUANTIZE_LINEAR",
+            "tensor_id": 2332,
+            "tensor_name": "/head/Reshape_output_0_quantized",
+            "reference_dtype": "uint8",
+            "actual_dtype": "uint8",
+            "reference_shape": [
+              1,
+              320,
+              298
+            ],
+            "actual_shape": [
+              1,
+              320,
+              298
+            ],
+            "element_count": 95360,
+            "status": "exact",
+            "max_abs_error": 0.0,
+            "mismatched_elements": 0
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_1",
+          "description": "Dense block 1 경계",
+          "tensor_id": 2647,
+          "comparison": {
+            "operator_id": 366,
+            "operator_name": "/xvector/block1/Concat_11",
+            "opcode": "CONCAT",
+            "tensor_id": 2647,
+            "tensor_name": "/xvector/block1/Concat_11_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              512,
+              149
+            ],
+            "actual_shape": [
+              1,
+              512,
+              149
+            ],
+            "element_count": 76288,
+            "status": "within_tolerance",
+            "max_abs_error": 9.5367431640625e-07,
+            "max_rel_error": 1.6929427205217897e-05,
+            "cosine_similarity": 0.9999999999999887
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_2",
+          "description": "Dense block 2 경계",
+          "tensor_id": 3276,
+          "comparison": {
+            "operator_id": 995,
+            "operator_name": "/xvector/block2/Concat_23",
+            "opcode": "CONCAT",
+            "tensor_id": 3276,
+            "tensor_name": "/xvector/block2/Concat_23_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024,
+              149
+            ],
+            "actual_shape": [
+              1,
+              1024,
+              149
+            ],
+            "element_count": 152576,
+            "status": "within_tolerance",
+            "max_abs_error": 4.76837158203125e-07,
+            "max_rel_error": 1.2883837708738301e-06,
+            "cosine_similarity": 1.0000000000000082
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_3",
+          "description": "Dense block 3 경계",
+          "tensor_id": 3697,
+          "comparison": {
+            "operator_id": 1416,
+            "operator_name": "/xvector/block3/Concat_15",
+            "opcode": "CONCAT",
+            "tensor_id": 3697,
+            "tensor_name": "/xvector/block3/Concat_15_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024,
+              149
+            ],
+            "actual_shape": [
+              1,
+              1024,
+              149
+            ],
+            "element_count": 152576,
+            "status": "within_tolerance",
+            "max_abs_error": 4.76837158203125e-07,
+            "max_rel_error": 0.21031156995246295,
+            "cosine_similarity": 1.0000000000000024
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "statistics_pooling",
+          "description": "Statistics pooling 출력",
+          "tensor_id": 3712,
+          "comparison": {
+            "operator_id": 1431,
+            "operator_name": "/xvector/stats/Concat",
+            "opcode": "CONCAT",
+            "tensor_id": 3712,
+            "tensor_name": "/xvector/stats/Concat_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024
+            ],
+            "actual_shape": [
+              1,
+              1024
+            ],
+            "element_count": 1024,
+            "status": "within_tolerance",
+            "max_abs_error": 5.960464477539062e-07,
+            "max_rel_error": 3.6618827423644557e-06,
+            "cosine_similarity": 0.9999999999999492
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "embedding",
+          "description": "최종 embedding",
+          "tensor_id": 3718,
+          "comparison": {
+            "operator_id": 1437,
+            "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+            "opcode": "BATCH_NORMALIZATION",
+            "tensor_id": 3718,
+            "tensor_name": "embedding",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              192
+            ],
+            "actual_shape": [
+              1,
+              192
+            ],
+            "element_count": 192,
+            "status": "within_tolerance",
+            "max_abs_error": 2.384185791015625e-07,
+            "max_rel_error": 2.0535466179776828e-05,
+            "cosine_similarity": 0.9999999999999977
+          },
+          "present": true,
+          "passed": true
+        }
+      ],
+      "first_failure": null
+    },
+    {
+      "bucket_frames": 498,
+      "operator_count": 1438,
+      "executed_operator_count": 1438,
+      "execution_passed": true,
+      "execution_evidence": {
+        "kind": "inferred_from_complete_runtime_tensor_dump_comparison",
+        "path": "results/runtime/compare_498.json",
+        "sha256": "000e93fa71cb024663df34bec7255741a206031334cd072a4f59922dbb1a5669"
+      },
+      "compared_tensors": 1438,
+      "failed_tensors": 0,
+      "numerical_passed": true,
+      "embedding": {
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding",
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "element_count": 192,
+        "status": "within_tolerance",
+        "max_abs_error": 2.384185791015625e-07,
+        "max_rel_error": 4.065204800952667e-07,
+        "cosine_similarity": 0.9999999999999982
+      },
+      "checkpoints": [
+        {
+          "key": "input_transform",
+          "description": "입력 Transpose 직후",
+          "tensor_id": 2281,
+          "comparison": {
+            "operator_id": 0,
+            "operator_name": "/Transpose",
+            "opcode": "TRANSPOSE",
+            "tensor_id": 2281,
+            "tensor_name": "/Transpose_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              80,
+              498
+            ],
+            "actual_shape": [
+              1,
+              80,
+              498
+            ],
+            "element_count": 39840,
+            "status": "within_tolerance",
+            "max_abs_error": 0.0,
+            "max_rel_error": 0.0,
+            "cosine_similarity": 1.0
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "head",
+          "description": "Head 출력",
+          "tensor_id": 2332,
+          "comparison": {
+            "operator_id": 51,
+            "operator_name": "/head/Reshape_output_0_QuantizeLinear",
+            "opcode": "QUANTIZE_LINEAR",
+            "tensor_id": 2332,
+            "tensor_name": "/head/Reshape_output_0_quantized",
+            "reference_dtype": "uint8",
+            "actual_dtype": "uint8",
+            "reference_shape": [
+              1,
+              320,
+              498
+            ],
+            "actual_shape": [
+              1,
+              320,
+              498
+            ],
+            "element_count": 159360,
+            "status": "exact",
+            "max_abs_error": 0.0,
+            "mismatched_elements": 0
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_1",
+          "description": "Dense block 1 경계",
+          "tensor_id": 2647,
+          "comparison": {
+            "operator_id": 366,
+            "operator_name": "/xvector/block1/Concat_11",
+            "opcode": "CONCAT",
+            "tensor_id": 2647,
+            "tensor_name": "/xvector/block1/Concat_11_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              512,
+              249
+            ],
+            "actual_shape": [
+              1,
+              512,
+              249
+            ],
+            "element_count": 127488,
+            "status": "within_tolerance",
+            "max_abs_error": 5.774199962615967e-07,
+            "max_rel_error": 2.4922130511161658e-05,
+            "cosine_similarity": 1.0000000000000118
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_2",
+          "description": "Dense block 2 경계",
+          "tensor_id": 3276,
+          "comparison": {
+            "operator_id": 995,
+            "operator_name": "/xvector/block2/Concat_23",
+            "opcode": "CONCAT",
+            "tensor_id": 3276,
+            "tensor_name": "/xvector/block2/Concat_23_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024,
+              249
+            ],
+            "actual_shape": [
+              1,
+              1024,
+              249
+            ],
+            "element_count": 254976,
+            "status": "within_tolerance",
+            "max_abs_error": 4.76837158203125e-07,
+            "max_rel_error": 9.239755248123232e-07,
+            "cosine_similarity": 0.9999999999999883
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_3",
+          "description": "Dense block 3 경계",
+          "tensor_id": 3697,
+          "comparison": {
+            "operator_id": 1416,
+            "operator_name": "/xvector/block3/Concat_15",
+            "opcode": "CONCAT",
+            "tensor_id": 3697,
+            "tensor_name": "/xvector/block3/Concat_15_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024,
+              249
+            ],
+            "actual_shape": [
+              1,
+              1024,
+              249
+            ],
+            "element_count": 254976,
+            "status": "within_tolerance",
+            "max_abs_error": 4.76837158203125e-07,
+            "max_rel_error": 0.006178953923219807,
+            "cosine_similarity": 0.9999999999999549
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "statistics_pooling",
+          "description": "Statistics pooling 출력",
+          "tensor_id": 3712,
+          "comparison": {
+            "operator_id": 1431,
+            "operator_name": "/xvector/stats/Concat",
+            "opcode": "CONCAT",
+            "tensor_id": 3712,
+            "tensor_name": "/xvector/stats/Concat_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024
+            ],
+            "actual_shape": [
+              1,
+              1024
+            ],
+            "element_count": 1024,
+            "status": "within_tolerance",
+            "max_abs_error": 7.152557373046875e-07,
+            "max_rel_error": 4.72351083362881e-06,
+            "cosine_similarity": 0.9999999999999276
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "embedding",
+          "description": "최종 embedding",
+          "tensor_id": 3718,
+          "comparison": {
+            "operator_id": 1437,
+            "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+            "opcode": "BATCH_NORMALIZATION",
+            "tensor_id": 3718,
+            "tensor_name": "embedding",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              192
+            ],
+            "actual_shape": [
+              1,
+              192
+            ],
+            "element_count": 192,
+            "status": "within_tolerance",
+            "max_abs_error": 2.384185791015625e-07,
+            "max_rel_error": 4.065204800952667e-07,
+            "cosine_similarity": 0.9999999999999982
+          },
+          "present": true,
+          "passed": true
+        }
+      ],
+      "first_failure": null
+    },
+    {
+      "bucket_frames": 998,
+      "operator_count": 1438,
+      "executed_operator_count": 1438,
+      "execution_passed": true,
+      "execution_evidence": {
+        "kind": "inferred_from_complete_runtime_tensor_dump_comparison",
+        "path": "results/runtime/compare_998.json",
+        "sha256": "31211cdc6a7e5a88953a2ad55168f4b8622d8b1d97893e31662380f27f019322"
+      },
+      "compared_tensors": 1438,
+      "failed_tensors": 1059,
+      "numerical_passed": false,
+      "embedding": {
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding",
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "element_count": 192,
+        "status": "float_mismatch",
+        "max_abs_error": 0.097349613904953,
+        "max_rel_error": 129.30466619706124,
+        "cosine_similarity": 0.9989376431038818,
+        "bitwise_differing_elements": 171,
+        "bitwise_identical": false
+      },
+      "checkpoints": [
+        {
+          "key": "input_transform",
+          "description": "입력 Transpose 직후",
+          "tensor_id": 2281,
+          "comparison": {
+            "operator_id": 0,
+            "operator_name": "/Transpose",
+            "opcode": "TRANSPOSE",
+            "tensor_id": 2281,
+            "tensor_name": "/Transpose_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              80,
+              998
+            ],
+            "actual_shape": [
+              1,
+              80,
+              998
+            ],
+            "element_count": 79840,
+            "status": "within_tolerance",
+            "max_abs_error": 0.0,
+            "max_rel_error": 0.0,
+            "cosine_similarity": 1.0000000000000002,
+            "bitwise_differing_elements": 0,
+            "bitwise_identical": true
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "head",
+          "description": "Head 출력",
+          "tensor_id": 2332,
+          "comparison": {
+            "operator_id": 51,
+            "operator_name": "/head/Reshape_output_0_QuantizeLinear",
+            "opcode": "QUANTIZE_LINEAR",
+            "tensor_id": 2332,
+            "tensor_name": "/head/Reshape_output_0_quantized",
+            "reference_dtype": "uint8",
+            "actual_dtype": "uint8",
+            "reference_shape": [
+              1,
+              320,
+              998
+            ],
+            "actual_shape": [
+              1,
+              320,
+              998
+            ],
+            "element_count": 319360,
+            "status": "exact",
+            "max_abs_error": 0.0,
+            "mismatched_elements": 0
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_1",
+          "description": "Dense block 1 경계",
+          "tensor_id": 2647,
+          "comparison": {
+            "operator_id": 366,
+            "operator_name": "/xvector/block1/Concat_11",
+            "opcode": "CONCAT",
+            "tensor_id": 2647,
+            "tensor_name": "/xvector/block1/Concat_11_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              512,
+              499
+            ],
+            "actual_shape": [
+              1,
+              512,
+              499
+            ],
+            "element_count": 255488,
+            "status": "within_tolerance",
+            "max_abs_error": 5.923211574554443e-07,
+            "max_rel_error": 2.4922130511161658e-05,
+            "cosine_similarity": 0.999999999999961,
+            "bitwise_differing_elements": 83871,
+            "bitwise_identical": false
+          },
+          "present": true,
+          "passed": true
+        },
+        {
+          "key": "dense_block_2",
+          "description": "Dense block 2 경계",
+          "tensor_id": 3276,
+          "comparison": {
+            "operator_id": 995,
+            "operator_name": "/xvector/block2/Concat_23",
+            "opcode": "CONCAT",
+            "tensor_id": 3276,
+            "tensor_name": "/xvector/block2/Concat_23_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024,
+              499
+            ],
+            "actual_shape": [
+              1,
+              1024,
+              499
+            ],
+            "element_count": 510976,
+            "status": "float_mismatch",
+            "max_abs_error": 0.6184608936309814,
+            "max_rel_error": 431493520736.69434,
+            "cosine_similarity": 0.9999348077377848,
+            "bitwise_differing_elements": 286497,
+            "bitwise_identical": false
+          },
+          "present": true,
+          "passed": false
+        },
+        {
+          "key": "dense_block_3",
+          "description": "Dense block 3 경계",
+          "tensor_id": 3697,
+          "comparison": {
+            "operator_id": 1416,
+            "operator_name": "/xvector/block3/Concat_15",
+            "opcode": "CONCAT",
+            "tensor_id": 3697,
+            "tensor_name": "/xvector/block3/Concat_15_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024,
+              499
+            ],
+            "actual_shape": [
+              1,
+              1024,
+              499
+            ],
+            "element_count": 510976,
+            "status": "float_mismatch",
+            "max_abs_error": 1.249710202217102,
+            "max_rel_error": 999768078327.179,
+            "cosine_similarity": 0.9959235161343252,
+            "bitwise_differing_elements": 358301,
+            "bitwise_identical": false
+          },
+          "present": true,
+          "passed": false
+        },
+        {
+          "key": "statistics_pooling",
+          "description": "Statistics pooling 출력",
+          "tensor_id": 3712,
+          "comparison": {
+            "operator_id": 1431,
+            "operator_name": "/xvector/stats/Concat",
+            "opcode": "CONCAT",
+            "tensor_id": 3712,
+            "tensor_name": "/xvector/stats/Concat_output_0",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              1024
+            ],
+            "actual_shape": [
+              1,
+              1024
+            ],
+            "element_count": 1024,
+            "status": "float_mismatch",
+            "max_abs_error": 0.03228950500488281,
+            "max_rel_error": 1.0,
+            "cosine_similarity": 0.9996857338856805,
+            "bitwise_differing_elements": 1013,
+            "bitwise_identical": false
+          },
+          "present": true,
+          "passed": false
+        },
+        {
+          "key": "embedding",
+          "description": "최종 embedding",
+          "tensor_id": 3718,
+          "comparison": {
+            "operator_id": 1437,
+            "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+            "opcode": "BATCH_NORMALIZATION",
+            "tensor_id": 3718,
+            "tensor_name": "embedding",
+            "reference_dtype": "float32",
+            "actual_dtype": "float32",
+            "reference_shape": [
+              1,
+              192
+            ],
+            "actual_shape": [
+              1,
+              192
+            ],
+            "element_count": 192,
+            "status": "float_mismatch",
+            "max_abs_error": 0.097349613904953,
+            "max_rel_error": 129.30466619706124,
+            "cosine_similarity": 0.9989376431038818,
+            "bitwise_differing_elements": 171,
+            "bitwise_identical": false
+          },
+          "present": true,
+          "passed": false
+        }
+      ],
+      "first_failure": {
+        "operator_id": 369,
+        "operator_name": "/xvector/transit1/nonlinear/relu/Relu_output_0_QuantizeLinear",
+        "opcode": "QUANTIZE_LINEAR",
+        "tensor_id": 2650,
+        "tensor_name": "/xvector/transit1/nonlinear/relu/Relu_output_0_quantized",
+        "reference_dtype": "uint8",
+        "actual_dtype": "uint8",
+        "reference_shape": [
+          1,
+          512,
+          499
+        ],
+        "actual_shape": [
+          1,
+          512,
+          499
+        ],
+        "element_count": 255488,
+        "status": "integer_mismatch",
+        "max_abs_error": 1.0,
+        "mismatched_elements": 1
+      }
+    }
+  ],
+  "all_buckets_executed": true,
+  "all_buckets_numerically_passed": false,
+  "dedicated_end_to_end_reports_complete": false,
+  "cross_bucket_rejection": {
+    "recorded": false,
+    "passed": false,
+    "reason": "end_to_end_summary.json이 없어 잘못된 bucket 입력 거부 증거를 고정하지 못했습니다",
+    "checks": []
+  },
+  "phase4_ready": false,
+  "phase4_blockers": [
+    "수치 허용 기준을 통과하지 못한 bucket이 있습니다: [998].",
+    "네 bucket의 전용 end_to_end_*.json이 모두 고정되지 않았습니다. 없는 bucket은 전체 Tensor dump 비교로 실행 완료를 추론했습니다.",
+    "잘못된 frame 수를 BUCKET_MISMATCH로 거부한 증거가 고정되지 않았습니다.",
+    "생성 보고서를 제외한 Git working tree가 깨끗하지 않습니다."
+  ]
+}

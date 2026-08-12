@@ -1,0 +1,968 @@
+{
+  "schema_version": 1,
+  "baseline_id": "campp-reference-v1-b4092e6bfdcf5443",
+  "source_revision": {
+    "sha": "23f4f504c99aa257dd0d300021ebd112976b863f",
+    "commit_time": "2026-08-12T12:09:47+09:00",
+    "worktree_clean_excluding_generated_reports": false,
+    "worktree_changes_excluding_generated_reports": [
+      "M results/runtime/README.md",
+      " M scripts/3_runtime/README.md",
+      "?? scripts/3_runtime/07_freeze_reference_results.py",
+      "?? src/python/runtime_bundle_exporter/reporting/__init__.py",
+      "?? src/python/runtime_bundle_exporter/reporting/reference_result_freezer.py",
+      "?? tests/runtime/test_reference_result_freezer.py"
+    ]
+  },
+  "model": {
+    "canonical_path": "models/source/campplus_int8_static_qop.onnx",
+    "canonical_sha256": "1ea9a4806a3c410046e7e785cfa81fb1393550b2f016b1e94581056b1c092048",
+    "manifest_path": "models/compiled/reference/manifest.json",
+    "manifest_sha256": "22291304a4ab54b4a95980d0dac2a9b90cdd1bdf9fa33c72043d88f45948de34",
+    "weights_path": "models/compiled/reference/weights.bin",
+    "weights_sha256": "595d308c035eccbd338eeba72a7b3b23dd878878cf74418f0730bf60264aecb9",
+    "binary_format_version": 1,
+    "plans": [
+      {
+        "bucket_frames": 98,
+        "path": "models/compiled/reference/execution_plans/plan_98.bin",
+        "size_bytes": 390800,
+        "sha256": "f39ed6727b1098e8ccb8b51124bd691add9e1f34c41dff7c82ca14c99af1666b",
+        "tensor_count": 3719,
+        "operator_count": 1438
+      },
+      {
+        "bucket_frames": 298,
+        "path": "models/compiled/reference/execution_plans/plan_298.bin",
+        "size_bytes": 390800,
+        "sha256": "4073e495a58bca43e4e93a119f518b00268cd2d83e4261875ede08a4f7caf51e",
+        "tensor_count": 3719,
+        "operator_count": 1438
+      },
+      {
+        "bucket_frames": 498,
+        "path": "models/compiled/reference/execution_plans/plan_498.bin",
+        "size_bytes": 390800,
+        "sha256": "ed41f282cc2745d13d43428c2bbc31fd28c1070fc3412ffc64768387b914ba8c",
+        "tensor_count": 3719,
+        "operator_count": 1438
+      },
+      {
+        "bucket_frames": 998,
+        "path": "models/compiled/reference/execution_plans/plan_998.bin",
+        "size_bytes": 390800,
+        "sha256": "fad66a36ebfd1f42707c368f84f3cf6aba81f5d5a7546357cd5d0b4fb94513a7",
+        "tensor_count": 3719,
+        "operator_count": 1438
+      }
+    ]
+  },
+  "validation_config": {
+    "path": "configs/runtime/reference.json",
+    "sha256": "81a39aa99cf34646c6a370bfa623d428646f415b86568b00f7fd2d19d369027f"
+  },
+  "validation_kind": "operator_output_accuracy",
+  "tolerances": {
+    "float_atol": 0.0001,
+    "float_rtol": 0.001,
+    "embedding_cosine_min": 0.999999,
+    "integer_policy": "exact_element_match"
+  },
+  "kernel_registry": {
+    "path": "src/c/runtime/backends/cpu_reference/reference_backend.c",
+    "sha256": "06d2d41883bcb5eee8583d6be9f3937f6e913f9984a049000d4e8827941cec94"
+  },
+  "implemented_opcodes": [
+    "ADD",
+    "AVERAGE_POOL",
+    "BATCH_NORMALIZATION",
+    "CONCAT",
+    "DEQUANTIZE_LINEAR",
+    "DIV",
+    "EXPAND",
+    "MUL",
+    "QLINEAR_CONV",
+    "QUANTIZE_LINEAR",
+    "REDUCE_MEAN",
+    "RELU",
+    "RESHAPE",
+    "SIGMOID",
+    "SLICE",
+    "SQRT",
+    "SQUEEZE",
+    "SUB",
+    "TRANSPOSE",
+    "UNSQUEEZE"
+  ],
+  "graph_opcodes": [
+    "ADD",
+    "AVERAGE_POOL",
+    "BATCH_NORMALIZATION",
+    "CONCAT",
+    "DEQUANTIZE_LINEAR",
+    "DIV",
+    "EXPAND",
+    "MUL",
+    "QLINEAR_CONV",
+    "QUANTIZE_LINEAR",
+    "REDUCE_MEAN",
+    "RELU",
+    "RESHAPE",
+    "SIGMOID",
+    "SLICE",
+    "SQRT",
+    "SQUEEZE",
+    "SUB",
+    "TRANSPOSE",
+    "UNSQUEEZE"
+  ],
+  "missing_opcodes": [],
+  "unused_implemented_opcodes": [],
+  "buckets": [
+    {
+      "bucket_frames": 98,
+      "compared_tensors": 1438,
+      "passed_tensors": 1438,
+      "failed_tensors": 0,
+      "status_counts": {
+        "exact": 448,
+        "within_tolerance": 990
+      },
+      "max_abs_error": 4.482269287109375e-05,
+      "max_rel_error": 119209.28955078125,
+      "embedding": {
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding",
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "element_count": 192,
+        "status": "within_tolerance",
+        "max_abs_error": 2.384185791015625e-07,
+        "max_rel_error": 3.834247260577803e-06,
+        "cosine_similarity": 0.9999999999999981
+      },
+      "embedding_cosine_min": 0.999999,
+      "embedding_cosine_passed": true,
+      "first_failure": null,
+      "opcode_results": [
+        {
+          "opcode": "ADD",
+          "output_tensors": 56,
+          "failed_tensors": 0,
+          "max_abs_error": 4.76837158203125e-07,
+          "max_rel_error": 4.341217998168874e-07,
+          "passed": true
+        },
+        {
+          "opcode": "AVERAGE_POOL",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "BATCH_NORMALIZATION",
+          "output_tensors": 56,
+          "failed_tensors": 0,
+          "max_abs_error": 4.482269287109375e-05,
+          "max_rel_error": 0.12414310484665352,
+          "passed": true
+        },
+        {
+          "opcode": "CONCAT",
+          "output_tensors": 53,
+          "failed_tensors": 0,
+          "max_abs_error": 9.5367431640625e-07,
+          "max_rel_error": 0.5025472314582261,
+          "passed": true
+        },
+        {
+          "opcode": "DEQUANTIZE_LINEAR",
+          "output_tensors": 225,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "DIV",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 5.587935447692871e-08,
+          "max_rel_error": 2.1007739655284e-06,
+          "passed": true
+        },
+        {
+          "opcode": "EXPAND",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "MUL",
+          "output_tensors": 54,
+          "failed_tensors": 0,
+          "max_abs_error": 2.6226043701171875e-06,
+          "max_rel_error": 0.5025472314582261,
+          "passed": true
+        },
+        {
+          "opcode": "QLINEAR_CONV",
+          "output_tensors": 225,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": null,
+          "passed": true
+        },
+        {
+          "opcode": "QUANTIZE_LINEAR",
+          "output_tensors": 223,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": null,
+          "passed": true
+        },
+        {
+          "opcode": "REDUCE_MEAN",
+          "output_tensors": 55,
+          "failed_tensors": 0,
+          "max_abs_error": 4.76837158203125e-07,
+          "max_rel_error": 2.0620578793252385e-06,
+          "passed": true
+        },
+        {
+          "opcode": "RELU",
+          "output_tensors": 171,
+          "failed_tensors": 0,
+          "max_abs_error": 2.536177635192871e-05,
+          "max_rel_error": 0.0026498301386656525,
+          "passed": true
+        },
+        {
+          "opcode": "RESHAPE",
+          "output_tensors": 53,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SIGMOID",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 1.1920928955078125e-07,
+          "max_rel_error": 0.5025472243626913,
+          "passed": true
+        },
+        {
+          "opcode": "SLICE",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SQRT",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 1.1920928955078125e-07,
+          "max_rel_error": 1.0409606206679123e-06,
+          "passed": true
+        },
+        {
+          "opcode": "SQUEEZE",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SUB",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 3.5762786865234375e-07,
+          "max_rel_error": 119209.28955078125,
+          "passed": true
+        },
+        {
+          "opcode": "TRANSPOSE",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "UNSQUEEZE",
+          "output_tensors": 54,
+          "failed_tensors": 0,
+          "max_abs_error": 3.5762786865234375e-07,
+          "max_rel_error": 1.0409606206679123e-06,
+          "passed": true
+        }
+      ],
+      "source": {
+        "path": "results/runtime/compare_98.json",
+        "sha256": "fb28910b8b02b00f0f43f8a9cfa0a30b40e4c62543cd0b5569fdb1352138c164"
+      },
+      "passed": true
+    },
+    {
+      "bucket_frames": 298,
+      "compared_tensors": 1438,
+      "passed_tensors": 1438,
+      "failed_tensors": 0,
+      "status_counts": {
+        "exact": 448,
+        "within_tolerance": 990
+      },
+      "max_abs_error": 6.4849853515625e-05,
+      "max_rel_error": 0.21031156995246295,
+      "embedding": {
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding",
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "element_count": 192,
+        "status": "within_tolerance",
+        "max_abs_error": 2.384185791015625e-07,
+        "max_rel_error": 2.0535466179776828e-05,
+        "cosine_similarity": 0.9999999999999977
+      },
+      "embedding_cosine_min": 0.999999,
+      "embedding_cosine_passed": true,
+      "first_failure": null,
+      "opcode_results": [
+        {
+          "opcode": "ADD",
+          "output_tensors": 56,
+          "failed_tensors": 0,
+          "max_abs_error": 1.6689300537109375e-06,
+          "max_rel_error": 1.0079868848810434e-06,
+          "passed": true
+        },
+        {
+          "opcode": "AVERAGE_POOL",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "BATCH_NORMALIZATION",
+          "output_tensors": 56,
+          "failed_tensors": 0,
+          "max_abs_error": 6.4849853515625e-05,
+          "max_rel_error": 0.032123692637026566,
+          "passed": true
+        },
+        {
+          "opcode": "CONCAT",
+          "output_tensors": 53,
+          "failed_tensors": 0,
+          "max_abs_error": 9.5367431640625e-07,
+          "max_rel_error": 0.21031156995246295,
+          "passed": true
+        },
+        {
+          "opcode": "DEQUANTIZE_LINEAR",
+          "output_tensors": 225,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "DIV",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 1.601874828338623e-07,
+          "max_rel_error": 7.374086995853826e-06,
+          "passed": true
+        },
+        {
+          "opcode": "EXPAND",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "MUL",
+          "output_tensors": 54,
+          "failed_tensors": 0,
+          "max_abs_error": 2.384185791015625e-05,
+          "max_rel_error": 0.21031156995246295,
+          "passed": true
+        },
+        {
+          "opcode": "QLINEAR_CONV",
+          "output_tensors": 225,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": null,
+          "passed": true
+        },
+        {
+          "opcode": "QUANTIZE_LINEAR",
+          "output_tensors": 223,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": null,
+          "passed": true
+        },
+        {
+          "opcode": "REDUCE_MEAN",
+          "output_tensors": 55,
+          "failed_tensors": 0,
+          "max_abs_error": 1.5497207641601562e-06,
+          "max_rel_error": 7.360997471780483e-06,
+          "passed": true
+        },
+        {
+          "opcode": "RELU",
+          "output_tensors": 171,
+          "failed_tensors": 0,
+          "max_abs_error": 2.000480890274048e-05,
+          "max_rel_error": 0.032123692637026566,
+          "passed": true
+        },
+        {
+          "opcode": "RESHAPE",
+          "output_tensors": 53,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SIGMOID",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 1.1920928955078125e-07,
+          "max_rel_error": 0.21031153202056885,
+          "passed": true
+        },
+        {
+          "opcode": "SLICE",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SQRT",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 3.5762786865234375e-07,
+          "max_rel_error": 3.6618827423644557e-06,
+          "passed": true
+        },
+        {
+          "opcode": "SQUEEZE",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SUB",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 5.960464477539062e-07,
+          "max_rel_error": 0.000453035336756267,
+          "passed": true
+        },
+        {
+          "opcode": "TRANSPOSE",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "UNSQUEEZE",
+          "output_tensors": 54,
+          "failed_tensors": 0,
+          "max_abs_error": 5.960464477539062e-07,
+          "max_rel_error": 3.6618827423644557e-06,
+          "passed": true
+        }
+      ],
+      "source": {
+        "path": "results/runtime/compare_298.json",
+        "sha256": "742651d2ae52b138d3e4e9b9c60ec21f9d88db7d89482fba55bc47333d1e9367"
+      },
+      "passed": true
+    },
+    {
+      "bucket_frames": 498,
+      "compared_tensors": 1438,
+      "passed_tensors": 1438,
+      "failed_tensors": 0,
+      "status_counts": {
+        "exact": 448,
+        "within_tolerance": 990
+      },
+      "max_abs_error": 6.699562072753906e-05,
+      "max_rel_error": 178813.93432617188,
+      "embedding": {
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding",
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "element_count": 192,
+        "status": "within_tolerance",
+        "max_abs_error": 2.384185791015625e-07,
+        "max_rel_error": 4.065204800952667e-07,
+        "cosine_similarity": 0.9999999999999982
+      },
+      "embedding_cosine_min": 0.999999,
+      "embedding_cosine_passed": true,
+      "first_failure": null,
+      "opcode_results": [
+        {
+          "opcode": "ADD",
+          "output_tensors": 56,
+          "failed_tensors": 0,
+          "max_abs_error": 2.1457672119140625e-06,
+          "max_rel_error": 1.4159860100582205e-06,
+          "passed": true
+        },
+        {
+          "opcode": "AVERAGE_POOL",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "BATCH_NORMALIZATION",
+          "output_tensors": 56,
+          "failed_tensors": 0,
+          "max_abs_error": 6.699562072753906e-05,
+          "max_rel_error": 0.12414310484665352,
+          "passed": true
+        },
+        {
+          "opcode": "CONCAT",
+          "output_tensors": 53,
+          "failed_tensors": 0,
+          "max_abs_error": 7.152557373046875e-07,
+          "max_rel_error": 0.006178953923219807,
+          "passed": true
+        },
+        {
+          "opcode": "DEQUANTIZE_LINEAR",
+          "output_tensors": 225,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "DIV",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 2.2351741790771484e-07,
+          "max_rel_error": 9.464285193055054e-06,
+          "passed": true
+        },
+        {
+          "opcode": "EXPAND",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "MUL",
+          "output_tensors": 54,
+          "failed_tensors": 0,
+          "max_abs_error": 5.340576171875e-05,
+          "max_rel_error": 0.03197442310920451,
+          "passed": true
+        },
+        {
+          "opcode": "QLINEAR_CONV",
+          "output_tensors": 225,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": null,
+          "passed": true
+        },
+        {
+          "opcode": "QUANTIZE_LINEAR",
+          "output_tensors": 223,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": null,
+          "passed": true
+        },
+        {
+          "opcode": "REDUCE_MEAN",
+          "output_tensors": 55,
+          "failed_tensors": 0,
+          "max_abs_error": 2.2649765014648438e-06,
+          "max_rel_error": 9.50244741305638e-06,
+          "passed": true
+        },
+        {
+          "opcode": "RELU",
+          "output_tensors": 171,
+          "failed_tensors": 0,
+          "max_abs_error": 2.0660459995269775e-05,
+          "max_rel_error": 0.032123692637026566,
+          "passed": true
+        },
+        {
+          "opcode": "RESHAPE",
+          "output_tensors": 53,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SIGMOID",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 1.1920928955078125e-07,
+          "max_rel_error": 0.006178911994485294,
+          "passed": true
+        },
+        {
+          "opcode": "SLICE",
+          "output_tensors": 52,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SQRT",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 4.023313522338867e-07,
+          "max_rel_error": 4.72351083362881e-06,
+          "passed": true
+        },
+        {
+          "opcode": "SQUEEZE",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "SUB",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 7.152557373046875e-07,
+          "max_rel_error": 178813.93432617188,
+          "passed": true
+        },
+        {
+          "opcode": "TRANSPOSE",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "UNSQUEEZE",
+          "output_tensors": 54,
+          "failed_tensors": 0,
+          "max_abs_error": 7.152557373046875e-07,
+          "max_rel_error": 4.72351083362881e-06,
+          "passed": true
+        }
+      ],
+      "source": {
+        "path": "results/runtime/compare_498.json",
+        "sha256": "000e93fa71cb024663df34bec7255741a206031334cd072a4f59922dbb1a5669"
+      },
+      "passed": true
+    },
+    {
+      "bucket_frames": 998,
+      "compared_tensors": 1438,
+      "passed_tensors": 379,
+      "failed_tensors": 1059,
+      "status_counts": {
+        "exact": 124,
+        "float_mismatch": 735,
+        "integer_mismatch": 324,
+        "within_tolerance": 255
+      },
+      "max_abs_error": 25.0,
+      "max_rel_error": 1127939939498.9014,
+      "embedding": {
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding",
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "element_count": 192,
+        "status": "float_mismatch",
+        "max_abs_error": 0.097349613904953,
+        "max_rel_error": 129.30466619706124,
+        "cosine_similarity": 0.9989376431038818,
+        "bitwise_differing_elements": 171,
+        "bitwise_identical": false
+      },
+      "embedding_cosine_min": 0.999999,
+      "embedding_cosine_passed": false,
+      "first_failure": {
+        "operator_id": 369,
+        "operator_name": "/xvector/transit1/nonlinear/relu/Relu_output_0_QuantizeLinear",
+        "opcode": "QUANTIZE_LINEAR",
+        "tensor_id": 2650,
+        "tensor_name": "/xvector/transit1/nonlinear/relu/Relu_output_0_quantized",
+        "reference_dtype": "uint8",
+        "actual_dtype": "uint8",
+        "reference_shape": [
+          1,
+          512,
+          499
+        ],
+        "actual_shape": [
+          1,
+          512,
+          499
+        ],
+        "element_count": 255488,
+        "status": "integer_mismatch",
+        "max_abs_error": 1.0,
+        "mismatched_elements": 1
+      },
+      "opcode_results": [
+        {
+          "opcode": "ADD",
+          "output_tensors": 56,
+          "failed_tensors": 40,
+          "max_abs_error": 0.1848762035369873,
+          "max_rel_error": 2751822816.208005,
+          "passed": false
+        },
+        {
+          "opcode": "AVERAGE_POOL",
+          "output_tensors": 52,
+          "failed_tensors": 40,
+          "max_abs_error": 0.12062066793441772,
+          "max_rel_error": 7036090362.817049,
+          "passed": false
+        },
+        {
+          "opcode": "BATCH_NORMALIZATION",
+          "output_tensors": 56,
+          "failed_tensors": 43,
+          "max_abs_error": 1.226682335138321,
+          "max_rel_error": 48332.90860572612,
+          "passed": false
+        },
+        {
+          "opcode": "CONCAT",
+          "output_tensors": 53,
+          "failed_tensors": 41,
+          "max_abs_error": 1.249710202217102,
+          "max_rel_error": 999768078327.179,
+          "passed": false
+        },
+        {
+          "opcode": "DEQUANTIZE_LINEAR",
+          "output_tensors": 225,
+          "failed_tensors": 162,
+          "max_abs_error": 1.249710202217102,
+          "max_rel_error": 1127939939498.9014,
+          "passed": false
+        },
+        {
+          "opcode": "DIV",
+          "output_tensors": 1,
+          "failed_tensors": 1,
+          "max_abs_error": 0.00936087965965271,
+          "max_rel_error": 1.0,
+          "passed": false
+        },
+        {
+          "opcode": "EXPAND",
+          "output_tensors": 52,
+          "failed_tensors": 40,
+          "max_abs_error": 0.12062066793441772,
+          "max_rel_error": 7036090362.817049,
+          "passed": false
+        },
+        {
+          "opcode": "MUL",
+          "output_tensors": 54,
+          "failed_tensors": 42,
+          "max_abs_error": 4.661720275878906,
+          "max_rel_error": 619205951690.6738,
+          "passed": false
+        },
+        {
+          "opcode": "QLINEAR_CONV",
+          "output_tensors": 225,
+          "failed_tensors": 162,
+          "max_abs_error": 8.0,
+          "max_rel_error": null,
+          "passed": false
+        },
+        {
+          "opcode": "QUANTIZE_LINEAR",
+          "output_tensors": 223,
+          "failed_tensors": 162,
+          "max_abs_error": 25.0,
+          "max_rel_error": null,
+          "passed": false
+        },
+        {
+          "opcode": "REDUCE_MEAN",
+          "output_tensors": 55,
+          "failed_tensors": 41,
+          "max_abs_error": 0.06731599569320679,
+          "max_rel_error": 727864215.1504755,
+          "passed": false
+        },
+        {
+          "opcode": "RELU",
+          "output_tensors": 171,
+          "failed_tensors": 122,
+          "max_abs_error": 0.9663914740085602,
+          "max_rel_error": 656596302986.145,
+          "passed": false
+        },
+        {
+          "opcode": "RESHAPE",
+          "output_tensors": 53,
+          "failed_tensors": 40,
+          "max_abs_error": 0.12062066793441772,
+          "max_rel_error": 7036090362.817049,
+          "passed": false
+        },
+        {
+          "opcode": "SIGMOID",
+          "output_tensors": 52,
+          "failed_tensors": 39,
+          "max_abs_error": 0.07316330075263977,
+          "max_rel_error": 0.4527499912364067,
+          "passed": false
+        },
+        {
+          "opcode": "SLICE",
+          "output_tensors": 52,
+          "failed_tensors": 40,
+          "max_abs_error": 0.12062066793441772,
+          "max_rel_error": 7036090362.817049,
+          "passed": false
+        },
+        {
+          "opcode": "SQRT",
+          "output_tensors": 1,
+          "failed_tensors": 1,
+          "max_abs_error": 0.017859041690826416,
+          "max_rel_error": 1.0,
+          "passed": false
+        },
+        {
+          "opcode": "SQUEEZE",
+          "output_tensors": 1,
+          "failed_tensors": 1,
+          "max_abs_error": 0.17561709880828857,
+          "max_rel_error": 43904267251.49155,
+          "passed": false
+        },
+        {
+          "opcode": "SUB",
+          "output_tensors": 1,
+          "failed_tensors": 1,
+          "max_abs_error": 0.5887482091784477,
+          "max_rel_error": 11870454.0,
+          "passed": false
+        },
+        {
+          "opcode": "TRANSPOSE",
+          "output_tensors": 1,
+          "failed_tensors": 0,
+          "max_abs_error": 0.0,
+          "max_rel_error": 0.0,
+          "passed": true
+        },
+        {
+          "opcode": "UNSQUEEZE",
+          "output_tensors": 54,
+          "failed_tensors": 41,
+          "max_abs_error": 0.12062066793441772,
+          "max_rel_error": 7036090362.817049,
+          "passed": false
+        }
+      ],
+      "source": {
+        "path": "results/runtime/compare_998.json",
+        "sha256": "31211cdc6a7e5a88953a2ad55168f4b8622d8b1d97893e31662380f27f019322"
+      },
+      "passed": false
+    }
+  ],
+  "all_buckets_complete": true,
+  "all_buckets_numerically_passed": false,
+  "baseline_frozen": true
+}
