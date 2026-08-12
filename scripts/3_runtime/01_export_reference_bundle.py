@@ -88,6 +88,23 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_false",
         help="보드 배포용으로 큰 weight index를 manifest에서 제외한다",
     )
+    parser.add_argument(
+        "--tensor-arena",
+        action="store_true",
+        help="ACTIVATION/OUTPUT data_offset을 계산한 Arena plan을 별도 output에 생성",
+    )
+    parser.add_argument(
+        "--arena-alignment",
+        type=int,
+        default=64,
+        help="Tensor Arena byte 정렬 (기본: 64)",
+    )
+    parser.add_argument(
+        "--arena-budget-bytes",
+        type=int,
+        default=None,
+        help="계산된 Arena가 이 byte 예산을 넘으면 export 실패",
+    )
     return parser
 
 
@@ -123,6 +140,9 @@ def _load_exporter_api() -> dict[str, object]:
             read_static_model,
         )
         from runtime_bundle_exporter.builder.tensor_table_builder import plan_weight_blob
+        from runtime_bundle_exporter.builder.tensor_arena_planner import (
+            plan_tensor_arena,
+        )
         from runtime_bundle_exporter.writer.weight_blob_writer import (
             WEIGHT_BLOB_FILE_NAME,
             read_weight_blob,
@@ -149,15 +169,20 @@ def _print_summary(weights: object, plans: Sequence[object], manifest: object) -
         f"(shared {weights.shared_bytes:,} / bucket {weights.bucket_bytes:,} / "
         f"padding {weights.padding_bytes:,})"
     )
+    has_arena = any(plan.arena_size is not None for plan in plans)
+    arena_heading = f" {'arena bytes':>12}" if has_arena else ""
     print(
         f"{'bucket':>8} {'tensors':>9} {'operators':>10} "
-        f"{'attributes':>12} {'plan bytes':>12}  sha"
+        f"{'attributes':>12} {'plan bytes':>12}{arena_heading}  sha"
     )
     for plan in sorted(plans, key=lambda item: item.bucket_frames):
+        arena_value = (
+            f" {plan.arena_size:>12,}" if plan.arena_size is not None else ""
+        )
         print(
             f"{plan.bucket_frames:>8} {plan.tensor_count:>9} "
             f"{plan.operator_count:>10} {plan.attribute_section_bytes:>12,} "
-            f"{plan.byte_size:>12,}  {plan.sha256[:12]}…"
+            f"{plan.byte_size:>12,}{arena_value}  {plan.sha256[:12]}…"
         )
     print(
         f"manifest.json {manifest.byte_size:>10,} B  "
@@ -166,6 +191,20 @@ def _print_summary(weights: object, plans: Sequence[object], manifest: object) -
 
 
 def export_reference_bundle(args: argparse.Namespace) -> None:
+    canonical_reference = ROOT / "models" / "compiled" / "reference"
+    if (
+        args.tensor_arena
+        and args.output_dir.resolve() == canonical_reference.resolve()
+    ):
+        raise BundleExportCliError(
+            "Arena plan은 기존 Reference bundle을 덮어쓸 수 없다. "
+            "--output-dir로 runs/runtime/tensor_arena 아래의 별도 경로를 지정해야 한다"
+        )
+    if not args.tensor_arena and args.arena_budget_bytes is not None:
+        raise BundleExportCliError(
+            "--arena-budget-bytes는 --tensor-arena와 함께 사용해야 한다"
+        )
+
     api = _load_exporter_api()
 
     read_static_model = api["read_static_model"]
@@ -173,6 +212,7 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
     build_runtime_graph = api["build_runtime_graph"]
     RuntimeBundle = api["RuntimeBundle"]
     plan_weight_blob = api["plan_weight_blob"]
+    plan_tensor_arena = api["plan_tensor_arena"]
     write_weight_blob = api["write_weight_blob"]
     read_weight_blob = api["read_weight_blob"]
     verify_weight_blob = api["verify_weight_blob"]
@@ -224,6 +264,21 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
 
     bundle = RuntimeBundle(graphs=tuple(graphs))
     layout = plan_weight_blob(bundle)
+    arena_layouts = {}
+    if args.tensor_arena:
+        print("Tensor Arena offset 계산")
+        for graph in bundle.graphs:
+            arena = plan_tensor_arena(
+                graph,
+                alignment=args.arena_alignment,
+                max_arena_bytes=args.arena_budget_bytes,
+            )
+            arena_layouts[graph.bucket_frames] = arena
+            print(
+                f"  {graph.bucket_frames:>4} frames  arena={arena.arena_size:,} B  "
+                f"independent={arena.naive_aligned_bytes:,} B  "
+                f"peak={arena.theoretical_peak_bytes:,} B"
+            )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     plan_dir = args.output_dir / plan_directory_name
@@ -239,6 +294,7 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
             graph,
             layout,
             plan_dir / plan_file_name(graph.bucket_frames),
+            arena_layout=arena_layouts.get(graph.bucket_frames),
         )
         for graph in bundle.graphs
     )
@@ -265,7 +321,12 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
     graph_by_bucket = {graph.bucket_frames: graph for graph in bundle.graphs}
     for plan in plans:
         loaded = read_execution_plan(plan.path)
-        verify_plan(loaded, graph_by_bucket[plan.bucket_frames], layout)
+        verify_plan(
+            loaded,
+            graph_by_bucket[plan.bucket_frames],
+            layout,
+            arena_layout=arena_layouts.get(plan.bucket_frames),
+        )
         print(f"  plan_{plan.bucket_frames}.bin  OK")
     verify_bundle_manifest(manifest.path)
     print("  weights.bin / manifest.json  OK")

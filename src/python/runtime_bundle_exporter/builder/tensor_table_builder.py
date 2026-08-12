@@ -9,14 +9,13 @@ storage 종류별로 ``data_offset``의 기준이 달라지므로, 이 모듈이
 
     INPUT       외부에서 pointer를 연결한다        -> INVALID_DATA_OFFSET
     CONSTANT    weights.bin 시작부터의 offset      -> WeightBlobLayout이 결정
-    ACTIVATION  Tensor Arena 시작부터의 offset     -> Phase 3에서는 미배정
-    OUTPUT      Tensor Arena 시작부터의 offset     -> Phase 3에서는 미배정
+    ACTIVATION  Tensor Arena 시작부터의 offset     -> Arena layout을 줄 때 배정
+    OUTPUT      Tensor Arena 시작부터의 offset     -> Arena layout을 줄 때 배정
     VIEW        alias Tensor 시작부터의 offset     -> 아직 생성하지 않는다
 
-Phase 3의 reference runtime은 Arena를 계획하지 않으므로 ACTIVATION과 OUTPUT은
-``INVALID_DATA_OFFSET``으로 남는다. 대신 각 Tensor의 수명(``first_use``,
-``last_use``)은 지금 기록해 두어, Arena planner가 나중에 이 표만 읽고 배치를
-정할 수 있게 한다.
+기본 Reference 경로는 Arena를 계획하지 않으므로 ACTIVATION과 OUTPUT을
+``INVALID_DATA_OFFSET``으로 남긴다. ``TensorArenaLayout``을 명시한 경우에만
+같은 80바이트 descriptor의 ``data_offset``을 채우고 ``DENSE_SLAB`` flag를 켠다.
 """
 
 from __future__ import annotations
@@ -37,6 +36,7 @@ from ..format.binary_format_schema import (
     TensorStorageType,
 )
 from ..runtime_ir import InitializerScope, RuntimeBundle, RuntimeGraph, RuntimeTensor
+from .tensor_arena_planner import TensorArenaLayout
 
 
 # weights.bin의 모든 항목을 8바이트 경계에 두어 C가 int64까지 그대로 읽게 한다.
@@ -259,18 +259,25 @@ def _lifetime(tensor: RuntimeTensor) -> tuple[int, int]:
     return first_use, last_use
 
 
-def _flags_for(storage_type: TensorStorageType) -> int:
+def _flags_for(
+    storage_type: TensorStorageType, *, arena_managed: bool = False
+) -> int:
     flags = TensorFlags.CONTIGUOUS
     if storage_type is TensorStorageType.CONSTANT:
         # weights.bin은 plan 밖에 있고 실행 중에 바뀌지 않는다.
         flags |= TensorFlags.READ_ONLY | TensorFlags.EXTERNAL
     if storage_type is TensorStorageType.VIEW:
         flags |= TensorFlags.ALIASED
+    if arena_managed:
+        flags |= TensorFlags.DENSE_SLAB
     return int(flags)
 
 
 def _data_offset_for(
-    tensor: RuntimeTensor, graph: RuntimeGraph, layout: WeightBlobLayout
+    tensor: RuntimeTensor,
+    graph: RuntimeGraph,
+    layout: WeightBlobLayout,
+    arena_layout: TensorArenaLayout | None,
 ) -> int:
     if tensor.storage_type is TensorStorageType.CONSTANT:
         return layout.offset_of(graph.bucket_frames, tensor.tensor_id)
@@ -279,14 +286,34 @@ def _data_offset_for(
             f"Tensor {tensor.name!r}가 VIEW인데 alias 대상이 없다. "
             "RuntimeTensor가 alias_of를 들고 다니게 된 뒤에 켜야 한다"
         )
-    # INPUT은 외부 pointer, ACTIVATION/OUTPUT은 Arena를 아직 계획하지 않았다.
+    if tensor.storage_type in (
+        TensorStorageType.ACTIVATION,
+        TensorStorageType.OUTPUT,
+    ):
+        return (
+            INVALID_DATA_OFFSET
+            if arena_layout is None
+            else arena_layout.offset_of(tensor.tensor_id)
+        )
+    # INPUT은 외부 pointer를 연결하므로 offset이 없다.
     return INVALID_DATA_OFFSET
 
 
 def build_tensor_table(
-    graph: RuntimeGraph, layout: WeightBlobLayout
+    graph: RuntimeGraph,
+    layout: WeightBlobLayout,
+    *,
+    arena_layout: TensorArenaLayout | None = None,
 ) -> TensorTable:
-    """RuntimeGraph 하나를 Tensor descriptor 표로 굳힌다."""
+    """RuntimeGraph 하나를 기존 80바이트 Tensor descriptor 표로 굳힌다.
+
+    ``arena_layout``을 생략하면 Phase 3 Reference plan과 byte-compatible한 표를
+    만든다. 명시하면 ACTIVATION/OUTPUT descriptor만 Arena offset과 실제 Arena
+    수명으로 바뀐다. INPUT과 CONSTANT의 주소 규칙은 변하지 않는다.
+    """
+
+    if arena_layout is not None:
+        arena_layout.validate_graph(graph)
 
     descriptors: list[TensorDescriptor] = []
     names: list[str] = []
@@ -298,7 +325,16 @@ def build_tensor_table(
                 f"Tensor {tensor.name!r}의 rank {rank}가 형식 한계를 넘는다"
             )
         padding = TENSOR_MAX_RANK - rank
-        first_use, last_use = _lifetime(tensor)
+        arena_managed = (
+            arena_layout is not None
+            and tensor.storage_type
+            in (TensorStorageType.ACTIVATION, TensorStorageType.OUTPUT)
+        )
+        if arena_managed:
+            allocation = arena_layout.allocation(tensor.tensor_id)
+            first_use, last_use = allocation.first_use, allocation.last_use
+        else:
+            first_use, last_use = _lifetime(tensor)
 
         descriptors.append(
             TensorDescriptor(
@@ -306,10 +342,14 @@ def build_tensor_table(
                 dtype=int(tensor.dtype),
                 rank=rank,
                 storage_type=int(tensor.storage_type),
-                flags=_flags_for(tensor.storage_type),
+                flags=_flags_for(
+                    tensor.storage_type, arena_managed=arena_managed
+                ),
                 dimensions=tuple(tensor.shape) + (1,) * padding,
                 byte_strides=tuple(tensor.strides) + (0,) * padding,
-                data_offset=_data_offset_for(tensor, graph, layout),
+                data_offset=_data_offset_for(
+                    tensor, graph, layout, arena_layout
+                ),
                 logical_byte_size=tensor.byte_size,
                 storage_span_bytes=tensor.byte_size,
                 alias_of_tensor_id=INVALID_TENSOR_ID,

@@ -73,3 +73,28 @@ python3 scripts/3_runtime/07_freeze_reference_results.py
 `results/runtime/reference_runtime_report.md`이다.
 CI에서 Phase 4 승인까지 필수로 요구하려면 `--require-phase4-ready`를 추가한다.
 이 경우 보고서는 생성하되 `phase4_ready=false`이면 종료 코드 3을 반환한다.
+
+## Tensor Arena plan 준비
+
+기존 Reference bundle을 보존한 채 Arena offset이 들어간 80바이트 Tensor
+descriptor를 별도 staging bundle에 생성한다.
+
+```bash
+python3 scripts/3_runtime/01_export_reference_bundle.py \
+  --tensor-arena \
+  --arena-alignment 64 \
+  --output-dir runs/runtime/tensor_arena/bundle
+```
+
+필요하면 보드 메모리 예산을 byte 단위로 강제한다.
+
+```bash
+python3 scripts/3_runtime/01_export_reference_bundle.py \
+  --tensor-arena \
+  --arena-budget-bytes 25165824 \
+  --output-dir runs/runtime/tensor_arena/bundle
+```
+
+Arena plan은 `ACTIVATION/OUTPUT`의 `data_offset`과 `DENSE_SLAB` flag만 바꾸며
+descriptor 크기, weights와 graph 연산은 바꾸지 않는다. C의 `tensor_arena.c`가
+구현되기 전까지 이 출력은 Python 배치 및 직렬화 검증용이다.

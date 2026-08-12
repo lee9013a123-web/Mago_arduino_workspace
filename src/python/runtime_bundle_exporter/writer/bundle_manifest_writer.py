@@ -124,17 +124,25 @@ def build_bundle_manifest(
             raise BundleManifestError(
                 f"bundle에 없는 bucket의 plan이다: {plan.bucket_frames}"
             )
-        plan_entries.append(
-            {
-                "bucket_frames": plan.bucket_frames,
-                "path": _relative_to(plan.path, root),
-                "size_bytes": plan.byte_size,
-                "sha256": plan.sha256,
-                "tensor_count": plan.tensor_count,
-                "operator_count": plan.operator_count,
-                "attribute_section_bytes": plan.attribute_section_bytes,
-                "attribute_blocks": plan.attribute_blocks,
-            }
+        plan_entry = {
+            "bucket_frames": plan.bucket_frames,
+            "path": _relative_to(plan.path, root),
+            "size_bytes": plan.byte_size,
+            "sha256": plan.sha256,
+            "tensor_count": plan.tensor_count,
+            "operator_count": plan.operator_count,
+            "attribute_section_bytes": plan.attribute_section_bytes,
+            "attribute_blocks": plan.attribute_blocks,
+        }
+        if plan.arena_size is not None:
+            plan_entry["arena_size_bytes"] = plan.arena_size
+            plan_entry["arena_alignment"] = plan.arena_alignment
+        plan_entries.append(plan_entry)
+
+    arena_plans = [plan for plan in plans if plan.arena_size is not None]
+    if arena_plans and len(arena_plans) != len(plans):
+        raise BundleManifestError(
+            "Arena plan과 Reference plan을 manifest 하나에 섞을 수 없다"
         )
 
     document: dict = {
@@ -159,6 +167,8 @@ def build_bundle_manifest(
         document["weight_index"] = [
             record.to_dict() for record in weights.records
         ]
+    if arena_plans:
+        document["memory_layout"] = "tensor_arena"
     return document
 
 

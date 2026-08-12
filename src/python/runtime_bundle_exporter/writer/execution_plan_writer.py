@@ -52,6 +52,7 @@ from ..format.binary_format_schema import (
 from ..builder.operator_table_builder import build_operator_table
 from ..runtime_ir import RuntimeGraph
 from ..builder.tensor_table_builder import WeightBlobLayout, build_tensor_table
+from ..builder.tensor_arena_planner import TensorArenaLayout
 
 
 PLAN_FILE_NAME_TEMPLATE: str = "plan_{frames}.bin"
@@ -78,6 +79,8 @@ class ExecutionPlanResult:
     operator_count: int
     attribute_section_bytes: int
     attribute_blocks: int
+    arena_size: int | None = None
+    arena_alignment: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +109,7 @@ def build_plan_bytes(
     *,
     backend_id: BackendId = BackendId.AUTO,
     kernel_id: int = DEFAULT_KERNEL_ID,
+    arena_layout: TensorArenaLayout | None = None,
 ) -> tuple[bytes, int, int]:
     """plan 파일 내용을 메모리에서 만든다.
 
@@ -115,7 +119,9 @@ def build_plan_bytes(
     if graph.bucket_frames is None:
         raise ExecutionPlanError("plan을 쓰려면 graph에 bucket_frames가 있어야 한다")
 
-    tensor_table = build_tensor_table(graph, layout)
+    tensor_table = build_tensor_table(
+        graph, layout, arena_layout=arena_layout
+    )
     operator_table = build_operator_table(
         graph, backend_id=backend_id, kernel_id=kernel_id
     )
@@ -161,12 +167,17 @@ def write_execution_plan(
     *,
     backend_id: BackendId = BackendId.AUTO,
     kernel_id: int = DEFAULT_KERNEL_ID,
+    arena_layout: TensorArenaLayout | None = None,
 ) -> ExecutionPlanResult:
     """한 bucket의 plan 파일을 쓴다."""
 
     target = Path(path)
     data, attribute_bytes, attribute_blocks = build_plan_bytes(
-        graph, layout, backend_id=backend_id, kernel_id=kernel_id
+        graph,
+        layout,
+        backend_id=backend_id,
+        kernel_id=kernel_id,
+        arena_layout=arena_layout,
     )
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(data)
@@ -180,6 +191,10 @@ def write_execution_plan(
         operator_count=len(graph.operators),
         attribute_section_bytes=attribute_bytes,
         attribute_blocks=attribute_blocks,
+        arena_size=(arena_layout.arena_size if arena_layout is not None else None),
+        arena_alignment=(
+            arena_layout.alignment if arena_layout is not None else None
+        ),
     )
 
 
@@ -234,7 +249,11 @@ def _normalized_attributes(attributes: Mapping[str, object]) -> dict[str, tuple]
 
 
 def verify_plan(
-    loaded: LoadedPlan, graph: RuntimeGraph, layout: WeightBlobLayout
+    loaded: LoadedPlan,
+    graph: RuntimeGraph,
+    layout: WeightBlobLayout,
+    *,
+    arena_layout: TensorArenaLayout | None = None,
 ) -> None:
     """되읽은 plan이 원본 RuntimeGraph와 같은지 항목별로 확인한다.
 
@@ -259,31 +278,32 @@ def verify_plan(
             f"graph {len(graph.operators)}"
         )
 
-    for descriptor, tensor in zip(loaded.tensors, graph.tensors):
-        rank = len(tensor.shape)
+    expected_tensor_table = build_tensor_table(
+        graph, layout, arena_layout=arena_layout
+    )
+    descriptor_fields = (
+        "tensor_id",
+        "dtype",
+        "rank",
+        "storage_type",
+        "flags",
+        "dimensions",
+        "byte_strides",
+        "data_offset",
+        "logical_byte_size",
+        "storage_span_bytes",
+        "alias_of_tensor_id",
+        "quantization_index",
+        "first_use",
+        "last_use",
+    )
+    for descriptor, expected, tensor in zip(
+        loaded.tensors, expected_tensor_table.descriptors, graph.tensors
+    ):
         mismatches = []
-        if descriptor.tensor_id != tensor.tensor_id:
-            mismatches.append("tensor_id")
-        if descriptor.dtype != int(tensor.dtype):
-            mismatches.append("dtype")
-        if descriptor.rank != rank:
-            mismatches.append("rank")
-        if descriptor.storage_type != int(tensor.storage_type):
-            mismatches.append("storage_type")
-        if descriptor.dimensions[:rank] != tuple(tensor.shape):
-            mismatches.append("dimensions")
-        if descriptor.byte_strides[:rank] != tuple(tensor.strides):
-            mismatches.append("byte_strides")
-        if descriptor.logical_byte_size != tensor.byte_size:
-            mismatches.append("logical_byte_size")
-        if tensor.storage_type is TensorStorageType.CONSTANT:
-            expected = layout.offset_of(graph.bucket_frames, tensor.tensor_id)
-            if descriptor.data_offset != expected:
-                mismatches.append("data_offset")
-        if tensor.producer is not None and descriptor.first_use != tensor.producer:
-            mismatches.append("first_use")
-        if tensor.consumers and descriptor.last_use != tensor.consumers[-1]:
-            mismatches.append("last_use")
+        for field_name in descriptor_fields:
+            if getattr(descriptor, field_name) != getattr(expected, field_name):
+                mismatches.append(field_name)
         if mismatches:
             raise ExecutionPlanError(
                 f"Tensor {tensor.tensor_id} {tensor.name!r}가 plan과 다르다: "
