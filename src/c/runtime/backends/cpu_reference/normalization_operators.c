@@ -75,9 +75,29 @@ CamppStatus campp_reference_batch_normalization(
         memcpy(&bias, (const uint8_t *)inputs[2].data + parameter_offset[1], sizeof(bias));
         memcpy(&mean, (const uint8_t *)inputs[3].data + parameter_offset[2], sizeof(mean));
         memcpy(&variance, (const uint8_t *)inputs[4].data + parameter_offset[3], sizeof(variance));
-        result = scale * (x - mean) /
-                     sqrtf(variance + (float)epsilon_value) +
-                 bias;
+        /*
+         * Legacy direct form (algebraically equivalent, but not necessarily
+         * float32 rounding-equivalent to ONNX Runtime):
+         *
+         * result = scale * (x - mean) /
+         *              sqrtf(variance + (float)epsilon_value) +
+         *          bias;
+         *
+         * ONNX Runtime's CPU BatchNormalization kernel first turns the
+         * channel parameters into an affine transform, then evaluates
+         * x * new_scale + new_bias.  Keep every intermediate as float so a
+         * compiler cannot silently promote part of the calculation to
+         * double precision.  This ordering is important near a following
+         * QuantizeLinear half-way rounding boundary.
+         */
+        {
+            const float epsilon = (float)epsilon_value;
+            const float inv_std = 1.0f / sqrtf(variance + epsilon);
+            const float new_scale = inv_std * scale;
+            const float new_bias = bias - mean * new_scale;
+
+            result = x * new_scale + new_bias;
+        }
         memcpy(
             (uint8_t *)outputs[0].data + output_offset, &result,
             sizeof(result));
