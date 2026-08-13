@@ -155,10 +155,10 @@ def _load_exporter_api() -> dict[str, object]:
             read_static_model,
         )
         from runtime_bundle_exporter.builder.tensor_table_builder import plan_weight_blob
-        from runtime_bundle_exporter.builder.planner.tensor_arena_planner import (
+        from runtime_bundle_exporter.planner.tensor_arena_planner import (
             plan_tensor_arena,
         )
-        from runtime_bundle_exporter.builder.planner.dense_slab_planner import (
+        from runtime_bundle_exporter.planner.dense_slab_planner import (
             inspect_compiled_dense_concats,
             rewrite_dense_concats_as_slabs,
         )

@@ -135,11 +135,11 @@ def _rebase_source_paths(document: dict, source: Path, output: Path) -> None:
 def export_dense_slab_bundle(args: argparse.Namespace) -> None:
     if str(PYTHON_SOURCE) not in sys.path:
         sys.path.insert(0, str(PYTHON_SOURCE))
-    from runtime_bundle_exporter.builder.planner.dense_slab_planner import (
+    from runtime_bundle_exporter.planner.dense_slab_planner import (
         inspect_compiled_dense_concats,
         rewrite_dense_concats_as_slabs,
     )
-    from runtime_bundle_exporter.builder.planner.tensor_arena_planner import (
+    from runtime_bundle_exporter.planner.tensor_arena_planner import (
         plan_tensor_arena,
     )
     from runtime_bundle_exporter.builder.tensor_table_builder import (

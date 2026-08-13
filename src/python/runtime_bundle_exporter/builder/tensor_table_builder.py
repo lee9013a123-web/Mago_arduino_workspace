@@ -36,7 +36,7 @@ from ..format.binary_format_schema import (
     TensorStorageType,
 )
 from ..runtime_ir import InitializerScope, RuntimeBundle, RuntimeGraph, RuntimeTensor
-from .planner.tensor_arena_planner import TensorArenaLayout
+from ..planner.tensor_arena_planner import TensorArenaLayout
 
 
 # weights.bin의 모든 항목을 8바이트 경계에 두어 C가 int64까지 그대로 읽게 한다.
@@ -260,8 +260,9 @@ def _lifetime(tensor: RuntimeTensor) -> tuple[int, int]:
 
 
 def _flags_for(
-    storage_type: TensorStorageType, *, arena_managed: bool = False
+    tensor: RuntimeTensor, *, arena_managed: bool = False
 ) -> int:
+    storage_type = tensor.storage_type
     flags = TensorFlags.CONTIGUOUS
     if storage_type is TensorStorageType.CONSTANT:
         # weights.bin은 plan 밖에 있고 실행 중에 바뀌지 않는다.
@@ -270,6 +271,8 @@ def _flags_for(
         flags |= TensorFlags.ALIASED
     if arena_managed:
         flags |= TensorFlags.DENSE_SLAB
+    if tensor.packed_qconv_o4i4:
+        flags |= TensorFlags.PACKED_QCONV_O4I4
     return int(flags)
 
 
@@ -339,9 +342,7 @@ def build_tensor_table(
                 dtype=int(tensor.dtype),
                 rank=rank,
                 storage_type=int(tensor.storage_type),
-                flags=_flags_for(
-                    tensor.storage_type, arena_managed=arena_managed
-                ),
+                flags=_flags_for(tensor, arena_managed=arena_managed),
                 dimensions=tuple(tensor.shape) + (1,) * padding,
                 byte_strides=tuple(tensor.strides) + (0,) * padding,
                 data_offset=_data_offset_for(

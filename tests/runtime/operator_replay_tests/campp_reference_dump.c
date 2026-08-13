@@ -190,7 +190,7 @@ int main(int argc, char **argv)
 {
     CamppRuntimeModel model;
     CamppRuntimeContext context;
-    const CamppKernelRegistry *registry = campp_cpu_reference_registry();
+    const CamppKernelRegistry *registry = NULL;
     const CamppTensorDescriptor *input_descriptor;
     uint32_t input_dimensions[CAMPP_TENSOR_MAX_RANK];
     uint32_t input_tensor_id;
@@ -215,6 +215,10 @@ int main(int argc, char **argv)
         fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
         return 1;
     }
+    registry =
+        model.operator_count != 0u && model.operators[0].kernel_id == 1u
+            ? campp_cpu_aarch64_registry()
+            : campp_cpu_reference_registry();
 
     memset(&context, 0, sizeof(context));
     status = campp_runtime_context_create(&model, registry, &context);
@@ -262,7 +266,6 @@ int main(int argc, char **argv)
         campp_runtime_model_release(&model);
         return 1;
     }
-
     snprintf(path, sizeof(path), "%s.bin", argv[4]);
     payload_sink = fopen(path, "wb");
     snprintf(path, sizeof(path), "%s.json", argv[4]);

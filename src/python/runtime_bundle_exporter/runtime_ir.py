@@ -144,6 +144,7 @@ class RuntimeTensor:
     storage_span_bytes: int | None = None
     alias_of_tensor_id: int | None = None
     view_byte_offset: int = 0
+    packed_qconv_o4i4: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -210,6 +211,19 @@ class RuntimeTensor:
             raise RuntimeIRError(
                 f"non-VIEW Tensor {self.name!r} cannot carry alias metadata"
             )
+        if self.packed_qconv_o4i4:
+            if self.storage_type is not TensorStorageType.CONSTANT:
+                raise RuntimeIRError(
+                    f"packed QConv Tensor {self.name!r} must be CONSTANT"
+                )
+            if self.dtype not in (TensorDType.INT8, TensorDType.UINT8):
+                raise RuntimeIRError(
+                    f"packed QConv Tensor {self.name!r} must be INT8 or UINT8"
+                )
+            if len(self.shape) not in (3, 4):
+                raise RuntimeIRError(
+                    f"packed QConv Tensor {self.name!r} must have rank 3 or 4"
+                )
 
         if self.producer is not None:
             _require_uint32("producer", self.producer)
@@ -308,6 +322,8 @@ class RuntimeInitializer:
     shape: tuple[int, ...]
     raw_data: bytes
     scope: InitializerScope = InitializerScope.SHARED
+    storage_span_bytes: int | None = None
+    packed_qconv_o4i4: bool = False
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -316,6 +332,8 @@ class RuntimeInitializer:
         object.__setattr__(self, "shape", _coerce_shape(self.shape))
         if isinstance(self.raw_data, (bytearray, memoryview)):
             object.__setattr__(self, "raw_data", bytes(self.raw_data))
+        if self.storage_span_bytes is None:
+            object.__setattr__(self, "storage_span_bytes", len(self.raw_data))
         try:
             object.__setattr__(self, "scope", InitializerScope(self.scope))
         except ValueError as exc:
@@ -328,16 +346,42 @@ class RuntimeInitializer:
     def byte_size(self) -> int:
         return len(self.raw_data)
 
+    @property
+    def logical_byte_size(self) -> int:
+        return _logical_byte_size(self.dtype, self.shape)
+
     def validate(self) -> None:
         _require_name("Initializer", self.name)
         _require_uint32("tensor_id", self.tensor_id)
         if not isinstance(self.raw_data, bytes):
             raise RuntimeIRError("initializer raw_data must be bytes")
-        expected_size = _logical_byte_size(self.dtype, self.shape)
-        if len(self.raw_data) != expected_size:
+        expected_size = self.logical_byte_size
+        assert self.storage_span_bytes is not None
+        _require_uint64("initializer storage_span_bytes", self.storage_span_bytes)
+        if self.storage_span_bytes != len(self.raw_data):
+            raise RuntimeIRError(
+                f"Initializer {self.name!r} storage span is "
+                f"{self.storage_span_bytes}, but contains {len(self.raw_data)} bytes"
+            )
+        if self.packed_qconv_o4i4:
+            if self.dtype not in (TensorDType.INT8, TensorDType.UINT8):
+                raise RuntimeIRError(
+                    f"packed initializer {self.name!r} must be INT8 or UINT8"
+                )
+            if len(self.shape) not in (3, 4) or len(self.raw_data) % 16:
+                raise RuntimeIRError(
+                    f"packed initializer {self.name!r} must be rank 3/4 and "
+                    "16-byte sized"
+                )
+        elif len(self.raw_data) != expected_size:
             raise RuntimeIRError(
                 f"Initializer {self.name!r} contains {len(self.raw_data)} bytes, "
                 f"expected {expected_size} from dtype and shape"
+            )
+        if len(self.raw_data) < expected_size:
+            raise RuntimeIRError(
+                f"Initializer {self.name!r} contains {len(self.raw_data)} bytes, "
+                f"smaller than logical {expected_size} from dtype and shape"
             )
 
 
@@ -558,6 +602,7 @@ class RuntimeGraph:
                     "directly, not another VIEW"
                 )
             if base.storage_type not in (
+                TensorStorageType.INPUT,
                 TensorStorageType.ACTIVATION,
                 TensorStorageType.OUTPUT,
             ):
@@ -604,7 +649,9 @@ class RuntimeGraph:
             if (
                 initializer.dtype != tensor.dtype
                 or initializer.shape != tensor.shape
-                or initializer.byte_size != tensor.byte_size
+                or initializer.logical_byte_size != tensor.byte_size
+                or initializer.byte_size != tensor.storage_span_bytes
+                or initializer.packed_qconv_o4i4 != tensor.packed_qconv_o4i4
             ):
                 raise RuntimeIRError(
                     f"Initializer {initializer.name!r} metadata does not match its Tensor"
@@ -711,6 +758,8 @@ class RuntimeBundle:
                     item.dtype != expected.dtype
                     or item.shape != expected.shape
                     or item.raw_data != expected.raw_data
+                    or item.storage_span_bytes != expected.storage_span_bytes
+                    or item.packed_qconv_o4i4 != expected.packed_qconv_o4i4
                 ):
                     raise RuntimeIRError(
                         f"SHARED initializer {name!r} differs between buckets; "

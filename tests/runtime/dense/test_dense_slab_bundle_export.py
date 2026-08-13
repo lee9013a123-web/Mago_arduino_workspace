@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "scripts" / "3_runtime" / "10_export_dense_slab_bundle.py"
 SPEC = importlib.util.spec_from_file_location("export_dense_slab", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None

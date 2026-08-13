@@ -413,7 +413,8 @@ CamppStatus campp_validate_tensor_descriptor(
     static const uint8_t known_flags = (uint8_t)(
         CAMPP_TENSOR_FLAG_READ_ONLY | CAMPP_TENSOR_FLAG_CONTIGUOUS
         | CAMPP_TENSOR_FLAG_EXTERNAL | CAMPP_TENSOR_FLAG_ALIASED
-        | CAMPP_TENSOR_FLAG_DENSE_SLAB);
+        | CAMPP_TENSOR_FLAG_DENSE_SLAB
+        | CAMPP_TENSOR_FLAG_PACKED_QCONV_O4I4);
     uint64_t elements = 1u;
     uint8_t axis;
     CamppStatus status;
@@ -472,6 +473,18 @@ CamppStatus campp_validate_tensor_descriptor(
         }
     }
     if (descriptor->storage_span_bytes < descriptor->logical_byte_size) {
+        return CAMPP_STATUS_CORRUPT_PLAN;
+    }
+    if ((descriptor->flags & CAMPP_TENSOR_FLAG_PACKED_QCONV_O4I4) != 0u) {
+        if (descriptor->storage_type != CAMPP_TENSOR_STORAGE_CONSTANT ||
+            (descriptor->dtype != CAMPP_DTYPE_INT8 &&
+             descriptor->dtype != CAMPP_DTYPE_UINT8) ||
+            (descriptor->rank != 3u && descriptor->rank != 4u) ||
+            descriptor->storage_span_bytes % 16u != 0u) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+    } else if (descriptor->storage_type == CAMPP_TENSOR_STORAGE_CONSTANT &&
+               descriptor->storage_span_bytes != descriptor->logical_byte_size) {
         return CAMPP_STATUS_CORRUPT_PLAN;
     }
 
@@ -637,7 +650,7 @@ CamppStatus campp_validate_model(const struct CamppRuntimeModel *model)
         (void)arena_size;
     }
 
-    /* VIEW는 반드시 arena-owned backing Tensor의 범위 안을 직접 가리킨다. */
+    /* VIEW는 arena-owned backing 또는 외부 INPUT을 직접 가리킨다. */
     for (index = 0u; index < target->tensor_count; ++index) {
         const CamppTensorDescriptor *view = &target->tensors[index];
         const CamppTensorDescriptor *base;
@@ -651,20 +664,26 @@ CamppStatus campp_validate_model(const struct CamppRuntimeModel *model)
             return CAMPP_STATUS_CORRUPT_PLAN;
         }
         base = &target->tensors[view->alias_of_tensor_id];
-        if ((base->storage_type != CAMPP_TENSOR_STORAGE_ACTIVATION &&
+        if ((base->storage_type != CAMPP_TENSOR_STORAGE_INPUT &&
+             base->storage_type != CAMPP_TENSOR_STORAGE_ACTIVATION &&
              base->storage_type != CAMPP_TENSOR_STORAGE_OUTPUT) ||
             base->dtype != view->dtype ||
             view->data_offset > base->storage_span_bytes) {
             return CAMPP_STATUS_CORRUPT_PLAN;
         }
         remaining = base->storage_span_bytes - view->data_offset;
-        if (view->storage_span_bytes > remaining ||
+        if (view->storage_span_bytes > remaining) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        /* INPUT은 caller가 inference 전체 동안 소유하므로 정적 수명 포위가 없다. */
+        if (base->storage_type != CAMPP_TENSOR_STORAGE_INPUT &&
+            (
             base->first_use == CAMPP_INVALID_OPERATOR_INDEX ||
             base->last_use == CAMPP_INVALID_OPERATOR_INDEX ||
             view->first_use == CAMPP_INVALID_OPERATOR_INDEX ||
             view->last_use == CAMPP_INVALID_OPERATOR_INDEX ||
             base->first_use > view->first_use ||
-            base->last_use < view->last_use) {
+            base->last_use < view->last_use)) {
             return CAMPP_STATUS_CORRUPT_PLAN;
         }
     }

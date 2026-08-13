@@ -103,6 +103,7 @@ class TensorFlags(IntFlag):
     EXTERNAL = 1 << 2
     ALIASED = 1 << 3
     DENSE_SLAB = 1 << 4
+    PACKED_QCONV_O4I4 = 1 << 5
 
 
 ALL_TENSOR_FLAGS: Final[int] = int(
@@ -111,6 +112,7 @@ ALL_TENSOR_FLAGS: Final[int] = int(
     | TensorFlags.EXTERNAL
     | TensorFlags.ALIASED
     | TensorFlags.DENSE_SLAB
+    | TensorFlags.PACKED_QCONV_O4I4
 )
 
 
@@ -482,6 +484,7 @@ class TensorDescriptor:
 
         is_view = int(self.storage_type) == TensorStorageType.VIEW
         is_aliased = bool(self.flags & TensorFlags.ALIASED)
+        is_packed = bool(self.flags & TensorFlags.PACKED_QCONV_O4I4)
         if is_view and self.alias_of_tensor_id == INVALID_TENSOR_ID:
             raise BinaryFormatError("VIEW Tensor must reference alias_of_tensor_id")
         if is_view and not is_aliased:
@@ -489,6 +492,22 @@ class TensorDescriptor:
         if not is_view and self.alias_of_tensor_id != INVALID_TENSOR_ID:
             raise BinaryFormatError(
                 "non-VIEW Tensor must use INVALID_TENSOR_ID for alias_of_tensor_id"
+            )
+        if is_packed:
+            if int(self.storage_type) != TensorStorageType.CONSTANT:
+                raise BinaryFormatError("packed QConv Tensor must be CONSTANT")
+            if int(self.dtype) not in (TensorDType.INT8, TensorDType.UINT8):
+                raise BinaryFormatError("packed QConv Tensor must be INT8 or UINT8")
+            if self.rank not in (3, 4) or self.storage_span_bytes % 16 != 0:
+                raise BinaryFormatError(
+                    "packed QConv Tensor must be rank 3/4 with 16-byte span"
+                )
+        elif (
+            int(self.storage_type) == TensorStorageType.CONSTANT
+            and self.storage_span_bytes != self.logical_byte_size
+        ):
+            raise BinaryFormatError(
+                "padded CONSTANT storage requires PACKED_QCONV_O4I4"
             )
 
         if (

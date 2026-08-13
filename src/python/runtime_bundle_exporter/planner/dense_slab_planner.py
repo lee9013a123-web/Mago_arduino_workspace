@@ -10,8 +10,8 @@ of patching a binary plan in place.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from ...format.binary_format_schema import OperatorCode, TensorStorageType
-from ...runtime_ir import RuntimeGraph, RuntimeOperator, RuntimeTensor
+from ..format.binary_format_schema import OperatorCode, TensorStorageType
+from ..runtime_ir import RuntimeGraph, RuntimeOperator, RuntimeTensor
 
 
 class DenseSlabPlanningError(ValueError):

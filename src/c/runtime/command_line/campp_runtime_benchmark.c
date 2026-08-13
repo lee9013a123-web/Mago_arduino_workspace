@@ -389,7 +389,7 @@ int main(int argc, char **argv)
     BenchmarkOptions options;
     CamppRuntimeModel model;
     CamppRuntimeContext context;
-    const CamppKernelRegistry *registry = campp_cpu_reference_registry();
+    const CamppKernelRegistry *registry = NULL;
     const CamppTensorDescriptor *input_descriptor;
     const CamppTensorView *output_view = NULL;
     uint32_t input_dimensions[CAMPP_TENSOR_MAX_RANK];
@@ -417,8 +417,9 @@ int main(int argc, char **argv)
 
     if (argc == 2 && strcmp(argv[1], "--capabilities") == 0) {
         fputs(
-            "{\"runtime\":\"campp-c-reference\",\"effective_threads\":1,"
-            "\"threading\":\"single-thread\"}\n",
+            "{\"runtime\":\"campp-c-runtime\",\"effective_threads\":1,"
+            "\"threading\":\"single-thread\","
+            "\"backends\":[\"cpu_reference\",\"cpu_aarch64_o4i4\"]}\n",
             stdout);
         return 0;
     }
@@ -440,6 +441,10 @@ int main(int argc, char **argv)
         fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
         goto cleanup;
     }
+    registry =
+        model.operator_count != 0u && model.operators[0].kernel_id == 1u
+            ? campp_cpu_aarch64_registry()
+            : campp_cpu_reference_registry();
     memory_after_model = read_memory_snapshot();
 
     context_started = monotonic_ns();
@@ -523,7 +528,10 @@ int main(int argc, char **argv)
         goto cleanup;
     }
 
-    fputs("{\"schema_version\":1,\"runtime\":\"campp-c-reference\",", stdout);
+    fputs("{\"schema_version\":1,\"runtime\":\"campp-c-runtime\",", stdout);
+    fputs("\"backend\":", stdout);
+    print_json_string(registry->name);
+    fputs(",", stdout);
     fputs("\"configuration\":{", stdout);
     printf(
         "\"requested_threads\":%" PRIu32

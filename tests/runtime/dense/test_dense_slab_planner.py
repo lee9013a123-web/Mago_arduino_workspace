@@ -6,14 +6,14 @@ import tempfile
 import unittest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "src" / "python"))
 
-from runtime_bundle_exporter.builder.planner.dense_slab_planner import (  # noqa: E402
+from runtime_bundle_exporter.planner.dense_slab_planner import (  # noqa: E402
     inspect_compiled_dense_concats,
     rewrite_dense_concats_as_slabs,
 )
-from runtime_bundle_exporter.builder.planner.tensor_arena_planner import (  # noqa: E402
+from runtime_bundle_exporter.planner.tensor_arena_planner import (  # noqa: E402
     plan_tensor_arena,
     plan_tensor_arena_from_descriptors,
 )

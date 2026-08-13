@@ -20,7 +20,6 @@ mkdir -p "${BUILD_DIR}"
 
 mapfile -t RUNTIME_SOURCES < <(
     find "${ROOT}/src/c/runtime" -name '*.c' \
-        -not -path '*cpu_aarch64*' \
         -not -path '*command_line*' | sort
 )
 

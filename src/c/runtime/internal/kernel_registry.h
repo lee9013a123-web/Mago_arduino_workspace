@@ -126,4 +126,7 @@ CamppStatus campp_kernel_registry_covers_model(
  */
 const CamppKernelRegistry *campp_cpu_reference_registry(void);
 
+/* O4I4 packed QLinearConv와 stride-aware fallback을 제공한다. */
+const CamppKernelRegistry *campp_cpu_aarch64_registry(void);
+
 #endif /* CAMPP_RUNTIME_INTERNAL_KERNEL_REGISTRY_H */

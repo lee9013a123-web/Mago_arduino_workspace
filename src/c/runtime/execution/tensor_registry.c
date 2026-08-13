@@ -152,7 +152,6 @@ CamppStatus campp_tensor_registry_create(
         base_descriptor = &model->tensors[descriptor->alias_of_tensor_id];
         base_view = &views[descriptor->alias_of_tensor_id];
         if (base_descriptor->storage_type == CAMPP_TENSOR_STORAGE_VIEW ||
-            base_view->data == NULL ||
             descriptor->data_offset == CAMPP_INVALID_DATA_OFFSET ||
             descriptor->data_offset > base_view->storage_span_bytes) {
             status = CAMPP_STATUS_CORRUPT_PLAN;
@@ -164,16 +163,23 @@ CamppStatus campp_tensor_registry_create(
             status = CAMPP_STATUS_BUFFER_OVERFLOW;
             goto failed;
         }
-        view->data = (uint8_t *)base_view->data +
-                     (size_t)descriptor->data_offset;
+        if (base_view->data != NULL) {
+            view->data = (uint8_t *)base_view->data +
+                         (size_t)descriptor->data_offset;
+        } else if (base_descriptor->storage_type != CAMPP_TENSOR_STORAGE_INPUT) {
+            status = CAMPP_STATUS_CORRUPT_PLAN;
+            goto failed;
+        }
         view->storage_span_bytes = descriptor->storage_span_bytes;
         if (campp_tensor_view_is_contiguous(view)) {
             view->flags =
                 (uint8_t)(view->flags | CAMPP_TENSOR_FLAG_CONTIGUOUS);
         }
-        status = campp_memory_bounds_check_view(descriptor, view);
-        if (status != CAMPP_STATUS_OK) {
-            goto failed;
+        if (view->data != NULL) {
+            status = campp_memory_bounds_check_view(descriptor, view);
+            if (status != CAMPP_STATUS_OK) {
+                goto failed;
+            }
         }
     }
 
@@ -205,6 +211,7 @@ CamppStatus campp_runtime_context_bind_input(
 {
     const CamppTensorDescriptor *descriptor;
     CamppTensorView candidate;
+    uint32_t view_id;
     uint8_t axis;
     uint8_t mismatch_count = 0u;
     uint8_t mismatched_axis = 0u;
@@ -259,6 +266,26 @@ CamppStatus campp_runtime_context_bind_input(
                       (uint8_t)~CAMPP_TENSOR_FLAG_CONTIGUOUS);
     }
     context->tensors[tensor_id] = candidate;
+    /* Producerless transpose/layout VIEW가 INPUT을 직접 alias할 수 있다. */
+    for (view_id = 0u; view_id < context->model->tensor_count; ++view_id) {
+        const CamppTensorDescriptor *view_descriptor =
+            &context->model->tensors[view_id];
+        CamppTensorView *view;
+        if (view_descriptor->storage_type != CAMPP_TENSOR_STORAGE_VIEW ||
+            view_descriptor->alias_of_tensor_id != tensor_id) {
+            continue;
+        }
+        view = &context->tensors[view_id];
+        view->data = (uint8_t *)data + (size_t)view_descriptor->data_offset;
+        view->flags = (uint8_t)(view->flags | CAMPP_TENSOR_FLAG_EXTERNAL);
+        if (campp_tensor_view_is_contiguous(view)) {
+            view->flags =
+                (uint8_t)(view->flags | CAMPP_TENSOR_FLAG_CONTIGUOUS);
+        } else {
+            view->flags = (uint8_t)(
+                view->flags & (uint8_t)~CAMPP_TENSOR_FLAG_CONTIGUOUS);
+        }
+    }
     return CAMPP_STATUS_OK;
 }
 

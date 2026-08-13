@@ -121,6 +121,55 @@ int main(void)
     CHECK_TRUE(views == NULL);
 
     campp_reference_tensor_storage_release(&storage);
+
+    /* INPUT-backed producerless VIEW is resolved when the caller binds input. */
+    {
+        CamppTensorDescriptor input_descriptors[2];
+        CamppRuntimeModel input_model;
+        CamppActivationStorage input_storage;
+        CamppRuntimeContext input_context;
+        void *buffers[2] = {NULL, NULL};
+        size_t buffer_sizes[2] = {0u, 0u};
+        float input_data[6] = {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f};
+        uint32_t dimensions[CAMPP_TENSOR_MAX_RANK] = {1u, 2u, 3u, 1u};
+
+        init_tensor(
+            &input_descriptors[0], 0u, CAMPP_TENSOR_STORAGE_INPUT,
+            2u, 24u, 24u);
+        init_tensor(
+            &input_descriptors[1], 1u, CAMPP_TENSOR_STORAGE_VIEW,
+            2u, 24u, 24u);
+        input_descriptors[1].flags = (uint8_t)(
+            input_descriptors[1].flags | CAMPP_TENSOR_FLAG_ALIASED);
+        input_descriptors[1].data_offset = 0u;
+        input_descriptors[1].alias_of_tensor_id = 0u;
+
+        memset(&input_model, 0, sizeof(input_model));
+        input_model.tensors = input_descriptors;
+        input_model.tensor_count = 2u;
+        input_model.operator_count = 1u;
+        memset(&input_storage, 0, sizeof(input_storage));
+        input_storage.mode = CAMPP_ACTIVATION_STORAGE_REFERENCE;
+        input_storage.buffers = buffers;
+        input_storage.buffer_sizes = buffer_sizes;
+        input_storage.buffer_count = 2u;
+        CHECK_STATUS(
+            campp_tensor_registry_create(
+                &input_model, &input_storage, &views, &view_count),
+            CAMPP_STATUS_OK);
+        CHECK_TRUE(views[0].data == NULL && views[1].data == NULL);
+        memset(&input_context, 0, sizeof(input_context));
+        input_context.model = &input_model;
+        input_context.tensors = views;
+        input_context.tensor_count = view_count;
+        CHECK_STATUS(
+            campp_runtime_context_bind_input(
+                &input_context, 0u, input_data, sizeof(input_data),
+                CAMPP_DTYPE_FLOAT32, 3u, dimensions),
+            CAMPP_STATUS_OK);
+        CHECK_TRUE(views[0].data == input_data && views[1].data == input_data);
+        campp_tensor_registry_release(&views, &view_count);
+    }
     puts("tensor VIEW alias tests: PASS");
     return 0;
 }

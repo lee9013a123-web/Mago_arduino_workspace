@@ -136,6 +136,36 @@ python3 scripts/3_runtime/11_validate_dense_slab.py
 생성 bundle은 `runs/runtime/dense_slab/bundle/`, 최종 검증 결과는
 `results/runtime/dense/dense_slab_validation.json`에 기록된다.
 
+## Cache layout·tiling·weight packing: 12-13
+
+Dense slab bundle을 입력으로 받아 논리 shape는 유지하고 rank 3/4 activation의
+물리 stride를 `[N,T,C_padded]` 또는 `[N,H,W,C_padded]`로 바꾼다. Channel은
+4-lane 경계로 padding하며 Dense VIEW는 같은 slab의 channel byte offset을 쓴다.
+입력의 `[N,T,C] -> [N,C,T]` Transpose는 외부 INPUT을 가리키는 producerless
+VIEW로 바꿔 copy를 제거한다. 98-frame graph에서는 singleton 축만 바꾸는
+Unsqueeze 54개, Squeeze 1개, Reshape 52개도 direct VIEW로 변환한다. 따라서
+descriptor 변경만 필요한 layout copy는 총 108개 제거된다. 실제 data 순서를
+바꾸는 `(1,32,10,98) -> (1,320,98)` Reshape는 copy 연산으로 유지한다.
+
+225개 QLinearConv weight는 다음 O4I4 순서로 오프라인 packing한다.
+
+```text
+[group][output block][kernel][input block][output lane][input lane]
+```
+
+실행 중 packing은 없으며 kernel ID 1이 packed AArch64 backend를 선택한다.
+AArch64에서는 NEON 4-lane multiply를 사용하고, 비-AArch64 개발 환경에서는 같은
+tile 순서의 scalar fallback으로 정확도를 검증한다.
+
+```bash
+python3 scripts/3_runtime/12_export_cache_packed_bundle.py
+python3 scripts/3_runtime/13_validate_cache_packed.py
+```
+
+생성 bundle은 `runs/runtime/cache_packed/bundle/`, 검증 결과는
+`results/runtime/cache_layout/cache_packed_validation.json`이다. 검증 입력은
+`multi__speaker_0000`, `0005`, `0006`의 98-frame feature 세 개로 고정한다.
+
 ## QRB2210 End-to-end 성능 검증: 09
 
 `09_benchmark_runtime.py`는 06-08의 정확도 검증을 반복하지 않는다. 기존 결과의
@@ -194,6 +224,19 @@ python3 scripts/3_runtime/09_benchmark_runtime.py \
 
 python3 scripts/3_runtime/09_benchmark_runtime.py \
   --config configs/benchmark/runtime_qrb2210.json
+```
+
+Dense slab 대 cache-packed A/B 평가는 같은 Release binary로 다음 두 설정을 각각
+실행한다. 두 설정 모두 위의 고정 98-frame 입력 세 개만 선택한다.
+
+```bash
+python3 scripts/3_runtime/09_benchmark_runtime.py \
+  --config configs/benchmark/runtime_dense_slab_98.json \
+  --run-id dense_slab_98
+
+python3 scripts/3_runtime/09_benchmark_runtime.py \
+  --config configs/benchmark/runtime_cache_packed_98.json \
+  --run-id cache_packed_98
 ```
 
 > **비용 주의.** cpu_reference backend는 1초 음성 추론이 약 35초(RTF 35.5)다.

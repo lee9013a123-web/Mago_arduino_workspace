@@ -7,7 +7,7 @@ import tempfile
 import unittest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "scripts" / "3_runtime" / "08_validate_tensor_arena.py"
 SPEC = importlib.util.spec_from_file_location("validate_tensor_arena", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None

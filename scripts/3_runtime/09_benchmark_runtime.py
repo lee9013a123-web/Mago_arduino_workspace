@@ -73,6 +73,7 @@ class BenchmarkConfig:
     cv_threshold_pct: float
     verify_source_wavs: bool
     require_all_latency_inputs: bool
+    input_ids: tuple[str, ...]
     paths: BenchmarkPaths
     environment: EnvironmentPolicy
 
@@ -180,6 +181,7 @@ def load_config(path: Path, repository_root: Path = ROOT) -> BenchmarkConfig:
         "cv_threshold_pct",
         "verify_source_wavs",
         "require_all_latency_inputs",
+        "input_ids",
         "paths",
         "environment",
     }
@@ -320,6 +322,13 @@ def load_config(path: Path, repository_root: Path = ROOT) -> BenchmarkConfig:
         raise BenchmarkError(
             "verify_source_wavs and require_all_latency_inputs must be booleans"
         )
+    raw_input_ids = document.get("input_ids", [])
+    if (
+        not isinstance(raw_input_ids, list)
+        or any(not isinstance(value, str) or not value for value in raw_input_ids)
+        or len(raw_input_ids) != len(set(raw_input_ids))
+    ):
+        raise BenchmarkError("input_ids must be a list of unique non-empty strings")
     return BenchmarkConfig(
         source=path.resolve(),
         profile=profile,
@@ -335,6 +344,7 @@ def load_config(path: Path, repository_root: Path = ROOT) -> BenchmarkConfig:
         ),
         verify_source_wavs=verify_source_wavs,
         require_all_latency_inputs=require_all,
+        input_ids=tuple(raw_input_ids),
         paths=paths,
         environment=environment,
     )
@@ -921,7 +931,8 @@ def run_c_benchmark(
         }
     result = {
         "schema_version": 1,
-        "runtime": "campp-c-reference",
+        "runtime": "campp-c-runtime",
+        "backend": warm.get("backend"),
         "model": warm["model"],
         "configuration": warm["configuration"],
         "input": warm["input"],
@@ -1037,7 +1048,7 @@ def aggregate_bucket(
         results[0].get("configuration", {}).get(
             "audio_seconds", BUCKET_TAGS.get(frames)
         )
-    ) if runtime == "campp-c-reference" else float(
+    ) if runtime == "campp-c-runtime" else float(
         results[0]["input"]["audio_seconds"]
     )
     rtf = summarize(
@@ -1169,19 +1180,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         all_features, feature_document = load_feature_manifest(
             config.paths.feature_manifest
         )
+        requested_input_ids = tuple(args.input_id or config.input_ids)
+        requested_input_set = set(requested_input_ids)
         filtered_features = [
             item
             for item in all_features
             if item.bucket_frames in selected_buckets
-            and (not args.input_id or item.input_id in set(args.input_id))
+            and (not requested_input_ids or item.input_id in requested_input_set)
         ]
         filtered_dataset = {
             key: value
             for key, value in selected_dataset.items()
-            if not args.input_id or key in set(args.input_id)
+            if not requested_input_ids or key in requested_input_set
         }
-        if args.input_id:
-            unknown_inputs = sorted(set(args.input_id) - set(selected_dataset))
+        if requested_input_ids:
+            unknown_inputs = sorted(requested_input_set - set(selected_dataset))
             if unknown_inputs:
                 raise BenchmarkError(f"unknown input IDs: {unknown_inputs}")
         selected_config = BenchmarkConfig(
@@ -1199,6 +1212,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             cv_threshold_pct=config.cv_threshold_pct,
             verify_source_wavs=config.verify_source_wavs,
             require_all_latency_inputs=config.require_all_latency_inputs,
+            input_ids=requested_input_ids,
             paths=config.paths,
             environment=config.environment,
         )
@@ -1275,6 +1289,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "cold_runs": config.cold_runs,
             "cv_threshold_pct": config.cv_threshold_pct,
             "buckets": selected_config.buckets,
+            "input_ids": list(selected_config.input_ids),
         },
         "git": git_metadata(),
         "artifacts": provenance,
@@ -1352,7 +1367,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         bucket_root / "c_runtime",
                         base_environment,
                     )
-                    runtime_name = "campp-c-reference"
+                    runtime_name = "campp-c-runtime"
             except (BenchmarkError, OSError, ValueError) as exc:
                 failure = {
                     "input_id": feature.input_id,
@@ -1391,7 +1406,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     aggregates: dict[str, dict[str, Any]] = {
         "onnxruntime-cpu": {},
-        "campp-c-reference": {},
+        "campp-c-runtime": {},
     }
     comparisons: list[dict[str, Any]] = []
     for frames in sorted(selected_config.buckets):
@@ -1402,13 +1417,13 @@ def main(argv: Sequence[str] | None = None) -> int:
             config.cv_threshold_pct,
         )
         c_result = aggregate_bucket(
-            "campp-c-reference",
+            "campp-c-runtime",
             frames,
-            grouped[("campp-c-reference", frames)],
+            grouped[("campp-c-runtime", frames)],
             config.cv_threshold_pct,
         )
         aggregates["onnxruntime-cpu"][str(frames)] = ort
-        aggregates["campp-c-reference"][str(frames)] = c_result
+        aggregates["campp-c-runtime"][str(frames)] = c_result
         comparisons.append(compare_buckets(ort, c_result))
 
     environment_after = environment_snapshot()

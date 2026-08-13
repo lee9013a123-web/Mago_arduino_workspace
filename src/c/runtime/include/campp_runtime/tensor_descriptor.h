@@ -48,7 +48,9 @@ typedef enum CamppTensorFlags {
     CAMPP_TENSOR_FLAG_CONTIGUOUS = 1u << 1,
     CAMPP_TENSOR_FLAG_EXTERNAL = 1u << 2,
     CAMPP_TENSOR_FLAG_ALIASED = 1u << 3,
-    CAMPP_TENSOR_FLAG_DENSE_SLAB = 1u << 4
+    CAMPP_TENSOR_FLAG_DENSE_SLAB = 1u << 4,
+    /* QLinearConv [group][O/4][kernel][I/4][O-lane][I-lane]. */
+    CAMPP_TENSOR_FLAG_PACKED_QCONV_O4I4 = 1u << 5
 } CamppTensorFlags;
 
 /*

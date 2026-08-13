@@ -15,13 +15,13 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Mapping, Sequence
 
-from ...format.binary_format_schema import (
+from ..format.binary_format_schema import (
     INVALID_OPERATOR_INDEX,
     TensorDescriptor,
     TensorStorageType,
     UINT64_MAX,
 )
-from ...runtime_ir import RuntimeGraph, RuntimeTensor
+from ..runtime_ir import RuntimeGraph, RuntimeTensor
 
 
 DEFAULT_ARENA_ALIGNMENT = 64
@@ -97,6 +97,10 @@ def _arena_lifetimes(graph: RuntimeGraph) -> dict[int, tuple[int, int]]:
         if tensor.storage_type is not TensorStorageType.VIEW:
             continue
         assert tensor.alias_of_tensor_id is not None
+        base_tensor = graph.tensor(tensor.alias_of_tensor_id)
+        if base_tensor.storage_type is TensorStorageType.INPUT:
+            # External input remains live for the whole inference.
+            continue
         try:
             base_first, base_last = lifetimes[tensor.alias_of_tensor_id]
         except KeyError as exc:
@@ -442,6 +446,9 @@ def plan_tensor_arena_from_descriptors(
         _require_positive_integer("max_arena_bytes", max_arena_bytes)
 
     descriptor_tuple = tuple(descriptors)
+    descriptors_by_id = {
+        descriptor.tensor_id: descriptor for descriptor in descriptor_tuple
+    }
     requests_by_id: dict[int, _ArenaRequest] = {}
     for descriptor in descriptor_tuple:
         storage_type = TensorStorageType(descriptor.storage_type)
@@ -470,6 +477,13 @@ def plan_tensor_arena_from_descriptors(
     for descriptor in descriptor_tuple:
         storage_type = TensorStorageType(descriptor.storage_type)
         if storage_type is not TensorStorageType.VIEW:
+            continue
+        base_descriptor = descriptors_by_id.get(descriptor.alias_of_tensor_id)
+        if (
+            base_descriptor is not None
+            and TensorStorageType(base_descriptor.storage_type)
+            is TensorStorageType.INPUT
+        ):
             continue
         if (
             descriptor.first_use == INVALID_OPERATOR_INDEX

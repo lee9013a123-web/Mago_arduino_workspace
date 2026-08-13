@@ -52,7 +52,7 @@ from ..format.binary_format_schema import (
 from ..builder.operator_table_builder import build_operator_table
 from ..runtime_ir import RuntimeGraph
 from ..builder.tensor_table_builder import WeightBlobLayout, build_tensor_table
-from ..builder.planner.tensor_arena_planner import TensorArenaLayout
+from ..planner.tensor_arena_planner import TensorArenaLayout
 
 
 PLAN_FILE_NAME_TEMPLATE: str = "plan_{frames}.bin"

@@ -18,7 +18,9 @@ sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
-def _config(root: Path, *, require_all: bool = True) -> MODULE.BenchmarkConfig:
+def _config(
+    root: Path, *, require_all: bool = True, input_ids: list[str] | None = None
+) -> MODULE.BenchmarkConfig:
     document = {
         "schema_version": 1,
         "profile": "test",
@@ -30,6 +32,7 @@ def _config(root: Path, *, require_all: bool = True) -> MODULE.BenchmarkConfig:
         "cv_threshold_pct": 3.0,
         "verify_source_wavs": False,
         "require_all_latency_inputs": require_all,
+        "input_ids": input_ids or [],
         "paths": {
             "workspace_root": "runs",
             "canonical_model": "model.onnx",
@@ -63,6 +66,14 @@ class RuntimeBenchmarkTests(unittest.TestCase):
         self.assertEqual(config.buckets, {98: 1.0})
         self.assertEqual(config.paths.canonical_model, root / "model.onnx")
         self.assertEqual(config.threads, 1)
+
+    def test_config_can_freeze_evaluation_input_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            config = _config(
+                Path(directory), input_ids=["speaker_0000", "speaker_0005"]
+            )
+
+        self.assertEqual(config.input_ids, ("speaker_0000", "speaker_0005"))
 
     def test_feature_payload_size_and_hash_are_enforced(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

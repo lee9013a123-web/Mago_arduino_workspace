@@ -21,8 +21,10 @@
 - `reader/graph_ir_reader.py`: graph IR의 Tensor shape와 실행 순서 로딩
 - `builder/tensor_table_builder.py`: Tensor ID와 descriptor 생성
 - `builder/operator_table_builder.py`: runtime operator table 생성
-- `builder/planner/tensor_arena_planner.py`: bucket별 activation lifetime과 Arena offset 계산
-- `builder/planner/dense_slab_planner.py`: Dense Concat chain을 slab-backed VIEW로 변환
+- `planner/tensor_arena_planner.py`: bucket별 activation lifetime과 Arena offset 계산
+- `planner/dense_slab_planner.py`: Dense Concat chain을 slab-backed VIEW로 변환
+- `planner/cache_layout_planner.py`: NTC/NHWC channel padding, stride와 layout VIEW 계획
+- `planner/weight_packing_planner.py`: QLinearConv O4I4 오프라인 packing과 복원 검증
 - `writer/weight_blob_writer.py`: weights binary 직렬화
 - `writer/execution_plan_writer.py`: bucket별 execution plan 직렬화
 - `writer/bundle_manifest_writer.py`: 모델 hash와 산출물 checksum 기록
