@@ -160,7 +160,15 @@ WAV read와 FBank 생성은 두 backend 공통의 측정 제외 구간이다. �
 정식 실행 전에는 15개 `latency_selected=1` 입력 각각에 대해 98·298·498·998
 frame 항목이 모두 있어야 한다.
 
+이 payload와 두 manifest는 `scripts/dataset_make/build_runtime_features.py`가
+만든다. **09보다 먼저 실행해야 한다.** `data/multi_speaker`의 화자별 3개 클립을
+이어붙여(원본이 4초 내외라 단일 클립으로는 498/998을 못 채운다) offset 0에서
+1·3·5·10초를 자르고, 배포 파이프라인의 FBank를 그대로 적용한다. zero-padding은
+쓰지 않는다.
+
 ```bash
+python3 scripts/dataset_make/build_runtime_features.py
+
 CFLAGS="-std=c11 -O3 -DNDEBUG -Wall -Wextra" \
   bash scripts/3_runtime/03_build_reference_runtime.sh
 
@@ -171,6 +179,11 @@ python3 scripts/3_runtime/09_benchmark_runtime.py \
 python3 scripts/3_runtime/09_benchmark_runtime.py \
   --config configs/benchmark/runtime_qrb2210.json
 ```
+
+> **비용 주의.** cpu_reference backend는 1초 음성 추론이 약 35초(RTF 35.5)다.
+> 09의 정식 프로토콜은 (input, bucket)마다 130회 추론을 요구하므로 15개 입력 ×
+> 4 bucket이면 C 쪽만 약 15일이 걸린다(ORT는 2.5시간). 추론 시간만 빠르게 보려면
+> `experiments/rtf/`의 축소 루프를 쓴다.
 
 결과는 `runs/runtime/benchmarks/<run-id>/benchmark_summary.json`과 backend별 raw
 JSON에 저장된다. 측정 중 backend 순서는 입력마다 교차해 일방적인 thermal
