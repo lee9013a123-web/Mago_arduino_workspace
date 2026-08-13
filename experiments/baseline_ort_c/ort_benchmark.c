@@ -27,12 +27,36 @@
 #define FEATURE_DIM 80
 
 static const OrtApi *g_ort = NULL;
+static void check(OrtStatus *status, const char *context);
 
 typedef struct MemorySnapshot {
     uint64_t current_rss_bytes;
     uint64_t peak_rss_bytes;
     int available;
 } MemorySnapshot;
+
+typedef struct AllocatorStats {
+    uint64_t in_use;
+    uint64_t total_allocated;
+    uint64_t max_in_use;
+    uint64_t num_allocs;
+    uint64_t num_reserves;
+    uint64_t num_arena_extensions;
+    uint64_t max_alloc_size;
+    int available;
+} AllocatorStats;
+
+typedef struct InferenceObservation {
+    double elapsed_ms;
+    MemorySnapshot memory_before;
+    MemorySnapshot memory_after_run;
+    MemorySnapshot memory_after_release;
+    AllocatorStats allocator_before;
+    AllocatorStats allocator_after_run;
+    AllocatorStats allocator_after_release;
+    uint64_t output_hash;
+    size_t output_bytes;
+} InferenceObservation;
 
 static uint64_t monotonic_ns(void)
 {
@@ -82,6 +106,117 @@ static void print_memory(const MemorySnapshot *snapshot)
     printf(
         "{\"current_rss_bytes\":%" PRIu64 ",\"peak_rss_bytes\":%" PRIu64 "}",
         snapshot->current_rss_bytes, snapshot->peak_rss_bytes);
+}
+
+static uint64_t parse_allocator_stat(const OrtKeyValuePairs *pairs, const char *key)
+{
+    const char *value = g_ort->GetKeyValue(pairs, key);
+    char *end = NULL;
+    unsigned long long parsed;
+    if (value == NULL || *value == '\0') {
+        return 0u;
+    }
+    parsed = strtoull(value, &end, 10);
+    return end != value ? (uint64_t)parsed : 0u;
+}
+
+static AllocatorStats read_allocator_stats(OrtAllocator *allocator)
+{
+    AllocatorStats result;
+    OrtKeyValuePairs *pairs = NULL;
+    OrtStatus *status;
+
+    memset(&result, 0, sizeof(result));
+    if (allocator == NULL || g_ort->AllocatorGetStats == NULL) {
+        return result;
+    }
+    status = g_ort->AllocatorGetStats(allocator, &pairs);
+    if (status != NULL) {
+        g_ort->ReleaseStatus(status);
+        return result;
+    }
+    if (pairs == NULL || g_ort->GetKeyValue(pairs, "InUse") == NULL) {
+        g_ort->ReleaseKeyValuePairs(pairs);
+        return result;
+    }
+    result.in_use = parse_allocator_stat(pairs, "InUse");
+    result.total_allocated = parse_allocator_stat(pairs, "TotalAllocated");
+    result.max_in_use = parse_allocator_stat(pairs, "MaxInUse");
+    result.num_allocs = parse_allocator_stat(pairs, "NumAllocs");
+    result.num_reserves = parse_allocator_stat(pairs, "NumReserves");
+    result.num_arena_extensions = parse_allocator_stat(pairs, "NumArenaExtensions");
+    result.max_alloc_size = parse_allocator_stat(pairs, "MaxAllocSize");
+    result.available = 1;
+    g_ort->ReleaseKeyValuePairs(pairs);
+    return result;
+}
+
+static void print_allocator_stats(const AllocatorStats *stats)
+{
+    if (stats == NULL || !stats->available) {
+        fputs("null", stdout);
+        return;
+    }
+    printf("{\"in_use_bytes\":%" PRIu64
+           ",\"total_allocated_bytes\":%" PRIu64
+           ",\"max_in_use_bytes\":%" PRIu64
+           ",\"num_allocs\":%" PRIu64
+           ",\"num_reserves\":%" PRIu64
+           ",\"num_arena_extensions\":%" PRIu64
+           ",\"max_alloc_size_bytes\":%" PRIu64 "}",
+           stats->in_use, stats->total_allocated, stats->max_in_use,
+           stats->num_allocs, stats->num_reserves,
+           stats->num_arena_extensions, stats->max_alloc_size);
+}
+
+static uint64_t nonnegative_delta(uint64_t after, uint64_t before)
+{
+    return after >= before ? after - before : 0u;
+}
+
+static void print_allocator_delta(
+    const AllocatorStats *before, const AllocatorStats *after)
+{
+    if (before == NULL || after == NULL ||
+        !before->available || !after->available) {
+        fputs("null", stdout);
+        return;
+    }
+    printf("{\"total_allocated_bytes\":%" PRIu64
+           ",\"num_allocs\":%" PRIu64
+           ",\"num_reserves\":%" PRIu64
+           ",\"num_arena_extensions\":%" PRIu64
+           ",\"in_use_bytes\":%" PRIu64 "}",
+           nonnegative_delta(after->total_allocated, before->total_allocated),
+           nonnegative_delta(after->num_allocs, before->num_allocs),
+           nonnegative_delta(after->num_reserves, before->num_reserves),
+           nonnegative_delta(after->num_arena_extensions,
+                             before->num_arena_extensions),
+           after->in_use);
+}
+
+static uint64_t fnv1a64(const void *data, size_t byte_size)
+{
+    const uint8_t *bytes = (const uint8_t *)data;
+    uint64_t value = UINT64_C(14695981039346656037);
+    size_t index;
+    for (index = 0; index < byte_size; ++index) {
+        value ^= bytes[index];
+        value *= UINT64_C(1099511628211);
+    }
+    return value;
+}
+
+static void inspect_output(
+    OrtValue *output, uint64_t *out_hash, size_t *out_bytes)
+{
+    void *data = NULL;
+    size_t byte_size = 0u;
+    check(g_ort->GetTensorSizeInBytes(output, &byte_size),
+          "GetTensorSizeInBytes");
+    check(g_ort->GetTensorMutableData(output, &data), "GetTensorMutableData");
+    *out_hash = fnv1a64(data, byte_size);
+    *out_bytes = byte_size;
 }
 
 static void print_json_string(const char *value)
@@ -173,6 +308,7 @@ int main(int argc, char **argv)
     const char *input_path = NULL;
     const char *embedding_output = NULL;
     const char *graph_opt_name = "all";
+    const char *memory_pattern_name = "on";
     double audio_seconds = 0.0;
     int warmup = 0, repeat = 1, threads = 1;
     int index;
@@ -187,6 +323,7 @@ int main(int argc, char **argv)
     OrtSession *session = NULL;
     OrtMemoryInfo *memory_info = NULL;
     OrtAllocator *allocator = NULL;
+    OrtAllocator *session_allocator = NULL;
     OrtValue *input_tensor = NULL;
     char *input_name = NULL;
     char *output_name = NULL;
@@ -200,6 +337,7 @@ int main(int argc, char **argv)
     double first_inference_ms = 0.0;
     double *timings = NULL;
     double *sorted = NULL;
+    InferenceObservation *observations = NULL;
     const float *embedding = NULL;
     size_t embedding_count = 0u;
 
@@ -213,12 +351,14 @@ int main(int argc, char **argv)
         else if (strcmp(flag, "--repeat") == 0 && value)           { repeat = atoi(value); index++; }
         else if (strcmp(flag, "--threads") == 0 && value)          { threads = atoi(value); index++; }
         else if (strcmp(flag, "--graph-opt") == 0 && value)        { graph_opt_name = value; index++; }
+        else if (strcmp(flag, "--memory-pattern") == 0 && value)   { memory_pattern_name = value; index++; }
         else if (strcmp(flag, "--embedding-output") == 0 && value) { embedding_output = value; index++; }
         else {
             fprintf(stderr,
                     "usage: %s --model m.onnx --input feature.f32 "
                     "--audio-seconds N --warmup N --repeat N --threads N "
                     "[--graph-opt disable|basic|extended|all] "
+                    "[--memory-pattern on|off] "
                     "[--embedding-output out.f32]\n",
                     argv[0]);
             return 2;
@@ -227,6 +367,11 @@ int main(int argc, char **argv)
     if (model_path == NULL || input_path == NULL || audio_seconds <= 0.0 ||
         repeat < 1 || warmup < 0 || threads < 1) {
         fprintf(stderr, "missing or invalid arguments\n");
+        return 2;
+    }
+    if (strcmp(memory_pattern_name, "on") != 0 &&
+        strcmp(memory_pattern_name, "off") != 0) {
+        fprintf(stderr, "--memory-pattern must be on or off\n");
         return 2;
     }
 
@@ -250,6 +395,11 @@ int main(int argc, char **argv)
     check(g_ort->SetSessionGraphOptimizationLevel(
               options, parse_graph_opt(graph_opt_name)),
           "SetSessionGraphOptimizationLevel");
+    if (strcmp(memory_pattern_name, "on") == 0) {
+        check(g_ort->EnableMemPattern(options), "EnableMemPattern");
+    } else {
+        check(g_ort->DisableMemPattern(options), "DisableMemPattern");
+    }
     check(g_ort->CreateSession(env, model_path, options, &session), "CreateSession");
     session_finished = monotonic_ns();
     memory_after_session = read_memory_snapshot();
@@ -279,18 +429,25 @@ int main(int argc, char **argv)
               memory_info, input_data, input_size, shape, 3,
               ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT, &input_tensor),
           "CreateTensorWithDataAsOrtValue");
+    check(g_ort->CreateAllocator(session, memory_info, &session_allocator),
+          "CreateAllocator");
     input_finished = monotonic_ns();
     memory_after_input = read_memory_snapshot();
 
     timings = (double *)malloc(sizeof(double) * (size_t)repeat);
     sorted = (double *)malloc(sizeof(double) * (size_t)repeat);
-    if (timings == NULL || sorted == NULL) {
+    observations = (InferenceObservation *)calloc(
+        (size_t)(warmup + repeat), sizeof(*observations));
+    if (timings == NULL || sorted == NULL || observations == NULL) {
         fprintf(stderr, "out of memory\n");
         return 1;
     }
 
     for (index = 0; index < warmup + repeat; ++index) {
         OrtValue *output_tensor = NULL;
+        InferenceObservation *observation = &observations[index];
+        observation->memory_before = read_memory_snapshot();
+        observation->allocator_before = read_allocator_stats(session_allocator);
         const uint64_t started = monotonic_ns();
         check(g_ort->Run(session, NULL, input_names,
                          (const OrtValue *const *)&input_tensor, 1,
@@ -298,6 +455,7 @@ int main(int argc, char **argv)
               "Run");
         {
             const double elapsed = ns_to_ms(monotonic_ns() - started);
+            observation->elapsed_ms = elapsed;
             if (index == 0) {
                 first_inference_ms = elapsed;
             }
@@ -305,6 +463,10 @@ int main(int argc, char **argv)
                 timings[index - warmup] = elapsed;
             }
         }
+        observation->memory_after_run = read_memory_snapshot();
+        observation->allocator_after_run = read_allocator_stats(session_allocator);
+        inspect_output(output_tensor, &observation->output_hash,
+                       &observation->output_bytes);
         if (index == warmup + repeat - 1) {
             /* 마지막 출력만 embedding 보고용으로 남긴다. */
             OrtTensorTypeAndShapeInfo *info = NULL;
@@ -325,6 +487,9 @@ int main(int argc, char **argv)
             memory_after_warmup = read_memory_snapshot();
         }
         g_ort->ReleaseValue(output_tensor);
+        observation->memory_after_release = read_memory_snapshot();
+        observation->allocator_after_release =
+            read_allocator_stats(session_allocator);
     }
     if (warmup == 0) {
         memory_after_warmup = memory_after_input;
@@ -350,7 +515,10 @@ int main(int argc, char **argv)
            ",\"graph_optimization_level\":", threads, threads, warmup, repeat,
            audio_seconds);
     print_json_string(graph_opt_name);
-    printf(",\"execution_mode\":\"ORT_SEQUENTIAL\"}");
+    printf(",\"memory_pattern\":");
+    print_json_string(memory_pattern_name);
+    printf(",\"cpu_memory_arena\":true"
+           ",\"execution_mode\":\"ORT_SEQUENTIAL\"}");
 
     printf(",\"model\":{\"path\":");
     print_json_string(model_path);
@@ -378,6 +546,34 @@ int main(int argc, char **argv)
     }
     printf("],\"p50_ms\":%.6f}", sorted[repeat / 2]);
 
+    printf(",\"inferences\":[");
+    for (index = 0; index < warmup + repeat; ++index) {
+        const InferenceObservation *observation = &observations[index];
+        printf("%s{\"session_run\":%d,\"phase\":\"%s\""
+               ",\"latency_ms\":%.6f,\"output_hash_fnv1a64\":\"%016" PRIx64 "\""
+               ",\"output_bytes\":%zu,\"memory_before\":",
+               index == 0 ? "" : ",", index + 1,
+               index < warmup ? "warmup" : "measurement",
+               observation->elapsed_ms, observation->output_hash,
+               observation->output_bytes);
+        print_memory(&observation->memory_before);
+        printf(",\"memory_after_run\":");
+        print_memory(&observation->memory_after_run);
+        printf(",\"memory_after_output_release\":");
+        print_memory(&observation->memory_after_release);
+        printf(",\"allocator_before\":");
+        print_allocator_stats(&observation->allocator_before);
+        printf(",\"allocator_after_run\":");
+        print_allocator_stats(&observation->allocator_after_run);
+        printf(",\"allocator_after_output_release\":");
+        print_allocator_stats(&observation->allocator_after_release);
+        printf(",\"allocator_run_delta\":");
+        print_allocator_delta(&observation->allocator_before,
+                              &observation->allocator_after_release);
+        putchar('}');
+    }
+    putchar(']');
+
     printf(",\"memory\":{\"start\":");
     print_memory(&memory_start);
     printf(",\"after_model_load\":");
@@ -395,7 +591,9 @@ int main(int argc, char **argv)
     free((void *)embedding);
     free(timings);
     free(sorted);
+    free(observations);
     g_ort->ReleaseValue(input_tensor);
+    g_ort->ReleaseAllocator(session_allocator);
     g_ort->ReleaseMemoryInfo(memory_info);
     if (allocator != NULL) {
         allocator->Free(allocator, input_name);
