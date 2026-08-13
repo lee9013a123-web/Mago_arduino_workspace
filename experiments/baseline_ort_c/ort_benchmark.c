@@ -32,7 +32,23 @@ static void check(OrtStatus *status, const char *context);
 typedef struct MemorySnapshot {
     uint64_t current_rss_bytes;
     uint64_t peak_rss_bytes;
-    int available;
+    uint64_t virtual_memory_bytes;
+    uint64_t rss_anon_bytes;
+    uint64_t rss_file_bytes;
+    uint64_t rss_shmem_bytes;
+    uint64_t vm_data_bytes;
+    uint64_t vm_stack_bytes;
+    uint64_t vm_executable_bytes;
+    uint64_t vm_library_bytes;
+    uint64_t pss_bytes;
+    uint64_t private_clean_bytes;
+    uint64_t private_dirty_bytes;
+    uint64_t shared_clean_bytes;
+    uint64_t shared_dirty_bytes;
+    uint64_t anonymous_bytes;
+    uint64_t swap_bytes;
+    int status_available;
+    int smaps_available;
 } MemorySnapshot;
 
 typedef struct AllocatorStats {
@@ -87,25 +103,107 @@ static MemorySnapshot read_memory_snapshot(void)
         unsigned long long kibibytes;
         if (sscanf(line, "VmRSS: %llu kB", &kibibytes) == 1) {
             result.current_rss_bytes = (uint64_t)kibibytes * 1024u;
-            result.available = 1;
+            result.status_available = 1;
         } else if (sscanf(line, "VmHWM: %llu kB", &kibibytes) == 1) {
             result.peak_rss_bytes = (uint64_t)kibibytes * 1024u;
-            result.available = 1;
+            result.status_available = 1;
+        } else if (sscanf(line, "VmSize: %llu kB", &kibibytes) == 1) {
+            result.virtual_memory_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "RssAnon: %llu kB", &kibibytes) == 1) {
+            result.rss_anon_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "RssFile: %llu kB", &kibibytes) == 1) {
+            result.rss_file_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "RssShmem: %llu kB", &kibibytes) == 1) {
+            result.rss_shmem_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "VmData: %llu kB", &kibibytes) == 1) {
+            result.vm_data_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "VmStk: %llu kB", &kibibytes) == 1) {
+            result.vm_stack_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "VmExe: %llu kB", &kibibytes) == 1) {
+            result.vm_executable_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "VmLib: %llu kB", &kibibytes) == 1) {
+            result.vm_library_bytes = (uint64_t)kibibytes * 1024u;
+        }
+    }
+    fclose(file);
+
+    file = fopen("/proc/self/smaps_rollup", "rb");
+    if (file == NULL) {
+        return result;
+    }
+    while (fgets(line, sizeof(line), file) != NULL) {
+        unsigned long long kibibytes;
+        if (sscanf(line, "Pss: %llu kB", &kibibytes) == 1) {
+            result.pss_bytes = (uint64_t)kibibytes * 1024u;
+            result.smaps_available = 1;
+        } else if (sscanf(line, "Private_Clean: %llu kB", &kibibytes) == 1) {
+            result.private_clean_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "Private_Dirty: %llu kB", &kibibytes) == 1) {
+            result.private_dirty_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "Shared_Clean: %llu kB", &kibibytes) == 1) {
+            result.shared_clean_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "Shared_Dirty: %llu kB", &kibibytes) == 1) {
+            result.shared_dirty_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "Anonymous: %llu kB", &kibibytes) == 1) {
+            result.anonymous_bytes = (uint64_t)kibibytes * 1024u;
+        } else if (sscanf(line, "Swap: %llu kB", &kibibytes) == 1) {
+            result.swap_bytes = (uint64_t)kibibytes * 1024u;
         }
     }
     fclose(file);
     return result;
 }
 
+static void print_optional_u64(int available, uint64_t value)
+{
+    if (available) {
+        printf("%" PRIu64, value);
+    } else {
+        fputs("null", stdout);
+    }
+}
+
 static void print_memory(const MemorySnapshot *snapshot)
 {
-    if (snapshot == NULL || !snapshot->available) {
-        fputs("{\"current_rss_bytes\":null,\"peak_rss_bytes\":null}", stdout);
+    if (snapshot == NULL) {
+        fputs("null", stdout);
         return;
     }
-    printf(
-        "{\"current_rss_bytes\":%" PRIu64 ",\"peak_rss_bytes\":%" PRIu64 "}",
-        snapshot->current_rss_bytes, snapshot->peak_rss_bytes);
+    fputs("{\"current_rss_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->current_rss_bytes);
+    fputs(",\"peak_rss_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->peak_rss_bytes);
+    fputs(",\"virtual_memory_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->virtual_memory_bytes);
+    fputs(",\"rss_anon_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->rss_anon_bytes);
+    fputs(",\"rss_file_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->rss_file_bytes);
+    fputs(",\"rss_shmem_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->rss_shmem_bytes);
+    fputs(",\"vm_data_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->vm_data_bytes);
+    fputs(",\"vm_stack_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->vm_stack_bytes);
+    fputs(",\"vm_executable_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->vm_executable_bytes);
+    fputs(",\"vm_library_bytes\":", stdout);
+    print_optional_u64(snapshot->status_available, snapshot->vm_library_bytes);
+    fputs(",\"pss_bytes\":", stdout);
+    print_optional_u64(snapshot->smaps_available, snapshot->pss_bytes);
+    fputs(",\"private_clean_bytes\":", stdout);
+    print_optional_u64(snapshot->smaps_available, snapshot->private_clean_bytes);
+    fputs(",\"private_dirty_bytes\":", stdout);
+    print_optional_u64(snapshot->smaps_available, snapshot->private_dirty_bytes);
+    fputs(",\"shared_clean_bytes\":", stdout);
+    print_optional_u64(snapshot->smaps_available, snapshot->shared_clean_bytes);
+    fputs(",\"shared_dirty_bytes\":", stdout);
+    print_optional_u64(snapshot->smaps_available, snapshot->shared_dirty_bytes);
+    fputs(",\"anonymous_bytes\":", stdout);
+    print_optional_u64(snapshot->smaps_available, snapshot->anonymous_bytes);
+    fputs(",\"swap_bytes\":", stdout);
+    print_optional_u64(snapshot->smaps_available, snapshot->swap_bytes);
+    putchar('}');
 }
 
 static uint64_t parse_allocator_stat(const OrtKeyValuePairs *pairs, const char *key)
