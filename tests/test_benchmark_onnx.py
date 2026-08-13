@@ -10,7 +10,7 @@ import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[1]
-MODULE_PATH = ROOT / "scripts" / "benchmark" / "benchmark_onnx.py"
+MODULE_PATH = ROOT / "scripts" / "1_benchmark" / "benchmark_onnx.py"
 SPEC = importlib.util.spec_from_file_location("benchmark_onnx", MODULE_PATH)
 assert SPEC is not None and SPEC.loader is not None
 benchmark = importlib.util.module_from_spec(SPEC)
@@ -44,6 +44,27 @@ class BenchmarkMathTests(unittest.TestCase):
             path.write_text(json.dumps({"unknown": 1}), encoding="utf-8")
             with self.assertRaises(ValueError):
                 benchmark.load_config(path)
+
+    def test_raw_f32_input_uses_exact_payload(self) -> None:
+        class Input:
+            name = "feature"
+            shape = [1, 98, 80]
+
+        class Session:
+            def get_inputs(self):
+                return [Input()]
+
+        expected = np.arange(98 * 80, dtype=np.float32).reshape(1, 98, 80)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "feature.f32"
+            path.write_bytes(expected.tobytes(order="C"))
+
+            actual, source = benchmark.load_feature(
+                None, path, 98, 0, Session(), "feature"
+            )
+
+        self.assertEqual(source, "f32")
+        np.testing.assert_array_equal(actual, expected)
 
 
 if __name__ == "__main__":

@@ -30,7 +30,7 @@ python -c "import numpy, onnxruntime; print(onnxruntime.__version__)"
 ```bash
 cd ~/workspace/egs/accelerate_CAM
 
-python3 scripts/benchmark/benchmark_onnx.py \
+python3 scripts/1_benchmark/benchmark_onnx.py \
   --config configs/benchmark/qrb2210.json \
   --model results/static/campp_static_298.onnx \
   --ir results/graph/ir_3s.json \
@@ -41,7 +41,7 @@ python3 scripts/benchmark/benchmark_onnx.py \
 스레드 수를 바꿀 때는 CLI 값이 config보다 우선한다.
 
 ```bash
-python3 scripts/benchmark/benchmark_onnx.py \
+python3 scripts/1_benchmark/benchmark_onnx.py \
   --config configs/benchmark/qrb2210.json \
   --model results/static/campp_static_298.onnx \
   --ir results/graph/ir_3s.json \
@@ -51,10 +51,14 @@ python3 scripts/benchmark/benchmark_onnx.py \
 
 ## 실제 feature와 reference 비교
 
+`--input-f32`는 C Runtime과 같은 바이트를 쓰기 위한 raw little-endian
+float32 입력이다. Dynamic canonical model에서는 shape 정보가 없으므로
+`--frames`도 함께 지정한다.
+
 `--input-npy`는 `[T,80]` 또는 `[1,T,80]` float feature를 받는다. Static model의 frame 수와 정확히 일치해야 한다.
 
 ```bash
-python3 scripts/benchmark/benchmark_onnx.py \
+python3 scripts/1_benchmark/benchmark_onnx.py \
   --config configs/benchmark/qrb2210.json \
   --model results/static/campp_static_298.onnx \
   --ir results/graph/ir_3s.json \

@@ -27,3 +27,8 @@ Arduino UNO Q의 QRB2210 Linux 영역에서 CAM++ 정적 실행 계획을 수행
 
 AArch64 NEON과 fused kernel은 Reference Runtime 및 Tensor Arena 결과를 기준으로
 다음 단계에서 추가한다.
+
+`command_line/campp_runtime_benchmark.c`는 진단 callback 없이 같은 context를
+반복 실행하며 raw timing, 초기화 시간, `/proc/self/status`의 RSS와 embedding을
+JSON/float32로 남긴다. `scripts/3_runtime/09_benchmark_runtime.py`가 ORT와
+같은 입력 및 프로세스 수명 규칙으로 이 실행 파일을 호출한다.

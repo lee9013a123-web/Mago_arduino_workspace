@@ -41,6 +41,8 @@ build_target() {
 
 build_target campp_reference_dump \
     "${ROOT}/tests/runtime/operator_replay_tests/campp_reference_dump.c"
+build_target campp_runtime_benchmark \
+    "${ROOT}/src/c/runtime/command_line/campp_runtime_benchmark.c"
 build_target campp_operator_replay \
     "${ROOT}/tests/runtime/operator_replay_tests/campp_operator_replay.c"
 build_target test_graph_executor \
@@ -51,5 +53,10 @@ build_target test_tensor_arena \
     "${ROOT}/tests/runtime/memory_safety_tests/test_tensor_arena.c"
 build_target test_tensor_arena_equivalence \
     "${ROOT}/tests/runtime/memory_safety_tests/test_tensor_arena_equivalence.c"
+
+{
+    printf 'cc=%s\n' "${CC}"
+    printf 'cflags=%s\n' "${CFLAGS}"
+} > "${BUILD_DIR}/campp_runtime_benchmark.build.txt"
 
 echo "빌드 완료: ${BUILD_DIR}"

@@ -3,8 +3,9 @@
 
 The ONNX models in this repository consume precomputed fbank features with
 shape ``[1, frames, 80]``.  This runner therefore accepts a feature ``.npy``
-file, not a WAV file.  If no feature is supplied, it creates deterministic
-synthetic features for performance-only measurements.
+or raw contiguous float32 ``.f32`` file, not a WAV file.  If no feature is
+supplied, it creates deterministic synthetic features for performance-only
+measurements.
 
 Cold measurements launch a fresh Python process for every sample.  Warm
 measurements create one ONNX Runtime session, discard warm-up runs, and then
@@ -266,6 +267,7 @@ def static_frames_from_session(session: Any, input_name: str) -> int | None:
 
 def load_feature(
     path: Path | None,
+    raw_path: Path | None,
     frames: int | None,
     seed: int,
     session: Any,
@@ -273,11 +275,28 @@ def load_feature(
 ) -> tuple[Any, str]:
     import numpy as np
 
+    if path is not None and raw_path is not None:
+        raise ValueError("--input-npy and --input-f32 are mutually exclusive")
     if path is not None:
         if not path.is_file():
             raise FileNotFoundError(f"feature file not found: {path}")
         feature = np.load(path, allow_pickle=False)
         source = "npy"
+    elif raw_path is not None:
+        if not raw_path.is_file():
+            raise FileNotFoundError(f"feature file not found: {raw_path}")
+        chosen_frames = frames or static_frames_from_session(session, input_name)
+        if chosen_frames is None:
+            raise ValueError("raw feature input requires --frames for a dynamic model")
+        expected_elements = chosen_frames * 80
+        feature = np.fromfile(raw_path, dtype="<f4")
+        if feature.size != expected_elements:
+            raise ValueError(
+                f"raw feature has {feature.size} float32 values; "
+                f"expected {expected_elements} for {chosen_frames} frames"
+            )
+        feature = feature.reshape(1, chosen_frames, 80)
+        source = "f32"
     else:
         chosen_frames = frames or static_frames_from_session(session, input_name)
         if chosen_frames is None:
@@ -323,7 +342,7 @@ def run_cold_child(args: argparse.Namespace) -> int:
     session, input_name, output_name = create_session(model, args.threads)
     create_end = time.perf_counter_ns()
     feature, source = load_feature(
-        args.input_npy, args.frames, args.seed, session, input_name
+        args.input_npy, args.input_f32, args.frames, args.seed, session, input_name
     )
     inference_start = time.perf_counter_ns()
     embedding = session.run([output_name], {input_name: feature})[0]
@@ -357,6 +376,8 @@ def child_command(args: argparse.Namespace, threads: int, seed: int) -> list[str
     ]
     if args.input_npy is not None:
         command += ["--input-npy", str(args.input_npy.resolve())]
+    if args.input_f32 is not None:
+        command += ["--input-f32", str(args.input_f32.resolve())]
     if args.frames is not None:
         command += ["--frames", str(args.frames)]
     return command
@@ -436,7 +457,7 @@ def run_warm(
     session, input_name, output_name = create_session(args.model.resolve(), threads)
     session_create_ms = (time.perf_counter_ns() - create_start) / 1e6
     feature, feature_source = load_feature(
-        args.input_npy, args.frames, seed, session, input_name
+        args.input_npy, args.input_f32, args.frames, seed, session, input_name
     )
     frames = int(feature.shape[1])
     audio_seconds = (
@@ -513,8 +534,12 @@ def run_warm(
     }
     input_result = {
         "source": feature_source,
-        "path": str(args.input_npy.resolve()) if args.input_npy else None,
-        "sha256": sha256_file(args.input_npy) if args.input_npy else None,
+        "path": str((args.input_npy or args.input_f32).resolve())
+        if (args.input_npy or args.input_f32)
+        else None,
+        "sha256": sha256_file(args.input_npy or args.input_f32)
+        if (args.input_npy or args.input_f32)
+        else None,
         "feature_sha256": sha256_array(feature),
         "shape": list(feature.shape),
         "dtype": str(feature.dtype),
@@ -530,6 +555,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--input-npy", type=Path)
+    parser.add_argument(
+        "--input-f32",
+        type=Path,
+        help="raw contiguous little-endian float32 feature [1,frames,80]",
+    )
     parser.add_argument("--reference-npy", type=Path)
     parser.add_argument("--ir", type=Path, help="matching results/graph/ir_*.json")
     parser.add_argument("--config", type=Path, help="JSON defaults for QRB2210")

@@ -119,3 +119,63 @@ python3 scripts/3_runtime/08_validate_tensor_arena.py --buckets 298
 각 Operator 출력 직후 callback으로 값을 기록한다. 보드 디스크를 보호하기 위해
 bucket 하나를 비교해 통과하면 큰 binary dump 두 개를 즉시 삭제한다. 실패한
 bucket은 원인 분석을 위해 남기며, 통과한 dump도 보존하려면 `--keep-dumps`를 쓴다.
+
+## QRB2210 End-to-end 성능 검증: 09
+
+`09_benchmark_runtime.py`는 06-08의 정확도 검증을 반복하지 않는다. 기존 결과의
+SHA-256만 기록하고, QRB2210에서 canonical INT8 ONNX와 Tensor Arena C Runtime에
+동일한 FBank float32 payload를 공급한다.
+
+측정 범위:
+
+- cold: 새 프로세스의 모델/context 초기화와 첫 inference
+- warm: 20회 warm-up 뒤 100회 inference
+- p50·p95·p99, RTF, CV, cold/warm Peak RSS
+- Arena, weights, plan, model, dataset 및 입력 payload SHA-256
+
+WAV read와 FBank 생성은 두 backend 공통의 측정 제외 구간이다. 실제 데이터에서
+미리 만든 `[1,frames,80]` little-endian float32 파일을
+`benchmarks/campplus/manifests/runtime_features.json`에 등록한다. 형식은
+`benchmarks/campplus/runtime_feature_manifest.schema.json`에 정의되어 있다.
+
+```json
+{
+  "schema_version": 1,
+  "preprocessing": {
+    "implementation": "배포 파이프라인의 고정 FBank 구현",
+    "crop_padding_policy": "고정한 정책과 버전을 여기에 기록"
+  },
+  "features": [
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/positive__speaker_identify_3sec_positive_jonah_id_0__298.f32",
+      "sha256": "64자리 소문자 SHA-256"
+    }
+  ]
+}
+```
+
+정식 실행 전에는 15개 `latency_selected=1` 입력 각각에 대해 98·298·498·998
+frame 항목이 모두 있어야 한다.
+
+```bash
+CFLAGS="-std=c11 -O3 -DNDEBUG -Wall -Wextra" \
+  bash scripts/3_runtime/03_build_reference_runtime.sh
+
+python3 scripts/3_runtime/09_benchmark_runtime.py \
+  --config configs/benchmark/runtime_qrb2210.json \
+  --preflight-only
+
+python3 scripts/3_runtime/09_benchmark_runtime.py \
+  --config configs/benchmark/runtime_qrb2210.json
+```
+
+결과는 `runs/runtime/benchmarks/<run-id>/benchmark_summary.json`과 backend별 raw
+JSON에 저장된다. 측정 중 backend 순서는 입력마다 교차해 일방적인 thermal
+순서 편향을 줄인다.
+
+현재 `cpu_reference`는 실제 단일 thread이므로 공식 설정도 `threads=1`이다.
+4-thread 설정은 worker가 구현되어 C 실행 파일의 `effective_threads`가 4가 된
+뒤에만 허용된다. 환경 변수나 affinity만 4로 바꾸면 실행 파일이 오류로 거부한다.

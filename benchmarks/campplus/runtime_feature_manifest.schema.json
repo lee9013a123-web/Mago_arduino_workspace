@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "campp-runtime-feature-manifest-v1",
+  "title": "CAM++ Runtime benchmark FBank manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "preprocessing", "features"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "preprocessing": {
+      "type": "object",
+      "description": "Frozen FBank, crop and padding policy used to create the payloads"
+    },
+    "features": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "input_id",
+          "bucket_frames",
+          "audio_seconds",
+          "path",
+          "sha256"
+        ],
+        "properties": {
+          "input_id": { "type": "string", "minLength": 1 },
+          "bucket_frames": { "enum": [98, 298, 498, 998] },
+          "audio_seconds": { "enum": [1.0, 3.0, 5.0, 10.0] },
+          "path": { "type": "string", "minLength": 1 },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}
