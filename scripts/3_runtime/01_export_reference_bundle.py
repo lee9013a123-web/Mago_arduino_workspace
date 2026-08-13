@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 import sys
 import time
@@ -94,6 +95,20 @@ def _build_parser() -> argparse.ArgumentParser:
         help="ACTIVATION/OUTPUT data_offset을 계산한 Arena plan을 별도 output에 생성",
     )
     parser.add_argument(
+        "--dense-slab",
+        action="store_true",
+        help="누적 Dense Concat을 slab-backed VIEW로 바꾸고 새 plan을 생성",
+    )
+    parser.add_argument(
+        "--dense-slab-reference-bundle",
+        type=_repository_path,
+        default=ROOT / "runs" / "runtime" / "tensor_arena" / "bundle",
+        help=(
+            "변환 전 graph와 대조할 기존 Tensor Arena bundle "
+            "(기본: runs/runtime/tensor_arena/bundle)"
+        ),
+    )
+    parser.add_argument(
         "--arena-alignment",
         type=int,
         default=64,
@@ -140,8 +155,12 @@ def _load_exporter_api() -> dict[str, object]:
             read_static_model,
         )
         from runtime_bundle_exporter.builder.tensor_table_builder import plan_weight_blob
-        from runtime_bundle_exporter.builder.tensor_arena_planner import (
+        from runtime_bundle_exporter.builder.planner.tensor_arena_planner import (
             plan_tensor_arena,
+        )
+        from runtime_bundle_exporter.builder.planner.dense_slab_planner import (
+            inspect_compiled_dense_concats,
+            rewrite_dense_concats_as_slabs,
         )
         from runtime_bundle_exporter.writer.weight_blob_writer import (
             WEIGHT_BLOB_FILE_NAME,
@@ -193,7 +212,7 @@ def _print_summary(weights: object, plans: Sequence[object], manifest: object) -
 def export_reference_bundle(args: argparse.Namespace) -> None:
     canonical_reference = ROOT / "models" / "compiled" / "reference"
     if (
-        args.tensor_arena
+        (args.tensor_arena or args.dense_slab)
         and args.output_dir.resolve() == canonical_reference.resolve()
     ):
         raise BundleExportCliError(
@@ -203,6 +222,10 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
     if not args.tensor_arena and args.arena_budget_bytes is not None:
         raise BundleExportCliError(
             "--arena-budget-bytes는 --tensor-arena와 함께 사용해야 한다"
+        )
+    if args.dense_slab and not args.tensor_arena:
+        raise BundleExportCliError(
+            "--dense-slab은 slab backing을 배치할 --tensor-arena와 함께 사용해야 한다"
         )
     if args.tensor_arena and args.arena_alignment != 64:
         raise BundleExportCliError(
@@ -217,6 +240,8 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
     RuntimeBundle = api["RuntimeBundle"]
     plan_weight_blob = api["plan_weight_blob"]
     plan_tensor_arena = api["plan_tensor_arena"]
+    rewrite_dense_concats_as_slabs = api["rewrite_dense_concats_as_slabs"]
+    inspect_compiled_dense_concats = api["inspect_compiled_dense_concats"]
     write_weight_blob = api["write_weight_blob"]
     read_weight_blob = api["read_weight_blob"]
     verify_weight_blob = api["verify_weight_blob"]
@@ -268,6 +293,72 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
 
     bundle = RuntimeBundle(graphs=tuple(graphs))
     layout = plan_weight_blob(bundle)
+    dense_slab_results = {}
+    if args.dense_slab:
+        reference_manifest_path = (
+            args.dense_slab_reference_bundle / manifest_file_name
+        )
+        _require_file(reference_manifest_path, "Dense slab reference manifest")
+        reference_manifest = verify_bundle_manifest(reference_manifest_path)
+        if reference_manifest.get("memory_layout") != "tensor_arena":
+            raise BundleExportCliError(
+                "Dense slab reference bundle이 Tensor Arena bundle이 아니다"
+            )
+
+        optimized_graphs = []
+        print("기존 plan_*.bin 대조 및 Dense slab graph rewrite")
+        for graph in bundle.graphs:
+            reference_plan_path = (
+                args.dense_slab_reference_bundle
+                / plan_directory_name
+                / plan_file_name(graph.bucket_frames)
+            )
+            _require_file(
+                reference_plan_path,
+                f"bucket {graph.bucket_frames} Dense slab reference plan",
+            )
+            reference_plan = read_execution_plan(reference_plan_path)
+            reference_arena = plan_tensor_arena(
+                graph, alignment=args.arena_alignment
+            )
+            verify_plan(
+                reference_plan,
+                graph,
+                layout,
+                arena_layout=reference_arena,
+            )
+            compiled_blocks = inspect_compiled_dense_concats(reference_plan)
+            if len(compiled_blocks) != 3 or sum(
+                len(block.concat_operator_ids) for block in compiled_blocks
+            ) != 52:
+                raise BundleExportCliError(
+                    f"bucket {graph.bucket_frames} 기존 plan의 Dense chain이 "
+                    "3 blocks / 52 Concats가 아니다"
+                )
+            result = rewrite_dense_concats_as_slabs(
+                graph,
+                expected_block_count=3,
+                expected_concat_count=52,
+            )
+            if tuple(
+                block.concat_operator_ids for block in compiled_blocks
+            ) != tuple(block.concat_operator_ids for block in result.blocks):
+                raise BundleExportCliError(
+                    f"bucket {graph.bucket_frames}의 기존 plan과 RuntimeGraph가 "
+                    "서로 다른 Dense Concat chain을 가리킨다"
+                )
+            dense_slab_results[graph.bucket_frames] = result
+            optimized_graphs.append(result.graph)
+            print(
+                f"  {graph.bucket_frames:>4} frames  blocks={len(result.blocks)}  "
+                f"concat={result.removed_concat_count} removed  "
+                f"operators={result.original_operator_count}→"
+                f"{len(result.graph.operators)}"
+            )
+
+        bundle = RuntimeBundle(graphs=tuple(optimized_graphs))
+        layout = plan_weight_blob(bundle)
+
     arena_layouts = {}
     if args.tensor_arena:
         print("Tensor Arena offset 계산")
@@ -287,6 +378,19 @@ def export_reference_bundle(args: argparse.Namespace) -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     plan_dir = args.output_dir / plan_directory_name
     plan_dir.mkdir(parents=True, exist_ok=True)
+    if dense_slab_results:
+        report_dir = args.output_dir / "dense_slab_plans"
+        report_dir.mkdir(parents=True, exist_ok=True)
+        for frames, result in sorted(dense_slab_results.items()):
+            report = result.to_dict()
+            report["reference_bundle"] = str(
+                args.dense_slab_reference_bundle.resolve()
+            )
+            report["arena_size_bytes"] = arena_layouts[frames].arena_size
+            (report_dir / f"dense_slab_{frames}.json").write_text(
+                json.dumps(report, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
 
     weights = write_weight_blob(
         bundle,

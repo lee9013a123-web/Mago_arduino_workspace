@@ -71,7 +71,7 @@ class ReferenceResultFreezerUnitTests(unittest.TestCase):
 class ReferenceResultFreezerIntegrationTests(unittest.TestCase):
     def test_current_evidence_generates_a_stable_baseline(self) -> None:
         bundle = ROOT / "models" / "compiled" / "reference"
-        validation = ROOT / "results" / "runtime"
+        validation = ROOT / "results" / "runtime" / "c_runtime_compare"
         required = [bundle / "manifest.json", bundle / "weights.bin"]
         required.extend(validation / f"compare_{bucket}.json" for bucket in EXPECTED_BUCKETS)
         if not all(path.is_file() for path in required):

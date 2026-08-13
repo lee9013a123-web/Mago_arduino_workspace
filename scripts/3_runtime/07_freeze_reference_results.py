@@ -23,7 +23,9 @@ def main(argv: list[str] | None = None) -> int:
         "--bundle-dir", type=_path, default=ROOT / "models" / "compiled" / "reference"
     )
     parser.add_argument(
-        "--validation-dir", type=_path, default=ROOT / "results" / "runtime"
+        "--validation-dir",
+        type=_path,
+        default=ROOT / "results" / "runtime" / "c_runtime_compare",
     )
     parser.add_argument(
         "--config", type=_path, default=ROOT / "configs" / "runtime" / "reference.json"
@@ -35,7 +37,9 @@ def main(argv: list[str] | None = None) -> int:
         / "reference_backend.c",
     )
     parser.add_argument(
-        "--output-dir", type=_path, default=ROOT / "results" / "runtime"
+        "--output-dir",
+        type=_path,
+        default=ROOT / "results" / "runtime" / "c_runtime_compare",
     )
     parser.add_argument(
         "--require-phase4-ready",

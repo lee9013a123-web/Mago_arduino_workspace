@@ -195,7 +195,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--result",
         type=Path,
-        default=ROOT / "results" / "runtime" / "tensor_arena_validation.json",
+        default=(
+            ROOT
+            / "results"
+            / "runtime"
+            / "c_runtime_compare"
+            / "tensor_arena_validation.json"
+        ),
     )
     parser.add_argument("--buckets", type=int, nargs="*", default=DEFAULT_BUCKETS)
     parser.add_argument(

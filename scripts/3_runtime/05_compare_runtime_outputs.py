@@ -344,7 +344,9 @@ def main(argv: list[str] | None = None) -> int:
         default=ROOT / "runs" / "runtime" / "c_reference",
     )
     parser.add_argument(
-        "--results-dir", type=Path, default=ROOT / "results" / "runtime"
+        "--results-dir",
+        type=Path,
+        default=ROOT / "results" / "runtime" / "c_runtime_compare",
     )
     parser.add_argument(
         "--static-dir", type=Path, default=ROOT / "results" / "static"

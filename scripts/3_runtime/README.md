@@ -58,7 +58,8 @@ runs/runtime/pipelines/reference/reference-YYYYMMDDTHHMMSSZ/
 
 ## 결과 고정: 07
 
-앞 단계에서 만든 canonical bundle과 `results/runtime/compare_*.json`을 검증한 뒤
+앞 단계에서 만든 canonical bundle과
+`results/runtime/c_runtime_compare/compare_*.json`을 검증한 뒤
 Phase 4가 참조할 최종 결과 세 파일을 만든다.
 
 ```bash
@@ -68,9 +69,9 @@ python3 scripts/3_runtime/07_freeze_reference_results.py
 `07`은 추론을 다시 실행하지 않는다. 대신 manifest의 canonical model, weights와
 네 plan의 크기·SHA-256, kernel registry의 opcode, 네 bucket의 1,438개 Operator
 결과를 교차 검증한다. 알려진 수치 실패도 삭제하지 않고 최종 보고서에 고정한다.
-출력은 `results/runtime/operator_validation.json`,
-`results/runtime/end_to_end_validation.json`,
-`results/runtime/reference_runtime_report.md`이다.
+출력은 `results/runtime/c_runtime_compare/operator_validation.json`,
+`results/runtime/c_runtime_compare/end_to_end_validation.json`,
+`results/runtime/c_runtime_compare/reference_runtime_report.md`이다.
 CI에서 Phase 4 승인까지 필수로 요구하려면 `--require-phase4-ready`를 추가한다.
 이 경우 보고서는 생성하되 `phase4_ready=false`이면 종료 코드 3을 반환한다.
 
@@ -114,11 +115,26 @@ python3 scripts/3_runtime/08_validate_tensor_arena.py
 python3 scripts/3_runtime/08_validate_tensor_arena.py --buckets 298
 ```
 
-결과는 `results/runtime/tensor_arena_validation.json`에 기록된다. Arena에서는
+결과는
+`results/runtime/c_runtime_compare/tensor_arena_validation.json`에 기록된다.
+Arena에서는
 중간 Tensor 주소가 재사용되므로 `campp_reference_dump`는 graph 종료 후가 아니라
 각 Operator 출력 직후 callback으로 값을 기록한다. 보드 디스크를 보호하기 위해
 bucket 하나를 비교해 통과하면 큰 binary dump 두 개를 즉시 삭제한다. 실패한
 bucket은 원인 분석을 위해 남기며, 통과한 dump도 보존하려면 `--keep-dumps`를 쓴다.
+
+## Dense concat 제거와 slab/view 검증: 10-11
+
+기존 Tensor Arena bundle의 `manifest.json`과 `plan_*.bin`을 직접 분석해
+Dense block 3개의 누적 Concat 52개를 slab-backed VIEW로 변환한다.
+
+```bash
+python3 scripts/3_runtime/10_export_dense_slab_bundle.py
+python3 scripts/3_runtime/11_validate_dense_slab.py
+```
+
+생성 bundle은 `runs/runtime/dense_slab/bundle/`, 최종 검증 결과는
+`results/runtime/dense/dense_slab_validation.json`에 기록된다.
 
 ## QRB2210 End-to-end 성능 검증: 09
 

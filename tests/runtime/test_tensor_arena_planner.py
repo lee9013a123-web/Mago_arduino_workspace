@@ -9,7 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src" / "python"))
 
-from runtime_bundle_exporter.builder.tensor_arena_planner import (  # noqa: E402
+from runtime_bundle_exporter.builder.planner.tensor_arena_planner import (  # noqa: E402
     TensorArenaPlanningError,
     plan_tensor_arena,
     plan_tensor_arena_from_descriptors,

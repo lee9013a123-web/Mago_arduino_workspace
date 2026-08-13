@@ -501,7 +501,8 @@ CamppStatus campp_validate_tensor_descriptor(
         break;
     }
     case CAMPP_TENSOR_STORAGE_VIEW:
-        if ((descriptor->flags & CAMPP_TENSOR_FLAG_DENSE_SLAB) != 0u) {
+        if ((descriptor->flags & CAMPP_TENSOR_FLAG_DENSE_SLAB) != 0u ||
+            descriptor->data_offset == CAMPP_INVALID_DATA_OFFSET) {
             return CAMPP_STATUS_CORRUPT_PLAN;
         }
         break;
@@ -510,7 +511,8 @@ CamppStatus campp_validate_tensor_descriptor(
     }
 
     if (descriptor->storage_type == CAMPP_TENSOR_STORAGE_VIEW) {
-        if (descriptor->alias_of_tensor_id >= tensor_count) {
+        if (descriptor->alias_of_tensor_id >= tensor_count ||
+            descriptor->alias_of_tensor_id == descriptor->tensor_id) {
             return CAMPP_STATUS_CORRUPT_PLAN;
         }
         if ((descriptor->flags & CAMPP_TENSOR_FLAG_ALIASED) == 0u) {
@@ -614,6 +616,7 @@ CamppStatus campp_validate_model(const struct CamppRuntimeModel *model)
     uint8_t slot;
     CamppStatus status;
     uint8_t *produced;
+    uint8_t *has_producer;
     bool uses_arena;
 
     if (target == NULL || target->tensors == NULL
@@ -632,6 +635,38 @@ CamppStatus campp_validate_model(const struct CamppRuntimeModel *model)
             return status;
         }
         (void)arena_size;
+    }
+
+    /* VIEW는 반드시 arena-owned backing Tensor의 범위 안을 직접 가리킨다. */
+    for (index = 0u; index < target->tensor_count; ++index) {
+        const CamppTensorDescriptor *view = &target->tensors[index];
+        const CamppTensorDescriptor *base;
+        uint64_t remaining;
+
+        if (view->storage_type != CAMPP_TENSOR_STORAGE_VIEW) {
+            continue;
+        }
+        if (view->alias_of_tensor_id >= target->tensor_count ||
+            view->alias_of_tensor_id == index) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        base = &target->tensors[view->alias_of_tensor_id];
+        if ((base->storage_type != CAMPP_TENSOR_STORAGE_ACTIVATION &&
+             base->storage_type != CAMPP_TENSOR_STORAGE_OUTPUT) ||
+            base->dtype != view->dtype ||
+            view->data_offset > base->storage_span_bytes) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        remaining = base->storage_span_bytes - view->data_offset;
+        if (view->storage_span_bytes > remaining ||
+            base->first_use == CAMPP_INVALID_OPERATOR_INDEX ||
+            base->last_use == CAMPP_INVALID_OPERATOR_INDEX ||
+            view->first_use == CAMPP_INVALID_OPERATOR_INDEX ||
+            view->last_use == CAMPP_INVALID_OPERATOR_INDEX ||
+            base->first_use > view->first_use ||
+            base->last_use < view->last_use) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
     }
 
     /* CONSTANT는 weights.bin 안을 가리켜야 한다. */
@@ -659,19 +694,34 @@ CamppStatus campp_validate_model(const struct CamppRuntimeModel *model)
      * 조용히 끝나므로 실행 전에 잡아야 한다.
      */
     produced = (uint8_t *)calloc((size_t)target->tensor_count, sizeof(uint8_t));
-    if (produced == NULL) {
+    has_producer =
+        (uint8_t *)calloc((size_t)target->tensor_count, sizeof(uint8_t));
+    if (produced == NULL || has_producer == NULL) {
+        free(produced);
+        free(has_producer);
         return CAMPP_STATUS_OUT_OF_MEMORY;
+    }
+    status = CAMPP_STATUS_OK;
+    for (index = 0u; index < target->operator_count; ++index) {
+        uint32_t output_id = target->operators[index].output_tensor_ids[0];
+
+        if (has_producer[output_id] != 0u) {
+            status = CAMPP_STATUS_CORRUPT_PLAN;
+            break;
+        }
+        has_producer[output_id] = 1u;
     }
     for (index = 0u; index < target->tensor_count; ++index) {
         uint8_t storage = target->tensors[index].storage_type;
 
         if (storage == CAMPP_TENSOR_STORAGE_INPUT
-            || storage == CAMPP_TENSOR_STORAGE_CONSTANT) {
+            || storage == CAMPP_TENSOR_STORAGE_CONSTANT
+            || (storage == CAMPP_TENSOR_STORAGE_VIEW
+                && has_producer[index] == 0u)) {
             produced[index] = 1u;
         }
     }
 
-    status = CAMPP_STATUS_OK;
     for (index = 0u; index < target->operator_count && status == CAMPP_STATUS_OK;
          ++index) {
         const CamppOperatorDescriptor *descriptor = &target->operators[index];
@@ -704,5 +754,6 @@ CamppStatus campp_validate_model(const struct CamppRuntimeModel *model)
     }
 
     free(produced);
+    free(has_producer);
     return status;
 }

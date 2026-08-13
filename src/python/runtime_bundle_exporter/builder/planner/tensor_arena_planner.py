@@ -15,13 +15,13 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Mapping, Sequence
 
-from ..format.binary_format_schema import (
+from ...format.binary_format_schema import (
     INVALID_OPERATOR_INDEX,
     TensorDescriptor,
     TensorStorageType,
     UINT64_MAX,
 )
-from ..runtime_ir import RuntimeGraph, RuntimeTensor
+from ...runtime_ir import RuntimeGraph, RuntimeTensor
 
 
 DEFAULT_ARENA_ALIGNMENT = 64
@@ -73,6 +73,43 @@ def _arena_lifetime(
             f"Tensor {tensor.tensor_id} 수명이 뒤집혔다: {first_use}>{last_use}"
         )
     return first_use, last_use
+
+
+def _view_lifetime(tensor: RuntimeTensor) -> tuple[int, int]:
+    uses: list[int] = []
+    if tensor.producer is not None:
+        uses.append(tensor.producer)
+    uses.extend(tensor.consumers)
+    if not uses:
+        raise TensorArenaPlanningError(
+            f"VIEW Tensor {tensor.tensor_id} {tensor.name!r} has no execution use"
+        )
+    return min(uses), max(uses)
+
+
+def _arena_lifetimes(graph: RuntimeGraph) -> dict[int, tuple[int, int]]:
+    lifetimes = {
+        tensor.tensor_id: _arena_lifetime(tensor, len(graph.operators))
+        for tensor in graph.tensors
+        if tensor.storage_type in _ARENA_STORAGE_TYPES
+    }
+    for tensor in graph.tensors:
+        if tensor.storage_type is not TensorStorageType.VIEW:
+            continue
+        assert tensor.alias_of_tensor_id is not None
+        try:
+            base_first, base_last = lifetimes[tensor.alias_of_tensor_id]
+        except KeyError as exc:
+            raise TensorArenaPlanningError(
+                f"VIEW Tensor {tensor.tensor_id} aliases non-arena Tensor "
+                f"{tensor.alias_of_tensor_id}"
+            ) from exc
+        view_first, view_last = _view_lifetime(tensor)
+        lifetimes[tensor.alias_of_tensor_id] = (
+            min(base_first, view_first),
+            max(base_last, view_last),
+        )
+    return lifetimes
 
 
 @dataclass(frozen=True, slots=True)
@@ -237,11 +274,12 @@ class TensorArenaLayout:
             raise TensorArenaPlanningError(
                 f"Arena 대상 Tensor가 graph와 다르다: missing={missing}, extra={extra}"
             )
+        lifetimes = _arena_lifetimes(graph)
         for tensor_id, tensor in expected.items():
             allocation = self._by_tensor_id[tensor_id]
-            first_use, last_use = _arena_lifetime(tensor, len(graph.operators))
+            first_use, last_use = lifetimes[tensor_id]
             if (
-                allocation.byte_size != tensor.byte_size
+                allocation.byte_size != tensor.storage_span_bytes
                 or allocation.first_use != first_use
                 or allocation.last_use != last_use
             ):
@@ -355,23 +393,18 @@ def plan_tensor_arena(
         raise TensorArenaPlanningError("alignment는 2의 거듭제곱이어야 한다")
     if max_arena_bytes is not None:
         _require_positive_integer("max_arena_bytes", max_arena_bytes)
-    if any(
-        tensor.storage_type is TensorStorageType.VIEW for tensor in graph.tensors
-    ):
-        raise TensorArenaPlanningError(
-            "VIEW Tensor alias 배치는 아직 지원하지 않는다"
-        )
-
+    lifetimes = _arena_lifetimes(graph)
     requests_list: list[_ArenaRequest] = []
     for tensor in graph.tensors:
         if tensor.storage_type not in _ARENA_STORAGE_TYPES:
             continue
-        first_use, last_use = _arena_lifetime(tensor, len(graph.operators))
+        first_use, last_use = lifetimes[tensor.tensor_id]
+        assert tensor.storage_span_bytes is not None
         requests_list.append(
             _ArenaRequest(
                 tensor_id=tensor.tensor_id,
-                byte_size=tensor.byte_size,
-                reserved_bytes=_aligned(tensor.byte_size, alignment),
+                byte_size=tensor.storage_span_bytes,
+                reserved_bytes=_aligned(tensor.storage_span_bytes, alignment),
                 first_use=first_use,
                 last_use=last_use,
             )
@@ -408,13 +441,10 @@ def plan_tensor_arena_from_descriptors(
     if max_arena_bytes is not None:
         _require_positive_integer("max_arena_bytes", max_arena_bytes)
 
-    requests: list[_ArenaRequest] = []
-    for descriptor in descriptors:
+    descriptor_tuple = tuple(descriptors)
+    requests_by_id: dict[int, _ArenaRequest] = {}
+    for descriptor in descriptor_tuple:
         storage_type = TensorStorageType(descriptor.storage_type)
-        if storage_type is TensorStorageType.VIEW:
-            raise TensorArenaPlanningError(
-                "VIEW Tensor alias 배치는 아직 지원하지 않는다"
-            )
         if storage_type not in _ARENA_STORAGE_TYPES:
             continue
         if (
@@ -430,17 +460,42 @@ def plan_tensor_arena_from_descriptors(
         if storage_type is TensorStorageType.OUTPUT:
             last_use = operator_count - 1
         byte_size = descriptor.storage_span_bytes
-        requests.append(
-            _ArenaRequest(
-                tensor_id=descriptor.tensor_id,
-                byte_size=byte_size,
-                reserved_bytes=_aligned(byte_size, alignment),
-                first_use=descriptor.first_use,
-                last_use=last_use,
+        requests_by_id[descriptor.tensor_id] = _ArenaRequest(
+            tensor_id=descriptor.tensor_id,
+            byte_size=byte_size,
+            reserved_bytes=_aligned(byte_size, alignment),
+            first_use=descriptor.first_use,
+            last_use=last_use,
+        )
+    for descriptor in descriptor_tuple:
+        storage_type = TensorStorageType(descriptor.storage_type)
+        if storage_type is not TensorStorageType.VIEW:
+            continue
+        if (
+            descriptor.first_use == INVALID_OPERATOR_INDEX
+            or descriptor.last_use == INVALID_OPERATOR_INDEX
+            or descriptor.first_use >= operator_count
+            or descriptor.last_use >= operator_count
+        ):
+            raise TensorArenaPlanningError(
+                f"VIEW Tensor {descriptor.tensor_id} has invalid descriptor lifetime"
             )
+        try:
+            base = requests_by_id[descriptor.alias_of_tensor_id]
+        except KeyError as exc:
+            raise TensorArenaPlanningError(
+                f"VIEW Tensor {descriptor.tensor_id} aliases non-arena Tensor "
+                f"{descriptor.alias_of_tensor_id}"
+            ) from exc
+        requests_by_id[base.tensor_id] = _ArenaRequest(
+            tensor_id=base.tensor_id,
+            byte_size=base.byte_size,
+            reserved_bytes=base.reserved_bytes,
+            first_use=min(base.first_use, descriptor.first_use),
+            last_use=max(base.last_use, descriptor.last_use),
         )
     return _build_layout(
-        tuple(requests),
+        tuple(requests_by_id.values()),
         bucket_frames=bucket_frames,
         alignment=alignment,
         max_arena_bytes=max_arena_bytes,

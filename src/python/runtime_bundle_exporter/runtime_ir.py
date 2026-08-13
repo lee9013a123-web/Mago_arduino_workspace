@@ -141,6 +141,9 @@ class RuntimeTensor:
     storage_type: TensorStorageType
     producer: int | None
     consumers: tuple[int, ...]
+    storage_span_bytes: int | None = None
+    alias_of_tensor_id: int | None = None
+    view_byte_offset: int = 0
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -157,6 +160,8 @@ class RuntimeTensor:
             object.__setattr__(self, "consumers", tuple(self.consumers))
         except TypeError as exc:
             raise RuntimeIRError("strides and consumers must be iterable") from exc
+        if self.storage_span_bytes is None:
+            object.__setattr__(self, "storage_span_bytes", self.byte_size)
         self.validate()
 
     def validate(self) -> None:
@@ -180,6 +185,30 @@ class RuntimeTensor:
             raise RuntimeIRError(
                 f"Tensor {self.name!r} byte_size is {self.byte_size}, "
                 f"expected {expected_size} from dtype and shape"
+            )
+        assert self.storage_span_bytes is not None
+        _require_uint64("storage_span_bytes", self.storage_span_bytes)
+        if self.storage_span_bytes < self.byte_size:
+            raise RuntimeIRError(
+                f"Tensor {self.name!r} storage span is "
+                f"{self.storage_span_bytes}, smaller than logical size "
+                f"{self.byte_size}"
+            )
+
+        _require_uint64("view_byte_offset", self.view_byte_offset)
+        if self.storage_type is TensorStorageType.VIEW:
+            if self.alias_of_tensor_id is None:
+                raise RuntimeIRError(
+                    f"VIEW Tensor {self.name!r} must name an alias target"
+                )
+            _require_uint32("alias_of_tensor_id", self.alias_of_tensor_id)
+            if self.alias_of_tensor_id == self.tensor_id:
+                raise RuntimeIRError(
+                    f"VIEW Tensor {self.name!r} cannot alias itself"
+                )
+        elif self.alias_of_tensor_id is not None or self.view_byte_offset != 0:
+            raise RuntimeIRError(
+                f"non-VIEW Tensor {self.name!r} cannot carry alias metadata"
             )
 
         if self.producer is not None:
@@ -412,6 +441,7 @@ class RuntimeGraph:
         self._validate_unique_and_dense_ids()
         self._validate_graph_io()
         self._validate_operator_links()
+        self._validate_aliases()
         self._validate_initializers()
 
     def _validate_unique_and_dense_ids(self) -> None:
@@ -500,6 +530,7 @@ class RuntimeGraph:
             if tensor.storage_type not in (
                 TensorStorageType.INPUT,
                 TensorStorageType.CONSTANT,
+                TensorStorageType.VIEW,
             ) and expected_producer is None:
                 raise RuntimeIRError(f"Tensor {tensor.name!r} has no producer")
             expected = tuple(expected_consumers[tensor.tensor_id])
@@ -507,6 +538,46 @@ class RuntimeGraph:
                 raise RuntimeIRError(
                     f"Tensor {tensor.name!r} consumers are {tensor.consumers}, "
                     f"expected {expected} from Operator inputs"
+                )
+
+    def _validate_aliases(self) -> None:
+        for tensor in self.tensors:
+            if tensor.storage_type is not TensorStorageType.VIEW:
+                continue
+            assert tensor.alias_of_tensor_id is not None
+            try:
+                base = self._tensors_by_id[tensor.alias_of_tensor_id]
+            except KeyError as exc:
+                raise RuntimeIRError(
+                    f"VIEW Tensor {tensor.name!r} aliases unknown Tensor "
+                    f"{tensor.alias_of_tensor_id}"
+                ) from exc
+            if base.storage_type is TensorStorageType.VIEW:
+                raise RuntimeIRError(
+                    f"VIEW Tensor {tensor.name!r} must alias a backing Tensor "
+                    "directly, not another VIEW"
+                )
+            if base.storage_type not in (
+                TensorStorageType.ACTIVATION,
+                TensorStorageType.OUTPUT,
+            ):
+                raise RuntimeIRError(
+                    f"VIEW Tensor {tensor.name!r} aliases unsupported "
+                    f"{base.storage_type.name} storage"
+                )
+            if tensor.dtype != base.dtype:
+                raise RuntimeIRError(
+                    f"VIEW Tensor {tensor.name!r} dtype differs from its backing "
+                    f"Tensor {base.name!r}"
+                )
+            assert tensor.storage_span_bytes is not None
+            assert base.storage_span_bytes is not None
+            end = tensor.view_byte_offset + tensor.storage_span_bytes
+            if end > base.storage_span_bytes:
+                raise RuntimeIRError(
+                    f"VIEW Tensor {tensor.name!r} range [{tensor.view_byte_offset}, "
+                    f"{end}) exceeds backing Tensor {base.name!r} span "
+                    f"{base.storage_span_bytes}"
                 )
 
     def _validate_initializers(self) -> None:

@@ -36,7 +36,7 @@ from ..format.binary_format_schema import (
     TensorStorageType,
 )
 from ..runtime_ir import InitializerScope, RuntimeBundle, RuntimeGraph, RuntimeTensor
-from .tensor_arena_planner import TensorArenaLayout
+from .planner.tensor_arena_planner import TensorArenaLayout
 
 
 # weights.bin의 모든 항목을 8바이트 경계에 두어 C가 int64까지 그대로 읽게 한다.
@@ -282,10 +282,7 @@ def _data_offset_for(
     if tensor.storage_type is TensorStorageType.CONSTANT:
         return layout.offset_of(graph.bucket_frames, tensor.tensor_id)
     if tensor.storage_type is TensorStorageType.VIEW:
-        raise TensorTableError(
-            f"Tensor {tensor.name!r}가 VIEW인데 alias 대상이 없다. "
-            "RuntimeTensor가 alias_of를 들고 다니게 된 뒤에 켜야 한다"
-        )
+        return tensor.view_byte_offset
     if tensor.storage_type in (
         TensorStorageType.ACTIVATION,
         TensorStorageType.OUTPUT,
@@ -351,8 +348,12 @@ def build_tensor_table(
                     tensor, graph, layout, arena_layout
                 ),
                 logical_byte_size=tensor.byte_size,
-                storage_span_bytes=tensor.byte_size,
-                alias_of_tensor_id=INVALID_TENSOR_ID,
+                storage_span_bytes=tensor.storage_span_bytes,
+                alias_of_tensor_id=(
+                    tensor.alias_of_tensor_id
+                    if tensor.storage_type is TensorStorageType.VIEW
+                    else INVALID_TENSOR_ID
+                ),
                 quantization_index=INVALID_QUANTIZATION_INDEX,
                 first_use=first_use,
                 last_use=last_use,

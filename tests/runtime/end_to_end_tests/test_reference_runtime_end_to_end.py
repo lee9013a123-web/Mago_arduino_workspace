@@ -606,7 +606,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--results-dir", type=Path,
-        default=ROOT / "results" / "runtime",
+        default=ROOT / "results" / "runtime" / "c_runtime_compare",
     )
     parser.add_argument(
         "--buckets",

@@ -771,7 +771,10 @@ def freeze_reference_results(
         ]
         limitations.append(f"전용 End-to-end 상세 보고서가 없는 bucket: {missing_detail}.")
     if not cross_bucket["recorded"]:
-        limitations.append("현재 results/runtime에는 교차-bucket 거부 summary가 없습니다.")
+        limitations.append(
+            "현재 results/runtime/c_runtime_compare에는 교차-bucket 거부 "
+            "summary가 없습니다."
+        )
 
     report = _render_report(
         baseline_id=baseline_id,

@@ -53,6 +53,8 @@ build_target test_tensor_arena \
     "${ROOT}/tests/runtime/memory_safety_tests/test_tensor_arena.c"
 build_target test_tensor_arena_equivalence \
     "${ROOT}/tests/runtime/memory_safety_tests/test_tensor_arena_equivalence.c"
+build_target test_tensor_view_alias \
+    "${ROOT}/tests/runtime/memory_safety_tests/test_tensor_view_alias.c"
 
 {
     printf 'cc=%s\n' "${CC}"

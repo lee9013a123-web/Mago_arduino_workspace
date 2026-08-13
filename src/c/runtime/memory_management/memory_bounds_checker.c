@@ -231,8 +231,43 @@ CamppStatus campp_memory_bounds_check_tensor(
             &context->activations, tensor_id);
     }
 
-    case CAMPP_TENSOR_STORAGE_VIEW:
-        return CAMPP_STATUS_NOT_IMPLEMENTED;
+    case CAMPP_TENSOR_STORAGE_VIEW: {
+        const CamppTensorDescriptor *base_descriptor;
+        const CamppTensorView *base_view;
+        const uint8_t *expected;
+        uint64_t remaining;
+
+        if (descriptor->alias_of_tensor_id >= context->tensor_count ||
+            descriptor->alias_of_tensor_id == tensor_id ||
+            descriptor->data_offset == CAMPP_INVALID_DATA_OFFSET) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        base_descriptor =
+            &context->model->tensors[descriptor->alias_of_tensor_id];
+        base_view = &context->tensors[descriptor->alias_of_tensor_id];
+        if (base_descriptor->storage_type == CAMPP_TENSOR_STORAGE_VIEW ||
+            base_view->data == NULL ||
+            descriptor->data_offset > base_view->storage_span_bytes ||
+            descriptor->data_offset > (uint64_t)SIZE_MAX) {
+            return CAMPP_STATUS_CORRUPT_PLAN;
+        }
+        remaining = base_view->storage_span_bytes - descriptor->data_offset;
+        if (descriptor->storage_span_bytes > remaining) {
+            return CAMPP_STATUS_BUFFER_OVERFLOW;
+        }
+        expected = (const uint8_t *)base_view->data +
+                   (size_t)descriptor->data_offset;
+        if ((const void *)view->data != (const void *)expected ||
+            view->storage_span_bytes != descriptor->storage_span_bytes ||
+            (view->flags & CAMPP_TENSOR_FLAG_ALIASED) == 0u) {
+            return CAMPP_STATUS_BUFFER_OVERFLOW;
+        }
+        if (context->activations.mode == CAMPP_ACTIVATION_STORAGE_ARENA) {
+            return campp_tensor_arena_check_guards(&context->activations);
+        }
+        return campp_reference_tensor_storage_check_guard(
+            &context->activations, descriptor->alias_of_tensor_id);
+    }
 
     default:
         return CAMPP_STATUS_CORRUPT_PLAN;

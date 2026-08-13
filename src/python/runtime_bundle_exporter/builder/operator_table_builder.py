@@ -192,6 +192,10 @@ def validate_execution_order(graph: RuntimeGraph) -> None:
         for tensor in graph.tensors
         if tensor.storage_type
         in (TensorStorageType.INPUT, TensorStorageType.CONSTANT)
+        or (
+            tensor.storage_type is TensorStorageType.VIEW
+            and tensor.producer is None
+        )
     }
     produced: set[int] = set()
 
@@ -222,6 +226,9 @@ def validate_execution_order(graph: RuntimeGraph) -> None:
         if tensor.storage_type in (
             TensorStorageType.INPUT,
             TensorStorageType.CONSTANT,
+        ) or (
+            tensor.storage_type is TensorStorageType.VIEW
+            and tensor.producer is None
         ):
             continue
         if tensor.tensor_id not in produced:

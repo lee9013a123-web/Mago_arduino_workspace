@@ -114,8 +114,8 @@ CamppStatus campp_tensor_registry_create(
         }
 
         case CAMPP_TENSOR_STORAGE_VIEW:
-            status = CAMPP_STATUS_NOT_IMPLEMENTED;
-            goto failed;
+            /* Backing Tensor가 모두 연결된 뒤 두 번째 pass에서 해석한다. */
+            continue;
 
         default:
             status = CAMPP_STATUS_CORRUPT_PLAN;
@@ -131,6 +131,49 @@ CamppStatus campp_tensor_registry_create(
             if (status != CAMPP_STATUS_OK) {
                 goto failed;
             }
+        }
+    }
+
+    for (tensor_id = 0u; tensor_id < model->tensor_count; ++tensor_id) {
+        const CamppTensorDescriptor *descriptor = &model->tensors[tensor_id];
+        const CamppTensorDescriptor *base_descriptor;
+        const CamppTensorView *base_view;
+        CamppTensorView *view = &views[tensor_id];
+        uint64_t remaining;
+
+        if (descriptor->storage_type != CAMPP_TENSOR_STORAGE_VIEW) {
+            continue;
+        }
+        if (descriptor->alias_of_tensor_id >= model->tensor_count ||
+            descriptor->alias_of_tensor_id == tensor_id) {
+            status = CAMPP_STATUS_CORRUPT_PLAN;
+            goto failed;
+        }
+        base_descriptor = &model->tensors[descriptor->alias_of_tensor_id];
+        base_view = &views[descriptor->alias_of_tensor_id];
+        if (base_descriptor->storage_type == CAMPP_TENSOR_STORAGE_VIEW ||
+            base_view->data == NULL ||
+            descriptor->data_offset == CAMPP_INVALID_DATA_OFFSET ||
+            descriptor->data_offset > base_view->storage_span_bytes) {
+            status = CAMPP_STATUS_CORRUPT_PLAN;
+            goto failed;
+        }
+        remaining = base_view->storage_span_bytes - descriptor->data_offset;
+        if (descriptor->storage_span_bytes > remaining ||
+            descriptor->data_offset > (uint64_t)SIZE_MAX) {
+            status = CAMPP_STATUS_BUFFER_OVERFLOW;
+            goto failed;
+        }
+        view->data = (uint8_t *)base_view->data +
+                     (size_t)descriptor->data_offset;
+        view->storage_span_bytes = descriptor->storage_span_bytes;
+        if (campp_tensor_view_is_contiguous(view)) {
+            view->flags =
+                (uint8_t)(view->flags | CAMPP_TENSOR_FLAG_CONTIGUOUS);
+        }
+        status = campp_memory_bounds_check_view(descriptor, view);
+        if (status != CAMPP_STATUS_OK) {
+            goto failed;
         }
     }
 
