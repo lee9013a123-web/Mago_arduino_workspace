@@ -1,0 +1,235 @@
+{
+  "schema_version": 1,
+  "label": "baseline",
+  "generated_at_utc": "2026-08-13T05:41:46.731707+00:00",
+  "measurement_scope": "warm 추론 루프만. WAV·FBank·session create 제외 (session create는 별도 기록).",
+  "configuration": {
+    "buckets": [
+      98,
+      298,
+      498,
+      998
+    ],
+    "inputs": 3,
+    "warmup": 5,
+    "repeat": 20,
+    "threads": 1,
+    "pinned_cpu": 0,
+    "graph_optimization_level": "all",
+    "model_dir": "results/static",
+    "feature_manifest": "benchmarks/campplus/manifests/runtime_features.json"
+  },
+  "environment": {
+    "device_tree_model": "Arduino UnoQ",
+    "kernel": "7.0.0-g122c2c22d838",
+    "machine": "aarch64",
+    "logical_cpu_count": 4,
+    "pinned_cpu": 0,
+    "cpu_governors": [
+      "schedutil"
+    ],
+    "max_thermal_zone_c": 40.0,
+    "git_commit": "c03c0345f1a14fe037dfb1ca9ae467e26a1ea6cf",
+    "git_dirty": true,
+    "compiler": "14.2.0",
+    "build": {
+      "cc": "gcc",
+      "cflags": "-std=c11 -O3 -DNDEBUG -Wall -Wextra",
+      "ort_so": "/home/arduino/workspace/venv/lib/python3.13/site-packages/onnxruntime/capi/libonnxruntime.so.1.27.0"
+    }
+  },
+  "buckets": [
+    {
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "model": "results/static/campp_static_98.onnx",
+      "inputs": [
+        "multi__speaker_0000",
+        "multi__speaker_0005",
+        "multi__speaker_0006"
+      ],
+      "native": {
+        "samples": 60,
+        "latency_ms": {
+          "min": 184.094332,
+          "mean": 186.20985206666668,
+          "p50": 185.97310099999999,
+          "p95": 188.79137215,
+          "max": 190.980971
+        },
+        "rtf": {
+          "p50": 0.185973101,
+          "mean": 0.18620985206666668
+        },
+        "spread_pct": 3.7408207657365584,
+        "peak_rss_bytes": 67932160,
+        "session_create_ms": 2083.1340603333333
+      },
+      "python": {
+        "samples": 60,
+        "latency_ms": {
+          "min": 185.262403,
+          "mean": 186.80024103333332,
+          "p50": 186.4994605,
+          "p95": 188.8282515,
+          "max": 190.501989
+        },
+        "rtf": {
+          "p50": 0.18649946050000002,
+          "mean": 0.18680024103333331
+        },
+        "spread_pct": 2.828197149099919,
+        "peak_rss_bytes": 100446208,
+        "session_create_ms": 1994.4418296666665
+      },
+      "python_overhead": {
+        "rss_bytes": 32514048,
+        "latency_p50_ms": 0.5263595000000123
+      }
+    },
+    {
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "model": "results/static/campp_static_298.onnx",
+      "inputs": [
+        "multi__speaker_0000",
+        "multi__speaker_0005",
+        "multi__speaker_0006"
+      ],
+      "native": {
+        "samples": 60,
+        "latency_ms": {
+          "min": 520.019878,
+          "mean": 522.8977043333333,
+          "p50": 522.4388295,
+          "p95": 525.2543578,
+          "max": 529.944606
+        },
+        "rtf": {
+          "p50": 0.1741462765,
+          "mean": 0.17429923477777776
+        },
+        "spread_pct": 1.9085285812862858,
+        "peak_rss_bytes": 97349632,
+        "session_create_ms": 2072.9083493333333
+      },
+      "python": {
+        "samples": 60,
+        "latency_ms": {
+          "min": 521.599786,
+          "mean": 524.5709197333333,
+          "p50": 524.326352,
+          "p95": 527.0766474,
+          "max": 529.272662
+        },
+        "rtf": {
+          "p50": 0.17477545066666667,
+          "mean": 0.17485697324444444
+        },
+        "spread_pct": 1.4710274440181565,
+        "peak_rss_bytes": 129609728,
+        "session_create_ms": 1973.6400130000002
+      },
+      "python_overhead": {
+        "rss_bytes": 32260096,
+        "latency_p50_ms": 1.8875225000000455
+      }
+    },
+    {
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "model": "results/static/campp_static_498.onnx",
+      "inputs": [
+        "multi__speaker_0000",
+        "multi__speaker_0005",
+        "multi__speaker_0006"
+      ],
+      "native": {
+        "samples": 60,
+        "latency_ms": {
+          "min": 813.938164,
+          "mean": 868.76447205,
+          "p50": 872.0446850000001,
+          "p95": 875.6692222,
+          "max": 878.184069
+        },
+        "rtf": {
+          "p50": 0.17440893699999999,
+          "mean": 0.17375289441000002
+        },
+        "spread_pct": 7.893216934843221,
+        "peak_rss_bytes": 126009344,
+        "session_create_ms": 2069.562491
+      },
+      "python": {
+        "samples": 60,
+        "latency_ms": {
+          "min": 860.99427,
+          "mean": 865.9990047333333,
+          "p50": 865.3969669999999,
+          "p95": 871.546154,
+          "max": 877.113555
+        },
+        "rtf": {
+          "p50": 0.1730793934,
+          "mean": 0.17319980094666668
+        },
+        "spread_pct": 1.8721709959811916,
+        "peak_rss_bytes": 158396416,
+        "session_create_ms": 1925.9663406666666
+      },
+      "python_overhead": {
+        "rss_bytes": 32387072,
+        "latency_p50_ms": -6.647718000000168
+      }
+    },
+    {
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "model": "results/static/campp_static_998.onnx",
+      "inputs": [
+        "multi__speaker_0000",
+        "multi__speaker_0005",
+        "multi__speaker_0006"
+      ],
+      "native": {
+        "samples": 60,
+        "latency_ms": {
+          "min": 1823.877019,
+          "mean": 1832.956177,
+          "p50": 1833.0504345,
+          "p95": 1839.5088730000002,
+          "max": 1845.574954
+        },
+        "rtf": {
+          "p50": 0.18330504345,
+          "mean": 0.1832956177
+        },
+        "spread_pct": 1.189659981126168,
+        "peak_rss_bytes": 197672960,
+        "session_create_ms": 2061.791728333333
+      },
+      "python": {
+        "samples": 60,
+        "latency_ms": {
+          "min": 1687.031869,
+          "mean": 1828.5216003833334,
+          "p50": 1836.9489715,
+          "p95": 1849.5629646500001,
+          "max": 1860.943045
+        },
+        "rtf": {
+          "p50": 0.18369489715,
+          "mean": 0.18285216003833332
+        },
+        "spread_pct": 10.308707215062105,
+        "peak_rss_bytes": 229998592,
+        "session_create_ms": 1973.783813
+      },
+      "python_overhead": {
+        "rss_bytes": 32325632,
+        "latency_p50_ms": 3.898537000000033
+      }
+    }
+  ]
+}
