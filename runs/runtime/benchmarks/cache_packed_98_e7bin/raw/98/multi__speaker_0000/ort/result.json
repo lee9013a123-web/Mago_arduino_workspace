@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.0",
+  "generated_at_utc": "2026-08-14T06:49:39.691016+00:00",
+  "git_commit": "58ed62eabb35edd2ecbd136695d972fee6ab9714",
+  "runtime": "onnxruntime-cpu",
+  "model": {
+    "path": "/home/arduino/workspace/egs/accelerate_CAM/models/source/campplus_int8_static_qop.onnx",
+    "sha256": "1ea9a4806a3c410046e7e785cfa81fb1393550b2f016b1e94581056b1c092048"
+  },
+  "configuration": {
+    "threads": 1,
+    "warmup": 1,
+    "repeat": 3,
+    "cold_runs": 2,
+    "seed": 0,
+    "cv_threshold_pct": 3.0,
+    "cosine_threshold": 0.999,
+    "execution_provider": "CPUExecutionProvider",
+    "execution_mode": "ORT_SEQUENTIAL"
+  },
+  "input": {
+    "source": "f32",
+    "path": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0000__98.f32",
+    "sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+    "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+    "shape": [
+      1,
+      98,
+      80
+    ],
+    "dtype": "float32",
+    "frames": 98,
+    "audio_seconds": 1.0
+  },
+  "ir": {
+    "path": "/home/arduino/workspace/egs/accelerate_CAM/results/graph/ir_1s.json",
+    "frames": 98,
+    "audio_seconds": 1.0,
+    "planned_static_arena_bytes": 2007040,
+    "planned_peak_live_bytes": 2007040,
+    "weight_bytes": 7424160
+  },
+  "environment": {
+    "hostname": "Mago",
+    "platform": "Linux-7.0.0-g122c2c22d838-aarch64-with-glibc2.41",
+    "machine": "aarch64",
+    "processor": null,
+    "python_version": "3.13.5",
+    "onnxruntime_version": "1.27.0",
+    "numpy_version": "2.4.6",
+    "device_tree_model": "Arduino UnoQ",
+    "cpu_governor": "schedutil",
+    "cpu_affinity": [
+      0
+    ],
+    "logical_cpu_count": 4,
+    "thread_environment": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "ORT_NUM_THREADS": "1"
+    }
+  },
+  "cold": {
+    "definition": "fresh process; OS file page cache is not dropped",
+    "samples": [
+      {
+        "session_create_ms": 3138.00871,
+        "first_inference_ms": 193.435786,
+        "child_total_ms": 3720.103578,
+        "peak_rss_bytes": 95760384,
+        "feature_source": "f32",
+        "feature_shape": [
+          1,
+          98,
+          80
+        ],
+        "embedding_shape": [
+          1,
+          192
+        ],
+        "embedding_sha256": "4a432be92185148ac08a6428ec8c83dc13c2a85e715c58e21e9ed34d01f55502",
+        "run": 1,
+        "process_wall_ms": 4352.986479
+      },
+      {
+        "session_create_ms": 3155.405138,
+        "first_inference_ms": 199.364979,
+        "child_total_ms": 3720.109983,
+        "peak_rss_bytes": 95420416,
+        "feature_source": "f32",
+        "feature_shape": [
+          1,
+          98,
+          80
+        ],
+        "embedding_shape": [
+          1,
+          192
+        ],
+        "embedding_sha256": "4a432be92185148ac08a6428ec8c83dc13c2a85e715c58e21e9ed34d01f55502",
+        "run": 2,
+        "process_wall_ms": 4371.531401
+      }
+    ],
+    "process_wall_summary": {
+      "count": 2,
+      "mean_ms": 4362.25894,
+      "stddev_ms": 9.272461000000021,
+      "cv_pct": 0.2125609948317287,
+      "min_ms": 4352.986479,
+      "p50_ms": 4362.25894,
+      "p95_ms": 4370.6041549,
+      "p99_ms": 4371.34595178,
+      "max_ms": 4371.531401
+    },
+    "session_create_summary": {
+      "count": 2,
+      "mean_ms": 3146.706924,
+      "stddev_ms": 8.698214000000007,
+      "cv_pct": 0.2764227559185301,
+      "min_ms": 3138.00871,
+      "p50_ms": 3146.706924,
+      "p95_ms": 3154.5353166,
+      "p99_ms": 3155.23117372,
+      "max_ms": 3155.405138
+    },
+    "first_inference_summary": {
+      "count": 2,
+      "mean_ms": 196.4003825,
+      "stddev_ms": 2.964596499999999,
+      "cv_pct": 1.5094657465852943,
+      "min_ms": 193.435786,
+      "p50_ms": 196.4003825,
+      "p95_ms": 199.06851935,
+      "p99_ms": 199.30568707,
+      "max_ms": 199.364979
+    },
+    "max_peak_rss_bytes": 95760384
+  },
+  "warm": {
+    "session_create_ms": 3084.645247,
+    "warmup_count": 1,
+    "measured_count": 3,
+    "timings_ms": [
+      188.463682,
+      185.329501,
+      186.027681
+    ],
+    "latency": {
+      "count": 3,
+      "mean_ms": 186.60695466666667,
+      "stddev_ms": 1.3434882758104867,
+      "cv_pct": 0.7199561657336623,
+      "min_ms": 185.329501,
+      "p50_ms": 186.027681,
+      "p95_ms": 188.2200819,
+      "p99_ms": 188.41496198000002,
+      "max_ms": 188.463682
+    },
+    "rtf": {
+      "mean": 0.18660695466666666,
+      "p50": 0.186027681,
+      "p95": 0.1882200819,
+      "p99": 0.18841496198000002
+    },
+    "stability_gate": {
+      "threshold_cv_pct": 3.0,
+      "passed": true
+    },
+    "memory": {
+      "current_rss_bytes": 97263616,
+      "peak_rss_bytes": 97263616,
+      "planned_static_arena_bytes": 2007040,
+      "planned_peak_live_bytes": 2007040,
+      "weight_bytes": 7424160,
+      "note": "planned arena is from offline IR, not ONNX Runtime RSS"
+    },
+    "accuracy": {
+      "reference_path": null,
+      "cosine_threshold": 0.999,
+      "evaluated": false,
+      "passed": null
+    },
+    "embedding": {
+      "shape": [
+        1,
+        192
+      ],
+      "dtype": "float32",
+      "sha256": "4a432be92185148ac08a6428ec8c83dc13c2a85e715c58e21e9ed34d01f55502"
+    }
+  }
+}
