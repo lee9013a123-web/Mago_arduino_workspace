@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "profile": "qrb2210-dense-slab-98-fixed-inputs-fast",
+  "run_id": "dense_slab_98",
+  "generated_at_utc": "2026-08-14T06:21:40.513908+00:00",
+  "accuracy_evaluated": false,
+  "existing_accuracy_evidence": {
+    "runtime_validation": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/results/runtime/c_runtime_compare/end_to_end_validation.json",
+      "sha256": "c746d12ebeed21ebf1de0ea6fc79918208ed6dec2c8cde88b5a0c86de3a5968e",
+      "status": {
+        "baseline_id": "campp-reference-v1-c7dc2bd1ce91c061",
+        "phase4_ready": false,
+        "all_buckets_numerically_passed": false
+      }
+    },
+    "tensor_arena_validation": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/results/runtime/dense/dense_slab_validation.json",
+      "sha256": "fc735ecae7979da90b39256f5998006f4559dd9745df736ce7dd86bda5c18a33",
+      "status": {
+        "all_bitwise_identical": true
+      }
+    }
+  },
+  "configuration": {
+    "source": "/home/arduino/workspace/egs/accelerate_CAM/configs/benchmark/runtime_dense_slab_98_fast.json",
+    "threads": 1,
+    "warmup": 1,
+    "repeat": 3,
+    "cold_runs": 2,
+    "cv_threshold_pct": 3.0,
+    "buckets": {
+      "98": 1.0
+    },
+    "input_ids": [
+      "multi__speaker_0000",
+      "multi__speaker_0005",
+      "multi__speaker_0006"
+    ]
+  },
+  "artifacts": {
+    "manifest": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/dense_slab/bundle/manifest.json",
+      "sha256": "438288edc9b0943aa1684001e9512e5880ae54d34b7843614839a8d74c8ea624"
+    },
+    "canonical_model": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/models/source/campplus_int8_static_qop.onnx",
+      "sha256": "1ea9a4806a3c410046e7e785cfa81fb1393550b2f016b1e94581056b1c092048",
+      "size_bytes": 8520399
+    },
+    "weights": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/dense_slab/bundle/weights.bin",
+      "sha256": "595d308c035eccbd338eeba72a7b3b23dd878878cf74418f0730bf60264aecb9",
+      "size_bytes": 7453696
+    },
+    "plans": {
+      "98": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/dense_slab/bundle/execution_plans/plan_98.bin",
+        "sha256": "cdf0fd54e00fc104adb3842d06c7637d85a5f004bdfa06b7763853a0917c59f3",
+        "size_bytes": 387448,
+        "arena_size_bytes": 2007040
+      }
+    },
+    "tools": {
+      "c_benchmark": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/build/campp_runtime_benchmark",
+        "sha256": "56f8383ea04d54828a5f75ab8a8215f608795d0228e8215362f9df720861eb3e",
+        "build_metadata_path": "/home/arduino/workspace/egs/accelerate_CAM/build/campp_runtime_benchmark.build.txt",
+        "build_metadata_sha256": "2b836846ab45ac3c14ef233902502748779fe4a703166335e363ee9914ca6663"
+      },
+      "ort_benchmark": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/scripts/1_benchmark/benchmark_onnx.py",
+        "sha256": "4f2b097c11149dba56eb35b22c54f78773286bd0a7cf6c4d24f307de73504270"
+      }
+    }
+  },
+  "environment_before": {
+    "hostname": "Mago",
+    "platform": "Linux-7.0.0-g122c2c22d838-aarch64-with-glibc2.41",
+    "machine": "aarch64",
+    "python_version": "3.13.5",
+    "logical_cpu_count": 4,
+    "cpu_affinity": [
+      0
+    ],
+    "device_tree_model": "Arduino UnoQ",
+    "governors": {
+      "cpu0": "schedutil",
+      "cpu1": "schedutil",
+      "cpu2": "schedutil",
+      "cpu3": "schedutil"
+    },
+    "thermal": [
+      {
+        "zone": "thermal_zone0",
+        "type": "mapss-thermal",
+        "temperature_c": 36.8
+      },
+      {
+        "zone": "thermal_zone1",
+        "type": "video-thermal",
+        "temperature_c": 36.8
+      },
+      {
+        "zone": "thermal_zone2",
+        "type": "wlan-thermal",
+        "temperature_c": 36.2
+      },
+      {
+        "zone": "thermal_zone3",
+        "type": "cpuss0-thermal",
+        "temperature_c": 38.7
+      },
+      {
+        "zone": "thermal_zone4",
+        "type": "cpuss1-thermal",
+        "temperature_c": 40.0
+      },
+      {
+        "zone": "thermal_zone5",
+        "type": "mdm0-thermal",
+        "temperature_c": 35.3
+      },
+      {
+        "zone": "thermal_zone6",
+        "type": "mdm1-thermal",
+        "temperature_c": 36.5
+      },
+      {
+        "zone": "thermal_zone7",
+        "type": "gpu-thermal",
+        "temperature_c": 35.6
+      },
+      {
+        "zone": "thermal_zone8",
+        "type": "hm-center-thermal",
+        "temperature_c": 37.1
+      },
+      {
+        "zone": "thermal_zone9",
+        "type": "camera-thermal",
+        "temperature_c": 36.2
+      }
+    ],
+    "thread_environment": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null,
+      "ORT_NUM_THREADS": null
+    }
+  },
+  "environment_after": {
+    "hostname": "Mago",
+    "platform": "Linux-7.0.0-g122c2c22d838-aarch64-with-glibc2.41",
+    "machine": "aarch64",
+    "python_version": "3.13.5",
+    "logical_cpu_count": 4,
+    "cpu_affinity": [
+      0
+    ],
+    "device_tree_model": "Arduino UnoQ",
+    "governors": {
+      "cpu0": "schedutil",
+      "cpu1": "schedutil",
+      "cpu2": "schedutil",
+      "cpu3": "schedutil"
+    },
+    "thermal": [
+      {
+        "zone": "thermal_zone0",
+        "type": "mapss-thermal",
+        "temperature_c": 38.7
+      },
+      {
+        "zone": "thermal_zone1",
+        "type": "video-thermal",
+        "temperature_c": 38.4
+      },
+      {
+        "zone": "thermal_zone2",
+        "type": "wlan-thermal",
+        "temperature_c": 37.8
+      },
+      {
+        "zone": "thermal_zone3",
+        "type": "cpuss0-thermal",
+        "temperature_c": 40.0
+      },
+      {
+        "zone": "thermal_zone4",
+        "type": "cpuss1-thermal",
+        "temperature_c": 40.9
+      },
+      {
+        "zone": "thermal_zone5",
+        "type": "mdm0-thermal",
+        "temperature_c": 37.1
+      },
+      {
+        "zone": "thermal_zone6",
+        "type": "mdm1-thermal",
+        "temperature_c": 38.1
+      },
+      {
+        "zone": "thermal_zone7",
+        "type": "gpu-thermal",
+        "temperature_c": 37.1
+      },
+      {
+        "zone": "thermal_zone8",
+        "type": "hm-center-thermal",
+        "temperature_c": 39.0
+      },
+      {
+        "zone": "thermal_zone9",
+        "type": "camera-thermal",
+        "temperature_c": 37.8
+      }
+    ],
+    "thread_environment": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null,
+      "ORT_NUM_THREADS": null
+    }
+  },
+  "environment_mismatches": [],
+  "per_input": [
+    {
+      "input_id": "multi__speaker_0000",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+      "ort_result": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/benchmarks/dense_slab_98/raw/98/multi__speaker_0000/ort/result.json",
+      "c_runtime_result": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/benchmarks/dense_slab_98/raw/98/multi__speaker_0000/c_runtime/result.json",
+      "embedding_bitwise_identical": false,
+      "ort_embedding_sha256": "4a432be92185148ac08a6428ec8c83dc13c2a85e715c58e21e9ed34d01f55502",
+      "c_runtime_embedding_sha256": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05"
+    },
+    {
+      "input_id": "multi__speaker_0005",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "feature_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+      "ort_result": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/benchmarks/dense_slab_98/raw/98/multi__speaker_0005/ort/result.json",
+      "c_runtime_result": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/benchmarks/dense_slab_98/raw/98/multi__speaker_0005/c_runtime/result.json",
+      "embedding_bitwise_identical": false,
+      "ort_embedding_sha256": "3bdcad33f89428f49df970c66871a9eaaa7c146862347f54f6c1166dc65837e4",
+      "c_runtime_embedding_sha256": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd"
+    },
+    {
+      "input_id": "multi__speaker_0006",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "feature_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+      "ort_result": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/benchmarks/dense_slab_98/raw/98/multi__speaker_0006/ort/result.json",
+      "c_runtime_result": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/benchmarks/dense_slab_98/raw/98/multi__speaker_0006/c_runtime/result.json",
+      "embedding_bitwise_identical": false,
+      "ort_embedding_sha256": "90334103b6a2db29c04bda63cb2a5ca7758f86ac79591a916bd99f8e182e3d41",
+      "c_runtime_embedding_sha256": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1"
+    }
+  ],
+  "aggregates": {
+    "onnxruntime-cpu": {
+      "98": {
+        "runtime": "onnxruntime-cpu",
+        "bucket_frames": 98,
+        "input_count": 3,
+        "latency": {
+          "count": 9,
+          "mean_ms": 187.14182722222222,
+          "stddev_ms": 4.188397793309505,
+          "cv_pct": 2.238087473804548,
+          "min_ms": 183.944148,
+          "p50_ms": 185.962215,
+          "p95_ms": 193.9867458,
+          "p99_ms": 197.79299956,
+          "max_ms": 198.744563
+        },
+        "rtf": {
+          "count": 9,
+          "mean_rtf": 0.18714182722222222,
+          "stddev_rtf": 0.004188397793309511,
+          "cv_pct": 2.238087473804551,
+          "min_rtf": 0.183944148,
+          "p50_rtf": 0.185962215,
+          "p95_rtf": 0.1939867458,
+          "p99_rtf": 0.19779299956000002,
+          "max_rtf": 0.198744563
+        },
+        "first_inference": {
+          "count": 6,
+          "mean_ms": 195.774422,
+          "stddev_ms": 4.388041948587247,
+          "cv_pct": 2.241376531091098,
+          "min_ms": 192.807257,
+          "p50_ms": 193.8117335,
+          "p95_ms": 202.934735,
+          "p99_ms": 204.9123782,
+          "max_ms": 205.406789
+        },
+        "warm_peak_rss_bytes": 97742848,
+        "cold_peak_rss_bytes": 95748096,
+        "peak_rss_bytes": 97742848,
+        "stability_gate": {
+          "threshold_cv_pct": 3.0,
+          "all_inputs_passed": false,
+          "aggregate_passed": true
+        }
+      }
+    },
+    "campp-c-runtime": {
+      "98": {
+        "runtime": "campp-c-runtime",
+        "bucket_frames": 98,
+        "input_count": 3,
+        "latency": {
+          "count": 9,
+          "mean_ms": 35324.01897777777,
+          "stddev_ms": 32.63794769415038,
+          "cv_pct": 0.09239590691728143,
+          "min_ms": 35266.2163,
+          "p50_ms": 35330.394,
+          "p95_ms": 35370.40582,
+          "p99_ms": 35384.183804,
+          "max_ms": 35387.6283
+        },
+        "rtf": {
+          "count": 9,
+          "mean_rtf": 35.324018977777776,
+          "stddev_rtf": 0.032637947694149703,
+          "cv_pct": 0.09239590691727952,
+          "min_rtf": 35.2662163,
+          "p50_rtf": 35.330394,
+          "p95_rtf": 35.370405819999995,
+          "p99_rtf": 35.384183803999996,
+          "max_rtf": 35.387628299999996
+        },
+        "first_inference": {
+          "count": 6,
+          "mean_ms": 35308.69146666666,
+          "stddev_ms": 61.83269891626041,
+          "cv_pct": 0.17512033538437374,
+          "min_ms": 35206.6305,
+          "p50_ms": 35294.63885,
+          "p95_ms": 35392.0113,
+          "p99_ms": 35398.995780000005,
+          "max_ms": 35400.7419
+        },
+        "warm_peak_rss_bytes": 12247040,
+        "cold_peak_rss_bytes": 12247040,
+        "peak_rss_bytes": 12247040,
+        "stability_gate": {
+          "threshold_cv_pct": 3.0,
+          "all_inputs_passed": true,
+          "aggregate_passed": true
+        }
+      }
+    }
+  },
+  "comparisons": [
+    {
+      "bucket_frames": 98,
+      "c_speedup_over_ort_p50": 0.005263519421832658,
+      "c_rtf_ratio_to_ort_p50": 189.9869497682634,
+      "peak_rss_reduction_bytes": 85495808,
+      "peak_rss_reduction_ratio": 0.8747014206093116
+    }
+  ],
+  "validity": {
+    "same_feature_payload": true,
+    "same_canonical_model_provenance": true,
+    "requested_threads": 1,
+    "c_effective_threads": 1,
+    "environment_matched": true,
+    "all_stability_gates_passed": false,
+    "performance_complete": true
+  }
+}

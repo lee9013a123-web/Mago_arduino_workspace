@@ -70,12 +70,17 @@ def file_sha256(path: Path | str) -> str:
 
 
 def _relative_to(path: Path, root: Path) -> str:
-    """bundle 안의 파일은 manifest 위치 기준 상대 경로로 적는다."""
+    """bundle 안의 파일은 manifest 위치 기준 상대 경로로 적는다.
+
+    구분자는 항상 ``/``로 적는다. manifest는 만든 OS와 읽는 OS가 다를 수
+    있는 산출물이고, Windows가 적은 ``\\``는 Linux에서 파일 이름의 일부로
+    읽혀 경로 해석이 깨진다.
+    """
 
     try:
-        return str(path.resolve().relative_to(root.resolve()))
+        return path.resolve().relative_to(root.resolve()).as_posix()
     except ValueError:
-        return str(path)
+        return Path(path).as_posix()
 
 
 def _source_entry(path: Path | str | None, root: Path) -> dict | None:
@@ -90,9 +95,9 @@ def _source_entry(path: Path | str | None, root: Path) -> dict | None:
         return None
     source = Path(path)
     try:
-        relative = os.path.relpath(source.resolve(), root.resolve())
+        relative = Path(os.path.relpath(source.resolve(), root.resolve())).as_posix()
     except ValueError:  # 다른 드라이브 등 상대화가 불가능한 경우
-        relative = str(source)
+        relative = source.as_posix()
     return {
         "path": relative,
         "size_bytes": source.stat().st_size,

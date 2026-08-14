@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "runtime": "campp-c-runtime",
+  "backend": "cpu_reference",
+  "configuration": {
+    "requested_threads": 1,
+    "effective_threads": 1,
+    "warmup": 0,
+    "repeat": 1,
+    "audio_seconds": 1
+  },
+  "model": {
+    "plan_path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/dense_slab/bundle/execution_plans/plan_98.bin",
+    "weights_path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/dense_slab/bundle/weights.bin",
+    "bucket_frames": 98,
+    "plan_bytes": 387448,
+    "weight_bytes": 7453696,
+    "operator_count": 1386
+  },
+  "input": {
+    "path": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0006__98.f32",
+    "byte_size": 31360
+  },
+  "lifecycle": {
+    "model_load_ms": 32.485469,
+    "context_create_ms": 11.62599,
+    "input_load_ms": 0.160312,
+    "first_inference_ms": 35289.6792,
+    "process_elapsed_ms": 35335.3599
+  },
+  "warm": {
+    "timings_ms": [
+      35289.6792
+    ]
+  },
+  "memory": {
+    "start": {
+      "current_rss_bytes": 1458176,
+      "peak_rss_bytes": 1458176
+    },
+    "after_model_load": {
+      "current_rss_bytes": 9764864,
+      "peak_rss_bytes": 9764864
+    },
+    "after_context_create": {
+      "current_rss_bytes": 12079104,
+      "peak_rss_bytes": 12079104
+    },
+    "after_warmup": {
+      "current_rss_bytes": 12115968,
+      "peak_rss_bytes": 12115968
+    },
+    "after_measurement": {
+      "current_rss_bytes": 12238848,
+      "peak_rss_bytes": 12238848
+    },
+    "activation_bytes": 2007040,
+    "arena_bytes": 2007040,
+    "scratch_bytes": 0
+  },
+  "embedding": {
+    "tensor_id": 3718,
+    "dtype": 1,
+    "shape": [
+      1,
+      192
+    ],
+    "output_path": null
+  },
+  "run": 2,
+  "process_wall_ms": 35344.212081
+}
