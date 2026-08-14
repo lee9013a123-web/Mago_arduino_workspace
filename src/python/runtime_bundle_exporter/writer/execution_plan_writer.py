@@ -109,6 +109,7 @@ def build_plan_bytes(
     *,
     backend_id: BackendId = BackendId.AUTO,
     kernel_id: int = DEFAULT_KERNEL_ID,
+    kernel_ids: Mapping[int, int] | None = None,
     arena_layout: TensorArenaLayout | None = None,
 ) -> tuple[bytes, int, int]:
     """plan 파일 내용을 메모리에서 만든다.
@@ -123,7 +124,10 @@ def build_plan_bytes(
         graph, layout, arena_layout=arena_layout
     )
     operator_table = build_operator_table(
-        graph, backend_id=backend_id, kernel_id=kernel_id
+        graph,
+        backend_id=backend_id,
+        kernel_id=kernel_id,
+        kernel_ids=kernel_ids,
     )
 
     tensor_table_offset = PLAN_HEADER_SIZE
@@ -167,6 +171,7 @@ def write_execution_plan(
     *,
     backend_id: BackendId = BackendId.AUTO,
     kernel_id: int = DEFAULT_KERNEL_ID,
+    kernel_ids: Mapping[int, int] | None = None,
     arena_layout: TensorArenaLayout | None = None,
 ) -> ExecutionPlanResult:
     """한 bucket의 plan 파일을 쓴다."""
@@ -177,6 +182,7 @@ def write_execution_plan(
         layout,
         backend_id=backend_id,
         kernel_id=kernel_id,
+        kernel_ids=kernel_ids,
         arena_layout=arena_layout,
     )
     target.parent.mkdir(parents=True, exist_ok=True)

@@ -166,6 +166,34 @@ python3 scripts/3_runtime/13_validate_cache_packed.py
 `results/runtime/cache_layout/cache_packed_validation.json`이다. 검증 입력은
 `multi__speaker_0000`, `0005`, `0006`의 98-frame feature 세 개로 고정한다.
 
+## E7 operator fusion과 메모리 계획 재생성: 14-15
+
+Cache-packed bundle에 fusion family를 독립적으로 적용한 다음 죽은 중간
+Tensor를 제거하고 Tensor ID, producer/consumer, alias lifetime, Arena offset,
+execution table, operator별 kernel ID와 최대 scratch를 전부 다시 생성한다.
+
+```bash
+python3 scripts/3_runtime/14_export_e7_fused_bundle.py --force
+python3 scripts/3_runtime/15_validate_e7_fusions.py \
+  --runtime-binary build/campp_reference_dump
+```
+
+각 family는 `--no-fusion-conv-bias-act`, `--no-fusion-bn-relu-quant`,
+`--no-fusion-pool-cam`, `--no-fusion-qdq-elementwise`,
+`--no-fusion-stats-pooling`으로 독립 비활성화할 수 있다. 생성 bundle은
+`runs/runtime/e7/bundle/`, bitwise 검증은
+`results/runtime/fusion/e7_validation.json`에 기록된다.
+
+```bash
+python3 scripts/3_runtime/09_benchmark_runtime.py \
+  --config configs/benchmark/runtime_cache_packed_98.json \
+  --run-id cache_packed_98
+
+python3 scripts/3_runtime/09_benchmark_runtime.py \
+  --config configs/benchmark/runtime_e7_98.json \
+  --run-id e7_fused_98
+```
+
 ## QRB2210 End-to-end 성능 검증: 09
 
 `09_benchmark_runtime.py`는 06-08의 정확도 검증을 반복하지 않는다. 기존 결과의

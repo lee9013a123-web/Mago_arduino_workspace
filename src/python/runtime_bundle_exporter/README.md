@@ -25,6 +25,8 @@
 - `planner/dense_slab_planner.py`: Dense Concat chain을 slab-backed VIEW로 변환
 - `planner/cache_layout_planner.py`: NTC/NHWC channel padding, stride와 layout VIEW 계획
 - `planner/weight_packing_planner.py`: QLinearConv O4I4 오프라인 packing과 복원 검증
+- `planner/fusion_planner.py`: 독립 fusion flag, dead Tensor 제거, Tensor ID와
+  lifetime 재생성, operator별 kernel ID와 memory traffic 계획
 - `writer/weight_blob_writer.py`: weights binary 직렬화
 - `writer/execution_plan_writer.py`: bucket별 execution plan 직렬화
 - `writer/bundle_manifest_writer.py`: 모델 hash와 산출물 checksum 기록

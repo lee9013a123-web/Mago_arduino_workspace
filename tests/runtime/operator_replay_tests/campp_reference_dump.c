@@ -216,7 +216,7 @@ int main(int argc, char **argv)
         return 1;
     }
     registry =
-        model.operator_count != 0u && model.operators[0].kernel_id == 1u
+        model.operator_count != 0u && model.operators[0].kernel_id != 0u
             ? campp_cpu_aarch64_registry()
             : campp_cpu_reference_registry();
 

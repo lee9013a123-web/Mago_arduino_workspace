@@ -111,6 +111,7 @@ def build_operator_table(
     *,
     backend_id: BackendId = BackendId.AUTO,
     kernel_id: int = DEFAULT_KERNEL_ID,
+    kernel_ids: Mapping[int, int] | None = None,
 ) -> OperatorTable:
     """RuntimeGraph 하나를 실행 명령 표로 굳힌다.
 
@@ -164,7 +165,11 @@ def build_operator_table(
                 attribute_offset=offset,
                 attribute_size=attribute_size,
                 backend_id=int(backend_id),
-                kernel_id=kernel_id,
+                kernel_id=(
+                    kernel_id
+                    if kernel_ids is None
+                    else kernel_ids.get(operator.operator_id, kernel_id)
+                ),
             )
         )
         names.append(operator.name)

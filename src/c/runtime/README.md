@@ -32,6 +32,13 @@ Packed plan은 kernel ID 1을 사용한다. AArch64 backend는 QLinearConv에
 비-AArch64 build도 같은 packed layout을 scalar로 실행하므로 개발 PC에서
 bitwise 검증할 수 있다. Runtime weight packing은 수행하지 않는다.
 
+E7 plan은 ordinary cache-packed kernel ID 1과 fusion kernel ID 2~6을 같은
+`cpu_aarch64_o4i4` registry에서 혼합한다. 구현된 fusion은 BN-ReLU-Quantize,
+Quantize-QLinearConv input pack, Dequantize-ReLU-Quantize, CAM mask의
+Dequantize-Sigmoid-Mul, QDQ Add/Mul, statistics mean/std reduction이다. Fusion
+scratch는 context 생성 시 최대값 한 번만 할당되며 inference loop에서는 추가
+allocation이 발생하지 않는다.
+
 `command_line/campp_runtime_benchmark.c`는 진단 callback 없이 같은 context를
 반복 실행하며 raw timing, 초기화 시간, `/proc/self/status`의 RSS와 embedding을
 JSON/float32로 남긴다. `scripts/3_runtime/09_benchmark_runtime.py`가 ORT와

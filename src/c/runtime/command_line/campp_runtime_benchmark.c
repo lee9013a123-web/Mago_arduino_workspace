@@ -442,7 +442,7 @@ int main(int argc, char **argv)
         goto cleanup;
     }
     registry =
-        model.operator_count != 0u && model.operators[0].kernel_id == 1u
+        model.operator_count != 0u && model.operators[0].kernel_id != 0u
             ? campp_cpu_aarch64_registry()
             : campp_cpu_reference_registry();
     memory_after_model = read_memory_snapshot();
