@@ -21,6 +21,7 @@ from typing import Any, Sequence
 
 ROOT = Path(__file__).resolve().parents[3]
 DIAGNOSIS_SCRIPT = Path(__file__).with_name("02_diagnose_top4.py")
+COMMON_SCRIPT = Path(__file__).with_name("_perf_hotspot_common.py")
 QCONV_SOURCE = (
     ROOT
     / "src/c/runtime/backends/cpu_aarch64/int8_neon/qlinear_convolution_neon.c"
@@ -63,7 +64,20 @@ def _load_diagnosis_module() -> Any:
     return module
 
 
+def _load_common_module() -> Any:
+    spec = importlib.util.spec_from_file_location(
+        "e7_perf_hotspot_common_qconv", COMMON_SCRIPT
+    )
+    if spec is None or spec.loader is None:
+        raise HotspotError(f"cannot import {COMMON_SCRIPT}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 DIAGNOSIS = _load_diagnosis_module()
+COMMON = _load_common_module()
 
 
 def _path(value: str) -> Path:
@@ -243,57 +257,12 @@ def classify_perf_script(
     periods = {category: 0 for category in CATEGORIES}
     sample_counts = {category: 0 for category in CATEGORIES}
     line_periods: dict[tuple[str, int, str, str], int] = {}
-    malformed_lines = 0
-    parsed_samples = 0
-
-    lines = text.splitlines()
-    index = 0
-    line_count = len(lines)
-    while index < line_count:
-        raw_line = lines[index]
-        if not raw_line.strip():
-            index += 1
-            continue
-
-        sample = parse_perf_script_line(raw_line)
-        if sample is not None:
-            index += 1
-        else:
-            header = _parse_perf_header_line(raw_line)
-            if header is None:
-                malformed_lines += 1
-                index += 1
-                continue
-            srcline = (
-                _parse_perf_srcline_line(lines[index + 1])
-                if index + 1 < line_count
-                else None
-            )
-            if srcline is None:
-                sample = {
-                    "period": header["period"],
-                    "ip": header["ip"],
-                    "symbol": header["symbol"],
-                    "source": "",
-                    "line": 0,
-                }
-                index += 1
-            else:
-                source, line = srcline
-                sample = {
-                    "period": header["period"],
-                    "ip": header["ip"],
-                    "symbol": header["symbol"],
-                    "source": source,
-                    "line": line,
-                }
-                index += 2
-
+    samples, malformed_lines = COMMON.iter_perf_samples(text)
+    for sample in samples:
         category = classify_sample(sample, source_map)
         period = int(sample["period"])
         periods[category] += period
         sample_counts[category] += 1
-        parsed_samples += 1
         key = (
             str(sample["source"]),
             int(sample["line"]),
@@ -303,14 +272,14 @@ def classify_perf_script(
         line_periods[key] = line_periods.get(key, 0) + period
 
     total_period = sum(periods.values())
-    if parsed_samples == 0 or total_period == 0:
+    if not samples or total_period == 0:
         raise HotspotError("perf script contains no attributable cycle samples")
     address_period = periods["address_load_control"]
     mac_period = periods["mac_reduction"]
     core_period = address_period + mac_period
     top_lines = sorted(line_periods.items(), key=lambda item: item[1], reverse=True)
     return {
-        "parsed_sample_count": parsed_samples,
+        "parsed_sample_count": len(samples),
         "malformed_line_count": malformed_lines,
         "total_sample_period": total_period,
         "category_sample_counts": sample_counts,
@@ -347,30 +316,10 @@ def _pin_cpu_zero() -> None:
 def _run(
     command: Sequence[str], *, check: bool = True
 ) -> subprocess.CompletedProcess[str]:
-    environment = os.environ.copy()
-    environment.update(
-        {
-            "OMP_NUM_THREADS": "1",
-            "OPENBLAS_NUM_THREADS": "1",
-            "MKL_NUM_THREADS": "1",
-            "NUMEXPR_NUM_THREADS": "1",
-        }
-    )
-    completed = subprocess.run(
-        list(command),
-        cwd=ROOT,
-        env=environment,
-        text=True,
-        capture_output=True,
-        check=False,
-        preexec_fn=_pin_cpu_zero if os.name == "posix" else None,
-    )
-    if check and completed.returncode != 0:
-        raise HotspotError(
-            f"command failed ({completed.returncode}): {' '.join(command)}\n"
-            f"{completed.stderr.strip() or completed.stdout.strip()}"
-        )
-    return completed
+    try:
+        return COMMON.run_command(command, root=ROOT, check=check)
+    except RuntimeError as exc:
+        raise HotspotError(str(exc)) from exc
 
 
 def _microbench_command(

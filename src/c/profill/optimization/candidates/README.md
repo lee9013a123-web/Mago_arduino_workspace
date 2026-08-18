@@ -30,3 +30,22 @@ qlinear_conv/
 
 지원하지 않는 layout이나 안전한 int32 부분합 범위를 벗어나는 shape는 기존
 `campp_aarch64_qlinear_conv_o4i4()`로 fallback한다.
+
+`bn_relu_quant/` 후보 역시 target Operator에서만 교체한다.
+
+```text
+bn_relu_quant/
+├── bn_iteration_fastpath.h/.c  # N/C/spatial offset을 직접 증가
+├── bn_affine_fastpath.h/.c     # 채널별 scale/sqrt/bias 계산
+├── bn_quant_neon.h/.c          # 4-lane ReLU/quantize 변환
+└── bn_candidate.h/.c           # address/affine/quant/combined 조합
+```
+
+- `address`: 직접 input/output offset, 기존처럼 element마다 affine 계산
+- `affine`: 채널별 multiplier/additive 사전 계산, 일반 Tensor 접근 유지
+- `quant`: 일반 Tensor 접근과 element별 affine, 4-lane quantize
+- `combined`: 채널별 affine + 직접 offset + channel-packed 4-lane NEON
+
+후보는 최대 4096 channel을 실험 범위로 두며 범위를 벗어나거나 지원하지 않는
+layout이면 `campp_fused_bn_relu_quant()`를 호출한다. production 승격 전에는
+bundle format이나 runtime scratch plan을 바꾸지 않는다.

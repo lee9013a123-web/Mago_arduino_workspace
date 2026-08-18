@@ -23,6 +23,7 @@
 #include "internal/runtime_context.h"
 #include "internal/runtime_model.h"
 #include "memory_management/memory_bounds_checker.h"
+#include "bn_candidate.h"
 #include "qconv_candidate.h"
 
 typedef struct MicrobenchOptions {
@@ -35,6 +36,7 @@ typedef struct MicrobenchOptions {
     uint32_t requested_threads;
     uint64_t expected_output_hash;
     CamppQconvCandidateMode qconv_candidate;
+    CamppBnCandidateMode bn_candidate;
     int has_expected_output_hash;
     int perf_window;
 } MicrobenchOptions;
@@ -88,7 +90,8 @@ static void usage(const char *program)
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
         "--operator-id N [--warmup 5] [--repeat 20] [--threads 1] "
         "[--expected-output-hash HEX] [--perf-window] "
-        "[--qconv-candidate baseline|address|mac|combined]\n",
+        "[--qconv-candidate baseline|address|mac|combined] "
+        "[--bn-candidate baseline|address|affine|quant|combined]\n",
         program);
 }
 
@@ -104,6 +107,7 @@ static int parse_options(
     options->repeat = 20u;
     options->requested_threads = 1u;
     options->qconv_candidate = CAMPP_QCONV_CANDIDATE_BASELINE;
+    options->bn_candidate = CAMPP_BN_CANDIDATE_BASELINE;
 
     for (index = 1; index < argc; ++index) {
         const char *name = argv[index];
@@ -147,6 +151,12 @@ static int parse_options(
             if (campp_qconv_candidate_mode_parse(
                     value, &options->qconv_candidate) != 0) {
                 fprintf(stderr, "invalid QConv candidate: %s\n", value);
+                return 1;
+            }
+        } else if (strcmp(name, "--bn-candidate") == 0) {
+            if (campp_bn_candidate_mode_parse(
+                    value, &options->bn_candidate) != 0) {
+                fprintf(stderr, "invalid BN candidate: %s\n", value);
                 return 1;
             }
         } else {
@@ -400,6 +410,9 @@ static void print_result(
     print_json_string(campp_qconv_candidate_mode_name(
         options->qconv_candidate));
     putchar(',');
+    fputs("\"bn_candidate\":", stdout);
+    print_json_string(campp_bn_candidate_mode_name(options->bn_candidate));
+    putchar(',');
     printf(
         "\"operator\":{\"operator_id\":%" PRIu32
         ",\"opcode\":%u,\"kernel_id\":%u,\"kernel_name\":",
@@ -483,6 +496,8 @@ int main(int argc, char **argv)
             "\"pmu\":true,"
             "\"qconv_candidates\":[\"baseline\",\"address\","
             "\"mac\",\"combined\"],"
+            "\"bn_candidates\":[\"baseline\",\"address\","
+            "\"affine\",\"quant\",\"combined\"],"
 #if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
             "\"stage_probe\":true,"
 #else
@@ -571,6 +586,17 @@ int main(int argc, char **argv)
         if (candidate == NULL || op->opcode != CAMPP_OP_QLINEAR_CONV ||
             op->kernel_id != candidate->kernel_id) {
             fprintf(stderr, "QConv candidate requires packed QLinearConv\n");
+            goto cleanup;
+        }
+        invocation.kernel = candidate;
+    }
+    if (options.bn_candidate != CAMPP_BN_CANDIDATE_BASELINE) {
+        const CamppKernelEntry *candidate =
+            campp_bn_candidate_entry(options.bn_candidate);
+        if (options.qconv_candidate != CAMPP_QCONV_CANDIDATE_BASELINE ||
+            candidate == NULL || op->opcode != CAMPP_OP_BATCH_NORMALIZATION ||
+            op->kernel_id != candidate->kernel_id) {
+            fprintf(stderr, "BN candidate requires fused BN/ReLU/Quantize\n");
             goto cleanup;
         }
         invocation.kernel = candidate;

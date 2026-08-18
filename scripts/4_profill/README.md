@@ -247,3 +247,53 @@ done
 `combined`가 세 입력에서 bitwise 동일하고 두 shape 모두 회귀 없이 개선된
 경우에만 production QConv의 fast path로 승격한다. 기존 구현은 지원하지 않는
 layout을 위한 fallback으로 유지한다.
+
+## BN 병목 분리와 후보 비교
+
+기존 coarse 진단의 `bn_elementwise`를 index/address, parameter load,
+sqrt/affine, ReLU/quantize, output write로 다시 분류한다. target symbol이
+유지되는 인라인 `tensor_view.h` 표본도 address로 포함하므로 단일 C 파일만
+허용하던 분류로 인해 unclassified가 커지는 문제를 피한다.
+
+```bash
+bash scripts/4_profill/optimization/01_build_optimization.sh
+build/profill/optimization/test_bn_candidate
+
+python3 scripts/4_profill/optimization/05_profile_bn_hotspot.py \
+  --preflight-only
+python3 scripts/4_profill/optimization/05_profile_bn_hotspot.py
+```
+
+세 입력에서 최상위 category가 같고 입력별 unclassified가 20% 이하일 때
+`ready=true`다. 분류된 BN core의 누적 80%에 도달하는 최소 category 집합을
+`top_bottleneck_set`으로 기록한다.
+
+```text
+runs/profiling/e7_98/optimization/bn_hotspot/
+results/profiling/e7_98/optimization/bn_hotspot/bn_hotspot.json
+results/profiling/e7_98/optimization/bn_hotspot/bn_hotspot.csv
+```
+
+후보 다섯 모드를 동일한 BN Operator와 세 입력으로 측정한다.
+
+```bash
+for mode in baseline address affine quant combined; do
+  python3 scripts/4_profill/optimization/02_diagnose_top4.py \
+    --bn-only \
+    --bn-candidate "${mode}" \
+    --runs-dir "runs/profiling/e7_98/optimization/bn_candidates/${mode}" \
+    --output "results/profiling/e7_98/optimization/bn_${mode}.json" \
+    --force
+done
+
+for mode in address affine quant combined; do
+  python3 scripts/4_profill/optimization/03_compare_candidate.py \
+    --baseline results/profiling/e7_98/optimization/bn_baseline.json \
+    --candidate "results/profiling/e7_98/optimization/bn_${mode}.json" \
+    --output "results/profiling/e7_98/optimization/bn_${mode}_comparison.json" \
+    --force
+done
+```
+
+모든 입력 hash가 bitwise 동일하고 BN case가 1% 넘게 회귀하지 않아야 한다.
+`combined`가 가장 빠르다는 가정은 하지 않고 측정 결과로 승격 후보를 정한다.

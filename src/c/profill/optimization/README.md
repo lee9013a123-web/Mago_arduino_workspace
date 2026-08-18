@@ -18,6 +18,11 @@ QConv 일반 경로와 fused Quant-QConv는 동일한 O4I4 core를 공유한다.
 같은 QConv 함수를 호출하므로 별도 MAC 구현 없이 개선을 공유한다. 이후 fused
 input tile quantization, BN-ReLU-Quant, DequantizeLinear 순으로 분리한다.
 
+BN 후보도 production registry와 분리한다. `address`, `affine`, `quant`는
+각 원인의 독립 효과를 확인하고 `combined`는 channel-packed 입력에서 채널
+4개를 함께 처리한다. 지원하지 않는 shape, stride, rounding mode는 기존
+`campp_fused_bn_relu_quant()`로 되돌아간다.
+
 `perf_sample_window.c`는 외부 Linux `perf record`를 target kernel 호출 동안만
 활성화한다. sampling 전용 `campp_operator_hotspot`은 runtime kernel의 stage
 probe를 컴파일하지 않아 소스 라인 표본에 계측 clock 호출이 섞이지 않는다.

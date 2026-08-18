@@ -17,10 +17,15 @@ mapfile -t RUNTIME_SOURCES < <(
 )
 
 CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv"
+BN_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant"
 CANDIDATE_SOURCES=(
     "${CANDIDATE_DIR}/qconv_address_fastpath.c"
     "${CANDIDATE_DIR}/qconv_mac_neon.c"
     "${CANDIDATE_DIR}/qconv_candidate.c"
+    "${BN_CANDIDATE_DIR}/bn_iteration_fastpath.c"
+    "${BN_CANDIDATE_DIR}/bn_affine_fastpath.c"
+    "${BN_CANDIDATE_DIR}/bn_quant_neon.c"
+    "${BN_CANDIDATE_DIR}/bn_candidate.c"
 )
 
 INCLUDES=(
@@ -29,6 +34,7 @@ INCLUDES=(
     -I "${ROOT}/src/c/profill/include"
     -I "${ROOT}/src/c/profill/optimization/include"
     -I "${CANDIDATE_DIR}"
+    -I "${BN_CANDIDATE_DIR}"
 )
 
 # shellcheck disable=SC2086
@@ -75,12 +81,21 @@ INCLUDES=(
     "${ROOT}/tests/runtime/profill/test_qconv_candidate.c" \
     -lm -o "${BUILD_DIR}/test_qconv_candidate"
 
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/test_bn_candidate.c" \
+    -lm -o "${BUILD_DIR}/test_bn_candidate"
+
 {
     printf 'cc=%s\n' "${CC}"
     printf 'cflags=%s\n' "${CFLAGS}"
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
     printf 'hotspot_stage_probe=disabled\n'
     printf 'qconv_candidate_modes=baseline,address,mac,combined\n'
+    printf 'bn_candidate_modes=baseline,address,affine,quant,combined\n'
 } > "${BUILD_DIR}/build_metadata.txt"
 
 echo "Optimization diagnostics build complete"
@@ -88,3 +103,4 @@ echo "  microbench: ${BUILD_DIR}/campp_operator_microbench"
 echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"
 echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"
+echo "  BN test:    ${BUILD_DIR}/test_bn_candidate"
