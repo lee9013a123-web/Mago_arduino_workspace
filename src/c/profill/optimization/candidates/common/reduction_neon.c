@@ -91,8 +91,10 @@ void campp_reduction_statistics_channels_f32(
                         (uint64_t)frame * frame_stride +
                         (uint64_t)channel * sizeof(float)));
                 const float32x4_t centered = vsubq_f32(value, mean);
-                variance_sum = vfmaq_f32(
-                    variance_sum, centered, centered);
+                /* fmla를 쓰면 곱셈 결과가 반올림되지 않아 reference와
+                   bitwise가 어긋난다. 곱셈과 덧셈을 분리해 유지한다. */
+                variance_sum = vaddq_f32(
+                    variance_sum, vmulq_f32(centered, centered));
             }
         }
         vst1q_f32(variances, variance_sum);
