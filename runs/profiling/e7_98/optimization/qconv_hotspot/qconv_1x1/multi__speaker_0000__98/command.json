@@ -1,0 +1,35 @@
+{
+  "record": [
+    "/usr/bin/perf",
+    "record",
+    "--quiet",
+    "--no-buildid",
+    "--output",
+    "/home/arduino/workspace/egs/accelerate_CAM/runs/profiling/e7_98/optimization/qconv_hotspot/qconv_1x1/multi__speaker_0000__98/perf.data",
+    "--event",
+    "cycles:u",
+    "--count",
+    "100000",
+    "--",
+    "/home/arduino/workspace/egs/accelerate_CAM/build/profill/optimization/campp_operator_hotspot",
+    "--plan",
+    "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "--weights",
+    "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "--input",
+    "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0000__98.f32",
+    "--operator-id",
+    "825",
+    "--warmup",
+    "5",
+    "--repeat",
+    "20",
+    "--threads",
+    "1",
+    "--perf-window"
+  ],
+  "cpu_affinity": [
+    0
+  ],
+  "measurement_scope": "target kernel only"
+}

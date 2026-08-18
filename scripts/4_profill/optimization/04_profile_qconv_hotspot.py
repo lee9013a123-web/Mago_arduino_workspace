@@ -39,6 +39,12 @@ PERF_LINE = re.compile(
     r"(?P<symbol>\S+)\s+"
     r"(?P<source>.*):(?P<line>\d+)\s*$"
 )
+PERF_HEADER_LINE = re.compile(
+    r"^\s*(?P<period>\d+)\s+"
+    r"(?P<ip>(?:0x)?[0-9a-fA-F]+)\s+"
+    r"(?P<symbol>\S+)\s*$"
+)
+PERF_SRCLINE_LINE = re.compile(r"^\s+(?P<source>\S.*):(?P<line>\d+)\s*$")
 
 
 class HotspotError(RuntimeError):
@@ -166,6 +172,24 @@ def parse_perf_script_line(line: str) -> dict[str, Any] | None:
     }
 
 
+def _parse_perf_header_line(line: str) -> dict[str, Any] | None:
+    match = PERF_HEADER_LINE.match(line)
+    if match is None:
+        return None
+    return {
+        "period": int(match.group("period")),
+        "ip": match.group("ip"),
+        "symbol": match.group("symbol"),
+    }
+
+
+def _parse_perf_srcline_line(line: str) -> tuple[str, int] | None:
+    match = PERF_SRCLINE_LINE.match(line)
+    if match is None:
+        return None
+    return match.group("source"), int(match.group("line"))
+
+
 def _inside(line: int, span: tuple[int, int]) -> bool:
     return span[0] <= line <= span[1]
 
@@ -222,13 +246,49 @@ def classify_perf_script(
     malformed_lines = 0
     parsed_samples = 0
 
-    for raw_line in text.splitlines():
+    lines = text.splitlines()
+    index = 0
+    line_count = len(lines)
+    while index < line_count:
+        raw_line = lines[index]
         if not raw_line.strip():
+            index += 1
             continue
+
         sample = parse_perf_script_line(raw_line)
-        if sample is None:
-            malformed_lines += 1
-            continue
+        if sample is not None:
+            index += 1
+        else:
+            header = _parse_perf_header_line(raw_line)
+            if header is None:
+                malformed_lines += 1
+                index += 1
+                continue
+            srcline = (
+                _parse_perf_srcline_line(lines[index + 1])
+                if index + 1 < line_count
+                else None
+            )
+            if srcline is None:
+                sample = {
+                    "period": header["period"],
+                    "ip": header["ip"],
+                    "symbol": header["symbol"],
+                    "source": "",
+                    "line": 0,
+                }
+                index += 1
+            else:
+                source, line = srcline
+                sample = {
+                    "period": header["period"],
+                    "ip": header["ip"],
+                    "symbol": header["symbol"],
+                    "source": source,
+                    "line": line,
+                }
+                index += 2
+
         category = classify_sample(sample, source_map)
         period = int(sample["period"])
         periods[category] += period
