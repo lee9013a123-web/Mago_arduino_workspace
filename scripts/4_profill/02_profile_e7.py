@@ -39,9 +39,12 @@ EXPECTED_INPUT_IDS = (
     "multi__speaker_0006",
 )
 EXPECTED_BUCKET = 98
-EXPECTED_WARMUP = 20
-EXPECTED_REPEAT = 100
 EXPECTED_THREADS = 1
+QUICK_WARMUP = 5
+QUICK_REPEAT = 20
+QUICK_BASELINE_REPEAT = 5
+OFFICIAL_WARMUP = 20
+OFFICIAL_REPEAT = 100
 TOP_THRESHOLD_PCT = 80.0
 
 
@@ -77,7 +80,7 @@ def _require_file(path: Path, name: str) -> None:
         raise ProfileError(f"{name} not found: {path}")
 
 
-def _official_protocol(config: Any) -> None:
+def _resolve_protocol(config: Any, mode: str) -> dict[str, Any]:
     mismatches: list[str] = []
     if config.buckets != {EXPECTED_BUCKET: 1.0}:
         mismatches.append(f"buckets={config.buckets!r}")
@@ -85,16 +88,31 @@ def _official_protocol(config: Any) -> None:
         mismatches.append(f"input_ids={tuple(config.input_ids)!r}")
     if config.threads != EXPECTED_THREADS:
         mismatches.append(f"threads={config.threads}")
-    if config.warmup != EXPECTED_WARMUP:
-        mismatches.append(f"warmup={config.warmup}")
-    if config.repeat != EXPECTED_REPEAT:
-        mismatches.append(f"repeat={config.repeat}")
     if tuple(config.environment.affinity) != (0,):
         mismatches.append(f"affinity={tuple(config.environment.affinity)!r}")
+    if mode == "official" and config.warmup != OFFICIAL_WARMUP:
+        mismatches.append(f"warmup={config.warmup}")
+    if mode == "official" and config.repeat != OFFICIAL_REPEAT:
+        mismatches.append(f"repeat={config.repeat}")
     if mismatches:
         raise ProfileError(
-            "E7 official profiling protocol mismatch: " + ", ".join(mismatches)
+            f"E7 {mode} profiling protocol mismatch: " + ", ".join(mismatches)
         )
+    if mode == "quick":
+        return {
+            "mode": "quick",
+            "warmup": QUICK_WARMUP,
+            "repeat": QUICK_REPEAT,
+            "baseline_repeat": QUICK_BASELINE_REPEAT,
+            "official": False,
+        }
+    return {
+        "mode": "official",
+        "warmup": OFFICIAL_WARMUP,
+        "repeat": OFFICIAL_REPEAT,
+        "baseline_repeat": OFFICIAL_REPEAT,
+        "official": True,
+    }
 
 
 def _load_e7_evidence(path: Path) -> dict[str, Any]:
@@ -351,23 +369,33 @@ def _build_operator_profile(
 
 
 def _overhead_document(
-    comparisons: Sequence[dict[str, Any]], threshold_pct: float = 1.0
+    comparisons: Sequence[dict[str, Any]], *, preliminary: bool,
+    threshold_pct: float = 1.0
 ) -> dict[str, Any]:
     baseline_total_ns = sum(int(item["baseline_total_ns"]) for item in comparisons)
     profiled_total_ns = sum(int(item["profiled_total_ns"]) for item in comparisons)
-    if baseline_total_ns <= 0:
-        raise ProfileError("baseline total time must be positive")
-    overhead_pct = (profiled_total_ns / baseline_total_ns - 1.0) * 100.0
+    baseline_count = sum(int(item["baseline_sample_count"]) for item in comparisons)
+    profiled_count = sum(int(item["profiled_sample_count"]) for item in comparisons)
+    if baseline_total_ns <= 0 or baseline_count <= 0 or profiled_count <= 0:
+        raise ProfileError("overhead comparison samples must be positive")
+    baseline_mean_ns = baseline_total_ns / baseline_count
+    profiled_mean_ns = profiled_total_ns / profiled_count
+    overhead_pct = (profiled_mean_ns / baseline_mean_ns - 1.0) * 100.0
     return {
         "schema_version": 1,
         "definition": (
-            "(profiled_end_to_end / baseline_end_to_end - 1) * 100"
+            "(profiled_mean_end_to_end / baseline_mean_end_to_end - 1) * 100"
         ),
+        "preliminary": preliminary,
         "threshold_pct": threshold_pct,
         "overhead_pct": overhead_pct,
         "passes": overhead_pct < threshold_pct,
         "baseline_total_ns": baseline_total_ns,
+        "baseline_sample_count": baseline_count,
+        "baseline_mean_ns": baseline_mean_ns,
         "profiled_total_ns": profiled_total_ns,
+        "profiled_sample_count": profiled_count,
+        "profiled_mean_ns": profiled_mean_ns,
         "per_input": list(comparisons),
     }
 
@@ -476,13 +504,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=ROOT / "results" / "profiling" / "e7_98",
     )
     parser.add_argument("--allow-environment-mismatch", action="store_true")
+    parser.add_argument(
+        "--mode",
+        choices=("quick", "official"),
+        default="quick",
+        help="quick: 5 warm-up/20 profile/5 baseline; official: 20/100",
+    )
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
 
     try:
         config = BENCHMARK.load_config(args.config, repository_root=ROOT)
-        _official_protocol(config)
+        protocol = _resolve_protocol(config, args.mode)
         baseline_binary = BENCHMARK.executable_path(args.baseline_binary)
         profiler_binary = BENCHMARK.executable_path(args.profiler_binary)
         _require_file(baseline_binary, "baseline binary")
@@ -540,6 +574,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("E7 profiling preflight: PASS")
         print(f"  operators: {len(plan.operators)}")
         print(f"  inputs: {len(features)}")
+        print(
+            f"  mode: {protocol['mode']} "
+            f"(warmup={protocol['warmup']}, repeat={protocol['repeat']}, "
+            f"baseline_repeat={protocol['baseline_repeat']})"
+        )
         print(f"  environment mismatches: {environment_mismatches or 'none'}")
         return 0
 
@@ -588,8 +627,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                         weights=weights_path,
                         feature=feature,
                         threads=config.threads,
-                        warmup=config.warmup,
-                        repeat=config.repeat,
+                        warmup=protocol["warmup"],
+                        repeat=protocol["baseline_repeat"],
                     )
                     baseline_payload, _ = BENCHMARK.run_json_command(
                         command, environment=base_environment
@@ -600,8 +639,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                         plan=plan_path,
                         weights=weights_path,
                         feature=feature,
-                        warmup=config.warmup,
-                        repeat=config.repeat,
+                        warmup=protocol["warmup"],
+                        repeat=protocol["repeat"],
                         threads=config.threads,
                     )
                     profile_payload, _ = BENCHMARK.run_json_command(
@@ -609,21 +648,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                     )
             if baseline_payload is None or profile_payload is None:
                 raise ProfileError("baseline/profile pair is incomplete")
-            _validate_profiler_payload(profile_payload, plan, config.repeat)
+            _validate_profiler_payload(profile_payload, plan, protocol["repeat"])
             baseline_timings_ms = baseline_payload.get("warm", {}).get(
                 "timings_ms"
             )
             if (
                 not isinstance(baseline_timings_ms, list)
-                or len(baseline_timings_ms) != config.repeat
+                or len(baseline_timings_ms) != protocol["baseline_repeat"]
                 or any(not isinstance(value, (int, float)) or value <= 0
                        for value in baseline_timings_ms)
             ):
                 raise ProfileError("baseline returned invalid warm timings")
             baseline_total_ns = round(sum(baseline_timings_ms) * 1_000_000.0)
             profiled_total_ns = sum(profile_payload["end_to_end_ns"])
+            baseline_mean_ns = baseline_total_ns / len(baseline_timings_ms)
+            profiled_mean_ns = profiled_total_ns / len(
+                profile_payload["end_to_end_ns"]
+            )
             input_overhead_pct = (
-                profiled_total_ns / baseline_total_ns - 1.0
+                profiled_mean_ns / baseline_mean_ns - 1.0
             ) * 100.0
             raw_document = {
                 **profile_payload,
@@ -640,7 +683,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 {
                     "input_id": feature.input_id,
                     "baseline_total_ns": baseline_total_ns,
+                    "baseline_sample_count": len(baseline_timings_ms),
                     "profiled_total_ns": profiled_total_ns,
+                    "profiled_sample_count": len(
+                        profile_payload["end_to_end_ns"]
+                    ),
                     "overhead_pct": input_overhead_pct,
                 }
             )
@@ -654,7 +701,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 }
             )
 
-        overhead = _overhead_document(overhead_comparisons)
+        overhead = _overhead_document(
+            overhead_comparisons, preliminary=not protocol["official"]
+        )
         overhead_path.write_text(
             json.dumps(overhead, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
@@ -662,7 +711,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         operators, timing_summary = _build_operator_profile(
             plan, fusion_document, raw_payloads
         )
-        expected_call_count = len(features) * config.repeat
+        expected_call_count = len(features) * protocol["repeat"]
         all_call_counts_valid = all(
             item["call_count"] == expected_call_count for item in operators
         )
@@ -691,11 +740,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         }
         configuration = {
             "config": _display_path(config.source),
+            "protocol_mode": protocol["mode"],
+            "official_protocol": protocol["official"],
             "bucket_frames": EXPECTED_BUCKET,
             "threads": config.threads,
             "cpu_affinity": list(config.environment.affinity),
-            "warmup": config.warmup,
-            "repeat": config.repeat,
+            "warmup": protocol["warmup"],
+            "repeat": protocol["repeat"],
+            "overhead_baseline_repeat": protocol["baseline_repeat"],
             "input_ids": list(EXPECTED_INPUT_IDS),
             "expected_call_count_per_operator": expected_call_count,
             "measurement_scope": "kernel_run_exclusive",
@@ -749,6 +801,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             },
             "validity": {
                 "e7_bitwise_validated": evidence["all_bitwise_identical"],
+                "official_protocol": protocol["official"],
                 "operator_count": len(operators),
                 "all_call_counts_valid": all_call_counts_valid,
                 "profiling_overhead_below_1pct": overhead["passes"],

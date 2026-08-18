@@ -62,8 +62,9 @@ static int parse_options(
         return 1;
     }
     memset(options, 0, sizeof(*options));
-    options->warmup = 20u;
-    options->repeat = 100u;
+    /* Python runner의 기본 Quick protocol과 같은 안전한 기본값이다. */
+    options->warmup = 5u;
+    options->repeat = 20u;
     options->requested_threads = 1u;
 
     for (index = 1; index < argc; ++index) {

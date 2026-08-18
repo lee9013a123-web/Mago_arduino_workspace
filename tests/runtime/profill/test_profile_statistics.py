@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 import sys
+from types import SimpleNamespace
 import unittest
 
 
@@ -13,6 +14,13 @@ assert SPEC is not None and SPEC.loader is not None
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
+
+PROFILE_PATH = ROOT / "scripts" / "4_profill" / "02_profile_e7.py"
+PROFILE_SPEC = importlib.util.spec_from_file_location("profile_e7", PROFILE_PATH)
+assert PROFILE_SPEC is not None and PROFILE_SPEC.loader is not None
+PROFILE = importlib.util.module_from_spec(PROFILE_SPEC)
+sys.modules[PROFILE_SPEC.name] = PROFILE
+PROFILE_SPEC.loader.exec_module(PROFILE)
 
 
 class ProfileStatisticsTests(unittest.TestCase):
@@ -46,6 +54,40 @@ class ProfileStatisticsTests(unittest.TestCase):
         self.assertFalse(summary["complete"])
         self.assertEqual(summary["kernel_accounted_end_to_end_pct"], 15.0)
         self.assertIn("reason", summary)
+
+    def test_quick_mode_reduces_profile_and_baseline_repeats(self) -> None:
+        config = SimpleNamespace(
+            buckets={98: 1.0},
+            input_ids=PROFILE.EXPECTED_INPUT_IDS,
+            threads=1,
+            warmup=20,
+            repeat=100,
+            environment=SimpleNamespace(affinity=(0,)),
+        )
+
+        protocol = PROFILE._resolve_protocol(config, "quick")
+
+        self.assertEqual(protocol["warmup"], 5)
+        self.assertEqual(protocol["repeat"], 20)
+        self.assertEqual(protocol["baseline_repeat"], 5)
+        self.assertFalse(protocol["official"])
+
+    def test_overhead_compares_means_when_repeat_counts_differ(self) -> None:
+        overhead = PROFILE._overhead_document(
+            [
+                {
+                    "baseline_total_ns": 500,
+                    "baseline_sample_count": 5,
+                    "profiled_total_ns": 2_010,
+                    "profiled_sample_count": 20,
+                }
+            ],
+            preliminary=True,
+        )
+
+        self.assertAlmostEqual(overhead["overhead_pct"], 0.5)
+        self.assertTrue(overhead["passes"])
+        self.assertTrue(overhead["preliminary"])
 
 
 if __name__ == "__main__":
