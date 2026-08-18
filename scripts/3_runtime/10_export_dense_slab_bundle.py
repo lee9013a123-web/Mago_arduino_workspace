@@ -315,7 +315,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output-dir",
         type=_path,
-        default=ROOT / "runs" / "runtime" / "dense_slab" / "bundle",
+        default=(
+            ROOT
+            / "runs"
+            / "runtime"
+            / "kernel_optimization"
+            / "dense_slab"
+            / "bundle"
+        ),
     )
     parser.add_argument("--arena-alignment", type=int, default=64)
     parser.add_argument("--force", action="store_true")

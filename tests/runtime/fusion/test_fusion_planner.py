@@ -130,8 +130,10 @@ class FusionPlannerTests(unittest.TestCase):
 class CanonicalE7PlanTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
-        cls.cache_bundle = ROOT / "runs/runtime/cache_packed/bundle"
-        cls.e7_bundle = ROOT / "runs/runtime/e7/bundle"
+        cls.cache_bundle = (
+            ROOT / "runs/runtime/kernel_optimization/cache_packed/bundle"
+        )
+        cls.e7_bundle = ROOT / "runs/runtime/kernel_optimization/e7/bundle"
         if not (cls.cache_bundle / "manifest.json").is_file():
             raise unittest.SkipTest("cache-packed bundle is not present")
 

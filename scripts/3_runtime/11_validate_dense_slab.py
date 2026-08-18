@@ -209,7 +209,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--dense-bundle",
         type=Path,
-        default=ROOT / "runs" / "runtime" / "dense_slab" / "bundle",
+        default=(
+            ROOT
+            / "runs"
+            / "runtime"
+            / "kernel_optimization"
+            / "dense_slab"
+            / "bundle"
+        ),
     )
     parser.add_argument(
         "--feature-dir",
@@ -219,7 +226,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--work-dir",
         type=Path,
-        default=ROOT / "runs" / "runtime" / "dense_slab" / "validation",
+        default=(
+            ROOT
+            / "runs"
+            / "runtime"
+            / "kernel_optimization"
+            / "dense_slab"
+            / "validation"
+        ),
     )
     parser.add_argument(
         "--result",

@@ -240,11 +240,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--source-bundle", type=_path,
-        default=ROOT / "runs/runtime/cache_packed/bundle",
+        default=ROOT / "runs/runtime/kernel_optimization/cache_packed/bundle",
     )
     parser.add_argument(
         "--output-dir", type=_path,
-        default=ROOT / "runs/runtime/e7/bundle",
+        default=ROOT / "runs/runtime/kernel_optimization/e7/bundle",
     )
     parser.add_argument("--arena-alignment", type=int, default=64)
     parser.add_argument("--weight-alignment", type=int, default=64)

@@ -133,7 +133,7 @@ python3 scripts/3_runtime/10_export_dense_slab_bundle.py
 python3 scripts/3_runtime/11_validate_dense_slab.py
 ```
 
-생성 bundle은 `runs/runtime/dense_slab/bundle/`, 최종 검증 결과는
+생성 bundle은 `runs/runtime/kernel_optimization/dense_slab/bundle/`, 최종 검증 결과는
 `results/runtime/dense/dense_slab_validation.json`에 기록된다.
 
 ## Cache layout·tiling·weight packing: 12-13
@@ -162,7 +162,7 @@ python3 scripts/3_runtime/12_export_cache_packed_bundle.py
 python3 scripts/3_runtime/13_validate_cache_packed.py
 ```
 
-생성 bundle은 `runs/runtime/cache_packed/bundle/`, 검증 결과는
+생성 bundle은 `runs/runtime/kernel_optimization/cache_packed/bundle/`, 검증 결과는
 `results/runtime/cache_layout/cache_packed_validation.json`이다. 검증 입력은
 `multi__speaker_0000`, `0005`, `0006`의 98-frame feature 세 개로 고정한다.
 
@@ -181,7 +181,7 @@ python3 scripts/3_runtime/15_validate_e7_fusions.py \
 각 family는 `--no-fusion-conv-bias-act`, `--no-fusion-bn-relu-quant`,
 `--no-fusion-pool-cam`, `--no-fusion-qdq-elementwise`,
 `--no-fusion-stats-pooling`으로 독립 비활성화할 수 있다. 생성 bundle은
-`runs/runtime/e7/bundle/`, bitwise 검증은
+`runs/runtime/kernel_optimization/e7/bundle/`, bitwise 검증은
 `results/runtime/fusion/e7_validation.json`에 기록된다.
 
 ```bash

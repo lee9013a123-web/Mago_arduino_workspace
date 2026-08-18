@@ -224,18 +224,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument(
         "--baseline-bundle", type=_path,
-        default=ROOT / "runs/runtime/cache_packed/bundle",
+        default=ROOT / "runs/runtime/kernel_optimization/cache_packed/bundle",
     )
     parser.add_argument(
         "--optimized-bundle", type=_path,
-        default=ROOT / "runs/runtime/e7/bundle",
+        default=ROOT / "runs/runtime/kernel_optimization/e7/bundle",
     )
     parser.add_argument(
         "--features", type=_path, nargs="+", default=list(DEFAULT_FEATURES)
     )
     parser.add_argument(
         "--work-dir", type=_path,
-        default=ROOT / "runs/runtime/e7/validation",
+        default=ROOT / "runs/runtime/kernel_optimization/e7/validation",
     )
     parser.add_argument(
         "--output", type=_path,

@@ -1,6 +1,6 @@
 # E7 operator fusion 검증
 
-E7은 `runs/runtime/cache_packed/bundle`을 baseline으로 사용하고, fusion 이후
+E7은 `runs/runtime/kernel_optimization/cache_packed/bundle`을 baseline으로 사용하고, fusion 이후
 operator table, Tensor ID, alias lifetime, Arena offset과 kernel ID를 모두 다시
 생성한다.
 
@@ -26,4 +26,4 @@ python3 scripts/3_runtime/15_validate_e7_fusions.py \
 ```
 
 정확도 결과는 `e7_validation.json`, 세부 graph/memory 계획은
-`runs/runtime/e7/bundle/fusion_plans/`에 기록된다.
+`runs/runtime/kernel_optimization/e7/bundle/fusion_plans/`에 기록된다.
