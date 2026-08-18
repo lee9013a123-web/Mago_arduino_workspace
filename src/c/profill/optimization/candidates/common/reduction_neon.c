@@ -22,7 +22,7 @@ static void campp_store_f32(uint8_t *data, float value)
 
 void campp_reduction_mean_channels_f32(
     const uint8_t *input, uint32_t frame_stride, uint32_t channels,
-    uint32_t frames, uint8_t *output)
+    uint32_t frames, uint32_t divisor, uint8_t *output)
 {
     uint32_t channel = 0u;
 #if defined(__aarch64__) && defined(__ARM_NEON)
@@ -41,7 +41,7 @@ void campp_reduction_mean_channels_f32(
         for (frame = 0u; frame < 4u; ++frame) {
             campp_store_f32(
                 output + (uint64_t)(channel + frame) * sizeof(float),
-                lanes[frame] / (float)frames);
+                lanes[frame] / (float)divisor);
         }
     }
 #endif
@@ -55,7 +55,7 @@ void campp_reduction_mean_channels_f32(
         }
         campp_store_f32(
             output + (uint64_t)channel * sizeof(float),
-            sum / (float)frames);
+            sum / (float)divisor);
     }
 }
 

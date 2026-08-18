@@ -80,28 +80,6 @@ static void campp_spatial_coordinates(
     }
 }
 
-static CamppStatus campp_qconv_write(
-    CamppTensorView *output, uint64_t logical_index, int64_t accumulator,
-    float multiplier, int32_t output_zero)
-{
-    int64_t rounded;
-    float scaled;
-    if (accumulator < INT32_MIN || accumulator > INT32_MAX ||
-        !isfinite(multiplier)) {
-        return CAMPP_STATUS_KERNEL_FAILED;
-    }
-    scaled = (float)(int32_t)accumulator * multiplier;
-    if (scaled <= -2147483648.0f) {
-        rounded = INT32_MIN;
-    } else if (scaled >= 2147483520.0f) {
-        rounded = INT32_MAX;
-    } else {
-        rounded = (int64_t)nearbyintf(scaled);
-    }
-    return campp_reference_write_quantized(
-        output, logical_index, rounded + output_zero);
-}
-
 CamppStatus campp_aarch64_qlinear_conv_o4i4(
     const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
     const CamppTensorView *inputs, uint8_t input_count,
@@ -228,49 +206,51 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
     CAMPP_OPTIMIZATION_STAGE_END(
         CAMPP_OPT_STAGE_QCONV_SETUP, setup_started_ns);
 
-    for (batch = 0u; batch < x->dimensions[0]; ++batch) {
-        uint32_t group_index;
-        for (group_index = 0u; group_index < group; ++group_index) {
-            uint32_t output_block;
-            for (output_block = 0u; output_block < output_blocks; ++output_block) {
-                int32_t weight_zero[4] = {0, 0, 0, 0};
-                float multiplier[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-                int32_t bias[4] = {0, 0, 0, 0};
-                bool valid_output[4] = {false, false, false, false};
-                uint32_t output_lane;
-                uint32_t tile_start;
-                for (output_lane = 0u; output_lane < 4u; ++output_lane) {
-                    const uint32_t within = output_block * 4u + output_lane;
-                    const uint32_t channel =
-                        group_index * outputs_per_group + within;
-                    uint64_t parameter_index;
-                    float weight_scale;
-                    if (within >= outputs_per_group) continue;
-                    valid_output[output_lane] = true;
-                    parameter_index =
-                        campp_tensor_view_element_count(&inputs[4]) == 1u
-                            ? 0u : channel;
-                    status = campp_reference_read_f32(
-                        &inputs[4], parameter_index, &weight_scale);
-                    if (status != CAMPP_STATUS_OK) return status;
-                    parameter_index =
-                        campp_tensor_view_element_count(&inputs[5]) == 1u
-                            ? 0u : channel;
-                    status = campp_reference_read_quantized(
-                        &inputs[5], parameter_index, &weight_zero[output_lane]);
-                    if (status != CAMPP_STATUS_OK) return status;
-                    if (!(weight_scale > 0.0f) || !isfinite(weight_scale)) {
-                        return CAMPP_STATUS_KERNEL_FAILED;
-                    }
-                    multiplier[output_lane] =
-                        input_scale * weight_scale / output_scale;
-                    if (input_count == 9u) {
-                        status = campp_reference_read_quantized(
-                            &inputs[8], channel, &bias[output_lane]);
-                        if (status != CAMPP_STATUS_OK) return status;
-                    }
-                }
+    for (uint32_t group_index = 0u; group_index < group; ++group_index) {
+        uint32_t output_block;
+        for (output_block = 0u; output_block < output_blocks; ++output_block) {
+            const uint32_t first_within = output_block * 4u;
+            const uint32_t remaining = outputs_per_group - first_within;
+            const uint32_t valid_outputs = remaining < 4u ? remaining : 4u;
+            int32_t weight_zero[4] = {0, 0, 0, 0};
+            float multiplier[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+            int32_t bias[4] = {0, 0, 0, 0};
+            uint32_t output_lane;
 
+            /* Parameters do not depend on batch or spatial position. */
+            for (output_lane = 0u; output_lane < valid_outputs;
+                 ++output_lane) {
+                const uint32_t channel =
+                    group_index * outputs_per_group +
+                    first_within + output_lane;
+                uint64_t parameter_index;
+                float weight_scale;
+                parameter_index =
+                    campp_tensor_view_element_count(&inputs[4]) == 1u
+                        ? 0u : channel;
+                status = campp_reference_read_f32(
+                    &inputs[4], parameter_index, &weight_scale);
+                if (status != CAMPP_STATUS_OK) return status;
+                parameter_index =
+                    campp_tensor_view_element_count(&inputs[5]) == 1u
+                        ? 0u : channel;
+                status = campp_reference_read_quantized(
+                    &inputs[5], parameter_index, &weight_zero[output_lane]);
+                if (status != CAMPP_STATUS_OK) return status;
+                if (!(weight_scale > 0.0f) || !isfinite(weight_scale)) {
+                    return CAMPP_STATUS_KERNEL_FAILED;
+                }
+                multiplier[output_lane] =
+                    input_scale * weight_scale / output_scale;
+                if (input_count == 9u) {
+                    status = campp_reference_read_quantized(
+                        &inputs[8], channel, &bias[output_lane]);
+                    if (status != CAMPP_STATUS_OK) return status;
+                }
+            }
+
+            for (batch = 0u; batch < x->dimensions[0]; ++batch) {
+                uint32_t tile_start;
                 for (tile_start = 0u; tile_start < output_spatial;
                      tile_start += CAMPP_QCONV_SPATIAL_TILE) {
                     const uint32_t tile_count =
@@ -357,12 +337,11 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
                                                       input_zero);
                                     }
                                 }
-                                for (output_lane = 0u; output_lane < 4u; ++output_lane) {
-                                    if (valid_output[output_lane]) {
-                                        accum[tile][output_lane] += campp_dot4_i16(
-                                            centered_input,
-                                            centered_weight[output_lane]);
-                                    }
+                                for (output_lane = 0u; output_lane < 4u;
+                                     ++output_lane) {
+                                    accum[tile][output_lane] += campp_dot4_i16(
+                                        centered_input,
+                                        centered_weight[output_lane]);
                                 }
                             }
                         }
@@ -371,19 +350,21 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
                         CAMPP_OPT_STAGE_QCONV_MAC_ADDRESS, mac_started_ns);
                     CAMPP_OPTIMIZATION_STAGE_BEGIN(requant_started_ns);
                     for (tile = 0u; tile < tile_count; ++tile) {
+                        int32_t accumulator32[4];
                         for (output_lane = 0u; output_lane < 4u; ++output_lane) {
-                            const uint32_t within = output_block * 4u + output_lane;
-                            const uint32_t channel =
-                                group_index * outputs_per_group + within;
-                            const uint64_t logical_index =
-                                ((uint64_t)batch * output_channels + channel) *
-                                    output_spatial + tile_start + tile;
-                            if (!valid_output[output_lane]) continue;
-                            status = campp_qconv_write(
-                                y, logical_index, accum[tile][output_lane],
-                                multiplier[output_lane], output_zero);
-                            if (status != CAMPP_STATUS_OK) return status;
+                            if (accum[tile][output_lane] < INT32_MIN ||
+                                accum[tile][output_lane] > INT32_MAX) {
+                                return CAMPP_STATUS_KERNEL_FAILED;
+                            }
+                            accumulator32[output_lane] =
+                                (int32_t)accum[tile][output_lane];
                         }
+                        status = campp_aarch64_qconv_requantize_store4(
+                            y, batch,
+                            group_index * outputs_per_group + first_within,
+                            tile_start + tile, accumulator32, multiplier,
+                            valid_outputs, output_zero);
+                        if (status != CAMPP_STATUS_OK) return status;
                     }
                     CAMPP_OPTIMIZATION_STAGE_END(
                         CAMPP_OPT_STAGE_QCONV_REQUANT_WRITE,

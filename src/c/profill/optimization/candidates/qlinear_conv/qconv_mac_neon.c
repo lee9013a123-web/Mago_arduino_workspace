@@ -4,6 +4,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "backends/cpu_aarch64/aarch64_kernels.h"
 #include "campp_runtime/tensor_descriptor.h"
 
 #if defined(__aarch64__) && defined(__ARM_NEON)
@@ -735,71 +736,6 @@ int campp_qconv_mac_neon_tile_v2(
 #endif
 }
 
-#if defined(__aarch64__) && defined(__ARM_NEON)
-static uint32_t campp_qconv_requantize_neon4(
-    const int32_t accumulator[CAMPP_QCONV_CANDIDATE_OUTPUT_BLOCK],
-    const float multiplier[CAMPP_QCONV_CANDIDATE_OUTPUT_BLOCK],
-    uint8_t output_dtype, int32_t output_zero)
-{
-    const int32_t output_min =
-        output_dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
-    const int32_t output_max =
-        output_dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
-    float32x4_t scaled = vmulq_f32(
-        vcvtq_f32_s32(vld1q_s32(accumulator)),
-        vld1q_f32(multiplier));
-    int32x4_t quantized;
-    uint32_t packed;
-
-    scaled = vmaxq_f32(
-        scaled, vdupq_n_f32((float)(output_min - output_zero)));
-    scaled = vminq_f32(
-        scaled, vdupq_n_f32((float)(output_max - output_zero)));
-    quantized = vaddq_s32(
-        vcvtnq_s32_f32(scaled), vdupq_n_s32(output_zero));
-    if (output_dtype == CAMPP_DTYPE_UINT8) {
-        const uint16x4_t narrowed16 = vqmovun_s32(quantized);
-        const uint8x8_t narrowed8 = vqmovn_u16(
-            vcombine_u16(narrowed16, vdup_n_u16(0u)));
-        packed = vget_lane_u32(vreinterpret_u32_u8(narrowed8), 0);
-    } else {
-        const int16x4_t narrowed16 = vqmovn_s32(quantized);
-        const int8x8_t narrowed8 = vqmovn_s16(
-            vcombine_s16(narrowed16, vdup_n_s16(0)));
-        packed = vget_lane_u32(
-            vreinterpret_u32_s8(narrowed8), 0);
-    }
-    return packed;
-}
-#endif
-
-#if !defined(__aarch64__) || !defined(__ARM_NEON)
-static uint8_t campp_qconv_requantize_scalar(
-    int32_t accumulator, float multiplier,
-    uint8_t output_dtype, int32_t output_zero)
-{
-    const int64_t output_min =
-        output_dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
-    const int64_t output_max =
-        output_dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
-    const float scaled = (float)accumulator * multiplier;
-    int64_t rounded;
-
-    if (scaled <= -2147483648.0f) {
-        rounded = INT32_MIN;
-    } else if (scaled >= 2147483520.0f) {
-        rounded = INT32_MAX;
-    } else {
-        rounded = (int64_t)nearbyintf(scaled);
-    }
-    rounded += output_zero;
-    if (rounded < output_min) rounded = output_min;
-    if (rounded > output_max) rounded = output_max;
-    return (uint8_t)(output_dtype == CAMPP_DTYPE_UINT8
-        ? rounded : (uint8_t)(int8_t)rounded);
-}
-#endif
-
 int campp_qconv_requantize_store_neon_tile(
     CamppTensorView *output, uint32_t batch, uint32_t output_channel,
     uint8_t spatial_rank,
@@ -816,7 +752,6 @@ int campp_qconv_requantize_store_neon_tile(
         output_coordinates == NULL || accumulators == NULL ||
         multipliers == NULL || spatial_rank < 1u || spatial_rank > 2u ||
         output->rank != spatial_rank + 2u ||
-        output->byte_strides[1] != 1u ||
         (output->dtype != CAMPP_DTYPE_UINT8 &&
          output->dtype != CAMPP_DTYPE_INT8) ||
         tile_count == 0u || tile_count > CAMPP_QCONV_CANDIDATE_TILE ||
@@ -825,22 +760,12 @@ int campp_qconv_requantize_store_neon_tile(
         return 1;
     }
     for (tile = 0u; tile < tile_count; ++tile) {
-        uint64_t offset = (uint64_t)batch * output->byte_strides[0]
-            + (uint64_t)output_channel * output->byte_strides[1]
-            + (uint64_t)output_coordinates[tile][0]
-                * output->byte_strides[2];
-        uint8_t *destination;
         uint32_t output_block;
+        const uint32_t spatial_index = spatial_rank == 1u
+            ? output_coordinates[tile][0]
+            : output_coordinates[tile][0] * output->dimensions[3] +
+                output_coordinates[tile][1];
 
-        if (spatial_rank == 2u) {
-            offset += (uint64_t)output_coordinates[tile][1]
-                * output->byte_strides[3];
-        }
-        if (offset >= output->storage_span_bytes ||
-            valid_outputs > output->storage_span_bytes - offset) {
-            return 1;
-        }
-        destination = (uint8_t *)output->data + offset;
         for (output_block = 0u;
              output_block < 2u; ++output_block) {
             const uint32_t lane_start =
@@ -852,28 +777,13 @@ int campp_qconv_requantize_store_neon_tile(
                     : CAMPP_QCONV_CANDIDATE_OUTPUT_BLOCK)
                 : 0u;
             if (lanes == 0u) continue;
-#if defined(__aarch64__) && defined(__ARM_NEON)
-            {
-                const uint32_t packed = campp_qconv_requantize_neon4(
-                    accumulators[tile] + lane_start,
-                    multipliers + lane_start,
-                    output->dtype, output_zero);
-                uint8_t bytes[CAMPP_QCONV_CANDIDATE_OUTPUT_BLOCK];
-                memcpy(bytes, &packed, sizeof(bytes));
-                memcpy(destination + lane_start, bytes, lanes);
+            if (campp_aarch64_qconv_requantize_store4(
+                    output, batch, output_channel + lane_start,
+                    spatial_index, accumulators[tile] + lane_start,
+                    multipliers + lane_start, lanes, output_zero) !=
+                CAMPP_STATUS_OK) {
+                return 1;
             }
-#else
-            {
-                uint32_t lane;
-                for (lane = 0u; lane < lanes; ++lane) {
-                    destination[lane_start + lane] =
-                        campp_qconv_requantize_scalar(
-                            accumulators[tile][lane_start + lane],
-                            multipliers[lane_start + lane],
-                            output->dtype, output_zero);
-                }
-            }
-#endif
         }
     }
     return 0;

@@ -360,7 +360,7 @@ static CamppStatus campp_remaining_reduce_mean_optimized(
     for (batch = 0u; batch < input.batches; ++batch) {
         campp_reduction_mean_channels_f32(
             campp_packed_iteration_const_pointer(&input, batch, 0u, 0u, 0u),
-            input.strides[3], input.channels, input.width,
+            input.strides[3], input.channels, input.width, input.width,
             campp_packed_iteration_pointer(&output, batch, 0u, 0u, 0u));
     }
     return CAMPP_STATUS_OK;
@@ -398,11 +398,12 @@ static CamppStatus campp_remaining_average_pool_optimized(
         campp_remaining_attribute_ints(
             model, op, CAMPP_ATTR_COUNT_INCLUDE_PAD, include_pad, 1u, 1u) !=
             CAMPP_STATUS_OK || pads[0] != 0 || pads[1] != 0 ||
-        strides[0] != 1 || (ceil_mode[0] != 0 && ceil_mode[0] != 1) ||
+        strides[0] <= 0 || (ceil_mode[0] != 0 && ceil_mode[0] != 1) ||
         (include_pad[0] != 0 && include_pad[0] != 1) ||
         !campp_packed_iteration_create(&inputs[0], &input) ||
         !campp_packed_iteration_create(&outputs[0], &output) ||
-        kernel[0] != input.width || input.batches != output.batches ||
+        kernel[0] < input.width || kernel[0] > UINT32_MAX ||
+        input.batches != output.batches ||
         input.channels != output.channels || output.height != 1u ||
         output.width != 1u) {
         return CAMPP_STATUS_NOT_IMPLEMENTED;
@@ -411,6 +412,7 @@ static CamppStatus campp_remaining_average_pool_optimized(
         campp_reduction_mean_channels_f32(
             campp_packed_iteration_const_pointer(&input, batch, 0u, 0u, 0u),
             input.strides[3], input.channels, input.width,
+            include_pad[0] != 0 ? (uint32_t)kernel[0] : input.width,
             campp_packed_iteration_pointer(&output, batch, 0u, 0u, 0u));
     }
     return CAMPP_STATUS_OK;
@@ -434,6 +436,8 @@ static CamppStatus campp_remaining_sigmoid_mul_optimized(
          inputs[0].dtype != CAMPP_DTYPE_INT8) ||
         inputs[3].dtype != CAMPP_DTYPE_FLOAT32 ||
         outputs[0].dtype != CAMPP_DTYPE_FLOAT32 ||
+        !campp_remaining_same_logical_shape(&inputs[0], &outputs[0]) ||
+        !campp_remaining_same_logical_shape(&inputs[3], &outputs[0]) ||
         campp_remaining_scalar_f32(&inputs[1], &scale) != CAMPP_STATUS_OK ||
         campp_remaining_scalar_quantized(
             &inputs[2], inputs[0].dtype, &zero) != CAMPP_STATUS_OK ||

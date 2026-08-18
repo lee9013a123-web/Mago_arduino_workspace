@@ -36,12 +36,14 @@ class QConvHotspotTests(unittest.TestCase):
     def test_parses_and_classifies_perf_source_lines(self) -> None:
         source_map = self.source_map
         source = "/tmp/qlinear_convolution_neon.c"
+        requant_source = "/tmp/requantization_neon.c"
         samples = "\n".join(
             [
                 f" 100000 ffff campp_aarch64_qlinear_conv_o4i4 "
                 f"{source}:{source_map['core_begin']}",
                 f" 200000 fffe campp_dot4_i16 {source}:{source_map['dot_span'][0]}",
-                f" 50000 fffd campp_qconv_write {source}:{source_map['requant_span'][0]}",
+                " 50000 fffd campp_aarch64_qconv_requantize_store4 "
+                f"{requant_source}:{source_map['requant_span'][0]}",
             ]
         )
         result = HOTSPOT.classify_perf_script(samples, source_map)

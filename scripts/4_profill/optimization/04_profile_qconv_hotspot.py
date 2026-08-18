@@ -26,6 +26,10 @@ QCONV_SOURCE = (
     ROOT
     / "src/c/runtime/backends/cpu_aarch64/int8_neon/qlinear_convolution_neon.c"
 )
+REQUANT_SOURCE = (
+    ROOT
+    / "src/c/runtime/backends/cpu_aarch64/int8_neon/requantization_neon.c"
+)
 TARGET_CASE_NAMES = ("qconv_3x3", "qconv_1x1")
 # MAC v2 lives in the candidate tree, so profiling it needs its own source map:
 # the production classifier would drop nearly every v2 sample as unclassified.
@@ -172,6 +176,7 @@ def _find_line(
 def build_v2_source_map(
     mac_source: Path = V2_MAC_SOURCE,
     candidate_source: Path = V2_CANDIDATE_SOURCE,
+    requant_source: Path = REQUANT_SOURCE,
 ) -> dict[str, Any]:
     """Function spans for the MAC v2 candidate.
 
@@ -182,13 +187,16 @@ def build_v2_source_map(
     """
     mac_lines = mac_source.read_text(encoding="utf-8").splitlines()
     cand_lines = candidate_source.read_text(encoding="utf-8").splitlines()
+    requant_lines = requant_source.read_text(encoding="utf-8").splitlines()
     return {
         "mac_source_name": mac_source.name,
         "candidate_source_name": candidate_source.name,
+        "requant_source_name": requant_source.name,
         "fixed_mac_source_name": FIXED_MAC_SOURCE.name,
         "fixed_dispatch_source_name": FIXED_DISPATCH_SOURCE.name,
         "mac_line_count": len(mac_lines),
         "candidate_line_count": len(cand_lines),
+        "requant_line_count": len(requant_lines),
         # qconv_mac_neon.c spans
         "neon_input_span": _function_span(
             mac_lines, "static int16x4_t campp_qconv_neon_input("
@@ -221,10 +229,14 @@ def build_v2_source_map(
             mac_lines, "int campp_qconv_mac_neon_tile_v2("
         ),
         "requantize_neon4_span": _function_span(
-            mac_lines, "static uint32_t campp_qconv_requantize_neon4("
+            requant_lines, "static uint32_t campp_qconv_requantize_neon4("
         ),
         "requantize_scalar_span": _function_span(
-            mac_lines, "static uint8_t campp_qconv_requantize_scalar("
+            requant_lines, "static CamppStatus campp_qconv_requantize_scalar("
+        ),
+        "requantize_store4_span": _function_span(
+            requant_lines,
+            "CamppStatus campp_aarch64_qconv_requantize_store4(",
         ),
         "requantize_store_span": _function_span(
             mac_lines, "int campp_qconv_requantize_store_neon_tile("
@@ -279,8 +291,6 @@ def classify_v2_sample(
             ("half_tile_v2_span", "v2_mac_smlal"),
             ("scalar_tile_v2_span", "v2_mac_smlal"),
             ("tile_v2_span", "v2_mac_smlal"),
-            ("requantize_neon4_span", "v2_requant"),
-            ("requantize_scalar_span", "v2_requant"),
             ("requantize_store_span", "v2_output_store"),
         ):
             if _inside(line, source_map[key]):
@@ -298,6 +308,15 @@ def classify_v2_sample(
             line, source_map["cand_load_parameters_span"]
         ):
             return "setup_other"
+        return "setup_other"
+
+    if source_name == source_map["requant_source_name"]:
+        if _inside(line, source_map["requantize_neon4_span"]) or _inside(
+            line, source_map["requantize_scalar_span"]
+        ):
+            return "v2_requant"
+        if _inside(line, source_map["requantize_store4_span"]):
+            return "v2_output_store"
         return "setup_other"
 
     if source_name == source_map["fixed_mac_source_name"]:
@@ -398,12 +417,18 @@ def measure_spill_share(annotate_text: str) -> dict[str, Any]:
     }
 
 
-def build_source_map(source: Path = QCONV_SOURCE) -> dict[str, Any]:
+def build_source_map(
+    source: Path = QCONV_SOURCE,
+    requant_source: Path = REQUANT_SOURCE,
+) -> dict[str, Any]:
     lines = source.read_text(encoding="utf-8").splitlines()
+    requant_lines = requant_source.read_text(encoding="utf-8").splitlines()
     dot_span = _function_span(lines, "static int32_t campp_dot4_i16(")
     read_span = _function_span(lines, "static int32_t campp_read_qbyte(")
     spatial_span = _function_span(lines, "static void campp_spatial_coordinates(")
-    requant_span = _function_span(lines, "static CamppStatus campp_qconv_write(")
+    requant_span = _function_span(
+        requant_lines, "CamppStatus campp_aarch64_qconv_requantize_store4("
+    )
     main_span = _function_span(lines, "CamppStatus campp_aarch64_qlinear_conv_o4i4(")
     core_begin = _find_line(
         lines, "for (kernel_index = 0u;", start=main_span[0]
@@ -435,6 +460,7 @@ def build_source_map(source: Path = QCONV_SOURCE) -> dict[str, Any]:
     return {
         "source": source,
         "source_name": source.name,
+        "requant_source_name": requant_source.name,
         "line_count": len(lines),
         "dot_span": dot_span,
         "read_span": read_span,
@@ -496,7 +522,7 @@ def classify_sample(sample: dict[str, Any], source_map: dict[str, Any]) -> str:
         return "mac_reduction"
     if any(
         name in lower_symbol
-        for name in ("campp_qconv_write", "nearbyint", "write_quantized")
+        for name in ("qconv_requantize", "nearbyint", "write_quantized")
     ):
         return "requant_write"
     if any(
@@ -508,6 +534,12 @@ def classify_sample(sample: dict[str, Any], source_map: dict[str, Any]) -> str:
         )
     ):
         return "address_load_control"
+    if source_name == source_map["requant_source_name"]:
+        return (
+            "requant_write"
+            if _inside(line, source_map["requant_span"])
+            else "setup_other"
+        )
     if source_name != source_map["source_name"]:
         return "unclassified"
     if _inside(line, source_map["dot_span"]):

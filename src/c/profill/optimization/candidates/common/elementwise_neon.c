@@ -2,6 +2,7 @@
 
 #include <math.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "campp_runtime/tensor_descriptor.h"
 
@@ -48,8 +49,15 @@ void campp_elementwise_relu_f32(
     }
 #endif
     for (; index < count; ++index) {
-        const float value = input[index];
-        output[index] = value < 0.0f ? 0.0f : value;
+        uint32_t bits;
+        uint32_t magnitude;
+        memcpy(&bits, &input[index], sizeof(bits));
+        magnitude = bits & UINT32_C(0x7fffffff);
+        if ((bits & UINT32_C(0x80000000)) != 0u && magnitude != 0u &&
+            magnitude <= UINT32_C(0x7f800000)) {
+            bits = 0u;
+        }
+        memcpy(&output[index], &bits, sizeof(bits));
     }
 }
 

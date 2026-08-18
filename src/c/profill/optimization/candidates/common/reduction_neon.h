@@ -5,7 +5,7 @@
 
 void campp_reduction_mean_channels_f32(
     const uint8_t *input, uint32_t frame_stride, uint32_t channels,
-    uint32_t frames, uint8_t *output);
+    uint32_t frames, uint32_t divisor, uint8_t *output);
 
 void campp_reduction_statistics_channels_f32(
     const uint8_t *input, uint32_t frame_stride, uint32_t channels,

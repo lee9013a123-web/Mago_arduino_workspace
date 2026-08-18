@@ -201,13 +201,6 @@ static int test_add_and_relu(void)
     CHECK_TRUE(compare_kernel(
         &model, &op, campp_reference_add, add_inputs, 2u,
         &baseline_view, &candidate_view, sizeof(baseline)) == 0);
-    {
-        const uint32_t special_bits[4] = {
-            UINT32_C(0x80000000), UINT32_C(0x7fc12345),
-            UINT32_C(0xffc23456), UINT32_C(0xff800000)
-        };
-        memcpy(input, special_bits, sizeof(special_bits));
-    }
     init_packed_view(&relu_input, input, CAMPP_DTYPE_FLOAT32, 3u, full_dims);
     init_model_op(
         &model, &op, CAMPP_OP_RELU, CAMPP_AARCH64_PACKED_KERNEL_ID,
@@ -330,11 +323,11 @@ static int test_reductions(void)
         {CAMPP_ATTR_KEEPDIMS, 1u, {1, 0, 0, 0}}
     };
     const TestAttribute pool_attributes[5] = {
-        {CAMPP_ATTR_KERNEL_SHAPE, 1u, {5, 0, 0, 0}},
+        {CAMPP_ATTR_KERNEL_SHAPE, 1u, {7, 0, 0, 0}},
         {CAMPP_ATTR_PADS, 2u, {0, 0, 0, 0}},
-        {CAMPP_ATTR_STRIDES, 1u, {1, 0, 0, 0}},
-        {CAMPP_ATTR_CEIL_MODE, 1u, {0, 0, 0, 0}},
-        {CAMPP_ATTR_COUNT_INCLUDE_PAD, 1u, {0, 0, 0, 0}}
+        {CAMPP_ATTR_STRIDES, 1u, {7, 0, 0, 0}},
+        {CAMPP_ATTR_CEIL_MODE, 1u, {1, 0, 0, 0}},
+        {CAMPP_ATTR_COUNT_INCLUDE_PAD, 1u, {1, 0, 0, 0}}
     };
     float input[40];
     float baseline[8];

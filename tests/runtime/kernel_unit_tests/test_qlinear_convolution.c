@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "backends/cpu_aarch64/aarch64_kernels.h"
 #include "backends/cpu_reference/reference_kernels.h"
 
 #define CHECK_TRUE(condition)                                                   \
@@ -100,6 +101,177 @@ static void init_view(
     view->logical_byte_size = rank == 0u
         ? campp_dtype_byte_size(dtype) : stride;
     view->storage_span_bytes = view->logical_byte_size;
+}
+
+static void init_channel_packed_view3(
+    CamppTensorView *view, void *data, uint8_t dtype,
+    const uint32_t dimensions[3], uint32_t channel_capacity)
+{
+    memset(view, 0, sizeof(*view));
+    view->data = data;
+    view->dtype = dtype;
+    view->rank = 3u;
+    view->dimensions[0] = dimensions[0];
+    view->dimensions[1] = dimensions[1];
+    view->dimensions[2] = dimensions[2];
+    view->dimensions[3] = 1u;
+    view->byte_strides[0] = dimensions[2] * channel_capacity;
+    view->byte_strides[1] = 1u;
+    view->byte_strides[2] = channel_capacity;
+    view->logical_byte_size =
+        (uint64_t)dimensions[0] * dimensions[1] * dimensions[2];
+    view->storage_span_bytes =
+        (uint64_t)dimensions[0] * dimensions[2] * channel_capacity;
+}
+
+static void init_qconv_model(
+    CamppRuntimeModel *model, CamppOperatorDescriptor *op,
+    uint8_t *attribute_buffer, const IntegerAttribute *attributes,
+    uint32_t attribute_count);
+
+static int test_qconv_requantization_store4(void)
+{
+    const uint32_t tail_dims[3] = {1u, 3u, 2u};
+    const uint32_t full_dims[3] = {1u, 4u, 1u};
+    const int32_t accumulators0[4] = {-300, 0, 300, 0};
+    const int32_t accumulators1[4] = {1, 3, -3, 0};
+    const float multipliers0[4] = {1.0f, 0.5f, 1.0f, 0.0f};
+    const float multipliers1[4] = {0.5f, 0.5f, 0.5f, 0.0f};
+    const int32_t signed_accumulators[4] = {-1000, -129, 127, 1000};
+    const float signed_multipliers[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    const uint8_t expected_packed[8] = {
+        0u, 128u, 255u, 128u, 128u, 130u, 126u, 128u
+    };
+    const uint8_t expected_generic[6] = {
+        0u, 128u, 128u, 130u, 255u, 126u
+    };
+    const int8_t expected_signed[4] = {-128, -128, 127, 127};
+    uint8_t packed_output[8];
+    uint8_t generic_output[6];
+    uint8_t aliased_output[4];
+    int8_t signed_output[4];
+    CamppTensorView packed_view;
+    CamppTensorView generic_view;
+    CamppTensorView aliased_view;
+    CamppTensorView signed_view;
+
+    memset(packed_output, 0xA5, sizeof(packed_output));
+    init_channel_packed_view3(
+        &packed_view, packed_output, CAMPP_DTYPE_UINT8, tail_dims, 4u);
+    CHECK_STATUS(
+        campp_aarch64_qconv_requantize_store4(
+            &packed_view, 0u, 0u, 0u, accumulators0, multipliers0,
+            3u, 128),
+        CAMPP_STATUS_OK);
+    CHECK_STATUS(
+        campp_aarch64_qconv_requantize_store4(
+            &packed_view, 0u, 0u, 1u, accumulators1, multipliers1,
+            3u, 128),
+        CAMPP_STATUS_OK);
+    CHECK_TRUE(
+        memcmp(packed_output, expected_packed, sizeof(expected_packed)) == 0);
+
+    memset(generic_output, 0xA5, sizeof(generic_output));
+    init_view(
+        &generic_view, generic_output, CAMPP_DTYPE_UINT8, 3u, tail_dims);
+    CHECK_STATUS(
+        campp_aarch64_qconv_requantize_store4(
+            &generic_view, 0u, 0u, 0u, accumulators0, multipliers0,
+            3u, 128),
+        CAMPP_STATUS_OK);
+    CHECK_STATUS(
+        campp_aarch64_qconv_requantize_store4(
+            &generic_view, 0u, 0u, 1u, accumulators1, multipliers1,
+            3u, 128),
+        CAMPP_STATUS_OK);
+    CHECK_TRUE(
+        memcmp(generic_output, expected_generic, sizeof(expected_generic)) == 0);
+
+    memset(aliased_output, 0xA5, sizeof(aliased_output));
+    init_channel_packed_view3(
+        &aliased_view, aliased_output, CAMPP_DTYPE_UINT8, tail_dims, 4u);
+    aliased_view.dimensions[2] = 1u;
+    aliased_view.byte_strides[0] = 4u;
+    aliased_view.storage_span_bytes = 4u;
+    aliased_view.flags = CAMPP_TENSOR_FLAG_ALIASED;
+    CHECK_STATUS(
+        campp_aarch64_qconv_requantize_store4(
+            &aliased_view, 0u, 0u, 0u, accumulators0, multipliers0,
+            3u, 128),
+        CAMPP_STATUS_OK);
+    CHECK_TRUE(aliased_output[3] == 0xA5u);
+
+    memset(signed_output, 0, sizeof(signed_output));
+    init_channel_packed_view3(
+        &signed_view, signed_output, CAMPP_DTYPE_INT8, full_dims, 4u);
+    CHECK_STATUS(
+        campp_aarch64_qconv_requantize_store4(
+            &signed_view, 0u, 0u, 0u, signed_accumulators,
+            signed_multipliers, 4u, 0),
+        CAMPP_STATUS_OK);
+    CHECK_TRUE(
+        memcmp(signed_output, expected_signed, sizeof(expected_signed)) == 0);
+    return 0;
+}
+
+static int test_aarch64_qconv_channel_tail(void)
+{
+    const uint32_t x_dims[3] = {2u, 2u, 2u};
+    const uint32_t w_dims[3] = {3u, 2u, 1u};
+    const uint32_t y_dims[3] = {2u, 3u, 2u};
+    const uint32_t channel_dims[1] = {3u};
+    uint8_t x[8] = {1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u};
+    int8_t packed_weight[16] = {
+        1, 2, 0, 0,
+        -1, 1, 0, 0,
+        2, -1, 0, 0,
+        0, 0, 0, 0
+    };
+    float scale = 1.0f;
+    uint8_t zero_u8 = 0u;
+    float weight_scale[3] = {1.0f, 1.0f, 1.0f};
+    int8_t weight_zero[3] = {0, 0, 0};
+    uint8_t output[16];
+    const uint8_t expected[16] = {
+        7u, 2u, 0u, 0u, 10u, 2u, 0u, 0u,
+        19u, 2u, 3u, 0u, 22u, 2u, 4u, 0u
+    };
+    CamppTensorView inputs[8];
+    CamppTensorView outputs[1];
+    CamppRuntimeModel model;
+    CamppOperatorDescriptor op;
+    uint8_t attribute_buffer[256];
+    const IntegerAttribute attributes[5] = {
+        {CAMPP_ATTR_KERNEL_SHAPE, 1u, {1, 0, 0, 0}},
+        {CAMPP_ATTR_PADS, 2u, {0, 0, 0, 0}},
+        {CAMPP_ATTR_STRIDES, 1u, {1, 0, 0, 0}},
+        {CAMPP_ATTR_DILATIONS, 1u, {1, 0, 0, 0}},
+        {CAMPP_ATTR_GROUP, 1u, {1, 0, 0, 0}}
+    };
+
+    memset(output, 0xA5, sizeof(output));
+    init_qconv_model(&model, &op, attribute_buffer, attributes, 5u);
+    init_view(&inputs[0], x, CAMPP_DTYPE_UINT8, 3u, x_dims);
+    init_view(&inputs[1], &scale, CAMPP_DTYPE_FLOAT32, 0u, x_dims);
+    init_view(&inputs[2], &zero_u8, CAMPP_DTYPE_UINT8, 0u, x_dims);
+    init_view(&inputs[3], packed_weight, CAMPP_DTYPE_INT8, 3u, w_dims);
+    inputs[3].flags = (uint8_t)(
+        inputs[3].flags | CAMPP_TENSOR_FLAG_PACKED_QCONV_O4I4);
+    inputs[3].storage_span_bytes = sizeof(packed_weight);
+    init_view(
+        &inputs[4], weight_scale, CAMPP_DTYPE_FLOAT32, 1u, channel_dims);
+    init_view(
+        &inputs[5], weight_zero, CAMPP_DTYPE_INT8, 1u, channel_dims);
+    init_view(&inputs[6], &scale, CAMPP_DTYPE_FLOAT32, 0u, x_dims);
+    init_view(&inputs[7], &zero_u8, CAMPP_DTYPE_UINT8, 0u, x_dims);
+    init_channel_packed_view3(
+        &outputs[0], output, CAMPP_DTYPE_UINT8, y_dims, 4u);
+    CHECK_STATUS(
+        campp_aarch64_qlinear_conv_o4i4(
+            &model, &op, inputs, 8u, outputs, 1u, NULL, 0u),
+        CAMPP_STATUS_OK);
+    CHECK_TRUE(memcmp(output, expected, sizeof(expected)) == 0);
+    return 0;
 }
 
 static void init_qconv_model(
@@ -467,6 +639,8 @@ static int test_qconv_2d(void)
 
 int main(void)
 {
+    if (test_qconv_requantization_store4() != 0) return 1;
+    if (test_aarch64_qconv_channel_tail() != 0) return 1;
     if (test_quantize_and_dequantize() != 0) return 1;
     if (test_per_axis_quantization() != 0) return 1;
     if (test_qconv_1x1_bias_per_channel() != 0) return 1;

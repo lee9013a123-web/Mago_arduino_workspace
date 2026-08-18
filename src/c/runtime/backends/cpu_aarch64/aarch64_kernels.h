@@ -17,6 +17,17 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
     CamppTensorView *outputs, uint8_t output_count,
     void *scratch, size_t scratch_size);
 
+/*
+ * QLinearConv INT32 accumulator four lanes are requantized and stored as one
+ * channel block. Channel-packed outputs use the NEON/direct-store fast path;
+ * other layouts preserve the generic stride-aware write semantics.
+ */
+CamppStatus campp_aarch64_qconv_requantize_store4(
+    CamppTensorView *output, uint32_t batch, uint32_t output_channel,
+    uint32_t spatial_index, const int32_t accumulators[4],
+    const float multipliers[4], uint32_t valid_outputs,
+    int32_t output_zero);
+
 CamppStatus campp_fused_bn_relu_quant(
     const struct CamppRuntimeModel *model,
     const CamppOperatorDescriptor *op,
