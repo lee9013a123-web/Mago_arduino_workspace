@@ -1,0 +1,427 @@
+ Percent |	Source code & Disassembly of campp_operator_hotspot for cycles:u (3094 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    00000000000030a0 <campp_fused_bn_relu_quant>:
+         : 6    CamppStatus campp_fused_bn_relu_quant(
+         : 7    const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
+         : 8    const CamppTensorView *inputs, uint8_t input_count,
+         : 9    CamppTensorView *outputs, uint8_t output_count, void *scratch,
+         : 10   size_t scratch_size)
+         : 11   {
+    0.00 :   30a0:   stp     x29, x30, [sp, #-224]!
+    0.00 :   30a4:   and     w3, w3, #0xff
+         : 14   const CamppTensorView *zero_point = input_count == 7u ? &inputs[6] : NULL;
+    0.00 :   30a8:   cmp     w3, #0x7
+         : 16   {
+    0.00 :   30ac:   mov     x29, sp
+    0.00 :   30b0:   stp     x23, x24, [sp, #48]
+         : 19   const CamppTensorView *zero_point = input_count == 7u ? &inputs[6] : NULL;
+    0.00 :   30b4:   add     x23, x2, #0x180
+    0.00 :   30b8:   csel    x23, x23, xzr, eq       // eq = none
+         : 22   {
+    0.00 :   30bc:   stp     x19, x20, [sp, #16]
+    0.00 :   30c0:   mov     x19, x2
+    0.00 :   30c4:   mov     x20, x4
+    0.00 :   30c8:   stp     x21, x22, [sp, #32]
+    0.00 :   30cc:   mov     x21, x0
+    0.00 :   30d0:   mov     x22, x1
+         : 29   CamppStatus status;
+         :
+         : 31   (void)scratch;
+         : 32   (void)scratch_size;
+         : 33   CAMPP_OPTIMIZATION_STAGE_BEGIN(setup_started_ns);
+         : 34   status = campp_reference_validate_invocation(
+    0.00 :   30d4:   mov     x0, x2
+    0.00 :   30d8:   mov     w1, w3
+    0.00 :   30dc:   mov     w2, #0x6                        // #6
+    0.00 :   30e0:   mov     w3, #0x7                        // #7
+    0.00 :   30e4:   bl      99a0 <campp_reference_validate_invocation>
+         : 40   inputs, input_count, 6u, 7u, outputs, output_count);
+         : 41   if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   30e8:   cbnz    w0, 3204 <campp_fused_bn_relu_quant+0x164>
+         : 43   if (inputs[0].dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   30ec:   ldrb    w0, [x19, #8]
+    0.00 :   30f0:   cmp     w0, #0x1
+    0.00 :   30f4:   b.ne    3200 <campp_fused_bn_relu_quant+0x160>  // b.any
+         : 47   (outputs[0].dtype != CAMPP_DTYPE_UINT8 &&
+    0.00 :   30f8:   ldrb    w0, [x20, #8]
+    0.00 :   30fc:   sub     w0, w0, #0x2
+         : 50   if (inputs[0].dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   3100:   and     w0, w0, #0xff
+    0.00 :   3104:   cmp     w0, #0x1
+    0.00 :   3108:   b.hi    3200 <campp_fused_bn_relu_quant+0x160>  // b.pmore
+         : 54   outputs[0].dtype != CAMPP_DTYPE_INT8) ||
+    0.00 :   310c:   ldrb    w0, [x19, #9]
+    0.00 :   3110:   cmp     w0, #0x1
+    0.00 :   3114:   b.ls    3200 <campp_fused_bn_relu_quant+0x160>  // b.plast
+         : 58   inputs[0].rank < 2u ||
+         : 59   !campp_reference_shapes_equal(&inputs[0], &outputs[0])) {
+    0.00 :   3118:   mov     x1, x20
+    0.00 :   311c:   mov     x0, x19
+    0.00 :   3120:   bl      9b80 <campp_reference_shapes_equal>
+         : 63   inputs[0].rank < 2u ||
+    0.00 :   3124:   tbz     w0, #0, 3200 <campp_fused_bn_relu_quant+0x160>
+         : 65   return CAMPP_STATUS_SHAPE_MISMATCH;
+         : 66   }
+         : 67   channels = inputs[0].dimensions[1];
+    0.00 :   3128:   stp     x27, x28, [sp, #80]
+         : 69   for (index = 1u; index < 5u; ++index) {
+         : 70   if (inputs[index].dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   312c:   add     x28, x19, #0x40
+    0.00 :   3130:   ldrh    w1, [x19, #72]
+         : 73   channels = inputs[0].dimensions[1];
+    0.00 :   3134:   ldr     w0, [x19, #16]
+         : 75   if (inputs[index].dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   3138:   cmp     x1, #0x101
+    0.00 :   313c:   b.ne    31fc <campp_fused_bn_relu_quant+0x15c>  // b.any
+         : 78   inputs[index].rank != 1u ||
+    0.00 :   3140:   ldr     w1, [x28, #12]
+    0.00 :   3144:   cmp     w0, w1
+    0.00 :   3148:   b.ne    31fc <campp_fused_bn_relu_quant+0x15c>  // b.any
+         : 82   if (inputs[index].dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   314c:   stp     x25, x26, [sp, #64]
+    0.00 :   3150:   add     x26, x19, #0x80
+    0.00 :   3154:   ldrh    w1, [x19, #136]
+    0.00 :   3158:   cmp     x1, #0x101
+    0.00 :   315c:   b.ne    31f8 <campp_fused_bn_relu_quant+0x158>  // b.any
+         : 88   inputs[index].rank != 1u ||
+    0.00 :   3160:   ldr     w1, [x26, #12]
+    0.00 :   3164:   cmp     w0, w1
+    0.00 :   3168:   b.ne    31f8 <campp_fused_bn_relu_quant+0x158>  // b.any
+         : 92   if (inputs[index].dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   316c:   ldrh    w1, [x19, #200]
+    0.00 :   3170:   add     x25, x19, #0xc0
+    0.00 :   3174:   cmp     x1, #0x101
+    0.00 :   3178:   b.ne    31f8 <campp_fused_bn_relu_quant+0x158>  // b.any
+         : 97   inputs[index].rank != 1u ||
+    0.00 :   317c:   ldr     w1, [x25, #12]
+    0.00 :   3180:   cmp     w0, w1
+    0.00 :   3184:   b.ne    31f8 <campp_fused_bn_relu_quant+0x158>  // b.any
+         : 101  if (inputs[index].dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   3188:   ldrh    w1, [x19, #264]
+    0.00 :   318c:   add     x27, x19, #0x100
+    0.00 :   3190:   cmp     x1, #0x101
+    0.00 :   3194:   b.ne    31f8 <campp_fused_bn_relu_quant+0x158>  // b.any
+         : 106  inputs[index].rank != 1u ||
+    0.00 :   3198:   ldr     w1, [x27, #12]
+    0.00 :   319c:   cmp     w1, w0
+    0.00 :   31a0:   b.ne    31f8 <campp_fused_bn_relu_quant+0x158>  // b.any
+         : 110  inputs[index].dimensions[0] != channels) {
+         : 111  return CAMPP_STATUS_SHAPE_MISMATCH;
+         : 112  }
+         : 113  }
+         : 114  if (inputs[5].dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   31a4:   ldrb    w0, [x19, #328]
+    0.00 :   31a8:   add     x24, x19, #0x140
+    0.00 :   31ac:   cmp     w0, #0x1
+    0.00 :   31b0:   b.ne    31f8 <campp_fused_bn_relu_quant+0x158>  // b.any
+         : 119  uint8_t axis;
+         :
+         : 121  if (view == NULL) {
+         : 122  return 0u;
+         : 123  }
+         : 124  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   31b4:   ldrb    w1, [x24, #9]
+    0.00 :   31b8:   cbz     w1, 3218 <campp_fused_bn_relu_quant+0x178>
+         : 127  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   31bc:   ldr     w0, [x24, #12]
+         : 129  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   31c0:   cmp     w1, #0x1
+    0.00 :   31c4:   b.eq    31f0 <campp_fused_bn_relu_quant+0x150>  // b.none
+         : 132  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   31c8:   ldr     w2, [x24, #16]
+    0.00 :   31cc:   umull   x0, w2, w0
+         : 135  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   31d0:   cmp     w1, #0x2
+    0.00 :   31d4:   b.eq    31f0 <campp_fused_bn_relu_quant+0x150>  // b.none
+         : 138  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   31d8:   ldr     w2, [x24, #20]
+    0.00 :   31dc:   mul     x0, x0, x2
+         : 141  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   31e0:   cmp     w1, #0x3
+    0.00 :   31e4:   b.eq    31f0 <campp_fused_bn_relu_quant+0x150>  // b.none
+         : 144  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   31e8:   ldr     w1, [x24, #24]
+    0.00 :   31ec:   mul     x0, x0, x1
+    0.00 :   31f0:   cmp     x0, #0x1
+    0.00 :   31f4:   b.eq    3218 <campp_fused_bn_relu_quant+0x178>  // b.none
+    0.00 :   31f8:   ldp     x25, x26, [sp, #64]
+    0.00 :   31fc:   ldp     x27, x28, [sp, #80]
+         : 151  return CAMPP_STATUS_SHAPE_MISMATCH;
+    0.00 :   3200:   mov     w0, #0x28                       // #40
+         : 153  if (status != CAMPP_STATUS_OK) return status;
+         : 154  }
+         : 155  CAMPP_OPTIMIZATION_STAGE_END(
+         : 156  CAMPP_OPT_STAGE_BN_ELEMENTWISE, elementwise_started_ns);
+         : 157  return CAMPP_STATUS_OK;
+         : 158  }
+    0.00 :   3204:   ldp     x19, x20, [sp, #16]
+    0.00 :   3208:   ldp     x21, x22, [sp, #32]
+    0.00 :   320c:   ldp     x23, x24, [sp, #48]
+    0.00 :   3210:   ldp     x29, x30, [sp], #224
+    0.00 :   3214:   ret
+         : 164  status = campp_runtime_model_attribute_double(
+    0.00 :   3218:   mov     x1, x22
+    0.00 :   321c:   mov     x0, x21
+    0.00 :   3220:   add     x3, sp, #0xc8
+    0.00 :   3224:   mov     w2, #0xa                        // #10
+    0.00 :   3228:   bl      10cec <campp_runtime_model_attribute_double>
+         : 170  if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   322c:   cbnz    w0, 3268 <campp_fused_bn_relu_quant+0x1c8>
+         : 172  if (epsilon_value < 0.0) return CAMPP_STATUS_CORRUPT_PLAN;
+    0.00 :   3230:   ldr     d31, [sp, #200]
+    0.00 :   3234:   mov     w0, #0x17                       // #23
+    0.00 :   3238:   fcmpe   d31, #0.0
+    0.00 :   323c:   b.mi    3268 <campp_fused_bn_relu_quant+0x1c8>  // b.first
+         : 177  status = campp_reference_read_f32(&inputs[5], 0u, &quant_scale);
+    0.00 :   3240:   mov     x1, #0x0                        // #0
+    0.00 :   3244:   mov     x0, x24
+    0.00 :   3248:   add     x2, sp, #0xac
+    0.00 :   324c:   bl      a068 <campp_reference_read_f32>
+    0.00 :   3250:   mov     w1, w0
+         : 183  return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   3254:   mov     w0, #0x3c                       // #60
+         : 185  if (status != CAMPP_STATUS_OK || !(quant_scale > 0.0f) ||
+    0.00 :   3258:   cbnz    w1, 3268 <campp_fused_bn_relu_quant+0x1c8>
+    0.00 :   325c:   ldr     s31, [sp, #172]
+    0.00 :   3260:   fcmpe   s31, #0.0
+    0.00 :   3264:   b.gt    3274 <campp_fused_bn_relu_quant+0x1d4>
+    0.00 :   3268:   ldp     x25, x26, [sp, #64]
+    0.03 :   326c:   ldp     x27, x28, [sp, #80]
+    0.00 :   3270:   b       3204 <campp_fused_bn_relu_quant+0x164>
+         : 193  !isfinite(quant_scale)) {
+    0.00 :   3274:   fabs    s31, s31
+         : 195  if (status != CAMPP_STATUS_OK || !(quant_scale > 0.0f) ||
+    0.00 :   3278:   mov     w1, #0x7f7fffff                 // #2139095039
+    0.00 :   327c:   fmov    s30, w1
+    0.00 :   3280:   fcmp    s31, s30
+    0.00 :   3284:   b.hi    3268 <campp_fused_bn_relu_quant+0x1c8>  // b.pmore
+         : 200  if (view == NULL) {
+    0.00 :   3288:   cbz     x23, 34c4 <campp_fused_bn_relu_quant+0x424>
+         : 202  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   328c:   ldrb    w1, [x23, #9]
+    0.00 :   3290:   cbz     w1, 32d0 <campp_fused_bn_relu_quant+0x230>
+         : 205  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   3294:   ldr     w0, [x23, #12]
+         : 207  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   3298:   cmp     w1, #0x1
+    0.00 :   329c:   b.eq    32c8 <campp_fused_bn_relu_quant+0x228>  // b.none
+         : 210  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   32a0:   ldr     w2, [x23, #16]
+    0.00 :   32a4:   umull   x0, w2, w0
+         : 213  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   32a8:   cmp     w1, #0x2
+    0.00 :   32ac:   b.eq    32c8 <campp_fused_bn_relu_quant+0x228>  // b.none
+         : 216  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   32b0:   ldr     w2, [x23, #20]
+    0.00 :   32b4:   mul     x0, x0, x2
+         : 219  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   32b8:   cmp     w1, #0x3
+    0.00 :   32bc:   b.eq    32c8 <campp_fused_bn_relu_quant+0x228>  // b.none
+         : 222  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   32c0:   ldr     w1, [x23, #24]
+    0.00 :   32c4:   mul     x0, x0, x1
+         : 225  if (campp_tensor_view_element_count(view) != 1u) {
+    0.00 :   32c8:   cmp     x0, #0x1
+    0.00 :   32cc:   b.ne    31f8 <campp_fused_bn_relu_quant+0x158>  // b.any
+         : 228  return campp_reference_read_quantized(view, 0u, out_value);
+    0.00 :   32d0:   mov     x0, x23
+    0.00 :   32d4:   add     x2, sp, #0xb0
+    0.00 :   32d8:   mov     x1, #0x0                        // #0
+    0.00 :   32dc:   bl      a2e4 <campp_reference_read_quantized>
+         : 233  if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   32e0:   cbnz    w0, 3268 <campp_fused_bn_relu_quant+0x1c8>
+         : 235  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   32e4:   ldrb    w1, [x20, #9]
+    0.00 :   32e8:   cbz     w1, 34dc <campp_fused_bn_relu_quant+0x43c>
+         : 238  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   32ec:   ldr     w23, [x20, #12]
+         : 240  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   32f0:   cmp     w1, #0x1
+    0.00 :   32f4:   b.eq    3320 <campp_fused_bn_relu_quant+0x280>  // b.none
+         : 243  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   32f8:   ldr     w0, [x20, #16]
+    0.00 :   32fc:   umull   x23, w0, w23
+         : 246  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   3300:   cmp     w1, #0x2
+    0.00 :   3304:   b.eq    3320 <campp_fused_bn_relu_quant+0x280>  // b.none
+         : 249  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   3308:   ldr     w0, [x20, #20]
+    0.00 :   330c:   mul     x23, x23, x0
+         : 252  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   3310:   cmp     w1, #0x3
+    0.00 :   3314:   b.eq    3320 <campp_fused_bn_relu_quant+0x280>  // b.none
+         : 255  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   3318:   ldr     w0, [x20, #24]
+    0.00 :   331c:   mul     x23, x23, x0
+         : 258  for (index = 0u; index < count; ++index) {
+    0.00 :   3320:   cbz     x23, 34d4 <campp_fused_bn_relu_quant+0x434>
+    0.00 :   3324:   stp     d13, d14, [sp, #96]
+    0.00 :   3328:   str     d15, [sp, #112]
+    0.00 :   332c:   add     x0, sp, #0xd0
+    0.00 :   3330:   str     x0, [sp, #136]
+    0.00 :   3334:   add     x0, x20, #0xc
+         : 265  if (scaled <= -2147483648.0f) {
+    0.00 :   3338:   movi    v14.2s, #0xcf, lsl #24
+         : 267  } else if (scaled >= 2147483520.0f) {
+    0.00 :   333c:   mvni    v13.2s, #0xb1, lsl #24
+    0.00 :   3340:   str     x0, [sp, #144]
+    0.00 :   3344:   add     x0, sp, #0xb4
+         : 271  status = campp_reference_read_f32(&inputs[1], channel, &scale);
+    0.00 :   3348:   add     x24, sp, #0xb8
+    0.00 :   334c:   str     x0, [sp, #128]
+         : 274  status = campp_reference_read_f32(&inputs[2], channel, &bias);
+    0.00 :   3350:   add     x0, sp, #0xbc
+         : 276  for (index = 0u; index < count; ++index) {
+    0.00 :   3354:   mov     x22, #0x0                       // #0
+         : 278  status = campp_reference_read_f32(&inputs[2], channel, &bias);
+    0.00 :   3358:   str     x0, [sp, #152]
+         : 280  if (!isfinite(value)) return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   335c:   mov     w0, #0x7f7fffff                 // #2139095039
+    0.00 :   3360:   fmov    s15, w0
+         : 283  campp_reference_unravel_index(
+    1.00 :   3364:   ldp     x3, x2, [sp, #136]
+    1.29 :   3368:   mov     x0, x22
+    0.52 :   336c:   bl      9a90 <campp_reference_unravel_index>
+         : 287  channel = coordinates[1];
+    0.78 :   3370:   ldr     w21, [sp, #212]
+         : 289  status = campp_reference_read_f32(&inputs[0], index, &x);
+    1.16 :   3374:   ldr     x2, [sp, #128]
+    0.00 :   3378:   mov     x1, x22
+    1.00 :   337c:   mov     x0, x19
+    0.00 :   3380:   bl      a068 <campp_reference_read_f32>
+         : 294  if (status != CAMPP_STATUS_OK) return status;
+    0.68 :   3384:   cbnz    w0, 34b0 <campp_fused_bn_relu_quant+0x410>
+         : 296  status = campp_reference_read_f32(&inputs[1], channel, &scale);
+    0.00 :   3388:   mov     w21, w21
+    1.00 :   338c:   mov     x2, x24
+    0.00 :   3390:   mov     x1, x21
+    0.87 :   3394:   mov     x0, x28
+    0.00 :   3398:   bl      a068 <campp_reference_read_f32>
+         : 302  if (status != CAMPP_STATUS_OK) return status;
+    1.33 :   339c:   cbnz    w0, 34b0 <campp_fused_bn_relu_quant+0x410>
+         : 304  status = campp_reference_read_f32(&inputs[2], channel, &bias);
+    0.00 :   33a0:   ldr     x2, [sp, #152]
+    0.71 :   33a4:   mov     x1, x21
+    0.00 :   33a8:   mov     x0, x26
+    0.65 :   33ac:   bl      a068 <campp_reference_read_f32>
+         : 309  if (status != CAMPP_STATUS_OK) return status;
+    1.07 :   33b0:   cbnz    w0, 34b0 <campp_fused_bn_relu_quant+0x410>
+         : 311  status = campp_reference_read_f32(&inputs[3], channel, &mean);
+    0.00 :   33b4:   add     x2, sp, #0xc0
+    0.87 :   33b8:   mov     x1, x21
+    0.00 :   33bc:   mov     x0, x25
+    0.61 :   33c0:   bl      a068 <campp_reference_read_f32>
+         : 316  if (status != CAMPP_STATUS_OK) return status;
+    0.97 :   33c4:   cbnz    w0, 34b0 <campp_fused_bn_relu_quant+0x410>
+         : 318  status = campp_reference_read_f32(&inputs[4], channel, &variance);
+    0.00 :   33c8:   mov     x1, x21
+    0.87 :   33cc:   add     x2, sp, #0xc4
+    0.00 :   33d0:   mov     x0, x27
+    0.61 :   33d4:   bl      a068 <campp_reference_read_f32>
+         : 323  if (status != CAMPP_STATUS_OK) return status;
+    1.07 :   33d8:   cbnz    w0, 34b0 <campp_fused_bn_relu_quant+0x410>
+         : 325  inv_std = 1.0f / sqrtf(variance + (float)epsilon_value);
+    0.00 :   33dc:   ldr     d0, [sp, #200]
+    1.07 :   33e0:   ldr     s30, [sp, #196]
+         : 328  new_scale = inv_std * scale;
+    0.90 :   33e4:   ldp     s28, s27, [sp, #180]
+         : 330  inv_std = 1.0f / sqrtf(variance + (float)epsilon_value);
+    1.94 :   33e8:   fcvt    s0, d0
+         : 332  new_bias = bias - mean * new_scale;
+    1.10 :   33ec:   ldp     s31, s29, [sp, #188]
+         : 334  inv_std = 1.0f / sqrtf(variance + (float)epsilon_value);
+    2.52 :   33f0:   fadd    s0, s0, s30
+    3.59 :   33f4:   fcmp    s0, #0.0
+    0.94 :   33f8:   b.pl    3418 <campp_fused_bn_relu_quant+0x378>  // b.nfrst
+    0.00 :   33fc:   bl      1ac0 <sqrtf@plt>
+         : 339  if (!isfinite(value)) return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   3400:   ldr     d15, [sp, #112]
+    0.00 :   3404:   mov     w0, #0x3c                       // #60
+    0.00 :   3408:   ldp     x25, x26, [sp, #64]
+    0.00 :   340c:   ldp     x27, x28, [sp, #80]
+    0.00 :   3410:   ldp     d13, d14, [sp, #96]
+    0.00 :   3414:   b       3204 <campp_fused_bn_relu_quant+0x164>
+         : 346  inv_std = 1.0f / sqrtf(variance + (float)epsilon_value);
+    0.65 :   3418:   fsqrt   s0, s0
+    0.00 :   341c:   fmov    s30, #1.000000000000000000e+00
+   12.96 :   3420:   fdiv    s30, s30, s0
+         : 350  new_scale = inv_std * scale;
+   11.64 :   3424:   fmul    s30, s30, s27
+         : 352  new_bias = bias - mean * new_scale;
+    3.62 :   3428:   fmul    s29, s30, s29
+         : 354  value = x * new_scale + new_bias;
+    0.00 :   342c:   fmul    s30, s30, s28
+         : 356  new_bias = bias - mean * new_scale;
+    3.75 :   3430:   fsub    s31, s31, s29
+         : 358  value = x * new_scale + new_bias;
+    3.62 :   3434:   fadd    s31, s31, s30
+         : 360  if (value < 0.0f) value = 0.0f;
+    4.40 :   3438:   fcmpe   s31, #0.0
+    0.84 :   343c:   b.mi    34a0 <campp_fused_bn_relu_quant+0x400>  // b.first
+         : 363  if (!isfinite(value)) return CAMPP_STATUS_KERNEL_FAILED;
+    0.71 :   3440:   fabs    s30, s31
+    2.07 :   3444:   fcmp    s30, s15
+    0.52 :   3448:   b.hi    3400 <campp_fused_bn_relu_quant+0x360>  // b.pmore
+         : 367  scaled = value / quant_scale;
+    0.00 :   344c:   ldr     s30, [sp, #172]
+         : 369  rounded = INT32_MIN;
+    0.48 :   3450:   mov     x2, #0xffffffff80000000         // #-2147483648
+         : 371  scaled = value / quant_scale;
+    1.58 :   3454:   fdiv    s31, s31, s30
+         : 373  if (scaled <= -2147483648.0f) {
+    5.46 :   3458:   fcmpe   s31, s14
+    0.55 :   345c:   b.ls    3474 <campp_fused_bn_relu_quant+0x3d4>  // b.plast
+         : 376  } else if (scaled >= 2147483520.0f) {
+    0.00 :   3460:   fcmpe   s31, s13
+         : 378  rounded = INT32_MAX;
+    0.48 :   3464:   mov     x2, #0x7fffffff                 // #2147483647
+         : 380  } else if (scaled >= 2147483520.0f) {
+    0.00 :   3468:   b.ge    3474 <campp_fused_bn_relu_quant+0x3d4>  // b.tcont
+         : 382  rounded = (int64_t)nearbyintf(scaled);
+    6.24 :   346c:   frinti  s31, s31
+    3.94 :   3470:   fcvtzs  x2, s31
+         : 385  status = campp_reference_write_quantized(
+    0.00 :   3474:   ldrsw   x3, [sp, #176]
+    0.74 :   3478:   mov     x1, x22
+    0.00 :   347c:   mov     x0, x20
+    0.90 :   3480:   add     x2, x3, x2
+    0.00 :   3484:   bl      a468 <campp_reference_write_quantized>
+         : 391  if (status != CAMPP_STATUS_OK) return status;
+    1.29 :   3488:   cbnz    w0, 34b0 <campp_fused_bn_relu_quant+0x410>
+         : 393  for (index = 0u; index < count; ++index) {
+    0.00 :   348c:   add     x22, x22, #0x1
+    1.03 :   3490:   cmp     x22, x23
+    0.00 :   3494:   b.cs    34cc <campp_fused_bn_relu_quant+0x42c>  // b.hs, b.nlast
+         : 397  campp_reference_unravel_index(
+    1.13 :   3498:   ldrb    w1, [x20, #9]
+    0.00 :   349c:   b       3364 <campp_fused_bn_relu_quant+0x2c4>
+         : 400  scaled = value / quant_scale;
+    0.84 :   34a0:   movi    v31.2s, #0x0
+    0.23 :   34a4:   ldr     s30, [sp, #172]
+    1.13 :   34a8:   fdiv    s31, s31, s30
+         : 404  if (scaled <= -2147483648.0f) {
+    0.00 :   34ac:   b       346c <campp_fused_bn_relu_quant+0x3cc>
+    0.00 :   34b0:   ldr     d15, [sp, #112]
+    0.00 :   34b4:   ldp     x25, x26, [sp, #64]
+    0.00 :   34b8:   ldp     x27, x28, [sp, #80]
+    0.00 :   34bc:   ldp     d13, d14, [sp, #96]
+    0.00 :   34c0:   b       3204 <campp_fused_bn_relu_quant+0x164>
+         : 411  *out_value = 0;
+    0.00 :   34c4:   str     wzr, [sp, #176]
+         : 413  if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   34c8:   b       32e4 <campp_fused_bn_relu_quant+0x244>
+    0.00 :   34cc:   ldp     d13, d14, [sp, #96]
+    0.03 :   34d0:   ldr     d15, [sp, #112]
+         : 417  return CAMPP_STATUS_OK;
+    0.00 :   34d4:   mov     w0, #0x0                        // #0
+    0.00 :   34d8:   b       3268 <campp_fused_bn_relu_quant+0x1c8>
+         : 420  uint64_t count = 1u;
+    0.00 :   34dc:   mov     x23, #0x1                       // #1
+    0.00 :   34e0:   stp     d13, d14, [sp, #96]
+    0.00 :   34e4:   str     d15, [sp, #112]
+    0.00 :   34e8:   b       332c <campp_fused_bn_relu_quant+0x28c>

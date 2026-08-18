@@ -227,7 +227,7 @@ for mode in baseline address mac combined; do
     --qconv-only \
     --qconv-candidate "${mode}" \
     --runs-dir "runs/profiling/e7_98/optimization/qconv_candidates/${mode}" \
-    --output "results/profiling/e7_98/optimization/qconv_${mode}.json" \
+    --output "results/profiling/e7_98/optimization/qconv_candidates/${mode}.json" \
     --force
 done
 ```
@@ -237,9 +237,9 @@ done
 ```bash
 for mode in address mac combined; do
   python3 scripts/4_profill/optimization/03_compare_candidate.py \
-    --baseline results/profiling/e7_98/optimization/qconv_baseline.json \
-    --candidate "results/profiling/e7_98/optimization/qconv_${mode}.json" \
-    --output "results/profiling/e7_98/optimization/qconv_${mode}_comparison.json" \
+    --baseline results/profiling/e7_98/optimization/qconv_candidates/baseline.json \
+    --candidate "results/profiling/e7_98/optimization/qconv_candidates/${mode}.json" \
+    --output "results/profiling/e7_98/optimization/qconv_candidates/${mode}_comparison.json" \
     --force
 done
 ```
@@ -282,15 +282,15 @@ for mode in baseline address affine quant combined; do
     --bn-only \
     --bn-candidate "${mode}" \
     --runs-dir "runs/profiling/e7_98/optimization/bn_candidates/${mode}" \
-    --output "results/profiling/e7_98/optimization/bn_${mode}.json" \
+    --output "results/profiling/e7_98/optimization/bn_candidates/${mode}.json" \
     --force
 done
 
 for mode in address affine quant combined; do
   python3 scripts/4_profill/optimization/03_compare_candidate.py \
-    --baseline results/profiling/e7_98/optimization/bn_baseline.json \
-    --candidate "results/profiling/e7_98/optimization/bn_${mode}.json" \
-    --output "results/profiling/e7_98/optimization/bn_${mode}_comparison.json" \
+    --baseline results/profiling/e7_98/optimization/bn_candidates/baseline.json \
+    --candidate "results/profiling/e7_98/optimization/bn_candidates/${mode}.json" \
+    --output "results/profiling/e7_98/optimization/bn_candidates/${mode}_comparison.json" \
     --force
 done
 ```

@@ -1,0 +1,745 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T05:26:50.209120+00:00",
+  "objective": "locate internal bottlenecks in E7 fused BN/ReLU/Quantize",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "perf_event": "cycles:u",
+    "sample_period": 100000,
+    "stage_probe_compiled": false,
+    "elapsed_seconds": 157.33777514800022
+  },
+  "source_map": {
+    "line_count": 137,
+    "main_span": [
+      32,
+      137
+    ],
+    "loop_begin": 87,
+    "index_span": [
+      102,
+      106
+    ],
+    "input_read": 105,
+    "parameter_span": [
+      107,
+      114
+    ],
+    "affine_span": [
+      116,
+      119
+    ],
+    "relu_quant_span": [
+      120,
+      129
+    ],
+    "output_span": [
+      130,
+      132
+    ],
+    "loop_end": 135,
+    "source": "src/c/runtime/backends/cpu_aarch64/fused_kernels/bn_relu_quant_conv.c"
+  },
+  "cases": [
+    {
+      "case_name": "fused_bn_relu_quant",
+      "operator_id": 824,
+      "kernel_id": 2,
+      "kernel_name": "fused_bn_relu_quant",
+      "operator_type": "BATCH_NORMALIZATION",
+      "weight_shape": [],
+      "profile_mean_ms": 12.840260449999999,
+      "profile_share_pct": 0.15155117716449354,
+      "inputs": [
+        {
+          "parsed_sample_count": 170875,
+          "malformed_line_count": 267,
+          "total_sample_period": 17087500000,
+          "classified_core_period": 7086800000,
+          "category_sample_counts": {
+            "bn_index_address": 62304,
+            "bn_parameter_load": 329,
+            "bn_sqrt_affine": 1494,
+            "bn_relu_quant": 912,
+            "bn_output_write": 5829,
+            "setup_other": 34,
+            "unclassified": 99973
+          },
+          "category_periods": {
+            "bn_index_address": 6230400000,
+            "bn_parameter_load": 32900000,
+            "bn_sqrt_affine": 149400000,
+            "bn_relu_quant": 91200000,
+            "bn_output_write": 582900000,
+            "setup_other": 3400000,
+            "unclassified": 9997300000
+          },
+          "category_share_pct": {
+            "bn_index_address": 36.46174103877103,
+            "bn_parameter_load": 0.19253840526700805,
+            "bn_sqrt_affine": 0.8743233357717629,
+            "bn_relu_quant": 0.533723482077542,
+            "bn_output_write": 3.411265544989027,
+            "setup_other": 0.01989758595464521,
+            "unclassified": 58.506510607168984
+          },
+          "classified_core_share_pct": 41.47359180687637,
+          "top_bottleneck_set": [
+            "bn_index_address"
+          ],
+          "top_lines": [
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "bn_index_address",
+              "sample_period": 3742900000,
+              "total_share_pct": 21.90431602048281
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 43,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 984300000,
+              "total_share_pct": 5.760351133869788
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 6981,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 804300000,
+              "total_share_pct": 4.706949524506218
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 330,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 734700000,
+              "total_share_pct": 4.299634235552304
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "bn_index_address",
+              "sample_period": 711000000,
+              "total_share_pct": 4.160936356986101
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 340,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 644200000,
+              "total_share_pct": 3.770007315288954
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 362,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 525700000,
+              "total_share_pct": 3.076517922457937
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 343,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 430500000,
+              "total_share_pct": 2.5193855157278713
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 361,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 425100000,
+              "total_share_pct": 2.487783467446964
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 348,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 403600000,
+              "total_share_pct": 2.361960497439649
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 48,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 393600000,
+              "total_share_pct": 2.3034381858083397
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 5031,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 289800000,
+              "total_share_pct": 1.6959765910753475
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 346,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 280700000,
+              "total_share_pct": 1.6427212874908559
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 360,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 268000000,
+              "total_share_pct": 1.568397951719093
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 355,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 260800000,
+              "total_share_pct": 1.52626188734455
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 351,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 255100000,
+              "total_share_pct": 1.4929041697147036
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 350,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 255000000,
+              "total_share_pct": 1.4923189465983906
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 312,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 222500000,
+              "total_share_pct": 1.302121433796635
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 216400000,
+              "total_share_pct": 1.2664228237015362
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 209900000,
+              "total_share_pct": 1.228383321141185
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+          "output_hash": "a45d6f98ea2f1bd0",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 170933,
+          "malformed_line_count": 285,
+          "total_sample_period": 17093300000,
+          "classified_core_period": 7093300000,
+          "category_sample_counts": {
+            "bn_index_address": 62415,
+            "bn_parameter_load": 317,
+            "bn_sqrt_affine": 1483,
+            "bn_relu_quant": 920,
+            "bn_output_write": 5798,
+            "setup_other": 28,
+            "unclassified": 99972
+          },
+          "category_periods": {
+            "bn_index_address": 6241500000,
+            "bn_parameter_load": 31700000,
+            "bn_sqrt_affine": 148300000,
+            "bn_relu_quant": 92000000,
+            "bn_output_write": 579800000,
+            "setup_other": 2800000,
+            "unclassified": 9997200000
+          },
+          "category_share_pct": {
+            "bn_index_address": 36.51430677516922,
+            "bn_parameter_load": 0.18545277974411026,
+            "bn_sqrt_affine": 0.8675913954590395,
+            "bn_relu_quant": 0.5382225784371655,
+            "bn_output_write": 3.3919722932377017,
+            "setup_other": 0.016380687169826776,
+            "unclassified": 58.48607349078294
+          },
+          "classified_core_share_pct": 41.49754582204723,
+          "top_bottleneck_set": [
+            "bn_index_address"
+          ],
+          "top_lines": [
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "bn_index_address",
+              "sample_period": 3745000000,
+              "total_share_pct": 21.90916908964331
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 43,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 978400000,
+              "total_share_pct": 5.723880116770898
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 6981,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 798800000,
+              "total_share_pct": 4.673176039734868
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "bn_index_address",
+              "sample_period": 722400000,
+              "total_share_pct": 4.226217289815308
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 330,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 711800000,
+              "total_share_pct": 4.164204688386678
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 340,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 645300000,
+              "total_share_pct": 3.775163368103292
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 362,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 523500000,
+              "total_share_pct": 3.0626034762158274
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 343,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 449300000,
+              "total_share_pct": 2.628515266215418
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 361,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 435300000,
+              "total_share_pct": 2.5466118303662837
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 348,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 401800000,
+              "total_share_pct": 2.3506286088701422
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 48,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 395700000,
+              "total_share_pct": 2.314942111821591
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 5031,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 308200000,
+              "total_share_pct": 1.803045637764504
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 346,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 287600000,
+              "total_share_pct": 1.6825305821579217
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 355,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 268600000,
+              "total_share_pct": 1.5713759192198111
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 360,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 265500000,
+              "total_share_pct": 1.553240158424646
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 351,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 261600000,
+              "total_share_pct": 1.5304242012952445
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 350,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 252600000,
+              "total_share_pct": 1.477771992535087
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 312,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 222000000,
+              "total_share_pct": 1.2987544827505515
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 220600000,
+              "total_share_pct": 1.290564139165638
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 151,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 216800000,
+              "total_share_pct": 1.268333206578016
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+          "output_hash": "3582a4717bc248b1",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 170962,
+          "malformed_line_count": 286,
+          "total_sample_period": 17096200000,
+          "classified_core_period": 7094600000,
+          "category_sample_counts": {
+            "bn_index_address": 62442,
+            "bn_parameter_load": 363,
+            "bn_sqrt_affine": 1490,
+            "bn_relu_quant": 854,
+            "bn_output_write": 5797,
+            "setup_other": 24,
+            "unclassified": 99992
+          },
+          "category_periods": {
+            "bn_index_address": 6244200000,
+            "bn_parameter_load": 36300000,
+            "bn_sqrt_affine": 149000000,
+            "bn_relu_quant": 85400000,
+            "bn_output_write": 579700000,
+            "setup_other": 2400000,
+            "unclassified": 9999200000
+          },
+          "category_share_pct": {
+            "bn_index_address": 36.52390589721692,
+            "bn_parameter_load": 0.21232788572899242,
+            "bn_sqrt_affine": 0.8715387045074343,
+            "bn_relu_quant": 0.4995262105029188,
+            "bn_output_write": 3.390811993308455,
+            "setup_other": 0.014038207320925117,
+            "unclassified": 58.48785110141434
+          },
+          "classified_core_share_pct": 41.49811069126473,
+          "top_bottleneck_set": [
+            "bn_index_address"
+          ],
+          "top_lines": [
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "bn_index_address",
+              "sample_period": 3746400000,
+              "total_share_pct": 21.913641627964108
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 43,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 947800000,
+              "total_share_pct": 5.543922041155344
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 6981,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 820300000,
+              "total_share_pct": 4.7981422772311975
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 330,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 728400000,
+              "total_share_pct": 4.260595921900774
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "bn_index_address",
+              "sample_period": 705100000,
+              "total_share_pct": 4.124308325826792
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 340,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 649000000,
+              "total_share_pct": 3.796165229700167
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 362,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 541900000,
+              "total_share_pct": 3.1697102280038836
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 343,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 441900000,
+              "total_share_pct": 2.584784922965337
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 361,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 437300000,
+              "total_share_pct": 2.5578783589335643
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 348,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 401100000,
+              "total_share_pct": 2.34613539850961
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 48,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 398000000,
+              "total_share_pct": 2.3280027140534156
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 5031,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 300700000,
+              "total_share_pct": 1.7588703922509095
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 346,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 275900000,
+              "total_share_pct": 1.6138089166013498
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 355,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 267000000,
+              "total_share_pct": 1.5617505644529195
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 351,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 253600000,
+              "total_share_pct": 1.483370573577754
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 350,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 252100000,
+              "total_share_pct": 1.474596694002176
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 360,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 251900000,
+              "total_share_pct": 1.4734268433920987
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 223800000,
+              "total_share_pct": 1.3090628326762672
+            },
+            {
+              "source": "qlinear_convolution_neon.c",
+              "line": 312,
+              "symbol": "campp_aarch64_qlinear_conv_o4i4",
+              "category": "unclassified",
+              "sample_period": 222700000,
+              "total_share_pct": 1.3026286543208432
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 151,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 216700000,
+              "total_share_pct": 1.2675331360185305
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0006__98.f32",
+          "output_hash": "591e95addeb2d88e",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/microbench.json"
+          }
+        }
+      ],
+      "aggregate": {
+        "total_sample_period": 51277000000,
+        "classified_core_period": 21274700000,
+        "category_periods": {
+          "bn_index_address": 18716100000,
+          "bn_parameter_load": 100900000,
+          "bn_sqrt_affine": 446700000,
+          "bn_relu_quant": 268600000,
+          "bn_output_write": 1742400000,
+          "setup_other": 8600000,
+          "unclassified": 29993700000
+        },
+        "category_share_pct": {
+          "bn_index_address": 36.499990249039534,
+          "bn_parameter_load": 0.19677438227665425,
+          "bn_sqrt_affine": 0.8711508083546229,
+          "bn_relu_quant": 0.523821596427248,
+          "bn_output_write": 3.3980147044483884,
+          "setup_other": 0.01677165200772276,
+          "unclassified": 58.493476607445835
+        },
+        "classified_core_share_pct": 41.489751740546446,
+        "top_bottleneck_set": [
+          "bn_index_address"
+        ]
+      },
+      "decision": {
+        "ready": false,
+        "winner": "bn_index_address",
+        "input_winners": [
+          "bn_index_address",
+          "bn_index_address",
+          "bn_index_address"
+        ],
+        "maximum_unclassified_share_pct": 58.506510607168984,
+        "rule": "same top category on 3 inputs and unclassified <=20%; select cumulative 80% of classified BN core"
+      }
+    }
+  ],
+  "decision": {
+    "ready": false,
+    "overall": "inconclusive",
+    "top_bottleneck_set": [
+      "bn_index_address"
+    ],
+    "next_candidates": [
+      "address"
+    ],
+    "next_step": "inspect perf_annotate and reduce unclassified samples"
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/bn_hotspot"
+  }
+}
