@@ -176,6 +176,7 @@ def _command(
     qconv_candidate: str = "baseline",
     fused_qconv_candidate: str = "baseline",
     bn_candidate: str = "baseline",
+    dequant_candidate: str = "baseline",
 ) -> list[str]:
     command = [
         str(binary),
@@ -199,6 +200,8 @@ def _command(
         fused_qconv_candidate,
         "--bn-candidate",
         bn_candidate,
+        "--dequant-candidate",
+        dequant_candidate,
     ]
     if expected_hash is not None:
         command.extend(("--expected-output-hash", expected_hash))
@@ -241,6 +244,7 @@ def _validate_payload(
     qconv_candidate: str | None = None,
     bn_candidate: str | None = None,
     fused_qconv_candidate: str | None = None,
+    dequant_candidate: str | None = None,
 ) -> None:
     if payload.get("mode") != "operator_microbench":
         raise DiagnosisError("unexpected microbench mode")
@@ -258,6 +262,11 @@ def _validate_payload(
         and payload.get("fused_qconv_candidate") != fused_qconv_candidate
     ):
         raise DiagnosisError("fused QConv candidate mode mismatch")
+    if (
+        dequant_candidate is not None
+        and payload.get("dequant_candidate") != dequant_candidate
+    ):
+        raise DiagnosisError("Dequant candidate mode mismatch")
     operator = payload.get("operator")
     if not isinstance(operator, dict) or (
         operator.get("operator_id") != case["operator_id"]
@@ -380,6 +389,7 @@ def build_diagnosis(
     qconv_candidate: str = "baseline",
     fused_qconv_candidate: str = "baseline",
     bn_candidate: str = "baseline",
+    dequant_candidate: str = "baseline",
 ) -> dict[str, Any]:
     results = [
         _aggregate_case(case, payloads_by_case[case["case_name"]])
@@ -400,6 +410,7 @@ def build_diagnosis(
             "qconv_candidate": qconv_candidate,
             "fused_qconv_candidate": fused_qconv_candidate,
             "bn_candidate": bn_candidate,
+            "dequant_candidate": dequant_candidate,
         },
         "target_kernel_families": list(TARGET_KERNELS),
         "case_count": len(results),
@@ -459,6 +470,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--bn-only", action="store_true")
     parser.add_argument(
+        "--dequant-candidate",
+        choices=(
+            "baseline", "address", "parameter",
+            "scalar_combined", "neon_combined",
+        ),
+        default="baseline",
+    )
+    parser.add_argument("--dequant-only", action="store_true")
+    parser.add_argument(
         "--runs-dir",
         type=_path,
         default=ROOT / "runs/profiling/e7_98/optimization/diagnosis",
@@ -476,11 +496,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.warmup < 0 or args.repeat <= 0:
             raise DiagnosisError("warmup must be >= 0 and repeat must be > 0")
         selected_only_modes = sum(
-            (args.qconv_only, args.fused_qconv_only, args.bn_only)
+            (
+                args.qconv_only, args.fused_qconv_only,
+                args.bn_only, args.dequant_only,
+            )
         )
         if selected_only_modes > 1:
             raise DiagnosisError(
-                "--qconv-only, --fused-qconv-only and --bn-only "
+                "--qconv-only, --fused-qconv-only, --bn-only and "
+                "--dequant-only "
                 "are mutually exclusive"
             )
         if os.name != "posix" and not args.preflight_only:
@@ -504,6 +528,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             cases = [
                 case for case in cases
                 if case["case_name"] == "fused_bn_relu_quant"
+            ]
+        elif args.dequant_only:
+            cases = [
+                case for case in cases
+                if case["case_name"] == "dequantize_linear"
             ]
         plan = args.plan or _resolve_profile_artifact(profile, "plan")
         weights = args.weights or _resolve_profile_artifact(profile, "weights")
@@ -531,6 +560,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         if args.bn_candidate not in capabilities.get("bn_candidates", []):
             raise DiagnosisError("binary does not expose requested BN candidate")
+        if args.dequant_candidate not in capabilities.get(
+            "dequant_candidates", []
+        ):
+            raise DiagnosisError(
+                "binary does not expose requested Dequant candidate"
+            )
         if args.preflight_only:
             print(
                 json.dumps(
@@ -543,6 +578,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "qconv_candidate": args.qconv_candidate,
                         "fused_qconv_candidate": args.fused_qconv_candidate,
                         "bn_candidate": args.bn_candidate,
+                        "dequant_candidate": args.dequant_candidate,
                     },
                     ensure_ascii=False,
                     indent=2,
@@ -591,6 +627,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                             if case["case_name"] == "fused_bn_relu_quant"
                             else "baseline"
                         ),
+                        dequant_candidate=(
+                            args.dequant_candidate
+                            if case["case_name"] == "dequantize_linear"
+                            else "baseline"
+                        ),
                     )
                 )
                 expected_candidate = (
@@ -608,9 +649,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                     if case["case_name"] == "fused_quant_qconv"
                     else "baseline"
                 )
+                expected_dequant_candidate = (
+                    args.dequant_candidate
+                    if case["case_name"] == "dequantize_linear"
+                    else "baseline"
+                )
                 _validate_payload(
                     payload, case, args.repeat, expected_candidate,
                     expected_bn_candidate, expected_fused_qconv_candidate,
+                    expected_dequant_candidate,
                 )
                 payload["input"] = {
                     "path": _display_path(feature),
@@ -632,6 +679,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             qconv_candidate=args.qconv_candidate,
             fused_qconv_candidate=args.fused_qconv_candidate,
             bn_candidate=args.bn_candidate,
+            dequant_candidate=args.dequant_candidate,
         )
         diagnosis["artifacts"] = {
             "profile": _display_path(args.profile),

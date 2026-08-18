@@ -66,3 +66,23 @@ bn_relu_quant/
 후보는 최대 4096 channel을 실험 범위로 두며 범위를 벗어나거나 지원하지 않는
 layout이면 `campp_fused_bn_relu_quant()`를 호출한다. production 승격 전에는
 bundle format이나 runtime scratch plan을 바꾸지 않는다.
+
+`dequantize_linear/`는 E7 channel-packed INT8/UINT8 입력을 저장 순서대로
+순회한다. 미지원 rank·stride·per-axis 축은 reference kernel로 fallback한다.
+
+```text
+dequantize_linear/
+├── dequant_layout_plan.h/.c       # N/spatial/channel 직접 offset 계획
+├── dequant_scalar_fastpath.h/.c   # 직접 read, scalar 변환, FP32 store
+├── dequant_neon.h/.c              # 16-lane INT8/UINT8→FP32 변환
+└── dequant_candidate.h/.c         # 후보 mode와 reference fallback
+```
+
+- `address`: 저장 순서 직접 pointer, 기존 parameter read 유지
+- `parameter`: generic Tensor 접근, scale/zero point hoist
+- `scalar_combined`: 직접 pointer + parameter hoist + scalar 변환
+- `neon_combined`: combined 구조에 16-lane NEON 변환 추가
+
+모든 scale은 fast loop 진입 전에 양수·finite인지 확인한다. scalar scale과
+channel-axis per-axis scale을 지원하고 나머지는 production 의미를 유지하기 위해
+`campp_reference_dequantize_linear()`로 되돌아간다.

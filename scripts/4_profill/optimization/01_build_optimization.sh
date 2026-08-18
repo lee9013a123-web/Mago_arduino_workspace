@@ -19,6 +19,7 @@ mapfile -t RUNTIME_SOURCES < <(
 CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv"
 FUSED_QCONV_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_quant_qconv"
 BN_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant"
+DEQUANT_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/dequantize_linear"
 CANDIDATE_SOURCES=(
     "${CANDIDATE_DIR}/qconv_address_fastpath.c"
     "${CANDIDATE_DIR}/qconv_mac_neon.c"
@@ -28,6 +29,10 @@ CANDIDATE_SOURCES=(
     "${BN_CANDIDATE_DIR}/bn_affine_fastpath.c"
     "${BN_CANDIDATE_DIR}/bn_quant_neon.c"
     "${BN_CANDIDATE_DIR}/bn_candidate.c"
+    "${DEQUANT_CANDIDATE_DIR}/dequant_layout_plan.c"
+    "${DEQUANT_CANDIDATE_DIR}/dequant_scalar_fastpath.c"
+    "${DEQUANT_CANDIDATE_DIR}/dequant_neon.c"
+    "${DEQUANT_CANDIDATE_DIR}/dequant_candidate.c"
 )
 
 INCLUDES=(
@@ -38,6 +43,7 @@ INCLUDES=(
     -I "${CANDIDATE_DIR}"
     -I "${FUSED_QCONV_CANDIDATE_DIR}"
     -I "${BN_CANDIDATE_DIR}"
+    -I "${DEQUANT_CANDIDATE_DIR}"
 )
 
 # shellcheck disable=SC2086
@@ -92,6 +98,14 @@ INCLUDES=(
     "${ROOT}/tests/runtime/profill/test_bn_candidate.c" \
     -lm -o "${BUILD_DIR}/test_bn_candidate"
 
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/test_dequant_candidate.c" \
+    -lm -o "${BUILD_DIR}/test_dequant_candidate"
+
 {
     printf 'cc=%s\n' "${CC}"
     printf 'cflags=%s\n' "${CFLAGS}"
@@ -100,6 +114,7 @@ INCLUDES=(
     printf 'qconv_candidate_modes=baseline,address,mac,combined\n'
     printf 'fused_qconv_candidate_modes=baseline,mac,combined\n'
     printf 'bn_candidate_modes=baseline,address,affine,quant,combined\n'
+    printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
 } > "${BUILD_DIR}/build_metadata.txt"
 
 echo "Optimization diagnostics build complete"
@@ -108,3 +123,4 @@ echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"
 echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"
 echo "  BN test:    ${BUILD_DIR}/test_bn_candidate"
+echo "  Dequant:    ${BUILD_DIR}/test_dequant_candidate"

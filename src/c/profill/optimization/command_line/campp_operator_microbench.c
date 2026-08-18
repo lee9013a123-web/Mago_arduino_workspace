@@ -24,6 +24,7 @@
 #include "internal/runtime_model.h"
 #include "memory_management/memory_bounds_checker.h"
 #include "bn_candidate.h"
+#include "dequant_candidate.h"
 #include "fused_quant_qconv_candidate.h"
 #include "qconv_candidate.h"
 
@@ -39,6 +40,7 @@ typedef struct MicrobenchOptions {
     CamppQconvCandidateMode qconv_candidate;
     CamppFusedQconvCandidateMode fused_qconv_candidate;
     CamppBnCandidateMode bn_candidate;
+    CamppDequantCandidateMode dequant_candidate;
     int has_expected_output_hash;
     int perf_window;
     const char *perf_control_path;
@@ -97,7 +99,9 @@ static void usage(const char *program)
         "[--perf-control CTL_FIFO --perf-ack ACK_FIFO] "
         "[--qconv-candidate baseline|address|mac|combined] "
         "[--fused-qconv-candidate baseline|mac|combined] "
-        "[--bn-candidate baseline|address|affine|quant|combined]\n",
+        "[--bn-candidate baseline|address|affine|quant|combined] "
+        "[--dequant-candidate baseline|address|parameter|scalar_combined|"
+        "neon_combined]\n",
         program);
 }
 
@@ -116,6 +120,7 @@ static int parse_options(
     options->fused_qconv_candidate =
         CAMPP_FUSED_QCONV_CANDIDATE_BASELINE;
     options->bn_candidate = CAMPP_BN_CANDIDATE_BASELINE;
+    options->dequant_candidate = CAMPP_DEQUANT_CANDIDATE_BASELINE;
 
     for (index = 1; index < argc; ++index) {
         const char *name = argv[index];
@@ -176,6 +181,12 @@ static int parse_options(
             if (campp_bn_candidate_mode_parse(
                     value, &options->bn_candidate) != 0) {
                 fprintf(stderr, "invalid BN candidate: %s\n", value);
+                return 1;
+            }
+        } else if (strcmp(name, "--dequant-candidate") == 0) {
+            if (campp_dequant_candidate_mode_parse(
+                    value, &options->dequant_candidate) != 0) {
+                fprintf(stderr, "invalid Dequant candidate: %s\n", value);
                 return 1;
             }
         } else {
@@ -436,6 +447,10 @@ static void print_result(
     fputs("\"bn_candidate\":", stdout);
     print_json_string(campp_bn_candidate_mode_name(options->bn_candidate));
     putchar(',');
+    fputs("\"dequant_candidate\":", stdout);
+    print_json_string(campp_dequant_candidate_mode_name(
+        options->dequant_candidate));
+    putchar(',');
     printf(
         "\"operator\":{\"operator_id\":%" PRIu32
         ",\"opcode\":%u,\"kernel_id\":%u,\"kernel_name\":",
@@ -523,6 +538,8 @@ int main(int argc, char **argv)
             "\"combined\"],"
             "\"bn_candidates\":[\"baseline\",\"address\","
             "\"affine\",\"quant\",\"combined\"],"
+            "\"dequant_candidates\":[\"baseline\",\"address\","
+            "\"parameter\",\"scalar_combined\",\"neon_combined\"],"
 #if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
             "\"stage_probe\":true,"
 #else
@@ -623,6 +640,7 @@ int main(int argc, char **argv)
             campp_qconv_candidate_entry(options.qconv_candidate);
         if (options.fused_qconv_candidate !=
                 CAMPP_FUSED_QCONV_CANDIDATE_BASELINE ||
+            options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE ||
             candidate == NULL || op->opcode != CAMPP_OP_QLINEAR_CONV ||
             op->kernel_id != candidate->kernel_id) {
             fprintf(stderr, "QConv candidate requires packed QLinearConv\n");
@@ -637,6 +655,7 @@ int main(int argc, char **argv)
                 options.fused_qconv_candidate);
         if (options.qconv_candidate != CAMPP_QCONV_CANDIDATE_BASELINE ||
             options.bn_candidate != CAMPP_BN_CANDIDATE_BASELINE ||
+            options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE ||
             candidate == NULL || op->opcode != CAMPP_OP_QLINEAR_CONV ||
             op->kernel_id != candidate->kernel_id) {
             fprintf(
@@ -652,9 +671,26 @@ int main(int argc, char **argv)
         if (options.qconv_candidate != CAMPP_QCONV_CANDIDATE_BASELINE ||
             options.fused_qconv_candidate !=
                 CAMPP_FUSED_QCONV_CANDIDATE_BASELINE ||
+            options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE ||
             candidate == NULL || op->opcode != CAMPP_OP_BATCH_NORMALIZATION ||
             op->kernel_id != candidate->kernel_id) {
             fprintf(stderr, "BN candidate requires fused BN/ReLU/Quantize\n");
+            goto cleanup;
+        }
+        invocation.kernel = candidate;
+    }
+    if (options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE) {
+        const CamppKernelEntry *candidate =
+            campp_dequant_candidate_entry(options.dequant_candidate);
+        if (options.qconv_candidate != CAMPP_QCONV_CANDIDATE_BASELINE ||
+            options.fused_qconv_candidate !=
+                CAMPP_FUSED_QCONV_CANDIDATE_BASELINE ||
+            options.bn_candidate != CAMPP_BN_CANDIDATE_BASELINE ||
+            candidate == NULL || op->opcode != CAMPP_OP_DEQUANTIZE_LINEAR ||
+            op->kernel_id != candidate->kernel_id) {
+            fprintf(
+                stderr,
+                "Dequant candidate requires DequantizeLinear stride kernel\n");
             goto cleanup;
         }
         invocation.kernel = candidate;

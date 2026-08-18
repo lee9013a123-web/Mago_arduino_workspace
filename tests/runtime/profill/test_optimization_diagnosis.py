@@ -80,6 +80,7 @@ def _payload(case: dict, *, pmu_available: bool = True) -> dict:
         "qconv_candidate": "baseline",
         "fused_qconv_candidate": "baseline",
         "bn_candidate": "baseline",
+        "dequant_candidate": "baseline",
         "operator": {
             "operator_id": case["operator_id"],
             "kernel_id": case["kernel_id"],
@@ -235,6 +236,39 @@ class OptimizationDiagnosisTests(unittest.TestCase):
         with self.assertRaises(DIAGNOSE.DiagnosisError):
             DIAGNOSE._validate_payload(
                 payload, case, 2, "baseline", "baseline", "mac"
+            )
+
+    def test_dequant_candidate_is_forwarded_and_validated(self) -> None:
+        command = DIAGNOSE._command(
+            Path("microbench"),
+            plan=Path("plan.bin"),
+            weights=Path("weights.bin"),
+            feature=Path("input.f32"),
+            operator_id=5,
+            warmup=5,
+            repeat=20,
+            dequant_candidate="neon_combined",
+        )
+        self.assertEqual(
+            command[command.index("--dequant-candidate") + 1],
+            "neon_combined",
+        )
+        case = {
+            "case_name": "dequantize_linear",
+            "operator_id": 5,
+            "kernel_id": 1,
+            "kernel_name": "dequantize_linear_stride",
+        }
+        payload = _payload(case)
+        payload["dequant_candidate"] = "neon_combined"
+        DIAGNOSE._validate_payload(
+            payload, case, 2, "baseline", "baseline", "baseline",
+            "neon_combined",
+        )
+        with self.assertRaises(DIAGNOSE.DiagnosisError):
+            DIAGNOSE._validate_payload(
+                payload, case, 2, "baseline", "baseline", "baseline",
+                "address",
             )
 
     def test_candidate_comparison_requires_hashes_and_speedup(self) -> None:

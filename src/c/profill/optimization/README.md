@@ -24,6 +24,11 @@ BN 후보도 production registry와 분리한다. `address`, `affine`, `quant`�
 4개를 함께 처리한다. 지원하지 않는 shape, stride, rounding mode는 기존
 `campp_fused_bn_relu_quant()`로 되돌아간다.
 
+DequantizeLinear 후보 역시 production registry에 등록하지 않는다. 기존
+channel-packed Tensor view를 `N/spatial/channel` 순서로 직접 순회하고 scalar
+parameter를 hoist한 뒤, 최종 후보에서 16개 channel을 NEON으로 변환한다.
+지원하지 않는 layout과 axis는 reference kernel로 fallback한다.
+
 `perf_sample_window.c`는 외부 Linux `perf record`를 target kernel 호출 동안만
 활성화한다. sampling 전용 `campp_operator_hotspot`은 runtime kernel의 stage
 probe를 컴파일하지 않아 소스 라인 표본에 계측 clock 호출이 섞이지 않는다.

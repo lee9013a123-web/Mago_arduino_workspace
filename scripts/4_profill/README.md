@@ -329,3 +329,49 @@ done
 
 모든 입력 hash가 bitwise 동일하고 BN case가 1% 넘게 회귀하지 않아야 한다.
 `combined`가 가장 빠르다는 가정은 하지 않고 측정 결과로 승격 후보를 정한다.
+
+## DequantizeLinear 병목 분리와 후보 비교
+
+기존 `dequant_elementwise`를 index/address, input load, parameter load,
+convert/multiply, output store로 분리한다. 원소마다 clock을 호출하지 않고 기존
+target-only `perf record`와 source-line 분류기를 사용한다.
+
+```bash
+bash scripts/4_profill/optimization/01_build_optimization.sh
+build/profill/optimization/test_dequant_candidate
+
+python3 scripts/4_profill/optimization/06_profile_dequant_hotspot.py \
+  --preflight-only
+python3 scripts/4_profill/optimization/06_profile_dequant_hotspot.py
+```
+
+```text
+runs/profiling/e7_98/optimization/dequant_hotspot/
+results/profiling/e7_98/optimization/dequant_hotspot/dequant_hotspot.json
+results/profiling/e7_98/optimization/dequant_hotspot/dequant_hotspot.csv
+```
+
+후보 다섯 모드는 동일한 DequantizeLinear Operator와 세 입력으로 측정한다.
+
+```bash
+for mode in baseline address parameter scalar_combined neon_combined; do
+  python3 scripts/4_profill/optimization/02_diagnose_top4.py \
+    --dequant-only \
+    --dequant-candidate "${mode}" \
+    --runs-dir "runs/profiling/e7_98/optimization/dequant_candidates/${mode}" \
+    --output "results/profiling/e7_98/optimization/dequant_candidates/${mode}.json" \
+    --force
+done
+
+for mode in address parameter scalar_combined neon_combined; do
+  python3 scripts/4_profill/optimization/03_compare_candidate.py \
+    --baseline results/profiling/e7_98/optimization/dequant_candidates/baseline.json \
+    --candidate "results/profiling/e7_98/optimization/dequant_candidates/${mode}.json" \
+    --output "results/profiling/e7_98/optimization/dequant_candidates/${mode}_comparison.json" \
+    --force
+done
+```
+
+세 입력의 output hash가 bitwise 동일하고 1% 초과 회귀가 없어야 한다. 최종
+후보는 retained tensor bitwise와 Quick E2E 검증을 통과한 뒤에만 production
+AArch64 registry로 승격한다.

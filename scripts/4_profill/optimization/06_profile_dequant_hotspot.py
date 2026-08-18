@@ -1,0 +1,692 @@
+#!/usr/bin/env python3
+"""E7 DequantizeLinear의 target-only cycle을 세부 구간으로 분류한다."""
+
+from __future__ import annotations
+
+import argparse
+import csv
+from datetime import datetime, timezone
+import importlib.util
+import json
+import math
+import os
+from pathlib import Path
+import shutil
+import sys
+import time
+from typing import Any, Sequence
+
+
+ROOT = Path(__file__).resolve().parents[3]
+SCRIPT_DIR = Path(__file__).resolve().parent
+DIAGNOSIS_SCRIPT = SCRIPT_DIR / "02_diagnose_top4.py"
+COMMON_SCRIPT = SCRIPT_DIR / "_perf_hotspot_common.py"
+DEQUANT_SOURCE = (
+    ROOT / "src/c/runtime/backends/cpu_reference/quantization_operators.c"
+)
+TARGET_CASE_NAME = "dequantize_linear"
+TARGET_SYMBOL = "campp_reference_dequantize_linear"
+CORE_CATEGORIES = (
+    "dequant_index_address",
+    "dequant_input_load",
+    "dequant_parameter_load",
+    "dequant_convert_mul",
+    "dequant_output_store",
+)
+CATEGORIES = (*CORE_CATEGORIES, "setup_other", "unclassified")
+
+
+class DequantHotspotError(RuntimeError):
+    """Dequant perf 입력, 실행 또는 분류 결과가 유효하지 않다."""
+
+
+def _load_module(name: str, path: Path) -> Any:
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise DequantHotspotError(f"cannot import {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+DIAGNOSIS = _load_module("e7_optimization_diagnosis_dequant", DIAGNOSIS_SCRIPT)
+COMMON = _load_module("e7_perf_hotspot_common_dequant", COMMON_SCRIPT)
+
+
+def _path(value: str) -> Path:
+    candidate = Path(value)
+    return candidate if candidate.is_absolute() else ROOT / candidate
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(path)
+
+
+def build_source_map(source: Path = DEQUANT_SOURCE) -> dict[str, Any]:
+    lines = source.read_text(encoding="utf-8").splitlines()
+    main_span = COMMON.function_span(
+        lines, "CamppStatus campp_reference_dequantize_linear("
+    )
+    loop_begin = COMMON.find_line(
+        lines, "for (index = 0u; index < count; ++index)", start=main_span[0]
+    )
+    parameter_index = COMMON.find_line(
+        lines, "const uint64_t parameter_index", start=loop_begin
+    )
+    output_offset = COMMON.find_line(
+        lines, "const uint64_t output_offset", start=parameter_index
+    )
+    input_read = COMMON.find_line(
+        lines, "status = campp_reference_read_quantized(&inputs[0]",
+        start=output_offset,
+    )
+    scale_read = COMMON.find_line(
+        lines, "status = campp_reference_read_f32(", start=input_read
+    )
+    zero_read = COMMON.find_line(
+        lines, "status = campp_read_zero_point(", start=scale_read
+    )
+    scale_check = COMMON.find_line(
+        lines, "if (!(scale > 0.0f)", start=zero_read
+    )
+    convert = COMMON.find_line(
+        lines, "result = (float)(value - zero) * scale", start=scale_check
+    )
+    output_store = COMMON.find_line(
+        lines, "memcpy(", start=convert
+    )
+    output_store_end = COMMON.find_line(
+        lines, "sizeof(result));", start=output_store
+    )
+    loop_end = COMMON.find_line(
+        lines, "CAMPP_OPT_STAGE_DEQUANT_ELEMENTWISE", start=output_store_end
+    )
+    return {
+        "source": source,
+        "source_name": source.name,
+        "line_count": len(lines),
+        "main_span": main_span,
+        "loop_begin": loop_begin,
+        "index_span": (parameter_index, input_read - 1),
+        "input_span": (input_read, scale_read - 1),
+        "parameter_span": (scale_read, convert - 1),
+        "convert_span": (convert, output_store - 1),
+        "output_span": (output_store, output_store_end),
+        "output_offset": output_offset,
+        "zero_read": zero_read,
+        "scale_check": scale_check,
+        "loop_end": loop_end,
+    }
+
+
+def classify_sample(sample: dict[str, Any], source_map: dict[str, Any]) -> str:
+    symbol = str(sample["symbol"]).lower()
+    source_name = Path(str(sample["source"])).name.lower()
+    line = int(sample["line"])
+
+    if any(
+        name in symbol
+        for name in (
+            "quantization_parameter_index",
+            "unravel_index",
+            "offset_for_linear",
+            "tensor_view_byte_offset",
+            "tensor_view_element_count",
+        )
+    ):
+        return "dequant_index_address"
+    if "reference_read_quantized" in symbol:
+        return "dequant_input_load"
+    if "reference_read_f32" in symbol or "read_zero_point" in symbol:
+        return "dequant_parameter_load"
+    if "memcpy" in symbol:
+        return "dequant_output_store"
+    if source_name == "tensor_view.h":
+        return "dequant_index_address"
+    if source_name != source_map["source_name"].lower():
+        return "unclassified"
+    if COMMON.inside(line, source_map["index_span"]):
+        return "dequant_index_address"
+    if COMMON.inside(line, source_map["input_span"]):
+        return "dequant_input_load"
+    if COMMON.inside(line, source_map["parameter_span"]):
+        return "dequant_parameter_load"
+    if COMMON.inside(line, source_map["convert_span"]):
+        return "dequant_convert_mul"
+    if COMMON.inside(line, source_map["output_span"]):
+        return "dequant_output_store"
+    if source_map["loop_begin"] <= line <= source_map["loop_end"]:
+        return "setup_other"
+    if COMMON.inside(line, source_map["main_span"]):
+        return "setup_other"
+    return "unclassified"
+
+
+def classify_perf_script(text: str, source_map: dict[str, Any]) -> dict[str, Any]:
+    periods = {category: 0 for category in CATEGORIES}
+    counts = {category: 0 for category in CATEGORIES}
+    line_periods: dict[tuple[str, int, str, str], int] = {}
+    samples, malformed = COMMON.iter_perf_samples(text)
+    for sample in samples:
+        category = classify_sample(sample, source_map)
+        period = int(sample["period"])
+        periods[category] += period
+        counts[category] += 1
+        key = (
+            Path(str(sample["source"])).name,
+            int(sample["line"]),
+            str(sample["symbol"]),
+            category,
+        )
+        line_periods[key] = line_periods.get(key, 0) + period
+    total = sum(periods.values())
+    if not samples or total == 0:
+        raise DequantHotspotError(
+            "perf script contains no attributable cycle samples"
+        )
+    classified = sum(periods[name] for name in CORE_CATEGORIES)
+    ranked = sorted(
+        CORE_CATEGORIES, key=lambda name: periods[name], reverse=True
+    )
+    cumulative = 0
+    top_set = []
+    for name in ranked:
+        if periods[name] == 0:
+            continue
+        cumulative += periods[name]
+        top_set.append(name)
+        if classified and cumulative / classified >= 0.8:
+            break
+    top_lines = sorted(line_periods.items(), key=lambda item: item[1], reverse=True)
+    return {
+        "parsed_sample_count": len(samples),
+        "malformed_line_count": malformed,
+        "total_sample_period": total,
+        "classified_core_period": classified,
+        "category_sample_counts": counts,
+        "category_periods": periods,
+        "category_share_pct": {
+            name: value / total * 100.0 for name, value in periods.items()
+        },
+        "classified_core_share_pct": classified / total * 100.0,
+        "top_bottleneck_set": top_set,
+        "top_lines": [
+            {
+                "source": source,
+                "line": line,
+                "symbol": symbol,
+                "category": category,
+                "sample_period": period,
+                "total_share_pct": period / total * 100.0,
+            }
+            for (source, line, symbol, category), period in top_lines[:20]
+        ],
+    }
+
+
+def _microbench_command(
+    binary: Path, *, plan: Path, weights: Path, feature: Path,
+    operator_id: int, warmup: int, repeat: int,
+) -> list[str]:
+    command = DIAGNOSIS._command(
+        binary,
+        plan=plan,
+        weights=weights,
+        feature=feature,
+        operator_id=operator_id,
+        warmup=warmup,
+        repeat=repeat,
+        dequant_candidate="baseline",
+    )
+    command.append("--perf-window")
+    return command
+
+
+def _run_one(
+    *, perf: str, binary: Path, plan: Path, weights: Path, feature: Path,
+    case: dict[str, Any], warmup: int, repeat: int, sample_period: int,
+    output_dir: Path, source_map: dict[str, Any],
+) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    perf_data = output_dir / "perf.data"
+    payload_path = output_dir / "microbench.json"
+    script_path = output_dir / "perf_script.txt"
+    annotate_path = output_dir / "perf_annotate.txt"
+    report_path = output_dir / "perf_report.txt"
+    command_path = output_dir / "command.json"
+    stderr_path = output_dir / "perf_record.stderr.txt"
+    microbench = _microbench_command(
+        binary, plan=plan, weights=weights, feature=feature,
+        operator_id=int(case["operator_id"]), warmup=warmup, repeat=repeat,
+    )
+    record_command = [
+        perf, "record", "--quiet", "--no-buildid", "--output", str(perf_data),
+        "--event", "cycles:u", "--count", str(sample_period), "--", *microbench,
+    ]
+    command_path.write_text(
+        json.dumps(
+            {
+                "record": record_command,
+                "cpu_affinity": [0],
+                "measurement_scope": "target kernel only",
+            },
+            ensure_ascii=False,
+            indent=2,
+        ) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    try:
+        completed = COMMON.run_command(record_command, root=ROOT)
+    except RuntimeError as exc:
+        raise DequantHotspotError(str(exc)) from exc
+    stderr_path.write_text(completed.stderr, encoding="utf-8", newline="\n")
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise DequantHotspotError("hotspot binary did not return JSON") from exc
+    operator = payload.get("operator", {})
+    window = payload.get("perf_window", {})
+    if (
+        operator.get("operator_id") != case["operator_id"]
+        or operator.get("kernel_name") != case["kernel_name"]
+        or payload.get("dequant_candidate") != "baseline"
+        or payload.get("output_hash_matches") is not True
+        or window.get("requested") is not True
+        or window.get("supported") is not True
+        or window.get("enabled_at_exit") is not False
+    ):
+        raise DequantHotspotError("invalid Dequant hotspot payload")
+    payload["input"] = {"path": _display_path(feature)}
+    payload_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
+    if not perf_data.is_file() or perf_data.stat().st_size == 0:
+        raise DequantHotspotError("perf record did not create data")
+    try:
+        script = COMMON.run_command(
+            [
+                perf, "script", "--input", str(perf_data),
+                "--fields", "period,ip,sym,srcline",
+            ],
+            root=ROOT,
+        )
+        annotate = COMMON.run_command(
+            [
+                perf, "annotate", "--stdio", "--input", str(perf_data),
+                "--symbol", TARGET_SYMBOL,
+            ],
+            root=ROOT,
+            check=False,
+        )
+        report = COMMON.run_command(
+            [
+                perf, "report", "--stdio", "--input", str(perf_data),
+                "--sort", "symbol,srcline", "--percent-limit", "0",
+            ],
+            root=ROOT,
+            check=False,
+        )
+    except RuntimeError as exc:
+        raise DequantHotspotError(str(exc)) from exc
+    script_path.write_text(script.stdout, encoding="utf-8", newline="\n")
+    annotate_path.write_text(
+        annotate.stdout + annotate.stderr, encoding="utf-8", newline="\n"
+    )
+    report_path.write_text(
+        report.stdout + report.stderr, encoding="utf-8", newline="\n"
+    )
+    result = classify_perf_script(script.stdout, source_map)
+    result.update(
+        {
+            "input": _display_path(feature),
+            "output_hash": payload["output_hash"],
+            "artifacts": {
+                "perf_data": _display_path(perf_data),
+                "perf_record_stderr": _display_path(stderr_path),
+                "perf_script": _display_path(script_path),
+                "perf_annotate": _display_path(annotate_path),
+                "perf_report": _display_path(report_path),
+                "microbench": _display_path(payload_path),
+            },
+        }
+    )
+    return result
+
+
+def _aggregate_case(
+    case: dict[str, Any], inputs: Sequence[dict[str, Any]]
+) -> dict[str, Any]:
+    periods = {category: 0 for category in CATEGORIES}
+    for item in inputs:
+        for category in CATEGORIES:
+            periods[category] += int(item["category_periods"][category])
+    total = sum(periods.values())
+    classified = sum(periods[name] for name in CORE_CATEGORIES)
+    ranked = sorted(
+        CORE_CATEGORIES, key=lambda name: periods[name], reverse=True
+    )
+    cumulative = 0
+    top_set = []
+    for name in ranked:
+        if periods[name] == 0:
+            continue
+        cumulative += periods[name]
+        top_set.append(name)
+        if classified and cumulative / classified >= 0.8:
+            break
+    input_winners = [
+        max(CORE_CATEGORIES, key=lambda name: item["category_periods"][name])
+        for item in inputs
+    ]
+    max_unclassified = max(
+        float(item["category_share_pct"]["unclassified"]) for item in inputs
+    )
+    stable = len(set(input_winners)) == 1 and max_unclassified <= 20.0
+    return {
+        **case,
+        "inputs": list(inputs),
+        "aggregate": {
+            "total_sample_period": total,
+            "classified_core_period": classified,
+            "category_periods": periods,
+            "category_share_pct": {
+                name: value / total * 100.0 if total else 0.0
+                for name, value in periods.items()
+            },
+            "classified_core_share_pct": (
+                classified / total * 100.0 if total else 0.0
+            ),
+            "top_bottleneck_set": top_set,
+        },
+        "decision": {
+            "ready": stable,
+            "winner": (
+                input_winners[0] if len(set(input_winners)) == 1 else "mixed"
+            ),
+            "input_winners": input_winners,
+            "maximum_unclassified_share_pct": max_unclassified,
+            "rule": (
+                "same top category on 3 inputs and unclassified <=20%; "
+                "select cumulative 80% of classified Dequant core"
+            ),
+        },
+    }
+
+
+def build_summary(
+    case: dict[str, Any], *, warmup: int, repeat: int, sample_period: int,
+    elapsed_seconds: float, source_map: dict[str, Any],
+) -> dict[str, Any]:
+    ready = bool(case["decision"]["ready"])
+    top_set = case["aggregate"]["top_bottleneck_set"]
+    candidate_map = {
+        "dequant_index_address": "address",
+        "dequant_input_load": "address",
+        "dequant_parameter_load": "parameter",
+        "dequant_convert_mul": "neon_combined",
+        "dequant_output_store": "address/neon_combined",
+    }
+    return {
+        "schema_version": 1,
+        "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "objective": "locate internal bottlenecks in E7 DequantizeLinear",
+        "configuration": {
+            "bucket_frames": 98,
+            "threads": 1,
+            "cpu_affinity": [0],
+            "warmup": warmup,
+            "repeat_per_input": repeat,
+            "input_count": 3,
+            "perf_event": "cycles:u",
+            "sample_period": sample_period,
+            "stage_probe_compiled": False,
+            "elapsed_seconds": elapsed_seconds,
+        },
+        "source_map": {
+            key: value
+            for key, value in source_map.items()
+            if key not in ("source", "source_name")
+        } | {"source": _display_path(source_map["source"])},
+        "cases": [case],
+        "decision": {
+            "ready": ready,
+            "overall": case["decision"]["winner"] if ready else "inconclusive",
+            "top_bottleneck_set": top_set,
+            "next_candidates": sorted({candidate_map[name] for name in top_set}),
+            "next_step": (
+                "benchmark baseline/address/parameter/scalar_combined/"
+                "neon_combined"
+                if ready
+                else "inspect perf_annotate and reduce unclassified samples"
+            ),
+        },
+    }
+
+
+def _write_csv(path: Path, summary: dict[str, Any]) -> None:
+    fieldnames = [
+        "case_name", "operator_id", "input",
+        *(f"{name}_pct" for name in CATEGORIES),
+        "classified_core_share_pct", "top_bottleneck_set", "winner",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as sink:
+        writer = csv.DictWriter(sink, fieldnames=fieldnames)
+        writer.writeheader()
+        case = summary["cases"][0]
+        for item in case["inputs"]:
+            shares = item["category_share_pct"]
+            winner = max(
+                CORE_CATEGORIES,
+                key=lambda name: item["category_periods"][name],
+            )
+            row = {
+                "case_name": case["case_name"],
+                "operator_id": case["operator_id"],
+                "input": item["input"],
+                "classified_core_share_pct": item["classified_core_share_pct"],
+                "top_bottleneck_set": ";".join(item["top_bottleneck_set"]),
+                "winner": winner,
+            }
+            row.update({f"{name}_pct": shares[name] for name in CATEGORIES})
+            writer.writerow(row)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--profile", type=_path,
+        default=ROOT / "results/profiling/e7_98/operator_profile.json",
+    )
+    parser.add_argument(
+        "--binary", type=_path,
+        default=ROOT / "build/profill/optimization/campp_operator_hotspot",
+    )
+    parser.add_argument("--plan", type=_path)
+    parser.add_argument("--weights", type=_path)
+    parser.add_argument(
+        "--features", type=_path, nargs="+",
+        default=list(DIAGNOSIS.EXPECTED_INPUTS),
+    )
+    parser.add_argument("--warmup", type=int, default=5)
+    parser.add_argument("--repeat", type=int, default=20)
+    parser.add_argument("--sample-period", type=int, default=100_000)
+    parser.add_argument(
+        "--runs-dir", type=_path,
+        default=ROOT / "runs/profiling/e7_98/optimization/dequant_hotspot",
+    )
+    parser.add_argument(
+        "--results-dir", type=_path,
+        default=ROOT / "results/profiling/e7_98/optimization/dequant_hotspot",
+    )
+    parser.add_argument("--preflight-only", action="store_true")
+    parser.add_argument("--force", action="store_true")
+    args = parser.parse_args(argv)
+
+    try:
+        if args.warmup < 0 or args.repeat <= 0 or args.sample_period <= 0:
+            raise DequantHotspotError(
+                "warmup, repeat or sample period is invalid"
+            )
+        if os.name != "posix" and not args.preflight_only:
+            raise DequantHotspotError("actual perf sampling requires Linux/QRB2210")
+        perf = shutil.which("perf")
+        if perf is None:
+            raise DequantHotspotError("Linux perf executable not found")
+        if not args.profile.is_file():
+            raise DequantHotspotError(f"profile not found: {args.profile}")
+        profile = json.loads(args.profile.read_text(encoding="utf-8"))
+        selected = DIAGNOSIS.select_representative_cases(
+            profile.get("operators", [])
+        )
+        case = next(
+            (item for item in selected if item["case_name"] == TARGET_CASE_NAME),
+            None,
+        )
+        if case is None:
+            raise DequantHotspotError("DequantizeLinear case was not selected")
+        plan = args.plan or DIAGNOSIS._resolve_profile_artifact(profile, "plan")
+        weights = args.weights or DIAGNOSIS._resolve_profile_artifact(
+            profile, "weights"
+        )
+        required = [args.binary, plan, weights, DEQUANT_SOURCE, *args.features]
+        missing = [path for path in required if not path.is_file()]
+        if missing:
+            raise DequantHotspotError(
+                "required files are missing:\n  "
+                + "\n  ".join(str(path) for path in missing)
+            )
+        if len(args.features) != 3 or any(
+            path.stat().st_size != 98 * 80 * 4 for path in args.features
+        ):
+            raise DequantHotspotError(
+                "exactly three float32 [1,98,80] inputs are required"
+            )
+        summary_path = args.results_dir / "dequant_hotspot.json"
+        csv_path = args.results_dir / "dequant_hotspot.csv"
+        if summary_path.exists() and not args.force and not args.preflight_only:
+            raise DequantHotspotError(
+                f"output exists: {summary_path} (use --force)"
+            )
+        capabilities = DIAGNOSIS._run_payload(
+            [str(args.binary), "--capabilities"]
+        )
+        if capabilities.get("perf_sample_window") is not True:
+            raise DequantHotspotError(
+                "binary does not support target-only perf windows"
+            )
+        if capabilities.get("stage_probe") is not False:
+            raise DequantHotspotError(
+                "hotspot binary must be built without stage probes"
+            )
+        source_map = build_source_map()
+        if args.preflight_only:
+            print(
+                json.dumps(
+                    {
+                        "ready": True,
+                        "perf": perf,
+                        "binary": _display_path(args.binary),
+                        "plan": _display_path(plan),
+                        "weights": _display_path(weights),
+                        "features": [_display_path(path) for path in args.features],
+                        "case": case,
+                        "source_map": {
+                            key: value
+                            for key, value in source_map.items()
+                            if key not in ("source", "source_name")
+                        },
+                    },
+                    ensure_ascii=False,
+                    indent=2,
+                )
+            )
+            return 0
+
+        execution_seconds = (
+            float(case["profile_mean_ms"]) / 1000.0
+            * (args.warmup + args.repeat + 1)
+            * len(args.features)
+        )
+        estimated_seconds = 45.0 + 75.0 * len(args.features) + execution_seconds
+        print(f"예상 시간: 약 {max(1, math.ceil(estimated_seconds / 60.0))}분")
+        started = time.monotonic()
+        inputs = []
+        for feature in args.features:
+            print("진행 중", flush=True)
+            output_dir = args.runs_dir / TARGET_CASE_NAME / feature.stem
+            if output_dir.exists() and args.force:
+                for generated in output_dir.iterdir():
+                    if generated.is_file():
+                        generated.unlink()
+            inputs.append(
+                _run_one(
+                    perf=perf,
+                    binary=args.binary,
+                    plan=plan,
+                    weights=weights,
+                    feature=feature,
+                    case=case,
+                    warmup=args.warmup,
+                    repeat=args.repeat,
+                    sample_period=args.sample_period,
+                    output_dir=output_dir,
+                    source_map=source_map,
+                )
+            )
+        aggregated = _aggregate_case(case, inputs)
+        summary = build_summary(
+            aggregated,
+            warmup=args.warmup,
+            repeat=args.repeat,
+            sample_period=args.sample_period,
+            elapsed_seconds=time.monotonic() - started,
+            source_map=source_map,
+        )
+        summary["artifacts"] = {
+            "profile": _display_path(args.profile),
+            "plan": _display_path(plan),
+            "weights": _display_path(weights),
+            "raw_dir": _display_path(args.runs_dir),
+        }
+        args.results_dir.mkdir(parents=True, exist_ok=True)
+        summary_path.write_text(
+            json.dumps(summary, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+        _write_csv(csv_path, summary)
+        print(f"Dequant hotspot 완료: {_display_path(summary_path)}")
+        aggregate = summary["cases"][0]["aggregate"]
+        print(f"  실측 시간: {summary['configuration']['elapsed_seconds']:.1f}초")
+        for category in CATEGORIES:
+            print(
+                f"  {category}: "
+                f"{aggregate['category_share_pct'][category]:.2f}%"
+            )
+        print(
+            "  Top bottleneck set: "
+            + ", ".join(summary["decision"]["top_bottleneck_set"])
+        )
+        print(
+            f"  gate.ready={str(summary['decision']['ready']).lower()} "
+            f"winner={summary['decision']['overall']}"
+        )
+        print(f"  next: {summary['decision']['next_step']}")
+        return 0 if summary["decision"]["ready"] else 3
+    except (
+        DequantHotspotError, OSError, RuntimeError, ValueError, KeyError
+    ) as exc:
+        print(f"Dequant hotspot failed: {exc}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
