@@ -9,6 +9,13 @@
 #include "backends/cpu_reference/reference_kernel_utils.h"
 #include "internal/runtime_model.h"
 
+#if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
+#include "campp_profill/optimization/stage_probe.h"
+#else
+#define CAMPP_OPTIMIZATION_STAGE_BEGIN(variable) ((void)0)
+#define CAMPP_OPTIMIZATION_STAGE_END(stage, variable) ((void)0)
+#endif
+
 static CamppStatus campp_fused_scalar_zero(
     const CamppTensorView *view, int32_t *out_value)
 {
@@ -39,6 +46,7 @@ CamppStatus campp_fused_bn_relu_quant(
 
     (void)scratch;
     (void)scratch_size;
+    CAMPP_OPTIMIZATION_STAGE_BEGIN(setup_started_ns);
     status = campp_reference_validate_invocation(
         inputs, input_count, 6u, 7u, outputs, output_count);
     if (status != CAMPP_STATUS_OK) return status;
@@ -72,8 +80,10 @@ CamppStatus campp_fused_bn_relu_quant(
     }
     status = campp_fused_scalar_zero(zero_point, &quant_zero);
     if (status != CAMPP_STATUS_OK) return status;
+    CAMPP_OPTIMIZATION_STAGE_END(CAMPP_OPT_STAGE_BN_SETUP, setup_started_ns);
 
     count = campp_tensor_view_element_count(&outputs[0]);
+    CAMPP_OPTIMIZATION_STAGE_BEGIN(elementwise_started_ns);
     for (index = 0u; index < count; ++index) {
         uint32_t coordinates[CAMPP_TENSOR_MAX_RANK];
         uint32_t channel;
@@ -121,5 +131,7 @@ CamppStatus campp_fused_bn_relu_quant(
             &outputs[0], index, rounded + quant_zero);
         if (status != CAMPP_STATUS_OK) return status;
     }
+    CAMPP_OPTIMIZATION_STAGE_END(
+        CAMPP_OPT_STAGE_BN_ELEMENTWISE, elementwise_started_ns);
     return CAMPP_STATUS_OK;
 }

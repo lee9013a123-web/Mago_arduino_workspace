@@ -89,6 +89,66 @@ class ProfileStatisticsTests(unittest.TestCase):
         self.assertTrue(overhead["passes"])
         self.assertTrue(overhead["preliminary"])
 
+    def test_quick_estimate_is_about_fifteen_minutes(self) -> None:
+        protocol = {
+            "warmup": 5,
+            "repeat": 20,
+            "baseline_repeat": 5,
+        }
+
+        estimated = PROFILE._estimated_minutes(protocol, 3)
+
+        self.assertAlmostEqual(estimated, 14.7)
+
+    def test_analysis_aggregates_kernel_share(self) -> None:
+        operators = [
+            {
+                "rank": 1,
+                "operator_id": 1,
+                "operator_type": "QLINEAR_CONV",
+                "kernel_id": 1,
+                "kernel_name": "qconv",
+                "fusion_family": None,
+                "call_count": 60,
+                "total_exclusive_ms": 80.0,
+                "mean_ms": 1.0,
+                "p50_ms": 1.0,
+                "p95_ms": 1.1,
+                "end_to_end_share_pct": 80.0,
+                "cumulative_end_to_end_share_pct": 80.0,
+            },
+            {
+                "rank": 2,
+                "operator_id": 2,
+                "operator_type": "ADD",
+                "kernel_id": 1,
+                "kernel_name": "add",
+                "fusion_family": None,
+                "call_count": 60,
+                "total_exclusive_ms": 10.0,
+                "mean_ms": 0.1,
+                "p50_ms": 0.1,
+                "p95_ms": 0.2,
+                "end_to_end_share_pct": 10.0,
+                "cumulative_end_to_end_share_pct": 90.0,
+            },
+        ]
+        timing = {
+            "total_end_to_end_ms": 100.0,
+            "kernel_accounted_end_to_end_pct": 90.0,
+        }
+
+        analysis = PROFILE._analysis_document(
+            operators, timing, {"preliminary": True}
+        )
+
+        self.assertEqual(
+            analysis["primary_bottleneck"]["kernel"]["name"], "qconv"
+        )
+        self.assertEqual(
+            analysis["kernel_breakdown"][0]["end_to_end_share_pct"], 80.0
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -7,6 +7,13 @@
 #include "internal/runtime_model.h"
 #include "reference_kernel_utils.h"
 
+#if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
+#include "campp_profill/optimization/stage_probe.h"
+#else
+#define CAMPP_OPTIMIZATION_STAGE_BEGIN(variable) ((void)0)
+#define CAMPP_OPTIMIZATION_STAGE_END(stage, variable) ((void)0)
+#endif
+
 static CamppStatus campp_quantization_axis(
     const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
     uint8_t tensor_rank, uint8_t *out_axis)
@@ -167,6 +174,7 @@ CamppStatus campp_reference_dequantize_linear(
 
     (void)scratch;
     (void)scratch_size;
+    CAMPP_OPTIMIZATION_STAGE_BEGIN(setup_started_ns);
     status = campp_reference_validate_invocation(
         inputs, input_count, 2u, 3u, outputs, output_count);
     if (status != CAMPP_STATUS_OK) return status;
@@ -182,8 +190,11 @@ CamppStatus campp_reference_dequantize_linear(
         model, op, &inputs[0], &inputs[1], zero_point, inputs[0].dtype,
         &axis, &per_axis);
     if (status != CAMPP_STATUS_OK) return status;
+    CAMPP_OPTIMIZATION_STAGE_END(
+        CAMPP_OPT_STAGE_DEQUANT_SETUP, setup_started_ns);
 
     count = campp_tensor_view_element_count(&outputs[0]);
+    CAMPP_OPTIMIZATION_STAGE_BEGIN(elementwise_started_ns);
     for (index = 0u; index < count; ++index) {
         const uint64_t parameter_index = campp_quantization_parameter_index(
             index, &inputs[0], axis, per_axis);
@@ -209,5 +220,7 @@ CamppStatus campp_reference_dequantize_linear(
             (uint8_t *)outputs[0].data + output_offset, &result,
             sizeof(result));
     }
+    CAMPP_OPTIMIZATION_STAGE_END(
+        CAMPP_OPT_STAGE_DEQUANT_ELEMENTWISE, elementwise_started_ns);
     return CAMPP_STATUS_OK;
 }

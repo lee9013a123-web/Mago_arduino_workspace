@@ -71,6 +71,11 @@ python3 scripts/4_profill/02_profile_e7.py --preflight-only
 python3 scripts/4_profill/02_profile_e7.py
 ```
 
+실행을 시작하면 기존 E7 p50을 기준으로 예상 시간을 한 번 표시한다. 측정 중에는
+입력 ID나 backend 로그 대신 `진행 중`만 출력하고, 완료 후 latency, overhead,
+Top 80%, kernel별 비중과 상위 Operator를 상세히 출력한다. 같은 분석은
+`summary.json`의 `analysis`에도 구조화해 저장한다.
+
 최종 공식 측정이 필요할 때만 다음을 실행한다.
 
 ```bash
@@ -101,3 +106,51 @@ exclusive time을 더해도 80% 미만이면 이를 100%로 재정규화하지 �
 계측 overhead는 같은 Release 옵션의 비계측 binary와 비교한다. 1% 이상이면
 결과 파일은 생성하지만 프로세스는 종료 코드 3을 반환하고
 `profile_valid=false`로 기록한다.
+
+## 상위 4개 kernel 내부 진단
+
+전체 profile에서 확인된 일반 QConv, fused Quant-QConv, fused BN-ReLU-Quant,
+DequantizeLinear를 최적화하기 전 다음 진단을 실행한다. QConv는 3x3과 1x1을
+서로 다른 대표 shape로 측정하므로 실행 case는 총 5개다.
+
+```bash
+bash scripts/4_profill/optimization/01_build_optimization.sh
+build/profill/optimization/test_optimization_probe
+
+python3 scripts/4_profill/optimization/02_diagnose_top4.py --preflight-only
+python3 scripts/4_profill/optimization/02_diagnose_top4.py
+```
+
+microbenchmark는 실제 feature로 target 직전 Operator까지 한 번 실행하여 중간
+Tensor를 만들고, 입력을 snapshot한 뒤 target `kernel->run()`만 반복한다.
+입력 복원, 출력 초기화, output hash 계산은 측정 구간 밖이다. Linux PMU 권한이
+있으면 cycles, instructions, cache/branch miss도 target 호출에 한해 기록한다.
+PMU 접근이 제한되어도 단계별 wall time 진단은 계속된다.
+
+Raw 결과:
+
+```text
+runs/profiling/e7_98/optimization/diagnosis/raw/
+```
+
+요약 결과:
+
+```text
+results/profiling/e7_98/optimization/diagnosis.json
+```
+
+진단용 clock 호출은 공식 E2E profiler에 포함되지 않으므로 기존 profiling
+overhead 1% 판정에 영향을 주지 않는다. 후보 구현은 진단 결과가 생성된 이후
+`src/c/profill/optimization/candidates/`에서 격리 검증한다.
+
+후보 binary로 같은 진단을 별도 경로에 실행한 뒤 baseline과 비교한다.
+
+```bash
+python3 scripts/4_profill/optimization/03_compare_candidate.py \
+  --baseline results/profiling/e7_98/optimization/diagnosis.json \
+  --candidate results/profiling/e7_98/optimization/candidate_diagnosis.json
+```
+
+대상 case가 개선되고 다른 case의 회귀가 1% 이내이며 세 입력의 output hash가
+bitwise 동일할 때만 `candidate_microbench_gate_passed=true`가 된다. 이 판정
+이후에도 전체 retained tensor 검증과 Quick E2E profiling은 별도로 통과해야 한다.

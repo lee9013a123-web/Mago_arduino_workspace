@@ -4,13 +4,16 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import redirect_stdout
 import csv
 from datetime import datetime, timezone
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
 import sys
+import time
 from typing import Any, Sequence
 
 
@@ -46,6 +49,7 @@ QUICK_BASELINE_REPEAT = 5
 OFFICIAL_WARMUP = 20
 OFFICIAL_REPEAT = 100
 TOP_THRESHOLD_PCT = 80.0
+HISTORICAL_E7_INFERENCE_SECONDS = 8.4
 
 
 def _load_benchmark_module() -> Any:
@@ -400,6 +404,167 @@ def _overhead_document(
     }
 
 
+def _estimated_minutes(protocol: dict[str, Any], input_count: int) -> float:
+    """기존 QRB2210 E7 p50을 이용해 전체 Quick/Official 시간을 예측한다."""
+
+    inference_count = input_count * (
+        protocol["warmup"] + protocol["repeat"]
+        + protocol["warmup"] + protocol["baseline_repeat"]
+    )
+    return inference_count * HISTORICAL_E7_INFERENCE_SECONDS / 60.0
+
+
+def _aggregate_operator_field(
+    operators: Sequence[dict[str, Any]], field: str,
+    total_end_to_end_ms: float,
+) -> list[dict[str, Any]]:
+    grouped: dict[str, dict[str, Any]] = {}
+    for operator in operators:
+        name = str(operator.get(field) or "NONE")
+        item = grouped.setdefault(
+            name,
+            {
+                "name": name,
+                "operator_count": 0,
+                "call_count": 0,
+                "total_exclusive_ms": 0.0,
+            },
+        )
+        item["operator_count"] += 1
+        item["call_count"] += int(operator["call_count"])
+        item["total_exclusive_ms"] += float(operator["total_exclusive_ms"])
+    result = sorted(
+        grouped.values(),
+        key=lambda item: (-float(item["total_exclusive_ms"]), item["name"]),
+    )
+    for item in result:
+        item["end_to_end_share_pct"] = (
+            float(item["total_exclusive_ms"]) / total_end_to_end_ms * 100.0
+            if total_end_to_end_ms > 0.0
+            else 0.0
+        )
+    return result
+
+
+def _analysis_document(
+    operators: Sequence[dict[str, Any]], timing: dict[str, Any],
+    overhead: dict[str, Any],
+) -> dict[str, Any]:
+    """결과를 kernel/type/fusion 축으로 집계하고 측정으로 확인된 사실만 요약한다."""
+
+    total_ms = float(timing["total_end_to_end_ms"])
+    kernels = _aggregate_operator_field(operators, "kernel_name", total_ms)
+    operator_types = _aggregate_operator_field(operators, "operator_type", total_ms)
+    fusion_families = _aggregate_operator_field(operators, "fusion_family", total_ms)
+    top_operator = operators[0]
+    observations = [
+        (
+            f"{operator_types[0]['name']} operators account for "
+            f"{operator_types[0]['end_to_end_share_pct']:.3f}% of end-to-end latency."
+        ),
+        (
+            f"The largest kernel family is {kernels[0]['name']} at "
+            f"{kernels[0]['end_to_end_share_pct']:.3f}%."
+        ),
+        (
+            f"Operator {top_operator['operator_id']} is the largest single operator "
+            f"at {top_operator['end_to_end_share_pct']:.3f}%."
+        ),
+        (
+            f"Kernel-exclusive timing accounts for "
+            f"{timing['kernel_accounted_end_to_end_pct']:.3f}% of end-to-end latency."
+        ),
+    ]
+    if overhead.get("preliminary"):
+        observations.append(
+            "Profiling overhead is a preliminary Quick-mode estimate."
+        )
+    return {
+        "primary_bottleneck": {
+            "operator_type": operator_types[0],
+            "kernel": kernels[0],
+            "top_operator": {
+                key: top_operator[key]
+                for key in (
+                    "rank",
+                    "operator_id",
+                    "operator_type",
+                    "kernel_id",
+                    "kernel_name",
+                    "fusion_family",
+                    "mean_ms",
+                    "p50_ms",
+                    "p95_ms",
+                    "end_to_end_share_pct",
+                )
+            },
+        },
+        "kernel_breakdown": kernels,
+        "operator_type_breakdown": operator_types,
+        "fusion_family_breakdown": fusion_families,
+        "top_10_cumulative_end_to_end_share_pct": operators[
+            min(9, len(operators) - 1)
+        ]["cumulative_end_to_end_share_pct"],
+        "observations": observations,
+        "limitation": (
+            "Exclusive latency alone does not distinguish compute, memory-bandwidth, "
+            "or cache bottlenecks; hardware counters are required for that conclusion."
+        ),
+    }
+
+
+def _print_final_report(
+    *,
+    elapsed_seconds: float,
+    result_targets: Sequence[Path],
+    summary: dict[str, Any],
+) -> None:
+    timing = summary["timing"]
+    overhead = summary["overhead"]
+    top_set = summary["top_bottleneck_set"]
+    analysis = summary["analysis"]
+    end_to_end = timing["end_to_end"]
+
+    print("측정 완료")
+    print(f"실제 소요 시간: {elapsed_seconds / 60.0:.1f}분")
+    print(
+        "End-to-end latency: "
+        f"mean {end_to_end['mean_ms']:.3f} ms, "
+        f"p50 {end_to_end['p50_ms']:.3f} ms, "
+        f"p95 {end_to_end['p95_ms']:.3f} ms"
+    )
+    print(
+        "Kernel 설명 비중: "
+        f"{timing['kernel_accounted_end_to_end_pct']:.3f}% "
+        f"(미설명 {timing['unattributed_runtime_ms']:.3f} ms)"
+    )
+    qualifier = "예비 " if overhead["preliminary"] else ""
+    print(
+        f"Profiling overhead: {overhead['overhead_pct']:.3f}% "
+        f"({qualifier}{'PASS' if overhead['passes'] else 'FAIL'})"
+    )
+    print(
+        f"Top 80% bottleneck set: {top_set['operator_count']}개, "
+        f"complete={top_set['complete']}"
+    )
+    print("Kernel별 비중:")
+    for item in analysis["kernel_breakdown"][:5]:
+        print(
+            f"  {item['name']}: {item['end_to_end_share_pct']:.3f}% "
+            f"({item['operator_count']} operators)"
+        )
+    print("상위 Operator:")
+    for item in top_set["operators"][:10]:
+        print(
+            f"  #{item['rank']} op={item['operator_id']} "
+            f"{item['kernel_name']} {item['end_to_end_share_pct']:.3f}% "
+            f"(누적 {item['cumulative_end_to_end_share_pct']:.3f}%)"
+        )
+    print("결과 파일:")
+    for path in result_targets:
+        print(f"  {path}")
+
+
 def _write_csv(path: Path, operators: Sequence[dict[str, Any]]) -> None:
     fields = (
         "rank",
@@ -595,6 +760,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         args.raw_dir.mkdir(parents=True, exist_ok=True)
         args.output_dir.mkdir(parents=True, exist_ok=True)
+        estimated_minutes = _estimated_minutes(protocol, len(features))
+        print(f"예상 시간: 약 {estimated_minutes:.0f}분")
+        print("진행 중", flush=True)
+        measurement_started = time.perf_counter()
 
         base_environment = os.environ.copy()
         base_environment.update(
@@ -609,7 +778,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         overhead_comparisons: list[dict[str, Any]] = []
         per_input: list[dict[str, Any]] = []
         for index, feature in enumerate(features):
-            print(f"[{index + 1}/{len(features)}] {feature.input_id}", flush=True)
             order = (
                 ("baseline", "profile")
                 if index % 2 == 0
@@ -618,8 +786,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             baseline_payload: dict[str, Any] | None = None
             profile_payload: dict[str, Any] | None = None
             for mode in order:
-                BENCHMARK.wait_for_thermal_start(config.environment)
-                print(f"  {mode}", flush=True)
+                print("진행 중", flush=True)
+                with redirect_stdout(io.StringIO()):
+                    BENCHMARK.wait_for_thermal_start(config.environment)
                 if mode == "baseline":
                     command = BENCHMARK.c_command(
                         baseline_binary,
@@ -711,6 +880,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         operators, timing_summary = _build_operator_profile(
             plan, fusion_document, raw_payloads
         )
+        analysis = _analysis_document(operators, timing_summary, overhead)
+        measurement_elapsed_seconds = time.perf_counter() - measurement_started
         expected_call_count = len(features) * protocol["repeat"]
         all_call_counts_valid = all(
             item["call_count"] == expected_call_count for item in operators
@@ -751,6 +922,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "input_ids": list(EXPECTED_INPUT_IDS),
             "expected_call_count_per_operator": expected_call_count,
             "measurement_scope": "kernel_run_exclusive",
+            "estimated_minutes": estimated_minutes,
         }
         operator_profile = {
             "schema_version": 1,
@@ -763,6 +935,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "environment_mismatches": environment_mismatches,
             "per_input": per_input,
             "timing": timing_summary,
+            "analysis": analysis,
             "operators": operators,
         }
         summary = {
@@ -772,6 +945,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "artifacts": artifacts,
             "overhead": overhead,
             "timing": timing_summary,
+            "analysis": analysis,
+            "measurement_elapsed_seconds": measurement_elapsed_seconds,
             "top_bottleneck_set": {
                 **{
                     key: timing_summary[key]
@@ -836,14 +1011,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"E7 profiling failed: {exc}", file=sys.stderr)
         return 1
 
-    print(f"operator profile: {result_targets[0]}")
-    print(f"operator CSV:     {result_targets[1]}")
-    print(f"summary:          {result_targets[2]}")
-    print(f"overhead:         {overhead['overhead_pct']:.6f}%")
-    print(
-        "top bottleneck set: "
-        f"{timing_summary['operator_count']} operators, "
-        f"complete={timing_summary['complete']}"
+    _print_final_report(
+        elapsed_seconds=measurement_elapsed_seconds,
+        result_targets=result_targets,
+        summary=summary,
     )
     return 0 if summary["validity"]["profile_valid"] else 3
 

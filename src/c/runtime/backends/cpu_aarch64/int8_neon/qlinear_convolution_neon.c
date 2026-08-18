@@ -15,6 +15,13 @@
 #include "backends/cpu_reference/reference_kernel_utils.h"
 #include "internal/runtime_model.h"
 
+#if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
+#include "campp_profill/optimization/stage_probe.h"
+#else
+#define CAMPP_OPTIMIZATION_STAGE_BEGIN(variable) ((void)0)
+#define CAMPP_OPTIMIZATION_STAGE_END(stage, variable) ((void)0)
+#endif
+
 #define CAMPP_QCONV_OUTPUT_BLOCK 4u
 #define CAMPP_QCONV_INPUT_BLOCK 4u
 #define CAMPP_QCONV_SPATIAL_TILE 8u
@@ -128,6 +135,7 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
 
     (void)scratch;
     (void)scratch_size;
+    CAMPP_OPTIMIZATION_STAGE_BEGIN(setup_started_ns);
     status = campp_reference_validate_invocation(
         inputs, input_count, 8u, 9u, outputs, output_count);
     if (status != CAMPP_STATUS_OK) return status;
@@ -217,6 +225,8 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
         !isfinite(input_scale) || !isfinite(output_scale)) {
         return CAMPP_STATUS_KERNEL_FAILED;
     }
+    CAMPP_OPTIMIZATION_STAGE_END(
+        CAMPP_OPT_STAGE_QCONV_SETUP, setup_started_ns);
 
     for (batch = 0u; batch < x->dimensions[0]; ++batch) {
         uint32_t group_index;
@@ -275,6 +285,7 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
                             accum[tile][output_lane] = bias[output_lane];
                         }
                     }
+                    CAMPP_OPTIMIZATION_STAGE_BEGIN(mac_started_ns);
                     for (kernel_index = 0u; kernel_index < kernel_elements;
                          ++kernel_index) {
                         uint32_t kernel_coordinates[2];
@@ -356,6 +367,9 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
                             }
                         }
                     }
+                    CAMPP_OPTIMIZATION_STAGE_END(
+                        CAMPP_OPT_STAGE_QCONV_MAC_ADDRESS, mac_started_ns);
+                    CAMPP_OPTIMIZATION_STAGE_BEGIN(requant_started_ns);
                     for (tile = 0u; tile < tile_count; ++tile) {
                         for (output_lane = 0u; output_lane < 4u; ++output_lane) {
                             const uint32_t within = output_block * 4u + output_lane;
@@ -371,6 +385,9 @@ CamppStatus campp_aarch64_qlinear_conv_o4i4(
                             if (status != CAMPP_STATUS_OK) return status;
                         }
                     }
+                    CAMPP_OPTIMIZATION_STAGE_END(
+                        CAMPP_OPT_STAGE_QCONV_REQUANT_WRITE,
+                        requant_started_ns);
                 }
             }
         }

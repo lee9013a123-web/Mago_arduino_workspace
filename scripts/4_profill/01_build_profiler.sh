@@ -39,6 +39,7 @@ echo "  build dir: ${BUILD_DIR}"
     "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
     "${ROOT}/src/c/profill/operator_profiler.c" \
+    "${ROOT}/src/c/profill/runtime_fixture.c" \
     "${ROOT}/src/c/profill/command_line/campp_e7_profiler.c" \
     -lm -o "${BUILD_DIR}/campp_e7_profiler"
 

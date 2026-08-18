@@ -10,6 +10,13 @@
 #include "backends/cpu_reference/reference_kernel_utils.h"
 #include "internal/runtime_model.h"
 
+#if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
+#include "campp_profill/optimization/stage_probe.h"
+#else
+#define CAMPP_OPTIMIZATION_STAGE_BEGIN(variable) ((void)0)
+#define CAMPP_OPTIMIZATION_STAGE_END(stage, variable) ((void)0)
+#endif
+
 static CamppStatus campp_fused_read_scalar_f32(
     const CamppTensorView *view, float *out_value)
 {
@@ -154,6 +161,7 @@ CamppStatus campp_fused_quant_qlinear_conv_o4i4(
         }
         quantized.byte_strides[axis] /= sizeof(float);
     }
+    CAMPP_OPTIMIZATION_STAGE_BEGIN(quantize_started_ns);
     for (index = 0u; index < campp_tensor_view_element_count(&inputs[0]); ++index) {
         float value;
         status = campp_reference_read_f32(&inputs[0], index, &value);
@@ -162,11 +170,17 @@ CamppStatus campp_fused_quant_qlinear_conv_o4i4(
             &quantized, index, value, scale, zero);
         if (status != CAMPP_STATUS_OK) return status;
     }
+    CAMPP_OPTIMIZATION_STAGE_END(
+        CAMPP_OPT_STAGE_FUSED_INPUT_QUANTIZE, quantize_started_ns);
     qconv_inputs[0] = quantized;
     for (axis = 1u; axis < input_count; ++axis) qconv_inputs[axis] = inputs[axis];
-    return campp_aarch64_qlinear_conv_o4i4(
+    CAMPP_OPTIMIZATION_STAGE_BEGIN(qconv_started_ns);
+    status = campp_aarch64_qlinear_conv_o4i4(
         model, op, qconv_inputs, input_count, outputs, output_count,
         NULL, 0u);
+    CAMPP_OPTIMIZATION_STAGE_END(
+        CAMPP_OPT_STAGE_FUSED_QCONV, qconv_started_ns);
+    return status;
 }
 
 CamppStatus campp_fused_dequant_relu_quant(
