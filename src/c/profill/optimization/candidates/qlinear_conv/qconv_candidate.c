@@ -9,6 +9,7 @@
 #include "backends/cpu_aarch64/aarch64_kernels.h"
 #include "backends/cpu_reference/reference_kernel_utils.h"
 #include "internal/runtime_model.h"
+#include "microkernels/qconv_mac_4x8.h"
 #include "qconv_address_fastpath.h"
 #include "qconv_mac_neon.h"
 
@@ -600,13 +601,44 @@ static CamppStatus campp_qconv_candidate_run_v2(
                                     mode == CAMPP_QCONV_CANDIDATE_COMBINED);
                         }
                     }
-                    if (campp_qconv_mac_neon_tile_v2(
-                            input_points, context.kernel_elements,
-                            tile_count, packed_weights,
-                            context.inputs_per_group,
-                            context.input->dtype, context.weight->dtype,
-                            context.input_zero, weight_zero, bias,
-                            valid_outputs, accumulators) != 0) {
+                    if (mode == CAMPP_QCONV_CANDIDATE_MAC_FIXED ||
+                        mode == CAMPP_QCONV_CANDIDATE_MAC_ASM) {
+                        const CamppQconvMac4x8Implementation implementation =
+                            mode == CAMPP_QCONV_CANDIDATE_MAC_ASM
+                            ? CAMPP_QCONV_MAC_4X8_ASSEMBLY
+                            : CAMPP_QCONV_MAC_4X8_INTRINSICS;
+                        const CamppQconvMac4x8Result fixed_result =
+                            campp_qconv_mac_4x8_try_tile(
+                                input_points, context.kernel_elements,
+                                tile_count, packed_weights,
+                                context.inputs_per_group,
+                                context.input->dtype,
+                                context.weight->dtype,
+                                context.input_zero, weight_zero, bias,
+                                valid_outputs, implementation,
+                                accumulators);
+                        if (fixed_result == CAMPP_QCONV_MAC_4X8_FAILED) {
+                            return CAMPP_STATUS_KERNEL_FAILED;
+                        }
+                        if (fixed_result == CAMPP_QCONV_MAC_4X8_UNSUPPORTED &&
+                            campp_qconv_mac_neon_tile_v2(
+                                input_points, context.kernel_elements,
+                                tile_count, packed_weights,
+                                context.inputs_per_group,
+                                context.input->dtype,
+                                context.weight->dtype,
+                                context.input_zero, weight_zero, bias,
+                                valid_outputs, accumulators) != 0) {
+                            return CAMPP_STATUS_KERNEL_FAILED;
+                        }
+                    } else if (campp_qconv_mac_neon_tile_v2(
+                                   input_points, context.kernel_elements,
+                                   tile_count, packed_weights,
+                                   context.inputs_per_group,
+                                   context.input->dtype,
+                                   context.weight->dtype,
+                                   context.input_zero, weight_zero, bias,
+                                   valid_outputs, accumulators) != 0) {
                         return CAMPP_STATUS_KERNEL_FAILED;
                     }
                     CAMPP_OPTIMIZATION_STAGE_END(
@@ -668,6 +700,10 @@ CAMPP_DEFINE_QCONV_CANDIDATE(
     campp_qconv_candidate_mac, CAMPP_QCONV_CANDIDATE_MAC)
 CAMPP_DEFINE_QCONV_CANDIDATE(
     campp_qconv_candidate_combined, CAMPP_QCONV_CANDIDATE_COMBINED)
+CAMPP_DEFINE_QCONV_CANDIDATE(
+    campp_qconv_candidate_mac_fixed, CAMPP_QCONV_CANDIDATE_MAC_FIXED)
+CAMPP_DEFINE_QCONV_CANDIDATE(
+    campp_qconv_candidate_mac_asm, CAMPP_QCONV_CANDIDATE_MAC_ASM)
 
 static const CamppKernelEntry CAMPP_QCONV_CANDIDATE_ENTRIES[] = {
     {
@@ -690,16 +726,30 @@ static const CamppKernelEntry CAMPP_QCONV_CANDIDATE_ENTRIES[] = {
         campp_qconv_candidate_combined,
         NULL,
         "qlinear_conv_o4i4_neon"
+    },
+    {
+        CAMPP_OP_QLINEAR_CONV,
+        CAMPP_AARCH64_PACKED_KERNEL_ID,
+        campp_qconv_candidate_mac_fixed,
+        NULL,
+        "qlinear_conv_o4i4_neon"
+    },
+    {
+        CAMPP_OP_QLINEAR_CONV,
+        CAMPP_AARCH64_PACKED_KERNEL_ID,
+        campp_qconv_candidate_mac_asm,
+        NULL,
+        "qlinear_conv_o4i4_neon"
     }
 };
 
 const char *campp_qconv_candidate_mode_name(CamppQconvCandidateMode mode)
 {
     static const char *const names[] = {
-        "baseline", "address", "mac", "combined"
+        "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm"
     };
     return mode >= CAMPP_QCONV_CANDIDATE_BASELINE &&
-        mode <= CAMPP_QCONV_CANDIDATE_COMBINED
+        mode <= CAMPP_QCONV_CANDIDATE_MAC_ASM
         ? names[mode] : "invalid";
 }
 
@@ -709,7 +759,7 @@ int campp_qconv_candidate_mode_parse(
     CamppQconvCandidateMode mode;
     if (text == NULL || out_mode == NULL) return 1;
     for (mode = CAMPP_QCONV_CANDIDATE_BASELINE;
-         mode <= CAMPP_QCONV_CANDIDATE_COMBINED;
+         mode <= CAMPP_QCONV_CANDIDATE_MAC_ASM;
          mode = (CamppQconvCandidateMode)(mode + 1)) {
         if (strcmp(text, campp_qconv_candidate_mode_name(mode)) == 0) {
             *out_mode = mode;
@@ -724,7 +774,7 @@ const CamppKernelEntry *campp_qconv_candidate_entry(
 {
     if (mode == CAMPP_QCONV_CANDIDATE_BASELINE) return NULL;
     if (mode < CAMPP_QCONV_CANDIDATE_ADDRESS ||
-        mode > CAMPP_QCONV_CANDIDATE_COMBINED) {
+        mode > CAMPP_QCONV_CANDIDATE_MAC_ASM) {
         return NULL;
     }
     return &CAMPP_QCONV_CANDIDATE_ENTRIES[mode - 1];

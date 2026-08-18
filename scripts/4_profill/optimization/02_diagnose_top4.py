@@ -453,7 +453,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--repeat", type=int, default=20)
     parser.add_argument(
         "--qconv-candidate",
-        choices=("baseline", "address", "mac", "combined"),
+        choices=(
+            "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm"
+        ),
         default="baseline",
     )
     parser.add_argument("--qconv-only", action="store_true")

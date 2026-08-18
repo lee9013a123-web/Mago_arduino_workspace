@@ -248,6 +248,47 @@ done
 경우에만 production QConv의 fast path로 승격한다. 기존 구현은 지원하지 않는
 layout을 위한 fallback으로 유지한다.
 
+## QConv fixed microkernel과 compiler spill 비교
+
+현재 `mac` v2를 보존한 상태에서 E7의 완전한 내부 tile만 `mac_fixed`로
+교체한다. 고정 경로는 `tile_count=4`인 half tile 두 개, `valid_outputs=8`,
+UINT8 input, INT8 O4I4 weight를 사용하며 dtype·tail·NULL padding 분기를 hot
+loop 밖으로 이동한다. 경계와 tail은 기존 `mac`으로 fallback한다.
+
+QRB2210에서 GCC와 Clang을 동일한 `-O3 -mcpu=native` 조건으로 한 번에
+빌드하고 두 QConv shape와 세 입력을 비교한다.
+
+```bash
+python3 scripts/4_profill/optimization/07_compare_qconv_spill.py \
+  --preflight-only
+
+python3 scripts/4_profill/optimization/07_compare_qconv_spill.py \
+  --force
+```
+
+기본 실행은 compiler별 `mac`과 `mac_fixed`를 측정한다. 선택된 fixed
+intrinsics의 최대 annotated stack spill이 5%를 넘으면
+`decision.assembly_required=true`가 된다. 그때만 assembly까지 추가 측정한다.
+
+```bash
+python3 scripts/4_profill/optimization/07_compare_qconv_spill.py \
+  --include-assembly \
+  --force
+```
+
+```text
+build/profill/optimization/qconv_spill/{gcc,clang}/
+runs/profiling/e7_98/optimization/qconv_spill/{gcc,clang}/{mac,mac_fixed,mac_asm}/
+results/profiling/e7_98/optimization/qconv_spill/compiler_comparison.json
+results/profiling/e7_98/optimization/qconv_spill/compiler_comparison.csv
+results/profiling/e7_98/optimization/qconv_spill/decision.json
+```
+
+선택 순서는 output hash bitwise 일치, shape별 1% 초과 회귀 없음, 두 shape의
+합산 mean latency, spill 비중이다. spill이 더 낮다는 이유만으로 느린 compiler를
+선택하지 않는다. production 승격 전 retained tensor bitwise와 Quick E2E
+검증은 별도로 수행한다.
+
 ## Fused Quant-QConv 후보 비교
 
 fused 후보는 production의 FP32→UINT8 quantization과 scratch를 그대로 사용하고,
@@ -375,3 +416,38 @@ done
 세 입력의 output hash가 bitwise 동일하고 1% 초과 회귀가 없어야 한다. 최종
 후보는 retained tensor bitwise와 Quick E2E 검증을 통과한 뒤에만 production
 AArch64 registry로 승격한다.
+
+## 나머지 10개 연산 공통 후보
+
+Add, ReLU, Expand, Slice, QuantizeLinear, ReduceMean,
+`fused_dequant_sigmoid_mul`, AveragePool, Reshape,
+`fused_statistics_pooling`에 공통 pointer/NEON/reduction/copy/LUT 후보를 적용한다.
+
+```bash
+bash scripts/4_profill/optimization/01_build_optimization.sh
+build/profill/optimization/test_remaining_candidates
+
+python3 scripts/4_profill/optimization/07_benchmark_remaining_ops.py \
+  --preflight-only
+python3 scripts/4_profill/optimization/07_benchmark_remaining_ops.py
+```
+
+긴 실행 전에 일부 kernel만 확인할 수 있다.
+
+```bash
+python3 scripts/4_profill/optimization/07_benchmark_remaining_ops.py \
+  --kernels add_stride relu_stride quantize_linear_stride \
+  --force
+```
+
+결과는 아래에 저장한다.
+
+```text
+runs/profiling/e7_98/optimization/remaining_candidates/
+results/profiling/e7_98/optimization/remaining_candidates.json
+results/profiling/e7_98/optimization/remaining_candidates.csv
+```
+
+세 입력의 output hash가 모두 bitwise 동일하고 어떤 case도 1%를 초과해 회귀하지
+않아야 microbench gate를 통과한다. 이 단계는 production registry나 bundle fusion
+plan을 수정하지 않는다.

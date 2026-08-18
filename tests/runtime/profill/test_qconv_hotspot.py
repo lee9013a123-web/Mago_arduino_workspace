@@ -100,6 +100,43 @@ class QConvHotspotTests(unittest.TestCase):
         with self.assertRaises(HOTSPOT.HotspotError):
             HOTSPOT.classify_perf_script("# no samples", self.source_map)
 
+    def test_fixed_and_assembly_symbols_are_mac_samples(self) -> None:
+        source_map = HOTSPOT.build_v2_source_map()
+        for symbol, source in (
+            (
+                "campp_qconv_mac_4x8_intrinsics_raw",
+                "/tmp/qconv_mac_4x8_intrinsics.c",
+            ),
+            (
+                "campp_qconv_mac_4x8_aarch64_raw",
+                "/tmp/qconv_mac_4x8_aarch64.S",
+            ),
+        ):
+            category = HOTSPOT.classify_v2_sample(
+                {"symbol": symbol, "source": source, "line": 1},
+                source_map,
+            )
+            self.assertEqual(category, "v2_mac_smlal")
+        parsed = HOTSPOT.classify_v2_perf_script(
+            " 100000 ffff campp_qconv_mac_4x8_aarch64_raw "
+            "/tmp/qconv_mac_4x8_aarch64.S:80",
+            source_map,
+        )
+        self.assertEqual(parsed["fixed_microkernel_sample_count"], 1)
+
+    def test_spill_parser_separates_stack_and_tensor_loads(self) -> None:
+        annotate = "\n".join(
+            [
+                " 12.50 : 10: ldr q0, [sp, #16]",
+                "  7.50 : 14: stp q1, q2, [x29, #-32]",
+                " 20.00 : 18: ldr q3, [x4]",
+                " 60.00 : 1c: smlal v16.4s, v0.4h, v4.h[0]",
+            ]
+        )
+        result = HOTSPOT.measure_spill_share(annotate)
+        self.assertAlmostEqual(result["stack_spill_percent"], 20.0)
+        self.assertAlmostEqual(result["other_memory_percent"], 20.0)
+
 
 if __name__ == "__main__":
     unittest.main()

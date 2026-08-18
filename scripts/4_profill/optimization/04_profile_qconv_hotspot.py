@@ -37,6 +37,16 @@ V2_CANDIDATE_SOURCE = (
     ROOT
     / "src/c/profill/optimization/candidates/qlinear_conv/qconv_candidate.c"
 )
+FIXED_MAC_SOURCE = (
+    ROOT
+    / "src/c/profill/optimization/candidates/qlinear_conv/microkernels"
+    / "qconv_mac_4x8_intrinsics.c"
+)
+FIXED_DISPATCH_SOURCE = (
+    ROOT
+    / "src/c/profill/optimization/candidates/qlinear_conv/microkernels"
+    / "qconv_mac_4x8.c"
+)
 CATEGORIES = (
     "address_load_control",
     "mac_reduction",
@@ -175,6 +185,8 @@ def build_v2_source_map(
     return {
         "mac_source_name": mac_source.name,
         "candidate_source_name": candidate_source.name,
+        "fixed_mac_source_name": FIXED_MAC_SOURCE.name,
+        "fixed_dispatch_source_name": FIXED_DISPATCH_SOURCE.name,
         "mac_line_count": len(mac_lines),
         "candidate_line_count": len(cand_lines),
         # qconv_mac_neon.c spans
@@ -248,6 +260,8 @@ def classify_v2_sample(
 
     if any(token in symbol for token in FOREIGN_SYMBOL_TOKENS):
         return "foreign_symbol"
+    if "campp_qconv_mac_4x8_" in symbol:
+        return "v2_mac_smlal"
     # Production kernel means the shape fell back out of the candidate path.
     if "campp_aarch64_qlinear_conv_o4i4" in symbol:
         return "foreign_symbol"
@@ -286,6 +300,11 @@ def classify_v2_sample(
             return "setup_other"
         return "setup_other"
 
+    if source_name == source_map["fixed_mac_source_name"]:
+        return "v2_mac_smlal"
+    if source_name == source_map["fixed_dispatch_source_name"]:
+        return "setup_other"
+
     # tensor_view.h / arm_neon.h inline into the candidate; attribute by intent.
     if source_name == "tensor_view.h":
         return "v2_input_address"
@@ -300,8 +319,11 @@ def classify_v2_perf_script(
     periods = {category: 0 for category in V2_CATEGORIES}
     counts = {category: 0 for category in V2_CATEGORIES}
     line_periods: dict[tuple[str, int, str, str], int] = {}
+    fixed_microkernel_sample_count = 0
     samples, malformed = COMMON.iter_perf_samples(text)
     for sample in samples:
+        if "campp_qconv_mac_4x8_" in str(sample["symbol"]).lower():
+            fixed_microkernel_sample_count += 1
         category = classify_v2_sample(sample, source_map)
         period = int(sample["period"])
         periods[category] += period
@@ -320,6 +342,7 @@ def classify_v2_perf_script(
     top = sorted(line_periods.items(), key=lambda item: item[1], reverse=True)
     return {
         "parsed_sample_count": sum(counts.values()),
+        "fixed_microkernel_sample_count": fixed_microkernel_sample_count,
         "malformed_line_count": malformed,
         "total_sample_period": total,
         "category_sample_counts": counts,
@@ -732,11 +755,14 @@ def _run_one(
     script = _run(script_command)
     script_path.write_text(script.stdout, encoding="utf-8", newline="\n")
 
-    annotate_symbol = (
-        "campp_qconv_mac_neon_tile_v2"
-        if qconv_candidate != "baseline"
-        else "campp_aarch64_qlinear_conv_o4i4"
-    )
+    if qconv_candidate == "mac_fixed":
+        annotate_symbol = "campp_qconv_mac_4x8_intrinsics_raw"
+    elif qconv_candidate == "mac_asm":
+        annotate_symbol = "campp_qconv_mac_4x8_aarch64_raw"
+    elif qconv_candidate != "baseline":
+        annotate_symbol = "campp_qconv_mac_neon_tile_v2"
+    else:
+        annotate_symbol = "campp_aarch64_qlinear_conv_o4i4"
     annotate = _run(
         [
             perf,
@@ -813,6 +839,9 @@ def _aggregate_v2_case(
         float(item.get("spill", {}).get("stack_spill_share_of_annotated_pct", 0.0))
         for item in inputs
     ]
+    fixed_sample_count = sum(
+        int(item.get("fixed_microkernel_sample_count", 0)) for item in inputs
+    )
     winner = input_winners[0] if len(set(input_winners)) == 1 else "mixed"
     stable = (
         winner != "mixed"
@@ -848,6 +877,7 @@ def _aggregate_v2_case(
             "stack_spill_share_of_annotated_pct": (
                 sum(spill_shares) / len(spill_shares) if spill_shares else 0.0
             ),
+            "fixed_microkernel_sample_count": fixed_sample_count,
         },
         "decision": {
             "winner": winner,
@@ -1119,10 +1149,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--force", action="store_true")
     parser.add_argument(
         "--qconv-candidate",
-        choices=("baseline", "address", "mac", "combined"),
+        choices=(
+            "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm"
+        ),
         default="baseline",
         help="profile a candidate instead of the production kernel; "
-        "'mac'/'combined' select the MAC v2 classifier",
+        "non-baseline modes select the candidate classifier",
     )
     args = parser.parse_args(argv)
 
@@ -1146,6 +1178,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             profile, "weights"
         )
         required = [args.binary, plan, weights, QCONV_SOURCE, *args.features]
+        if args.qconv_candidate in ("mac_fixed", "mac_asm"):
+            required.extend([FIXED_MAC_SOURCE, FIXED_DISPATCH_SOURCE])
         missing = [path for path in required if not path.is_file()]
         if missing:
             raise HotspotError(

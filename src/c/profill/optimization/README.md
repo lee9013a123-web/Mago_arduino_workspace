@@ -13,8 +13,10 @@ retained tensor bitwise 검증, Quick E2E 성능을 모두 통과한 구현만
 디렉터리에 의존하게 만들지 않는다.
 
 QConv 일반 경로와 fused Quant-QConv는 동일한 O4I4 core를 공유한다. QConv
-후보는 `candidates/qlinear_conv/`에 모으고 address, MAC, combined 모드로
-각각 측정한다. fused 후보는 production의 quantization/scratch driver를 그대로
+후보는 `candidates/qlinear_conv/`에 모으고 address, MAC, combined와 고정
+S4×O8 microkernel 모드로 각각 측정한다. `mac_fixed`는 compiler register
+allocation을 비교하고 `mac_asm`은 fixed intrinsics에도 spill이 남을 때만
+검증한다. fused 후보는 production의 quantization/scratch driver를 그대로
 사용하고 QConv runner만 주입한다. 따라서 별도 MAC 구현 없이 같은 개선을
 공유하며, fused 측정에서 남는 input quantization 비중은 후속 tile quantization
 후보의 근거로 사용한다. 이후 BN-ReLU-Quant, DequantizeLinear를 분리한다.
@@ -28,6 +30,12 @@ DequantizeLinear 후보 역시 production registry에 등록하지 않는다. �
 channel-packed Tensor view를 `N/spatial/channel` 순서로 직접 순회하고 scalar
 parameter를 hoist한 뒤, 최종 후보에서 16개 channel을 NEON으로 변환한다.
 지원하지 않는 layout과 axis는 reference kernel로 fallback한다.
+
+나머지 10개 kernel 후보는 `candidates/common/`의 packed iteration, NEON
+elementwise, reduction, block-copy, Sigmoid LUT를 공유한다. 후보 선택은
+`--remaining-candidate baseline|optimized`로 격리하며, 미지원 signature는 기존
+kernel로 돌아간다. 승격 전에는 개별 output hash뿐 아니라 retained tensor 전체와
+Quick E2E를 다시 검증한다.
 
 `perf_sample_window.c`는 외부 Linux `perf record`를 target kernel 호출 동안만
 활성화한다. sampling 전용 `campp_operator_hotspot`은 runtime kernel의 stage
