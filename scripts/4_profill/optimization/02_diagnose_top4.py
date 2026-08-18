@@ -173,6 +173,7 @@ def _command(
     warmup: int,
     repeat: int,
     expected_hash: str | None = None,
+    qconv_candidate: str = "baseline",
 ) -> list[str]:
     command = [
         str(binary),
@@ -190,6 +191,8 @@ def _command(
         str(repeat),
         "--threads",
         "1",
+        "--qconv-candidate",
+        qconv_candidate,
     ]
     if expected_hash is not None:
         command.extend(("--expected-output-hash", expected_hash))
@@ -228,12 +231,18 @@ def _run_payload(command: Sequence[str]) -> dict[str, Any]:
 
 
 def _validate_payload(
-    payload: dict[str, Any], case: dict[str, Any], repeat: int
+    payload: dict[str, Any], case: dict[str, Any], repeat: int,
+    qconv_candidate: str | None = None,
 ) -> None:
     if payload.get("mode") != "operator_microbench":
         raise DiagnosisError("unexpected microbench mode")
     if payload.get("clock") != "CLOCK_MONOTONIC_RAW":
         raise DiagnosisError("microbench clock is not CLOCK_MONOTONIC_RAW")
+    if (
+        qconv_candidate is not None
+        and payload.get("qconv_candidate") != qconv_candidate
+    ):
+        raise DiagnosisError("QConv candidate mode mismatch")
     operator = payload.get("operator")
     if not isinstance(operator, dict) or (
         operator.get("operator_id") != case["operator_id"]
@@ -353,6 +362,7 @@ def build_diagnosis(
     warmup: int,
     repeat: int,
     elapsed_seconds: float,
+    qconv_candidate: str = "baseline",
 ) -> dict[str, Any]:
     results = [
         _aggregate_case(case, payloads_by_case[case["case_name"]])
@@ -370,6 +380,7 @@ def build_diagnosis(
             "repeat_per_input": repeat,
             "input_count": 3,
             "elapsed_seconds": elapsed_seconds,
+            "qconv_candidate": qconv_candidate,
         },
         "target_kernel_families": list(TARGET_KERNELS),
         "case_count": len(results),
@@ -411,6 +422,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--warmup", type=int, default=5)
     parser.add_argument("--repeat", type=int, default=20)
     parser.add_argument(
+        "--qconv-candidate",
+        choices=("baseline", "address", "mac", "combined"),
+        default="baseline",
+    )
+    parser.add_argument("--qconv-only", action="store_true")
+    parser.add_argument(
         "--runs-dir",
         type=_path,
         default=ROOT / "runs/profiling/e7_98/optimization/diagnosis",
@@ -433,6 +450,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise DiagnosisError(f"profile not found: {args.profile}")
         profile = json.loads(args.profile.read_text(encoding="utf-8"))
         cases = select_representative_cases(profile.get("operators", []))
+        if args.qconv_only:
+            cases = [
+                case
+                for case in cases
+                if case["case_name"] in ("qconv_3x3", "qconv_1x1")
+            ]
         plan = args.plan or _resolve_profile_artifact(profile, "plan")
         weights = args.weights or _resolve_profile_artifact(profile, "weights")
         required = [args.binary, plan, weights, *args.features]
@@ -449,6 +472,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         capabilities = _run_payload([str(args.binary), "--capabilities"])
         if capabilities.get("stage_probe") is not True:
             raise DiagnosisError("binary does not expose optimization stage probes")
+        if args.qconv_candidate not in capabilities.get("qconv_candidates", []):
+            raise DiagnosisError("binary does not expose requested QConv candidate")
         if args.preflight_only:
             print(
                 json.dumps(
@@ -458,6 +483,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "weights": _display_path(weights),
                         "features": [_display_path(path) for path in args.features],
                         "cases": cases,
+                        "qconv_candidate": args.qconv_candidate,
                     },
                     ensure_ascii=False,
                     indent=2,
@@ -490,9 +516,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                         operator_id=case["operator_id"],
                         warmup=args.warmup,
                         repeat=args.repeat,
+                        qconv_candidate=(
+                            args.qconv_candidate
+                            if case["case_name"]
+                            in ("qconv_3x3", "qconv_1x1")
+                            else "baseline"
+                        ),
                     )
                 )
-                _validate_payload(payload, case, args.repeat)
+                expected_candidate = (
+                    args.qconv_candidate
+                    if case["case_name"] in ("qconv_3x3", "qconv_1x1")
+                    else "baseline"
+                )
+                _validate_payload(
+                    payload, case, args.repeat, expected_candidate
+                )
                 payload["input"] = {
                     "path": _display_path(feature),
                     "byte_size": feature.stat().st_size,
@@ -510,6 +549,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             warmup=args.warmup,
             repeat=args.repeat,
             elapsed_seconds=time.monotonic() - started,
+            qconv_candidate=args.qconv_candidate,
         )
         diagnosis["artifacts"] = {
             "profile": _display_path(args.profile),

@@ -16,11 +16,19 @@ mapfile -t RUNTIME_SOURCES < <(
         -not -path '*command_line*' | sort
 )
 
+CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv"
+CANDIDATE_SOURCES=(
+    "${CANDIDATE_DIR}/qconv_address_fastpath.c"
+    "${CANDIDATE_DIR}/qconv_mac_neon.c"
+    "${CANDIDATE_DIR}/qconv_candidate.c"
+)
+
 INCLUDES=(
     -I "${ROOT}/src/c/runtime"
     -I "${ROOT}/src/c/runtime/include"
     -I "${ROOT}/src/c/profill/include"
     -I "${ROOT}/src/c/profill/optimization/include"
+    -I "${CANDIDATE_DIR}"
 )
 
 # shellcheck disable=SC2086
@@ -32,6 +40,7 @@ INCLUDES=(
     "${ROOT}/src/c/profill/optimization/diagnostics/stage_probe.c" \
     "${ROOT}/src/c/profill/optimization/diagnostics/linux_pmu.c" \
     "${ROOT}/src/c/profill/optimization/diagnostics/perf_sample_window.c" \
+    "${CANDIDATE_SOURCES[@]}" \
     "${ROOT}/src/c/profill/optimization/command_line/campp_operator_microbench.c" \
     -lm -o "${BUILD_DIR}/campp_operator_microbench"
 
@@ -45,6 +54,7 @@ INCLUDES=(
     "${ROOT}/src/c/profill/optimization/diagnostics/stage_probe.c" \
     "${ROOT}/src/c/profill/optimization/diagnostics/linux_pmu.c" \
     "${ROOT}/src/c/profill/optimization/diagnostics/perf_sample_window.c" \
+    "${CANDIDATE_SOURCES[@]}" \
     "${ROOT}/src/c/profill/optimization/command_line/campp_operator_microbench.c" \
     -lm -o "${BUILD_DIR}/campp_operator_hotspot"
 
@@ -57,14 +67,24 @@ INCLUDES=(
     "${ROOT}/tests/runtime/profill/test_optimization_probe.c" \
     -lm -o "${BUILD_DIR}/test_optimization_probe"
 
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/test_qconv_candidate.c" \
+    -lm -o "${BUILD_DIR}/test_qconv_candidate"
+
 {
     printf 'cc=%s\n' "${CC}"
     printf 'cflags=%s\n' "${CFLAGS}"
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
     printf 'hotspot_stage_probe=disabled\n'
+    printf 'qconv_candidate_modes=baseline,address,mac,combined\n'
 } > "${BUILD_DIR}/build_metadata.txt"
 
 echo "Optimization diagnostics build complete"
 echo "  microbench: ${BUILD_DIR}/campp_operator_microbench"
 echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"
+echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"

@@ -204,6 +204,46 @@ results/profiling/e7_98/optimization/qconv_hotspot/qconv_hotspot.json
 results/profiling/e7_98/optimization/qconv_hotspot/qconv_hotspot.csv
 ```
 
-두 shape에서 `mac_reduction`이 안정적으로 우세할 때만 공통 O4I4 NEON
-microkernel을 먼저 구현한다. `address_load_control`이 우세하면 좌표/offset
-fast path를 먼저 만들고, shape별 승자가 다르면 3x3과 1x1 후보를 분리한다.
+hotspot 결과는 address와 MAC 중 구현 순서를 정하는 근거로 사용한다. 두 후보를
+모두 구현하는 경우에도 각각을 독립 측정한 뒤 combined 결과를 확인하며,
+shape별 효과가 다르면 3x3과 1x1 dispatch를 분리한다.
+
+## QConv 최적화 후보 비교
+
+QConv 후보는 production kernel을 수정하지 않고 target Operator에서만
+선택한다. 빌드 후 C equivalence test를 먼저 실행한다.
+
+```bash
+bash scripts/4_profill/optimization/01_build_optimization.sh
+build/profill/optimization/test_qconv_candidate
+```
+
+기존 QConv, address-only, MAC-only, combined를 같은 두 shape와 세 입력으로
+측정한다. 각 모드는 별도 raw/result 경로를 사용한다.
+
+```bash
+for mode in baseline address mac combined; do
+  python3 scripts/4_profill/optimization/02_diagnose_top4.py \
+    --qconv-only \
+    --qconv-candidate "${mode}" \
+    --runs-dir "runs/profiling/e7_98/optimization/qconv_candidates/${mode}" \
+    --output "results/profiling/e7_98/optimization/qconv_${mode}.json" \
+    --force
+done
+```
+
+후보별 bitwise hash와 latency gate는 기존 비교기를 그대로 사용한다.
+
+```bash
+for mode in address mac combined; do
+  python3 scripts/4_profill/optimization/03_compare_candidate.py \
+    --baseline results/profiling/e7_98/optimization/qconv_baseline.json \
+    --candidate "results/profiling/e7_98/optimization/qconv_${mode}.json" \
+    --output "results/profiling/e7_98/optimization/qconv_${mode}_comparison.json" \
+    --force
+done
+```
+
+`combined`가 세 입력에서 bitwise 동일하고 두 shape 모두 회귀 없이 개선된
+경우에만 production QConv의 fast path로 승격한다. 기존 구현은 지원하지 않는
+layout을 위한 fallback으로 유지한다.

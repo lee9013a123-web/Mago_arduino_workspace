@@ -77,6 +77,7 @@ def _payload(case: dict, *, pmu_available: bool = True) -> dict:
     return {
         "mode": "operator_microbench",
         "clock": "CLOCK_MONOTONIC_RAW",
+        "qconv_candidate": "baseline",
         "operator": {
             "operator_id": case["operator_id"],
             "kernel_id": case["kernel_id"],
@@ -152,6 +153,32 @@ class OptimizationDiagnosisTests(unittest.TestCase):
         payload["output_hash_matches"] = False
         with self.assertRaises(DIAGNOSE.DiagnosisError):
             DIAGNOSE._validate_payload(payload, case, 2)
+
+    def test_qconv_candidate_is_forwarded_and_validated(self) -> None:
+        command = DIAGNOSE._command(
+            Path("microbench"),
+            plan=Path("plan.bin"),
+            weights=Path("weights.bin"),
+            feature=Path("input.f32"),
+            operator_id=2,
+            warmup=5,
+            repeat=20,
+            qconv_candidate="combined",
+        )
+        self.assertEqual(
+            command[command.index("--qconv-candidate") + 1], "combined"
+        )
+        case = {
+            "case_name": "qconv_3x3",
+            "operator_id": 2,
+            "kernel_id": 1,
+            "kernel_name": "qlinear_conv_o4i4_neon",
+        }
+        payload = _payload(case)
+        payload["qconv_candidate"] = "combined"
+        DIAGNOSE._validate_payload(payload, case, 2, "combined")
+        with self.assertRaises(DIAGNOSE.DiagnosisError):
+            DIAGNOSE._validate_payload(payload, case, 2, "address")
 
     def test_candidate_comparison_requires_hashes_and_speedup(self) -> None:
         case = {

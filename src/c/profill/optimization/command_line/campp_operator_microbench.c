@@ -23,6 +23,7 @@
 #include "internal/runtime_context.h"
 #include "internal/runtime_model.h"
 #include "memory_management/memory_bounds_checker.h"
+#include "qconv_candidate.h"
 
 typedef struct MicrobenchOptions {
     const char *plan_path;
@@ -33,6 +34,7 @@ typedef struct MicrobenchOptions {
     uint32_t repeat;
     uint32_t requested_threads;
     uint64_t expected_output_hash;
+    CamppQconvCandidateMode qconv_candidate;
     int has_expected_output_hash;
     int perf_window;
 } MicrobenchOptions;
@@ -85,7 +87,8 @@ static void usage(const char *program)
         stderr,
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
         "--operator-id N [--warmup 5] [--repeat 20] [--threads 1] "
-        "[--expected-output-hash HEX] [--perf-window]\n",
+        "[--expected-output-hash HEX] [--perf-window] "
+        "[--qconv-candidate baseline|address|mac|combined]\n",
         program);
 }
 
@@ -100,6 +103,7 @@ static int parse_options(
     options->warmup = 5u;
     options->repeat = 20u;
     options->requested_threads = 1u;
+    options->qconv_candidate = CAMPP_QCONV_CANDIDATE_BASELINE;
 
     for (index = 1; index < argc; ++index) {
         const char *name = argv[index];
@@ -139,6 +143,12 @@ static int parse_options(
                 return 1;
             }
             options->has_expected_output_hash = 1;
+        } else if (strcmp(name, "--qconv-candidate") == 0) {
+            if (campp_qconv_candidate_mode_parse(
+                    value, &options->qconv_candidate) != 0) {
+                fprintf(stderr, "invalid QConv candidate: %s\n", value);
+                return 1;
+            }
         } else {
             fprintf(stderr, "unknown option: %s\n", name);
             return 1;
@@ -386,6 +396,10 @@ static void print_result(
         "\"model\":{\"bucket_frames\":%" PRIu32
         ",\"operator_count\":%" PRIu32 "},",
         model->bucket_frames, model->operator_count);
+    fputs("\"qconv_candidate\":", stdout);
+    print_json_string(campp_qconv_candidate_mode_name(
+        options->qconv_candidate));
+    putchar(',');
     printf(
         "\"operator\":{\"operator_id\":%" PRIu32
         ",\"opcode\":%u,\"kernel_id\":%u,\"kernel_name\":",
@@ -467,6 +481,8 @@ int main(int argc, char **argv)
             "\"effective_threads\":1,\"bucket\":98,"
             "\"measurement_scope\":\"single_kernel_run\","
             "\"pmu\":true,"
+            "\"qconv_candidates\":[\"baseline\",\"address\","
+            "\"mac\",\"combined\"],"
 #if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
             "\"stage_probe\":true,"
 #else
@@ -548,6 +564,16 @@ int main(int argc, char **argv)
     if (prepare_target_invocation(&context, op, &invocation) != 0) {
         fprintf(stderr, "cannot prepare target kernel invocation\n");
         goto cleanup;
+    }
+    if (options.qconv_candidate != CAMPP_QCONV_CANDIDATE_BASELINE) {
+        const CamppKernelEntry *candidate =
+            campp_qconv_candidate_entry(options.qconv_candidate);
+        if (candidate == NULL || op->opcode != CAMPP_OP_QLINEAR_CONV ||
+            op->kernel_id != candidate->kernel_id) {
+            fprintf(stderr, "QConv candidate requires packed QLinearConv\n");
+            goto cleanup;
+        }
+        invocation.kernel = candidate;
     }
 
     if (restore_input_snapshots(
