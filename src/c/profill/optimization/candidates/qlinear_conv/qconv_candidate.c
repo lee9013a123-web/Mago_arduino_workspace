@@ -235,7 +235,7 @@ static CamppStatus campp_qconv_candidate_prepare(
     return CAMPP_STATUS_OK;
 }
 
-static CamppStatus campp_qconv_candidate_run(
+static CamppStatus campp_qconv_candidate_run_v1(
     CamppQconvCandidateMode mode, const CamppRuntimeModel *model,
     const CamppOperatorDescriptor *op, const CamppTensorView *inputs,
     uint8_t input_count, CamppTensorView *outputs, uint8_t output_count,
@@ -423,6 +423,230 @@ static CamppStatus campp_qconv_candidate_run(
         }
     }
     return CAMPP_STATUS_OK;
+}
+
+static CamppStatus campp_qconv_candidate_load_parameters(
+    const CamppQconvCandidateContext *context,
+    const CamppTensorView *inputs, uint8_t input_count,
+    uint32_t group_index, uint32_t first_within, uint32_t capacity,
+    int32_t weight_zero[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    float multiplier[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    uint32_t *out_valid_outputs)
+{
+    const uint32_t remaining =
+        context->outputs_per_group - first_within;
+    const uint32_t valid_outputs = remaining < capacity
+        ? remaining : capacity;
+    uint32_t output_lane;
+
+    memset(
+        weight_zero, 0,
+        sizeof(*weight_zero) * CAMPP_QCONV_CANDIDATE_OUTPUT_TILE);
+    memset(
+        multiplier, 0,
+        sizeof(*multiplier) * CAMPP_QCONV_CANDIDATE_OUTPUT_TILE);
+    memset(
+        bias, 0,
+        sizeof(*bias) * CAMPP_QCONV_CANDIDATE_OUTPUT_TILE);
+    for (output_lane = 0u;
+         output_lane < valid_outputs; ++output_lane) {
+        const uint32_t channel =
+            group_index * context->outputs_per_group
+            + first_within + output_lane;
+        uint64_t parameter_index;
+        float weight_scale;
+        CamppStatus status;
+
+        parameter_index =
+            campp_tensor_view_element_count(&inputs[4]) == 1u
+                ? 0u : channel;
+        status = campp_reference_read_f32(
+            &inputs[4], parameter_index, &weight_scale);
+        if (status != CAMPP_STATUS_OK) return status;
+        parameter_index =
+            campp_tensor_view_element_count(&inputs[5]) == 1u
+                ? 0u : channel;
+        status = campp_reference_read_quantized(
+            &inputs[5], parameter_index, &weight_zero[output_lane]);
+        if (status != CAMPP_STATUS_OK) return status;
+        if (!(weight_scale > 0.0f) || !isfinite(weight_scale)) {
+            return CAMPP_STATUS_KERNEL_FAILED;
+        }
+        multiplier[output_lane] =
+            context->input_scale * weight_scale / context->output_scale;
+        if (input_count == 9u) {
+            status = campp_reference_read_quantized(
+                &inputs[8], channel, &bias[output_lane]);
+            if (status != CAMPP_STATUS_OK) return status;
+        }
+    }
+    *out_valid_outputs = valid_outputs;
+    return CAMPP_STATUS_OK;
+}
+
+static CamppStatus campp_qconv_candidate_run_v2(
+    CamppQconvCandidateMode mode, const CamppRuntimeModel *model,
+    const CamppOperatorDescriptor *op, const CamppTensorView *inputs,
+    uint8_t input_count, CamppTensorView *outputs, uint8_t output_count,
+    void *scratch, size_t scratch_size)
+{
+    CamppQconvCandidateContext context;
+    CamppStatus status;
+    uint32_t batch;
+
+    CAMPP_OPTIMIZATION_STAGE_BEGIN(setup_started_ns);
+    status = campp_qconv_candidate_prepare(
+        model, op, inputs, input_count, outputs, output_count, &context);
+    CAMPP_OPTIMIZATION_STAGE_END(
+        CAMPP_OPT_STAGE_QCONV_SETUP, setup_started_ns);
+    if (status == CAMPP_STATUS_NOT_IMPLEMENTED) {
+        return campp_aarch64_qlinear_conv_o4i4(
+            model, op, inputs, input_count, outputs, output_count,
+            scratch, scratch_size);
+    }
+    if (status != CAMPP_STATUS_OK) return status;
+    if (context.kernel_elements >
+            CAMPP_QCONV_CANDIDATE_MAX_KERNEL_ELEMENTS ||
+        (uint64_t)context.kernel_elements * context.inputs_per_group
+            * UINT64_C(65025) > INT32_MAX ||
+        context.output->byte_strides[1] != 1u) {
+        return campp_aarch64_qlinear_conv_o4i4(
+            model, op, inputs, input_count, outputs, output_count,
+            scratch, scratch_size);
+    }
+
+    for (batch = 0u; batch < context.input->dimensions[0]; ++batch) {
+        uint32_t group_index;
+        for (group_index = 0u;
+             group_index < context.group; ++group_index) {
+            uint32_t output_block;
+            for (output_block = 0u;
+                 output_block < context.output_blocks;
+                 output_block += 2u) {
+                const uint32_t first_within = output_block
+                    * CAMPP_QCONV_CANDIDATE_OUTPUT_BLOCK;
+                int32_t weight_zero
+                    [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE];
+                float multiplier[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE];
+                int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE];
+                const uint8_t *packed_weights[2] = {NULL, NULL};
+                uint32_t valid_outputs;
+                uint32_t tile_start;
+
+                status = campp_qconv_candidate_load_parameters(
+                    &context, inputs, input_count, group_index,
+                    first_within, CAMPP_QCONV_CANDIDATE_OUTPUT_TILE,
+                    weight_zero, multiplier, bias, &valid_outputs);
+                if (status != CAMPP_STATUS_OK) return status;
+                packed_weights[0] =
+                    (const uint8_t *)context.weight->data
+                    + (((uint64_t)group_index * context.output_blocks
+                        + output_block)
+                       * context.kernel_elements * context.input_blocks
+                       * CAMPP_QCONV_CANDIDATE_OUTPUT_BLOCK
+                       * CAMPP_QCONV_CANDIDATE_INPUT_BLOCK);
+                if (output_block + 1u < context.output_blocks) {
+                    packed_weights[1] =
+                        (const uint8_t *)context.weight->data
+                        + (((uint64_t)group_index * context.output_blocks
+                            + output_block + 1u)
+                           * context.kernel_elements * context.input_blocks
+                           * CAMPP_QCONV_CANDIDATE_OUTPUT_BLOCK
+                           * CAMPP_QCONV_CANDIDATE_INPUT_BLOCK);
+                }
+
+                for (tile_start = 0u;
+                     tile_start < context.output_spatial;
+                     tile_start += CAMPP_QCONV_CANDIDATE_TILE) {
+                    const uint32_t tile_count =
+                        context.output_spatial - tile_start
+                            < CAMPP_QCONV_CANDIDATE_TILE
+                        ? context.output_spatial - tile_start
+                        : CAMPP_QCONV_CANDIDATE_TILE;
+                    uint32_t output_coordinates
+                        [CAMPP_QCONV_CANDIDATE_TILE][2];
+                    const uint8_t *input_points
+                        [CAMPP_QCONV_CANDIDATE_MAX_KERNEL_ELEMENTS]
+                        [CAMPP_QCONV_CANDIDATE_TILE] = {{NULL}};
+                    int32_t accumulators
+                        [CAMPP_QCONV_CANDIDATE_TILE]
+                        [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE];
+                    uint32_t kernel_index;
+
+                    campp_qconv_address_output_tile(
+                        &context.address, tile_start, tile_count,
+                        output_coordinates);
+                    CAMPP_OPTIMIZATION_STAGE_BEGIN(mac_started_ns);
+                    for (kernel_index = 0u;
+                         kernel_index < context.kernel_elements;
+                         ++kernel_index) {
+                        uint32_t kernel_coordinates[2];
+                        uint32_t tile;
+                        campp_qconv_candidate_spatial_coordinates(
+                            context.spatial_rank, kernel_index,
+                            context.spatial_rank == 1u
+                                ? 1u
+                                : (uint32_t)context.kernel_shape[1],
+                            kernel_coordinates);
+                        for (tile = 0u; tile < tile_count; ++tile) {
+                            input_points[kernel_index][tile] =
+                                campp_qconv_address_input_base(
+                                    &context.address, batch,
+                                    group_index
+                                        * context.inputs_per_group,
+                                    output_coordinates[tile],
+                                    kernel_coordinates,
+                                    mode == CAMPP_QCONV_CANDIDATE_COMBINED);
+                        }
+                    }
+                    if (campp_qconv_mac_neon_tile_v2(
+                            input_points, context.kernel_elements,
+                            tile_count, packed_weights,
+                            context.inputs_per_group,
+                            context.input->dtype, context.weight->dtype,
+                            context.input_zero, weight_zero, bias,
+                            valid_outputs, accumulators) != 0) {
+                        return CAMPP_STATUS_KERNEL_FAILED;
+                    }
+                    CAMPP_OPTIMIZATION_STAGE_END(
+                        CAMPP_OPT_STAGE_QCONV_MAC_ADDRESS,
+                        mac_started_ns);
+
+                    CAMPP_OPTIMIZATION_STAGE_BEGIN(requant_started_ns);
+                    if (campp_qconv_requantize_store_neon_tile(
+                            context.output, batch,
+                            group_index * context.outputs_per_group
+                                + first_within,
+                            context.spatial_rank, output_coordinates,
+                            tile_count, valid_outputs, accumulators,
+                            multiplier, context.output_zero) != 0) {
+                        return CAMPP_STATUS_KERNEL_FAILED;
+                    }
+                    CAMPP_OPTIMIZATION_STAGE_END(
+                        CAMPP_OPT_STAGE_QCONV_REQUANT_WRITE,
+                        requant_started_ns);
+                }
+            }
+        }
+    }
+    return CAMPP_STATUS_OK;
+}
+
+static CamppStatus campp_qconv_candidate_run(
+    CamppQconvCandidateMode mode, const CamppRuntimeModel *model,
+    const CamppOperatorDescriptor *op, const CamppTensorView *inputs,
+    uint8_t input_count, CamppTensorView *outputs, uint8_t output_count,
+    void *scratch, size_t scratch_size)
+{
+    if (mode == CAMPP_QCONV_CANDIDATE_ADDRESS) {
+        return campp_qconv_candidate_run_v1(
+            mode, model, op, inputs, input_count, outputs, output_count,
+            scratch, scratch_size);
+    }
+    return campp_qconv_candidate_run_v2(
+        mode, model, op, inputs, input_count, outputs, output_count,
+        scratch, scratch_size);
 }
 
 #define CAMPP_DEFINE_QCONV_CANDIDATE(function_name, candidate_mode) \
