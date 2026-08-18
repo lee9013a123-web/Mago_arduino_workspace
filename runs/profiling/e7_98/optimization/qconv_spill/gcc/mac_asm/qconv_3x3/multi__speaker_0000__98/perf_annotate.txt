@@ -1,0 +1,211 @@
+ Percent |	Source code & Disassembly of campp_operator_hotspot for cycles:u (4915 samples, percent: local period)
+----------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000016de0 <campp_qconv_mac_4x8_aarch64_raw>:
+         : 6     .endm
+         :
+         : 8     .global campp_qconv_mac_4x8_aarch64_raw
+         : 9     .type campp_qconv_mac_4x8_aarch64_raw, %function
+         : 10    campp_qconv_mac_4x8_aarch64_raw:
+         : 11    ldr x1, [x0, #0]
+    0.02 :   16de0:  ldr     x1, [x0]
+         : 13    ldr x2, [x0, #8]
+    0.00 :   16de4:  ldr     x2, [x0, #8]
+         : 15    ldr x3, [x0, #16]
+    0.02 :   16de8:  ldr     x3, [x0, #16]
+         : 17    ldr x4, [x0, #24]
+    0.00 :   16dec:  ldr     x4, [x0, #24]
+         : 19    ldr x5, [x0, #32]
+    0.00 :   16df0:  ldr     x5, [x0, #32]
+         : 21    ldr w6, [x0, #40]
+    0.00 :   16df4:  ldr     w6, [x0, #40]
+         : 23    ldr w7, [x0, #44]
+    0.00 :   16df8:  ldr     w7, [x0, #44]
+         : 25    ldr w8, [x0, #48]
+    0.00 :   16dfc:  ldr     w8, [x0, #48]
+         : 27    lsr w7, w7, #2
+    0.06 :   16e00:  lsr     w7, w7, #2
+         :
+         : 30    movi v16.4s, #0
+    0.02 :   16e04:  movi    v16.4s, #0x0
+         : 32    movi v17.4s, #0
+    0.00 :   16e08:  movi    v17.4s, #0x0
+         : 34    movi v18.4s, #0
+    0.02 :   16e0c:  movi    v18.4s, #0x0
+         : 36    movi v19.4s, #0
+    0.02 :   16e10:  movi    v19.4s, #0x0
+         : 38    movi v20.4s, #0
+    0.02 :   16e14:  movi    v20.4s, #0x0
+         : 40    movi v21.4s, #0
+    0.00 :   16e18:  movi    v21.4s, #0x0
+         : 42    movi v22.4s, #0
+    0.00 :   16e1c:  movi    v22.4s, #0x0
+         : 44    movi v23.4s, #0
+    0.00 :   16e20:  movi    v23.4s, #0x0
+         :
+         : 47    .Lcampp_qconv_4x8_kernel:
+         : 48    ldp x10, x11, [x1]
+    0.12 :   16e24:  ldp     x10, x11, [x1]
+         : 50    ldp x12, x13, [x1, #16]
+    0.31 :   16e28:  ldp     x12, x13, [x1, #16]
+         : 52    mov w14, #0
+    0.00 :   16e2c:  mov     w14, #0x0                       // #0
+         : 54    mov w15, w7
+    0.18 :   16e30:  mov     w15, w7
+         :
+         : 57    .Lcampp_qconv_4x8_input_block:
+         : 58    ldr s24, [x10, x14]
+    1.08 :   16e34:  ldr     s24, [x10, x14]
+         : 60    ldr s25, [x11, x14]
+    1.14 :   16e38:  ldr     s25, [x11, x14]
+         : 62    ldr s26, [x12, x14]
+    1.10 :   16e3c:  ldr     s26, [x12, x14]
+         : 64    ldr s27, [x13, x14]
+    1.12 :   16e40:  ldr     s27, [x13, x14]
+         : 66    uxtl v24.8h, v24.8b
+    7.02 :   16e44:  uxtl    v24.8h, v24.8b
+         : 68    uxtl v25.8h, v25.8b
+    1.28 :   16e48:  uxtl    v25.8h, v25.8b
+         : 70    uxtl v26.8h, v26.8b
+    0.92 :   16e4c:  uxtl    v26.8h, v26.8b
+         : 72    uxtl v27.8h, v27.8b
+    0.90 :   16e50:  uxtl    v27.8h, v27.8b
+         : 74    dup v31.4h, w8
+    1.14 :   16e54:  dup     v31.4h, w8
+         : 76    sub v24.4h, v24.4h, v31.4h
+    1.02 :   16e58:  sub     v24.4h, v24.4h, v31.4h
+         : 78    sub v25.4h, v25.4h, v31.4h
+    0.00 :   16e5c:  sub     v25.4h, v25.4h, v31.4h
+         : 80    sub v26.4h, v26.4h, v31.4h
+    1.08 :   16e60:  sub     v26.4h, v26.4h, v31.4h
+         : 82    sub v27.4h, v27.4h, v31.4h
+    0.00 :   16e64:  sub     v27.4h, v27.4h, v31.4h
+         :
+         : 85    CAMPP_QCONV_LOAD_COLUMNS x2, 0
+    1.20 :   16e68:  ldr     q28, [x2], #16
+    3.09 :   16e6c:  sxtl    v29.8h, v28.8b
+    1.18 :   16e70:  sxtl2   v30.8h, v28.16b
+    1.06 :   16e74:  ext     v31.16b, v29.16b, v29.16b, #8
+    2.16 :   16e78:  trn1    v4.4h, v29.4h, v31.4h
+    0.00 :   16e7c:  trn2    v5.4h, v29.4h, v31.4h
+    0.85 :   16e80:  ext     v31.16b, v30.16b, v30.16b, #8
+    2.01 :   16e84:  trn1    v6.4h, v30.4h, v31.4h
+    0.00 :   16e88:  trn2    v7.4h, v30.4h, v31.4h
+    1.91 :   16e8c:  trn1    v0.2s, v4.2s, v6.2s
+    0.00 :   16e90:  trn2    v2.2s, v4.2s, v6.2s
+    0.81 :   16e94:  trn1    v1.2s, v5.2s, v7.2s
+    0.00 :   16e98:  trn2    v3.2s, v5.2s, v7.2s
+    1.04 :   16e9c:  ldr     q31, [x4]
+    4.13 :   16ea0:  xtn     v31.4h, v31.4s
+    0.94 :   16ea4:  sub     v0.4h, v0.4h, v31.4h
+    0.00 :   16ea8:  sub     v1.4h, v1.4h, v31.4h
+    0.69 :   16eac:  sub     v2.4h, v2.4h, v31.4h
+    0.00 :   16eb0:  sub     v3.4h, v3.4h, v31.4h
+         : 105   /* SMLAL-by-element encodes its lane source in v0-v15 only. */
+         : 106   mov v4.8b, v24.8b
+    0.77 :   16eb4:  mov     v4.8b, v24.8b
+         : 108   mov v5.8b, v25.8b
+    0.00 :   16eb8:  mov     v5.8b, v25.8b
+         : 110   mov v6.8b, v26.8b
+    0.83 :   16ebc:  mov     v6.8b, v26.8b
+         : 112   mov v7.8b, v27.8b
+    0.00 :   16ec0:  mov     v7.8b, v27.8b
+         : 114   CAMPP_QCONV_ACCUMULATE v16, v4
+    0.83 :   16ec4:  smlal   v16.4s, v0.4h, v4.h[0]
+    1.18 :   16ec8:  smlal   v16.4s, v1.4h, v4.h[1]
+    0.94 :   16ecc:  smlal   v16.4s, v2.4h, v4.h[2]
+    1.20 :   16ed0:  smlal   v16.4s, v3.4h, v4.h[3]
+         : 119   CAMPP_QCONV_ACCUMULATE v17, v5
+    1.49 :   16ed4:  smlal   v17.4s, v0.4h, v5.h[0]
+    0.92 :   16ed8:  smlal   v17.4s, v1.4h, v5.h[1]
+    1.02 :   16edc:  smlal   v17.4s, v2.4h, v5.h[2]
+    1.02 :   16ee0:  smlal   v17.4s, v3.4h, v5.h[3]
+         : 124   CAMPP_QCONV_ACCUMULATE v18, v6
+    1.02 :   16ee4:  smlal   v18.4s, v0.4h, v6.h[0]
+    0.94 :   16ee8:  smlal   v18.4s, v1.4h, v6.h[1]
+    0.77 :   16eec:  smlal   v18.4s, v2.4h, v6.h[2]
+    0.96 :   16ef0:  smlal   v18.4s, v3.4h, v6.h[3]
+         : 129   CAMPP_QCONV_ACCUMULATE v19, v7
+    0.83 :   16ef4:  smlal   v19.4s, v0.4h, v7.h[0]
+    0.69 :   16ef8:  smlal   v19.4s, v1.4h, v7.h[1]
+    1.04 :   16efc:  smlal   v19.4s, v2.4h, v7.h[2]
+    1.10 :   16f00:  smlal   v19.4s, v3.4h, v7.h[3]
+         :
+         : 135   CAMPP_QCONV_LOAD_COLUMNS x3, 16
+    1.32 :   16f04:  ldr     q28, [x3], #16
+    3.19 :   16f08:  sxtl    v29.8h, v28.8b
+    0.98 :   16f0c:  sxtl2   v30.8h, v28.16b
+    1.08 :   16f10:  ext     v31.16b, v29.16b, v29.16b, #8
+    1.93 :   16f14:  trn1    v4.4h, v29.4h, v31.4h
+    0.00 :   16f18:  trn2    v5.4h, v29.4h, v31.4h
+    1.02 :   16f1c:  ext     v31.16b, v30.16b, v30.16b, #8
+    2.01 :   16f20:  trn1    v6.4h, v30.4h, v31.4h
+    0.00 :   16f24:  trn2    v7.4h, v30.4h, v31.4h
+    1.91 :   16f28:  trn1    v0.2s, v4.2s, v6.2s
+    0.00 :   16f2c:  trn2    v2.2s, v4.2s, v6.2s
+    0.96 :   16f30:  trn1    v1.2s, v5.2s, v7.2s
+    0.00 :   16f34:  trn2    v3.2s, v5.2s, v7.2s
+    1.06 :   16f38:  ldr     q31, [x4, #16]
+    4.03 :   16f3c:  xtn     v31.4h, v31.4s
+    0.90 :   16f40:  sub     v0.4h, v0.4h, v31.4h
+    0.00 :   16f44:  sub     v1.4h, v1.4h, v31.4h
+    1.24 :   16f48:  sub     v2.4h, v2.4h, v31.4h
+    0.00 :   16f4c:  sub     v3.4h, v3.4h, v31.4h
+         : 155   mov v4.8b, v24.8b
+    1.16 :   16f50:  mov     v4.8b, v24.8b
+         : 157   mov v5.8b, v25.8b
+    0.00 :   16f54:  mov     v5.8b, v25.8b
+         : 159   mov v6.8b, v26.8b
+    1.00 :   16f58:  mov     v6.8b, v26.8b
+         : 161   mov v7.8b, v27.8b
+    0.00 :   16f5c:  mov     v7.8b, v27.8b
+         : 163   CAMPP_QCONV_ACCUMULATE v20, v4
+    1.02 :   16f60:  smlal   v20.4s, v0.4h, v4.h[0]
+    1.16 :   16f64:  smlal   v20.4s, v1.4h, v4.h[1]
+    1.04 :   16f68:  smlal   v20.4s, v2.4h, v4.h[2]
+    1.00 :   16f6c:  smlal   v20.4s, v3.4h, v4.h[3]
+         : 168   CAMPP_QCONV_ACCUMULATE v21, v5
+    1.14 :   16f70:  smlal   v21.4s, v0.4h, v5.h[0]
+    0.98 :   16f74:  smlal   v21.4s, v1.4h, v5.h[1]
+    1.10 :   16f78:  smlal   v21.4s, v2.4h, v5.h[2]
+    1.26 :   16f7c:  smlal   v21.4s, v3.4h, v5.h[3]
+         : 173   CAMPP_QCONV_ACCUMULATE v22, v6
+    1.04 :   16f80:  smlal   v22.4s, v0.4h, v6.h[0]
+    1.26 :   16f84:  smlal   v22.4s, v1.4h, v6.h[1]
+    0.98 :   16f88:  smlal   v22.4s, v2.4h, v6.h[2]
+    1.10 :   16f8c:  smlal   v22.4s, v3.4h, v6.h[3]
+         : 178   CAMPP_QCONV_ACCUMULATE v23, v7
+    1.14 :   16f90:  smlal   v23.4s, v0.4h, v7.h[0]
+    1.08 :   16f94:  smlal   v23.4s, v1.4h, v7.h[1]
+    0.81 :   16f98:  smlal   v23.4s, v2.4h, v7.h[2]
+    1.10 :   16f9c:  smlal   v23.4s, v3.4h, v7.h[3]
+         :
+         : 184   add w14, w14, #4
+    0.00 :   16fa0:  add     w14, w14, #0x4
+         : 186   subs w15, w15, #1
+    1.28 :   16fa4:  subs    w15, w15, #0x1
+         : 188   b.ne .Lcampp_qconv_4x8_input_block
+    0.00 :   16fa8:  b.ne    16e34 <campp_qconv_mac_4x8_aarch64_raw+0x54>  // b.any
+         : 190   add x1, x1, #64
+    0.16 :   16fac:  add     x1, x1, #0x40
+         : 192   subs w6, w6, #1
+    0.02 :   16fb0:  subs    w6, w6, #0x1
+         : 194   b.ne .Lcampp_qconv_4x8_kernel
+    0.08 :   16fb4:  b.ne    16e24 <campp_qconv_mac_4x8_aarch64_raw+0x44>  // b.any
+         :
+         : 197   stp q16, q20, [x5]
+    0.16 :   16fb8:  stp     q16, q20, [x5]
+         : 199   stp q17, q21, [x5, #32]
+    0.02 :   16fbc:  stp     q17, q21, [x5, #32]
+         : 201   stp q18, q22, [x5, #64]
+    0.04 :   16fc0:  stp     q18, q22, [x5, #64]
+         : 203   stp q19, q23, [x5, #96]
+    0.04 :   16fc4:  stp     q19, q23, [x5, #96]
+         : 205   mov w0, #0
+    0.00 :   16fc8:  mov     w0, #0x0                        // #0
+         : 207   ret
+    0.02 :   16fcc:  ret

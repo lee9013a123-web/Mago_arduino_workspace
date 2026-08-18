@@ -1,0 +1,402 @@
+ Percent |	Source code & Disassembly of campp_operator_hotspot for cycles:u (948 samples, percent: local period)
+---------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    0000000000009d4c <campp_reference_dequantize_linear>:
+         : 6    CamppStatus campp_reference_dequantize_linear(
+         : 7    const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
+         : 8    const CamppTensorView *inputs, uint8_t input_count,
+         : 9    CamppTensorView *outputs, uint8_t output_count, void *scratch,
+         : 10   size_t scratch_size)
+         : 11   {
+    0.00 :   9d4c:   stp     x29, x30, [sp, #-176]!
+    0.00 :   9d50:   and     w3, w3, #0xff
+         : 14   const CamppTensorView *zero_point = input_count == 3u ? &inputs[2] : NULL;
+    0.00 :   9d54:   cmp     w3, #0x3
+         : 16   {
+    0.00 :   9d58:   mov     x29, sp
+    0.00 :   9d5c:   stp     x21, x22, [sp, #32]
+         : 19   const CamppTensorView *zero_point = input_count == 3u ? &inputs[2] : NULL;
+    0.00 :   9d60:   add     x21, x2, #0x80
+         : 21   {
+    0.00 :   9d64:   mov     x22, x0
+         : 23   const CamppTensorView *zero_point = input_count == 3u ? &inputs[2] : NULL;
+    0.00 :   9d68:   csel    x21, x21, xzr, eq       // eq = none
+         : 25   CamppStatus status;
+         :
+         : 27   (void)scratch;
+         : 28   (void)scratch_size;
+         : 29   CAMPP_OPTIMIZATION_STAGE_BEGIN(setup_started_ns);
+         : 30   status = campp_reference_validate_invocation(
+    0.00 :   9d6c:   mov     x0, x2
+         : 32   {
+    0.00 :   9d70:   stp     x19, x20, [sp, #16]
+    0.00 :   9d74:   mov     x19, x2
+    0.00 :   9d78:   mov     x20, x4
+         : 36   status = campp_reference_validate_invocation(
+    0.00 :   9d7c:   mov     w2, #0x2                        // #2
+         : 38   {
+    0.00 :   9d80:   stp     x23, x24, [sp, #48]
+    0.00 :   9d84:   mov     x23, x1
+         : 41   status = campp_reference_validate_invocation(
+    0.00 :   9d88:   mov     w1, w3
+    0.00 :   9d8c:   mov     w3, #0x3                        // #3
+         : 44   {
+    0.00 :   9d90:   stp     x25, x26, [sp, #64]
+         : 46   status = campp_reference_validate_invocation(
+    0.00 :   9d94:   bl      a140 <campp_reference_validate_invocation>
+    0.00 :   9d98:   mov     w26, w0
+         : 49   inputs, input_count, 2u, 3u, outputs, output_count);
+         : 50   if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   9d9c:   cbnz    w0, 9ef4 <campp_reference_dequantize_linear+0x1a8>
+         : 52   if ((inputs[0].dtype != CAMPP_DTYPE_UINT8 &&
+    0.00 :   9da0:   ldrb    w2, [x19, #8]
+         : 54   inputs[0].dtype != CAMPP_DTYPE_INT8) ||
+         : 55   outputs[0].dtype != CAMPP_DTYPE_FLOAT32) {
+         : 56   return CAMPP_STATUS_UNSUPPORTED_DTYPE;
+    0.00 :   9da4:   mov     w26, #0x1f                      // #31
+         : 58   if ((inputs[0].dtype != CAMPP_DTYPE_UINT8 &&
+    0.00 :   9da8:   sub     w2, w2, #0x2
+    0.00 :   9dac:   and     w2, w2, #0xff
+    0.00 :   9db0:   cmp     w2, #0x1
+    0.00 :   9db4:   b.hi    9ef4 <campp_reference_dequantize_linear+0x1a8>  // b.pmore
+         : 63   inputs[0].dtype != CAMPP_DTYPE_INT8) ||
+    0.00 :   9db8:   ldrb    w0, [x20, #8]
+    0.00 :   9dbc:   cmp     w0, #0x1
+    0.00 :   9dc0:   b.ne    9ef4 <campp_reference_dequantize_linear+0x1a8>  // b.any
+         : 67   }
+         : 68   if (!campp_reference_shapes_equal(&inputs[0], &outputs[0])) {
+    0.00 :   9dc4:   mov     x1, x20
+    0.00 :   9dc8:   mov     x0, x19
+         : 71   return CAMPP_STATUS_SHAPE_MISMATCH;
+    0.00 :   9dcc:   mov     w26, #0x28                      // #40
+         : 73   if (!campp_reference_shapes_equal(&inputs[0], &outputs[0])) {
+    0.00 :   9dd0:   bl      a320 <campp_reference_shapes_equal>
+    0.00 :   9dd4:   tbz     w0, #0, 9ef4 <campp_reference_dequantize_linear+0x1a8>
+         : 76   }
+         : 77   status = campp_validate_quantization_parameters(
+    0.00 :   9dd8:   ldrb    w5, [x19, #8]
+    0.00 :   9ddc:   add     x24, x19, #0x40
+    0.00 :   9de0:   mov     x1, x23
+    0.00 :   9de4:   mov     x0, x22
+    0.00 :   9de8:   mov     x3, x24
+    0.00 :   9dec:   add     x7, sp, #0x97
+    0.00 :   9df0:   add     x6, sp, #0x96
+    0.00 :   9df4:   mov     x4, x21
+    0.00 :   9df8:   mov     x2, x19
+    0.00 :   9dfc:   bl      97a0 <campp_validate_quantization_parameters>
+    0.00 :   9e00:   mov     w26, w0
+         : 89   model, op, &inputs[0], &inputs[1], zero_point, inputs[0].dtype,
+         : 90   &axis, &per_axis);
+         : 91   if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   9e04:   cbnz    w0, 9ef4 <campp_reference_dequantize_linear+0x1a8>
+         : 93   uint8_t axis;
+         :
+         : 95   if (view == NULL) {
+         : 96   return 0u;
+         : 97   }
+         : 98   for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   9e08:   ldrb    w0, [x20, #9]
+    0.00 :   9e0c:   cbz     w0, a110 <campp_reference_dequantize_linear+0x3c4>
+         : 101  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   9e10:   ldr     w23, [x20, #12]
+         : 103  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   9e14:   cmp     w0, #0x1
+    0.00 :   9e18:   b.eq    9e44 <campp_reference_dequantize_linear+0xf8>  // b.none
+         : 106  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   9e1c:   ldr     w1, [x20, #16]
+    0.00 :   9e20:   umull   x23, w1, w23
+         : 109  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   9e24:   cmp     w0, #0x2
+    0.00 :   9e28:   b.eq    9e44 <campp_reference_dequantize_linear+0xf8>  // b.none
+         : 112  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   9e2c:   ldr     w1, [x20, #20]
+    0.00 :   9e30:   mul     x23, x23, x1
+         : 115  for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   9e34:   cmp     w0, #0x3
+    0.00 :   9e38:   b.eq    9e44 <campp_reference_dequantize_linear+0xf8>  // b.none
+         : 118  count *= (uint64_t)view->dimensions[axis];
+    0.00 :   9e3c:   ldr     w0, [x20, #24]
+    0.00 :   9e40:   mul     x23, x23, x0
+         : 121  CAMPP_OPTIMIZATION_STAGE_END(
+         : 122  CAMPP_OPT_STAGE_DEQUANT_SETUP, setup_started_ns);
+         :
+         : 124  count = campp_tensor_view_element_count(&outputs[0]);
+         : 125  CAMPP_OPTIMIZATION_STAGE_BEGIN(elementwise_started_ns);
+         : 126  for (index = 0u; index < count; ++index) {
+    0.00 :   9e44:   cbz     x23, 9ef4 <campp_reference_dequantize_linear+0x1a8>
+    0.00 :   9e48:   stp     x27, x28, [sp, #80]
+    0.00 :   9e4c:   str     d15, [sp, #96]
+         : 130  const uint64_t parameter_index = campp_quantization_parameter_index(
+    0.00 :   9e50:   ldrb    w28, [sp, #151]
+    0.00 :   9e54:   cbz     x21, 9f10 <campp_reference_dequantize_linear+0x1c4>
+    0.00 :   9e58:   add     x0, sp, #0x98
+    0.00 :   9e5c:   str     x0, [sp, #120]
+         : 135  const uint64_t output_offset =
+         : 136  campp_reference_offset_for_linear(&outputs[0], index);
+         :
+         : 138  status = campp_reference_read_quantized(&inputs[0], index, &value);
+         : 139  if (status != CAMPP_STATUS_OK) return status;
+         : 140  status = campp_reference_read_f32(
+    0.00 :   9e60:   add     x27, sp, #0xa0
+         : 142  for (index = 0u; index < count; ++index) {
+    0.00 :   9e64:   mov     x22, #0x0                       // #0
+    0.00 :   9e68:   tbnz    w28, #0, a01c <campp_reference_dequantize_linear+0x2d0>
+         : 145  return campp_reference_read_quantized(zero_point, index, out_value);
+    0.00 :   9e6c:   add     x28, sp, #0x9c
+         : 147  &inputs[1], parameter_index, &scale);
+         : 148  if (status != CAMPP_STATUS_OK) return status;
+         : 149  status = campp_read_zero_point(zero_point, parameter_index, &zero);
+         : 150  if (status != CAMPP_STATUS_OK) return status;
+         : 151  if (!(scale > 0.0f) || !isfinite(scale)) {
+    0.00 :   9e70:   mov     w0, #0x7f7fffff                 // #2139095039
+    0.00 :   9e74:   fmov    s15, w0
+    0.00 :   9e78:   nop
+    0.00 :   9e7c:   nop
+         : 156  campp_reference_offset_for_linear(&outputs[0], index);
+    0.00 :   9e80:   mov     x1, x22
+    2.11 :   9e84:   mov     x0, x20
+    0.00 :   9e88:   bl      a26c <campp_reference_offset_for_linear>
+    2.53 :   9e8c:   mov     x25, x0
+         : 161  status = campp_reference_read_quantized(&inputs[0], index, &value);
+    0.00 :   9e90:   ldr     x2, [sp, #120]
+    3.27 :   9e94:   mov     x1, x22
+    0.00 :   9e98:   mov     x0, x19
+    2.64 :   9e9c:   bl      aa84 <campp_reference_read_quantized>
+    2.74 :   9ea0:   mov     w3, w0
+         : 167  status = campp_reference_read_f32(
+    0.00 :   9ea4:   mov     x2, x27
+    2.43 :   9ea8:   mov     x0, x24
+    0.00 :   9eac:   mov     x1, #0x0                        // #0
+         : 171  if (status != CAMPP_STATUS_OK) return status;
+    2.95 :   9eb0:   cbnz    w3, a0f8 <campp_reference_dequantize_linear+0x3ac>
+         : 173  status = campp_reference_read_f32(
+    1.69 :   9eb4:   bl      a808 <campp_reference_read_f32>
+    2.64 :   9eb8:   mov     w3, w0
+         : 176  return campp_reference_read_quantized(zero_point, index, out_value);
+    0.00 :   9ebc:   mov     x2, x28
+    2.43 :   9ec0:   mov     x0, x21
+    0.00 :   9ec4:   mov     x1, #0x0                        // #0
+         : 180  if (status != CAMPP_STATUS_OK) return status;
+    3.38 :   9ec8:   cbnz    w3, a0f8 <campp_reference_dequantize_linear+0x3ac>
+         : 182  for (index = 0u; index < count; ++index) {
+    0.00 :   9ecc:   add     x22, x22, #0x1
+         : 184  return campp_reference_read_quantized(zero_point, index, out_value);
+    2.11 :   9ed0:   bl      aa84 <campp_reference_read_quantized>
+         : 186  if (status != CAMPP_STATUS_OK) return status;
+    8.23 :   9ed4:   cbnz    w0, a100 <campp_reference_dequantize_linear+0x3b4>
+         : 188  if (!(scale > 0.0f) || !isfinite(scale)) {
+    2.85 :   9ed8:   ldr     s30, [sp, #160]
+    7.70 :   9edc:   fcmpe   s30, #0.0
+    2.95 :   9ee0:   fabs    s31, s30
+    0.00 :   9ee4:   b.gt    9ff0 <campp_reference_dequantize_linear+0x2a4>
+    0.00 :   9ee8:   ldp     x27, x28, [sp, #80]
+         : 194  return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   9eec:   mov     w26, #0x3c                      // #60
+    0.00 :   9ef0:   ldr     d15, [sp, #96]
+         : 197  sizeof(result));
+         : 198  }
+         : 199  CAMPP_OPTIMIZATION_STAGE_END(
+         : 200  CAMPP_OPT_STAGE_DEQUANT_ELEMENTWISE, elementwise_started_ns);
+         : 201  return CAMPP_STATUS_OK;
+         : 202  }
+    0.00 :   9ef4:   ldp     x19, x20, [sp, #16]
+    0.00 :   9ef8:   mov     w0, w26
+    0.00 :   9efc:   ldp     x21, x22, [sp, #32]
+    0.00 :   9f00:   ldp     x23, x24, [sp, #48]
+    0.00 :   9f04:   ldp     x25, x26, [sp, #64]
+    0.00 :   9f08:   ldp     x29, x30, [sp], #176
+    0.00 :   9f0c:   ret
+    0.00 :   9f10:   add     x0, sp, #0x98
+    0.00 :   9f14:   and     w28, w28, #0x1
+         : 212  campp_reference_unravel_index(
+    0.00 :   9f18:   add     x25, sp, #0xa0
+    0.00 :   9f1c:   str     x0, [sp, #120]
+         : 215  data_index, data->rank, data->dimensions, coordinates);
+    0.00 :   9f20:   add     x0, x19, #0xc
+         : 217  for (index = 0u; index < count; ++index) {
+    0.00 :   9f24:   mov     x21, #0x0                       // #0
+         : 219  data_index, data->rank, data->dimensions, coordinates);
+    0.00 :   9f28:   str     x0, [sp, #128]
+         : 221  if (!(scale > 0.0f) || !isfinite(scale)) {
+    0.00 :   9f2c:   mov     w0, #0x7f7fffff                 // #2139095039
+    0.00 :   9f30:   fmov    s15, w0
+    0.00 :   9f34:   nop
+    0.00 :   9f38:   nop
+    0.00 :   9f3c:   nop
+         : 227  campp_reference_unravel_index(
+    0.00 :   9f40:   ldr     x2, [sp, #128]
+    0.00 :   9f44:   mov     x3, x25
+    0.00 :   9f48:   mov     x0, x21
+         : 231  if (!per_axis) return 0u;
+    0.00 :   9f4c:   mov     x27, #0x0                       // #0
+    0.00 :   9f50:   cbz     w28, 9f68 <campp_reference_dequantize_linear+0x21c>
+         : 234  const uint64_t parameter_index = campp_quantization_parameter_index(
+    0.00 :   9f54:   ldrb    w22, [sp, #150]
+         : 236  campp_reference_unravel_index(
+    0.00 :   9f58:   ldrb    w1, [x19, #9]
+         : 238  return coordinates[axis];
+    0.00 :   9f5c:   ubfiz   x22, x22, #2, #8
+         : 240  campp_reference_unravel_index(
+    0.00 :   9f60:   bl      a230 <campp_reference_unravel_index>
+         : 242  return coordinates[axis];
+    0.00 :   9f64:   ldr     w27, [x25, x22]
+         : 244  campp_reference_offset_for_linear(&outputs[0], index);
+    0.00 :   9f68:   mov     x1, x21
+    0.00 :   9f6c:   mov     x0, x20
+    0.00 :   9f70:   bl      a26c <campp_reference_offset_for_linear>
+    0.00 :   9f74:   mov     x22, x0
+         : 249  status = campp_reference_read_quantized(&inputs[0], index, &value);
+    0.00 :   9f78:   ldr     x2, [sp, #120]
+    0.00 :   9f7c:   mov     x1, x21
+    0.00 :   9f80:   mov     x0, x19
+    0.00 :   9f84:   bl      aa84 <campp_reference_read_quantized>
+    0.00 :   9f88:   mov     w3, w0
+         : 255  status = campp_reference_read_f32(
+    0.00 :   9f8c:   mov     x2, x25
+    0.00 :   9f90:   mov     x1, x27
+    0.00 :   9f94:   mov     x0, x24
+         : 259  if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   9f98:   cbnz    w3, a0f8 <campp_reference_dequantize_linear+0x3ac>
+         : 261  status = campp_reference_read_f32(
+    0.00 :   9f9c:   bl      a808 <campp_reference_read_f32>
+         : 263  if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   9fa0:   cbnz    w0, a100 <campp_reference_dequantize_linear+0x3b4>
+         : 265  if (!(scale > 0.0f) || !isfinite(scale)) {
+    0.00 :   9fa4:   ldr     s30, [sp, #160]
+         : 267  *out_value = 0;
+    0.00 :   9fa8:   str     wzr, [sp, #156]
+         : 269  if (!(scale > 0.0f) || !isfinite(scale)) {
+    0.00 :   9fac:   fcmpe   s30, #0.0
+    0.00 :   9fb0:   fabs    s31, s30
+    0.00 :   9fb4:   b.gt    9fbc <campp_reference_dequantize_linear+0x270>
+    0.00 :   9fb8:   b       9ee8 <campp_reference_dequantize_linear+0x19c>
+    0.00 :   9fbc:   fcmp    s31, s15
+    0.00 :   9fc0:   b.hi    9ee8 <campp_reference_dequantize_linear+0x19c>  // b.pmore
+         : 276  result = (float)(value - zero) * scale;
+    0.00 :   9fc4:   ldr     s31, [sp, #152]
+         : 278  for (index = 0u; index < count; ++index) {
+    0.00 :   9fc8:   add     x21, x21, #0x1
+         : 280  memcpy(
+    0.00 :   9fcc:   ldr     x0, [x20]
+         : 282  result = (float)(value - zero) * scale;
+    0.00 :   9fd0:   scvtf   s31, s31
+         : 284  memcpy(
+    0.00 :   9fd4:   fmul    s31, s31, s30
+    0.00 :   9fd8:   str     s31, [x0, x22]
+         : 287  for (index = 0u; index < count; ++index) {
+    0.00 :   9fdc:   cmp     x23, x21
+    0.00 :   9fe0:   b.hi    9f40 <campp_reference_dequantize_linear+0x1f4>  // b.pmore
+    0.00 :   9fe4:   ldr     d15, [sp, #96]
+    0.00 :   9fe8:   ldp     x27, x28, [sp, #80]
+    0.00 :   9fec:   b       9ef4 <campp_reference_dequantize_linear+0x1a8>
+         : 293  if (!(scale > 0.0f) || !isfinite(scale)) {
+    9.81 :   9ff0:   fcmp    s31, s15
+    2.00 :   9ff4:   b.hi    9ee8 <campp_reference_dequantize_linear+0x19c>  // b.pmore
+         : 296  result = (float)(value - zero) * scale;
+    2.85 :   9ff8:   ldp     w0, w2, [sp, #152]
+         : 298  memcpy(
+    2.64 :   9ffc:   ldr     x1, [x20]
+         : 300  result = (float)(value - zero) * scale;
+    2.43 :   a000:   sub     w0, w0, w2
+    5.49 :   a004:   scvtf   s31, w0
+         : 303  memcpy(
+   10.76 :   a008:   fmul    s31, s31, s30
+    8.23 :   a00c:   str     s31, [x1, x25]
+         : 306  for (index = 0u; index < count; ++index) {
+    0.00 :   a010:   cmp     x23, x22
+    3.16 :   a014:   b.hi    9e80 <campp_reference_dequantize_linear+0x134>  // b.pmore
+    0.00 :   a018:   b       9fe4 <campp_reference_dequantize_linear+0x298>
+    0.00 :   a01c:   add     x0, x19, #0xc
+    0.00 :   a020:   str     x0, [sp, #128]
+         : 312  return campp_reference_read_quantized(zero_point, index, out_value);
+    0.00 :   a024:   add     x0, sp, #0x9c
+    0.00 :   a028:   str     x0, [sp, #136]
+         : 315  if (!(scale > 0.0f) || !isfinite(scale)) {
+    0.00 :   a02c:   mov     w0, #0x7f7fffff                 // #2139095039
+    0.00 :   a030:   fmov    s15, w0
+    0.00 :   a034:   nop
+    0.00 :   a038:   nop
+    0.00 :   a03c:   nop
+         : 321  const uint64_t parameter_index = campp_quantization_parameter_index(
+    0.00 :   a040:   ldrb    w25, [sp, #150]
+         : 323  campp_reference_unravel_index(
+    0.00 :   a044:   mov     x3, x27
+    0.00 :   a048:   ldr     x2, [sp, #128]
+    0.00 :   a04c:   mov     x0, x22
+    0.00 :   a050:   ldrb    w1, [x19, #9]
+         : 328  return coordinates[axis];
+    0.00 :   a054:   ubfiz   x25, x25, #2, #8
+         : 330  campp_reference_unravel_index(
+    0.00 :   a058:   bl      a230 <campp_reference_unravel_index>
+         : 332  return coordinates[axis];
+    0.00 :   a05c:   ldr     w28, [x27, x25]
+         : 334  campp_reference_offset_for_linear(&outputs[0], index);
+    0.00 :   a060:   mov     x1, x22
+    0.00 :   a064:   mov     x0, x20
+    0.00 :   a068:   bl      a26c <campp_reference_offset_for_linear>
+    0.00 :   a06c:   mov     x25, x0
+         : 339  status = campp_reference_read_quantized(&inputs[0], index, &value);
+    0.00 :   a070:   ldr     x2, [sp, #120]
+    0.00 :   a074:   mov     x1, x22
+    0.00 :   a078:   mov     x0, x19
+    0.00 :   a07c:   bl      aa84 <campp_reference_read_quantized>
+    0.00 :   a080:   mov     w3, w0
+         : 345  status = campp_reference_read_f32(
+    0.00 :   a084:   mov     x2, x27
+    0.00 :   a088:   mov     x1, x28
+    0.00 :   a08c:   mov     x0, x24
+         : 349  if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   a090:   cbnz    w3, a0f8 <campp_reference_dequantize_linear+0x3ac>
+         : 351  status = campp_reference_read_f32(
+    0.00 :   a094:   bl      a808 <campp_reference_read_f32>
+    0.00 :   a098:   mov     w3, w0
+         : 354  return campp_reference_read_quantized(zero_point, index, out_value);
+    0.00 :   a09c:   ldr     x2, [sp, #136]
+    0.00 :   a0a0:   mov     x1, x28
+    0.00 :   a0a4:   mov     x0, x21
+         : 358  if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   a0a8:   cbnz    w3, a0f8 <campp_reference_dequantize_linear+0x3ac>
+         : 360  for (index = 0u; index < count; ++index) {
+    0.00 :   a0ac:   add     x22, x22, #0x1
+         : 362  return campp_reference_read_quantized(zero_point, index, out_value);
+    0.00 :   a0b0:   bl      aa84 <campp_reference_read_quantized>
+         : 364  if (status != CAMPP_STATUS_OK) return status;
+    0.00 :   a0b4:   cbnz    w0, a100 <campp_reference_dequantize_linear+0x3b4>
+         : 366  if (!(scale > 0.0f) || !isfinite(scale)) {
+    0.00 :   a0b8:   ldr     s30, [sp, #160]
+    0.00 :   a0bc:   fcmpe   s30, #0.0
+    0.00 :   a0c0:   fabs    s31, s30
+    0.00 :   a0c4:   b.gt    a0cc <campp_reference_dequantize_linear+0x380>
+    0.00 :   a0c8:   b       9ee8 <campp_reference_dequantize_linear+0x19c>
+    0.00 :   a0cc:   fcmp    s31, s15
+    0.00 :   a0d0:   b.hi    9ee8 <campp_reference_dequantize_linear+0x19c>  // b.pmore
+         : 374  result = (float)(value - zero) * scale;
+    0.00 :   a0d4:   ldp     w0, w2, [sp, #152]
+         : 376  memcpy(
+    0.00 :   a0d8:   ldr     x1, [x20]
+         : 378  result = (float)(value - zero) * scale;
+    0.00 :   a0dc:   sub     w0, w0, w2
+    0.00 :   a0e0:   scvtf   s31, w0
+         : 381  memcpy(
+    0.00 :   a0e4:   fmul    s31, s31, s30
+    0.00 :   a0e8:   str     s31, [x1, x25]
+         : 384  for (index = 0u; index < count; ++index) {
+    0.00 :   a0ec:   cmp     x23, x22
+    0.00 :   a0f0:   b.hi    a040 <campp_reference_dequantize_linear+0x2f4>  // b.pmore
+    0.00 :   a0f4:   b       9fe4 <campp_reference_dequantize_linear+0x298>
+    0.00 :   a0f8:   mov     w26, w3
+    0.00 :   a0fc:   b       9fe4 <campp_reference_dequantize_linear+0x298>
+    0.00 :   a100:   ldr     d15, [sp, #96]
+         : 391  return campp_reference_read_quantized(zero_point, index, out_value);
+    0.00 :   a104:   mov     w26, w0
+    0.00 :   a108:   ldp     x27, x28, [sp, #80]
+    0.00 :   a10c:   b       9ef4 <campp_reference_dequantize_linear+0x1a8>
+         : 395  uint64_t count = 1u;
+    0.00 :   a110:   mov     x23, #0x1                       // #1
+    0.00 :   a114:   stp     x27, x28, [sp, #80]
+    0.00 :   a118:   str     d15, [sp, #96]
+    0.00 :   a11c:   b       9e50 <campp_reference_dequantize_linear+0x104>

@@ -14,9 +14,15 @@
     ext v31.16b, v30.16b, v30.16b, #8
     trn1 v6.4h, v30.4h, v31.4h
     trn2 v7.4h, v30.4h, v31.4h
+    /*
+     * v4/v5 carry input lanes {0,2}/{1,3} of outputs 0-1 and v6/v7 the same
+     * lanes of outputs 2-3, so pairing them yields columns in lane order
+     * 0, 2, 1, 3. CAMPP_QCONV_ACCUMULATE feeds v0..v3 to input lanes 0..3, so
+     * lanes 1 and 2 must land in v1 and v2 respectively.
+     */
     trn1 v0.2s, v4.2s, v6.2s
-    trn2 v1.2s, v4.2s, v6.2s
-    trn1 v2.2s, v5.2s, v7.2s
+    trn2 v2.2s, v4.2s, v6.2s
+    trn1 v1.2s, v5.2s, v7.2s
     trn2 v3.2s, v5.2s, v7.2s
     ldr q31, [x4, #\zero_offset]
     xtn v31.4h, v31.4s

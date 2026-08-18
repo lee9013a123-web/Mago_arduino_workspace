@@ -1,0 +1,1560 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T08:13:34.488349+00:00",
+  "objective": "locate the internal bottleneck of the MAC v2 candidate",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "perf_event": "cycles:u",
+    "sample_period": 100000,
+    "stage_probe_compiled": false,
+    "qconv_candidate": "mac_asm",
+    "elapsed_seconds": 38.46849841799849
+  },
+  "v2_source_map": {
+    "mac_source_name": "qconv_mac_neon.c",
+    "candidate_source_name": "qconv_candidate.c",
+    "fixed_mac_source_name": "qconv_mac_4x8_intrinsics.c",
+    "fixed_dispatch_source_name": "qconv_mac_4x8.c",
+    "mac_line_count": 880,
+    "candidate_line_count": 783,
+    "neon_input_span": [
+      82,
+      107
+    ],
+    "dot_input_span": [
+      224,
+      244
+    ],
+    "weight_columns_span": [
+      109,
+      157
+    ],
+    "dot_weight_span": [
+      246,
+      254
+    ],
+    "dot_weight_zero_span": [
+      256,
+      268
+    ],
+    "dot_accumulate_span": [
+      270,
+      290
+    ],
+    "smlal_accumulate_span": [
+      295,
+      309
+    ],
+    "half_tile_v2_span": [
+      312,
+      476
+    ],
+    "scalar_tile_v2_span": [
+      480,
+      556
+    ],
+    "tile_v2_span": [
+      559,
+      736
+    ],
+    "requantize_neon4_span": [
+      739,
+      773
+    ],
+    "requantize_scalar_span": [
+      777,
+      800
+    ],
+    "requantize_store_span": [
+      803,
+      880
+    ],
+    "candidate_read_span": [
+      13,
+      22
+    ],
+    "cand_spatial_span": [
+      59,
+      70
+    ],
+    "cand_write_span": [
+      72,
+      93
+    ],
+    "cand_prepare_span": [
+      95,
+      237
+    ],
+    "cand_load_parameters_span": [
+      429,
+      487
+    ],
+    "cand_run_v2_span": [
+      489,
+      666
+    ]
+  },
+  "source_map": {
+    "line_count": 396,
+    "dot_span": [
+      52,
+      68
+    ],
+    "read_span": [
+      40,
+      50
+    ],
+    "spatial_span": [
+      70,
+      81
+    ],
+    "requant_span": [
+      83,
+      103
+    ],
+    "main_span": [
+      105,
+      396
+    ],
+    "core_begin": 289,
+    "mac_loop_begin": 360,
+    "core_end": 371,
+    "requant_begin": 372,
+    "requant_end": 372,
+    "source": "src/c/runtime/backends/cpu_aarch64/int8_neon/qlinear_convolution_neon.c"
+  },
+  "cases": [
+    {
+      "case_name": "qconv_3x3",
+      "operator_id": 2,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 525.6370155,
+      "profile_share_pct": 6.203994753101456,
+      "inputs": [
+        {
+          "parsed_sample_count": 11859,
+          "fixed_microkernel_sample_count": 5182,
+          "malformed_line_count": 166,
+          "total_sample_period": 1185900000,
+          "category_sample_counts": {
+            "v2_input_address": 1542,
+            "v2_weight_transform": 103,
+            "v2_mac_smlal": 6703,
+            "v2_requant": 95,
+            "v2_output_store": 193,
+            "setup_other": 3,
+            "foreign_symbol": 0,
+            "unclassified": 3220
+          },
+          "category_periods": {
+            "v2_input_address": 154200000,
+            "v2_weight_transform": 10300000,
+            "v2_mac_smlal": 670300000,
+            "v2_requant": 9500000,
+            "v2_output_store": 19300000,
+            "setup_other": 300000,
+            "foreign_symbol": 0,
+            "unclassified": 322000000
+          },
+          "category_share_pct": {
+            "v2_input_address": 13.00278269668606,
+            "v2_weight_transform": 0.8685386626191078,
+            "v2_mac_smlal": 56.52247238384349,
+            "v2_requant": 0.8010793490176237,
+            "v2_output_store": 1.6274559406358042,
+            "setup_other": 0.025297242600556536,
+            "foreign_symbol": 0.0,
+            "unclassified": 27.15237372459735
+          },
+          "classified_core_period": 863600000,
+          "classified_core_share_pct": 72.82232903280209,
+          "top_lines": [
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 96,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 106300000,
+              "total_share_pct": 8.9636562947972
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 85,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 103600000,
+              "total_share_pct": 8.73598111139219
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 101700000,
+              "total_share_pct": 8.575765241588666
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_half_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 57800000,
+              "total_share_pct": 4.8739354077072266
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 43600000,
+              "total_share_pct": 3.6765325912808837
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 42000000,
+              "total_share_pct": 3.5416139640779156
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 75,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 34500000,
+              "total_share_pct": 2.9091828990640023
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 80,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 30100000,
+              "total_share_pct": 2.5381566742558395
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 82,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 22700000,
+              "total_share_pct": 1.9141580234421116
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 102,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 22000000,
+              "total_share_pct": 1.8551311240408128
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 22000000,
+              "total_share_pct": 1.8551311240408128
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 92,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 21800000,
+              "total_share_pct": 1.8382662956404419
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 103,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 21500000,
+              "total_share_pct": 1.8129690530398854
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 101,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 20700000,
+              "total_share_pct": 1.7455097394384012
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 91,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 20400000,
+              "total_share_pct": 1.7202124968378447
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 104,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 20300000,
+              "total_share_pct": 1.711780082637659
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 93,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 18100000,
+              "total_share_pct": 1.526266970233578
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 94,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 18000000,
+              "total_share_pct": 1.5178345560333923
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 16700000,
+              "total_share_pct": 1.4082131714309807
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 14900000,
+              "total_share_pct": 1.2564297158276414
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 100.00999999999999,
+            "stack_spill_percent": 0.0,
+            "other_memory_percent": 9.79,
+            "stack_spill_share_of_annotated_pct": 0.0
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+          "output_hash": "b1d51fe74b382d6c",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0000__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0000__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0000__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0000__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0000__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0000__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 11870,
+          "fixed_microkernel_sample_count": 5155,
+          "malformed_line_count": 178,
+          "total_sample_period": 1187000000,
+          "category_sample_counts": {
+            "v2_input_address": 1508,
+            "v2_weight_transform": 93,
+            "v2_mac_smlal": 6727,
+            "v2_requant": 107,
+            "v2_output_store": 215,
+            "setup_other": 4,
+            "foreign_symbol": 0,
+            "unclassified": 3216
+          },
+          "category_periods": {
+            "v2_input_address": 150800000,
+            "v2_weight_transform": 9300000,
+            "v2_mac_smlal": 672700000,
+            "v2_requant": 10700000,
+            "v2_output_store": 21500000,
+            "setup_other": 400000,
+            "foreign_symbol": 0,
+            "unclassified": 321600000
+          },
+          "category_share_pct": {
+            "v2_input_address": 12.704296545914067,
+            "v2_weight_transform": 0.7834877843302442,
+            "v2_mac_smlal": 56.67228306655434,
+            "v2_requant": 0.9014321819713563,
+            "v2_output_store": 1.8112889637742207,
+            "setup_other": 0.03369839932603201,
+            "foreign_symbol": 0.0,
+            "unclassified": 27.093513058129737
+          },
+          "classified_core_period": 865000000,
+          "classified_core_share_pct": 72.87278854254423,
+          "top_lines": [
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 85,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 110200000,
+              "total_share_pct": 9.28390901432182
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 96,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 105200000,
+              "total_share_pct": 8.86267902274642
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 100900000,
+              "total_share_pct": 8.500421229991575
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_half_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 61800000,
+              "total_share_pct": 5.2064026958719465
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 42400000,
+              "total_share_pct": 3.5720303285593933
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 41400000,
+              "total_share_pct": 3.4877843302443132
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 75,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 35400000,
+              "total_share_pct": 2.9823083403538333
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 80,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 32300000,
+              "total_share_pct": 2.721145745577085
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 92,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 21600000,
+              "total_share_pct": 1.8197135636057287
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 21500000,
+              "total_share_pct": 1.8112889637742207
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 82,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 21300000,
+              "total_share_pct": 1.7944397641112046
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 93,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 19500000,
+              "total_share_pct": 1.6427969671440605
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 91,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 19400000,
+              "total_share_pct": 1.6343723673125525
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 102,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 19400000,
+              "total_share_pct": 1.6343723673125525
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 104,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 19300000,
+              "total_share_pct": 1.6259477674810445
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 94,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 18000000,
+              "total_share_pct": 1.5164279696714407
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 103,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 17700000,
+              "total_share_pct": 1.4911541701769166
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 101,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 17500000,
+              "total_share_pct": 1.4743049705139006
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 16600000,
+              "total_share_pct": 1.3984835720303286
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 15300000,
+              "total_share_pct": 1.2889637742207245
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 99.98,
+            "stack_spill_percent": 0.0,
+            "other_memory_percent": 8.7,
+            "stack_spill_share_of_annotated_pct": 0.0
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+          "output_hash": "0dea6284322de1b7",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0005__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0005__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0005__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0005__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0005__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0005__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 11853,
+          "fixed_microkernel_sample_count": 5157,
+          "malformed_line_count": 180,
+          "total_sample_period": 1185300000,
+          "category_sample_counts": {
+            "v2_input_address": 1533,
+            "v2_weight_transform": 124,
+            "v2_mac_smlal": 6662,
+            "v2_requant": 105,
+            "v2_output_store": 192,
+            "setup_other": 3,
+            "foreign_symbol": 0,
+            "unclassified": 3234
+          },
+          "category_periods": {
+            "v2_input_address": 153300000,
+            "v2_weight_transform": 12400000,
+            "v2_mac_smlal": 666200000,
+            "v2_requant": 10500000,
+            "v2_output_store": 19200000,
+            "setup_other": 300000,
+            "foreign_symbol": 0,
+            "unclassified": 323400000
+          },
+          "category_share_pct": {
+            "v2_input_address": 12.93343457352569,
+            "v2_weight_transform": 1.04614865434911,
+            "v2_mac_smlal": 56.205180123175566,
+            "v2_requant": 0.885851683118198,
+            "v2_output_store": 1.6198430777018478,
+            "setup_other": 0.02531004808909137,
+            "foreign_symbol": 0.0,
+            "unclassified": 27.284231840040498
+          },
+          "classified_core_period": 861600000,
+          "classified_core_share_pct": 72.69045811187041,
+          "top_lines": [
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 85,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 105800000,
+              "total_share_pct": 8.92601029275289
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 103100000,
+              "total_share_pct": 8.698219859951067
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 96,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 101400000,
+              "total_share_pct": 8.554796254112883
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_half_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 56200000,
+              "total_share_pct": 4.74141567535645
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 43000000,
+              "total_share_pct": 3.62777355943643
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 43000000,
+              "total_share_pct": 3.62777355943643
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 75,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 39300000,
+              "total_share_pct": 3.3156162996709697
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 80,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 31000000,
+              "total_share_pct": 2.615371635872775
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 82,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 23300000,
+              "total_share_pct": 1.9657470682527631
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 91,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 23300000,
+              "total_share_pct": 1.9657470682527631
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 22200000,
+              "total_share_pct": 1.8729435585927614
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 103,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 21400000,
+              "total_share_pct": 1.805450097021851
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 104,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 20300000,
+              "total_share_pct": 1.7126465873618495
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 102,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 20300000,
+              "total_share_pct": 1.7126465873618495
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 94,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 19300000,
+              "total_share_pct": 1.6282797603982115
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 101,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 19000000,
+              "total_share_pct": 1.60296971230912
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 18900000,
+              "total_share_pct": 1.5945330296127564
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 93,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 18300000,
+              "total_share_pct": 1.5439129334345734
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 92,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 17900000,
+              "total_share_pct": 1.5101662026491185
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 16000000,
+              "total_share_pct": 1.3498692314182064
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 99.91000000000004,
+            "stack_spill_percent": 0.0,
+            "other_memory_percent": 9.43,
+            "stack_spill_share_of_annotated_pct": 0.0
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0006__98.f32",
+          "output_hash": "9419da2e4164b910",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0006__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0006__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0006__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0006__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0006__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_3x3/multi__speaker_0006__98/microbench.json"
+          }
+        }
+      ],
+      "aggregate": {
+        "total_sample_period": 3558200000,
+        "category_periods": {
+          "v2_input_address": 458300000,
+          "v2_weight_transform": 32000000,
+          "v2_mac_smlal": 2009200000,
+          "v2_requant": 30700000,
+          "v2_output_store": 60000000,
+          "setup_other": 1000000,
+          "foreign_symbol": 0,
+          "unclassified": 967000000
+        },
+        "category_share_pct": {
+          "v2_input_address": 12.880107919734698,
+          "v2_weight_transform": 0.8993311224776572,
+          "v2_mac_smlal": 56.466752852565904,
+          "v2_requant": 0.8627957956270024,
+          "v2_output_store": 1.6862458546456072,
+          "setup_other": 0.02810409757742679,
+          "foreign_symbol": 0.0,
+          "unclassified": 27.176662357371704
+        },
+        "classified_core_period": 2590200000,
+        "classified_core_share_pct": 72.79523354505086,
+        "top_bottleneck_set": [
+          "v2_mac_smlal",
+          "v2_input_address"
+        ],
+        "stack_spill_share_of_annotated_pct": 0.0,
+        "fixed_microkernel_sample_count": 15494
+      },
+      "decision": {
+        "winner": "v2_mac_smlal",
+        "stable_across_inputs": false,
+        "input_winners": [
+          "v2_mac_smlal",
+          "v2_mac_smlal",
+          "v2_mac_smlal"
+        ],
+        "maximum_unclassified_share_pct": 27.284231840040498,
+        "maximum_foreign_symbol_share_pct": 0.0,
+        "rule": "same top v2 category on 3 inputs, unclassified <=20%, foreign_symbol <=5%"
+      }
+    },
+    {
+      "case_name": "qconv_1x1",
+      "operator_id": 825,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        512,
+        1024,
+        1
+      ],
+      "profile_mean_ms": 320.11598849999996,
+      "profile_share_pct": 3.7782687567175066,
+      "inputs": [
+        {
+          "parsed_sample_count": 4839,
+          "fixed_microkernel_sample_count": 3788,
+          "malformed_line_count": 44,
+          "total_sample_period": 483900000,
+          "category_sample_counts": {
+            "v2_input_address": 113,
+            "v2_weight_transform": 62,
+            "v2_mac_smlal": 4158,
+            "v2_requant": 19,
+            "v2_output_store": 54,
+            "setup_other": 8,
+            "foreign_symbol": 0,
+            "unclassified": 425
+          },
+          "category_periods": {
+            "v2_input_address": 11300000,
+            "v2_weight_transform": 6200000,
+            "v2_mac_smlal": 415800000,
+            "v2_requant": 1900000,
+            "v2_output_store": 5400000,
+            "setup_other": 800000,
+            "foreign_symbol": 0,
+            "unclassified": 42500000
+          },
+          "category_share_pct": {
+            "v2_input_address": 2.335193221740029,
+            "v2_weight_transform": 1.2812564579458567,
+            "v2_mac_smlal": 85.92684438933664,
+            "v2_requant": 0.3926431080801819,
+            "v2_output_store": 1.115933044017359,
+            "setup_other": 0.16532341392849764,
+            "foreign_symbol": 0.0,
+            "unclassified": 8.782806364951435
+          },
+          "classified_core_period": 440600000,
+          "classified_core_share_pct": 91.05187022112007,
+          "top_lines": [
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 96,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 91600000,
+              "total_share_pct": 18.92953089481298
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 85,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 87500000,
+              "total_share_pct": 18.082248398429428
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 94,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 17100000,
+              "total_share_pct": 3.533787972721637
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 101,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 17000000,
+              "total_share_pct": 3.5131225459805746
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 104,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16300000,
+              "total_share_pct": 3.368464558793139
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 92,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16200000,
+              "total_share_pct": 3.347799132052077
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 91,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15600000,
+              "total_share_pct": 3.223806571605704
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 102,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15000000,
+              "total_share_pct": 3.0998140111593306
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 14800000,
+              "total_share_pct": 3.0584831576772062
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 103,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 13700000,
+              "total_share_pct": 2.831163463525522
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 93,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 13500000,
+              "total_share_pct": 2.7898326100433977
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 75,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5500000,
+              "total_share_pct": 1.1365984707584211
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 99,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5500000,
+              "total_share_pct": 1.1365984707584211
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 5500000,
+              "total_share_pct": 1.1365984707584211
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 699,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5400000,
+              "total_share_pct": 1.115933044017359
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5300000,
+              "total_share_pct": 1.0952676172762967
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 72,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5100000,
+              "total_share_pct": 1.0539367637941723
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 371,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 5000000,
+              "total_share_pct": 1.0332713370531101
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 4800000,
+              "total_share_pct": 0.9919404835709857
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 73,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 4600000,
+              "total_share_pct": 0.9506096300888613
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 100.04999999999997,
+            "stack_spill_percent": 0.0,
+            "other_memory_percent": 9.599999999999998,
+            "stack_spill_share_of_annotated_pct": 0.0
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+          "output_hash": "404a38f8af5e1461",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0000__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0000__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0000__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0000__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0000__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0000__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 4840,
+          "fixed_microkernel_sample_count": 3813,
+          "malformed_line_count": 45,
+          "total_sample_period": 484000000,
+          "category_sample_counts": {
+            "v2_input_address": 124,
+            "v2_weight_transform": 70,
+            "v2_mac_smlal": 4179,
+            "v2_requant": 13,
+            "v2_output_store": 41,
+            "setup_other": 6,
+            "foreign_symbol": 0,
+            "unclassified": 407
+          },
+          "category_periods": {
+            "v2_input_address": 12400000,
+            "v2_weight_transform": 7000000,
+            "v2_mac_smlal": 417900000,
+            "v2_requant": 1300000,
+            "v2_output_store": 4100000,
+            "setup_other": 600000,
+            "foreign_symbol": 0,
+            "unclassified": 40700000
+          },
+          "category_share_pct": {
+            "v2_input_address": 2.56198347107438,
+            "v2_weight_transform": 1.4462809917355373,
+            "v2_mac_smlal": 86.34297520661157,
+            "v2_requant": 0.26859504132231404,
+            "v2_output_store": 0.8471074380165289,
+            "setup_other": 0.12396694214876033,
+            "foreign_symbol": 0.0,
+            "unclassified": 8.409090909090908
+          },
+          "classified_core_period": 442700000,
+          "classified_core_share_pct": 91.46694214876034,
+          "top_lines": [
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 85,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 88200000,
+              "total_share_pct": 18.223140495867767
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 96,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 87200000,
+              "total_share_pct": 18.016528925619834
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 101,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 18600000,
+              "total_share_pct": 3.84297520661157
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 103,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 17300000,
+              "total_share_pct": 3.5743801652892566
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 93,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16500000,
+              "total_share_pct": 3.4090909090909087
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 92,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15700000,
+              "total_share_pct": 3.2438016528925617
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 94,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15300000,
+              "total_share_pct": 3.161157024793389
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 104,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15300000,
+              "total_share_pct": 3.161157024793389
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 91,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 14300000,
+              "total_share_pct": 2.9545454545454546
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 102,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 14100000,
+              "total_share_pct": 2.9132231404958677
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 14100000,
+              "total_share_pct": 2.9132231404958677
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 6000000,
+              "total_share_pct": 1.2396694214876034
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 75,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5600000,
+              "total_share_pct": 1.1570247933884297
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 78,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5500000,
+              "total_share_pct": 1.1363636363636365
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 99,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5400000,
+              "total_share_pct": 1.115702479338843
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5200000,
+              "total_share_pct": 1.0743801652892562
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 72,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5200000,
+              "total_share_pct": 1.0743801652892562
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 80,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5000000,
+              "total_share_pct": 1.0330578512396695
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 73,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5000000,
+              "total_share_pct": 1.0330578512396695
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 97,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 4700000,
+              "total_share_pct": 0.9710743801652892
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 100.03000000000002,
+            "stack_spill_percent": 0.0,
+            "other_memory_percent": 9.18,
+            "stack_spill_share_of_annotated_pct": 0.0
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+          "output_hash": "9d9c98b150326d1a",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0005__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0005__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0005__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0005__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0005__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0005__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 4836,
+          "fixed_microkernel_sample_count": 3817,
+          "malformed_line_count": 37,
+          "total_sample_period": 483600000,
+          "category_sample_counts": {
+            "v2_input_address": 125,
+            "v2_weight_transform": 48,
+            "v2_mac_smlal": 4198,
+            "v2_requant": 10,
+            "v2_output_store": 34,
+            "setup_other": 5,
+            "foreign_symbol": 0,
+            "unclassified": 416
+          },
+          "category_periods": {
+            "v2_input_address": 12500000,
+            "v2_weight_transform": 4800000,
+            "v2_mac_smlal": 419800000,
+            "v2_requant": 1000000,
+            "v2_output_store": 3400000,
+            "setup_other": 500000,
+            "foreign_symbol": 0,
+            "unclassified": 41600000
+          },
+          "category_share_pct": {
+            "v2_input_address": 2.5847808105872625,
+            "v2_weight_transform": 0.9925558312655087,
+            "v2_mac_smlal": 86.80727874276262,
+            "v2_requant": 0.20678246484698098,
+            "v2_output_store": 0.7030603804797354,
+            "setup_other": 0.10339123242349049,
+            "foreign_symbol": 0.0,
+            "unclassified": 8.60215053763441
+          },
+          "classified_core_period": 441500000,
+          "classified_core_share_pct": 91.2944582299421,
+          "top_lines": [
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 96,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 91300000,
+              "total_share_pct": 18.879239040529363
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 85,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 90300000,
+              "total_share_pct": 18.672456575682382
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 93,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16500000,
+              "total_share_pct": 3.411910669975186
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 103,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16500000,
+              "total_share_pct": 3.411910669975186
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 101,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16400000,
+              "total_share_pct": 3.391232423490488
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 94,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16200000,
+              "total_share_pct": 3.3498759305210917
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 102,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16000000,
+              "total_share_pct": 3.3085194375516958
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 91,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15200000,
+              "total_share_pct": 3.1430934656741107
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 104,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 14900000,
+              "total_share_pct": 3.0810587262200166
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 92,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 14800000,
+              "total_share_pct": 3.0603804797353185
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 14700000,
+              "total_share_pct": 3.0397022332506203
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 6200000,
+              "total_share_pct": 1.282051282051282
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5600000,
+              "total_share_pct": 1.1579818031430935
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 699,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5500000,
+              "total_share_pct": 1.1373035566583953
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 87,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5200000,
+              "total_share_pct": 1.0752688172043012
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 72,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 5100000,
+              "total_share_pct": 1.054590570719603
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 79,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 4900000,
+              "total_share_pct": 1.013234077750207
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 77,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 4900000,
+              "total_share_pct": 1.013234077750207
+            },
+            {
+              "source": "qconv_mac_4x8_aarch64.S",
+              "line": 75,
+              "symbol": "campp_qconv_mac_4x8_aarch64_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 4900000,
+              "total_share_pct": 1.013234077750207
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 4900000,
+              "total_share_pct": 1.013234077750207
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 100.02000000000005,
+            "stack_spill_percent": 0.0,
+            "other_memory_percent": 8.94,
+            "stack_spill_share_of_annotated_pct": 0.0
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0006__98.f32",
+          "output_hash": "10faa9184c9134bf",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0006__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0006__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0006__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0006__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0006__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm/qconv_1x1/multi__speaker_0006__98/microbench.json"
+          }
+        }
+      ],
+      "aggregate": {
+        "total_sample_period": 1451500000,
+        "category_periods": {
+          "v2_input_address": 36200000,
+          "v2_weight_transform": 18000000,
+          "v2_mac_smlal": 1253500000,
+          "v2_requant": 4200000,
+          "v2_output_store": 12900000,
+          "setup_other": 1900000,
+          "foreign_symbol": 0,
+          "unclassified": 124800000
+        },
+        "category_share_pct": {
+          "v2_input_address": 2.493971753358595,
+          "v2_weight_transform": 1.2400964519462625,
+          "v2_mac_smlal": 86.35893902859111,
+          "v2_requant": 0.28935583878746124,
+          "v2_output_store": 0.8887357905614882,
+          "setup_other": 0.13089906992766104,
+          "foreign_symbol": 0.0,
+          "unclassified": 8.598002066827421
+        },
+        "classified_core_period": 1324800000,
+        "classified_core_share_pct": 91.27109886324492,
+        "top_bottleneck_set": [
+          "v2_mac_smlal"
+        ],
+        "stack_spill_share_of_annotated_pct": 0.0,
+        "fixed_microkernel_sample_count": 11418
+      },
+      "decision": {
+        "winner": "v2_mac_smlal",
+        "stable_across_inputs": true,
+        "input_winners": [
+          "v2_mac_smlal",
+          "v2_mac_smlal",
+          "v2_mac_smlal"
+        ],
+        "maximum_unclassified_share_pct": 8.782806364951435,
+        "maximum_foreign_symbol_share_pct": 0.0,
+        "rule": "same top v2 category on 3 inputs, unclassified <=20%, foreign_symbol <=5%"
+      }
+    }
+  ],
+  "decision": {
+    "ready": false,
+    "overall": "inconclusive",
+    "next_candidate": "inspect perf_annotate and reduce unclassified samples"
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_asm"
+  }
+}

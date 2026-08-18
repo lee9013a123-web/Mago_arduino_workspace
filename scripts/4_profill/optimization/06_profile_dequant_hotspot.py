@@ -33,7 +33,18 @@ CORE_CATEGORIES = (
     "dequant_convert_mul",
     "dequant_output_store",
 )
-CATEGORIES = (*CORE_CATEGORIES, "setup_other", "unclassified")
+CATEGORIES = (*CORE_CATEGORIES, "setup_other", "foreign_symbol", "unclassified")
+# Second line of defence behind the perf control FIFO: samples raised by another
+# kernel or by the measurement harness must never reach a dequant_* bucket.
+# Inlined headers (tensor_view.h, arm_neon.h) report the *enclosing* symbol, so
+# matching on the symbol is what keeps QConv's address maths out of
+# dequant_index_address.
+FOREIGN_SYMBOL_TOKENS = (
+    "qlinear_conv",
+    "sha256",
+    "runtime_model_load",
+    "fused_bn_relu_quant",
+)
 
 
 class DequantHotspotError(RuntimeError):
@@ -128,6 +139,8 @@ def classify_sample(sample: dict[str, Any], source_map: dict[str, Any]) -> str:
     source_name = Path(str(sample["source"])).name.lower()
     line = int(sample["line"])
 
+    if any(token in symbol for token in FOREIGN_SYMBOL_TOKENS):
+        return "foreign_symbol"
     if any(
         name in symbol
         for name in (
@@ -263,9 +276,26 @@ def _run_one(
         binary, plan=plan, weights=weights, feature=feature,
         operator_id=int(case["operator_id"]), warmup=warmup, repeat=repeat,
     )
+    # prctl cannot gate events owned by an external `perf record`, so the
+    # prelude used to leak in. perf starts disabled (-D -1) and the microbench
+    # turns sampling on through perf's own control FIFO instead.
+    control_fifo = output_dir / "perf_ctl.fifo"
+    ack_fifo = output_dir / "perf_ack.fifo"
+    for fifo in (control_fifo, ack_fifo):
+        if fifo.exists():
+            fifo.unlink()
+        os.mkfifo(fifo)
+    microbench = [
+        *microbench,
+        "--perf-control", str(control_fifo),
+        "--perf-ack", str(ack_fifo),
+    ]
     record_command = [
         perf, "record", "--quiet", "--no-buildid", "--output", str(perf_data),
-        "--event", "cycles:u", "--count", str(sample_period), "--", *microbench,
+        "--event", "cycles:u", "--count", str(sample_period),
+        "--delay", "-1",
+        "--control", f"fifo:{control_fifo},{ack_fifo}",
+        "--", *microbench,
     ]
     command_path.write_text(
         json.dumps(
@@ -273,6 +303,9 @@ def _run_one(
                 "record": record_command,
                 "cpu_affinity": [0],
                 "measurement_scope": "target kernel only",
+                "isolation": (
+                    "perf control FIFO (-D -1) plus target symbol filter"
+                ),
             },
             ensure_ascii=False,
             indent=2,
@@ -284,6 +317,10 @@ def _run_one(
         completed = COMMON.run_command(record_command, root=ROOT)
     except RuntimeError as exc:
         raise DequantHotspotError(str(exc)) from exc
+    finally:
+        for fifo in (control_fifo, ack_fifo):
+            if fifo.exists():
+                fifo.unlink()
     stderr_path.write_text(completed.stderr, encoding="utf-8", newline="\n")
     try:
         payload = json.loads(completed.stdout)
@@ -388,7 +425,17 @@ def _aggregate_case(
     max_unclassified = max(
         float(item["category_share_pct"]["unclassified"]) for item in inputs
     )
-    stable = len(set(input_winners)) == 1 and max_unclassified <= 20.0
+    # A non-trivial foreign share means the perf window failed to isolate the
+    # target kernel, so the dequant_* shares cannot be trusted no matter how
+    # stable the winner looks.
+    max_foreign = max(
+        float(item["category_share_pct"]["foreign_symbol"]) for item in inputs
+    )
+    stable = (
+        len(set(input_winners)) == 1
+        and max_unclassified <= 20.0
+        and max_foreign <= 5.0
+    )
     return {
         **case,
         "inputs": list(inputs),
@@ -412,8 +459,10 @@ def _aggregate_case(
             ),
             "input_winners": input_winners,
             "maximum_unclassified_share_pct": max_unclassified,
+            "maximum_foreign_symbol_share_pct": max_foreign,
             "rule": (
-                "same top category on 3 inputs and unclassified <=20%; "
+                "same top category on 3 inputs, unclassified <=20% and "
+                "foreign_symbol <=5%; "
                 "select cumulative 80% of classified Dequant core"
             ),
         },

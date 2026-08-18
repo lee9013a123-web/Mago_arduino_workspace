@@ -197,11 +197,14 @@ def build_decision(
     }
 
 
-def _run(command: Sequence[str], *, env: dict[str, str] | None = None) -> None:
+def _run(
+    command: Sequence[str], *, env: dict[str, str] | None = None,
+    allowed_returncodes: Sequence[int] = (0,),
+) -> None:
     completed = subprocess.run(
         list(command), cwd=ROOT, env=env, text=True, check=False
     )
-    if completed.returncode != 0:
+    if completed.returncode not in allowed_returncodes:
         raise SpillComparisonError(
             f"command failed ({completed.returncode}): {' '.join(command)}"
         )
@@ -351,7 +354,12 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "--results-dir", str(profile_results),
                     "--force",
                 ]
-                _run(command)
+                # Exit 3 means the hotspot's own bottleneck-stability gate did
+                # not settle (e.g. unclassified above its threshold). That gate
+                # is about category attribution, not about the spill and timing
+                # numbers this comparison consumes, and the JSON is written
+                # either way -- so it must not abort the sweep.
+                _run(command, allowed_returncodes=(0, 3))
                 measurements.append(
                     summarize_profile(
                         profile_results / "qconv_hotspot.json",

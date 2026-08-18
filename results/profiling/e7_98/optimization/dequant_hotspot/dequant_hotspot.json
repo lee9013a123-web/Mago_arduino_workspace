@@ -1,0 +1,764 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T07:19:41.969038+00:00",
+  "objective": "locate internal bottlenecks in E7 DequantizeLinear",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "perf_event": "cycles:u",
+    "sample_period": 100000,
+    "stage_probe_compiled": false,
+    "elapsed_seconds": 12.969362890999037
+  },
+  "source_map": {
+    "line_count": 226,
+    "main_span": [
+      162,
+      226
+    ],
+    "loop_begin": 198,
+    "index_span": [
+      199,
+      207
+    ],
+    "input_span": [
+      208,
+      209
+    ],
+    "parameter_span": [
+      210,
+      217
+    ],
+    "convert_span": [
+      218,
+      218
+    ],
+    "output_span": [
+      219,
+      221
+    ],
+    "output_offset": 205,
+    "zero_read": 213,
+    "scale_check": 215,
+    "loop_end": 224,
+    "source": "src/c/runtime/backends/cpu_reference/quantization_operators.c"
+  },
+  "cases": [
+    {
+      "case_name": "dequantize_linear",
+      "operator_id": 5,
+      "kernel_id": 1,
+      "kernel_name": "dequantize_linear_stride",
+      "operator_type": "DEQUANTIZE_LINEAR",
+      "weight_shape": [],
+      "profile_mean_ms": 15.7279757,
+      "profile_share_pct": 0.1856343367045603,
+      "inputs": [
+        {
+          "parsed_sample_count": 9300,
+          "malformed_line_count": 65,
+          "total_sample_period": 930000000,
+          "classified_core_period": 788700000,
+          "category_sample_counts": {
+            "dequant_index_address": 3670,
+            "dequant_input_load": 3184,
+            "dequant_parameter_load": 726,
+            "dequant_convert_mul": 102,
+            "dequant_output_store": 205,
+            "setup_other": 30,
+            "foreign_symbol": 0,
+            "unclassified": 1383
+          },
+          "category_periods": {
+            "dequant_index_address": 367000000,
+            "dequant_input_load": 318400000,
+            "dequant_parameter_load": 72600000,
+            "dequant_convert_mul": 10200000,
+            "dequant_output_store": 20500000,
+            "setup_other": 3000000,
+            "foreign_symbol": 0,
+            "unclassified": 138300000
+          },
+          "category_share_pct": {
+            "dequant_index_address": 39.462365591397855,
+            "dequant_input_load": 34.236559139784944,
+            "dequant_parameter_load": 7.806451612903226,
+            "dequant_convert_mul": 1.096774193548387,
+            "dequant_output_store": 2.204301075268817,
+            "setup_other": 0.3225806451612903,
+            "foreign_symbol": 0.0,
+            "unclassified": 14.870967741935484
+          },
+          "classified_core_share_pct": 84.80645161290322,
+          "top_bottleneck_set": [
+            "dequant_index_address",
+            "dequant_input_load"
+          ],
+          "top_lines": [
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 195200000,
+              "total_share_pct": 20.989247311827956
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 96900000,
+              "total_share_pct": 10.419354838709676
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 85700000,
+              "total_share_pct": 9.21505376344086
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 48600000,
+              "total_share_pct": 5.225806451612904
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 43900000,
+              "total_share_pct": 4.720430107526882
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 179,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 43700000,
+              "total_share_pct": 4.698924731182796
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 363,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 42000000,
+              "total_share_pct": 4.516129032258064
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 362,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 40900000,
+              "total_share_pct": 4.397849462365591
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 31000000,
+              "total_share_pct": 3.3333333333333335
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 361,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 24300000,
+              "total_share_pct": 2.612903225806452
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 215,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_parameter_load",
+              "sample_period": 24000000,
+              "total_share_pct": 2.5806451612903225
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 78,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 22300000,
+              "total_share_pct": 2.3978494623655915
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 219,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_output_store",
+              "sample_period": 20500000,
+              "total_share_pct": 2.204301075268817
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 17100000,
+              "total_share_pct": 1.8387096774193548
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 197,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 17000000,
+              "total_share_pct": 1.827956989247312
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 141,
+              "symbol": "campp_reference_read_f32",
+              "category": "dequant_parameter_load",
+              "sample_period": 11600000,
+              "total_share_pct": 1.2473118279569892
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 184,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 10600000,
+              "total_share_pct": 1.1397849462365592
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 218,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_convert_mul",
+              "sample_period": 10200000,
+              "total_share_pct": 1.096774193548387
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 395,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 10000000,
+              "total_share_pct": 1.0752688172043012
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 9700000,
+              "total_share_pct": 1.043010752688172
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+          "output_hash": "276f38bc4e2cfa03",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0000__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0000__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0000__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0000__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0000__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0000__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 9317,
+          "malformed_line_count": 68,
+          "total_sample_period": 931700000,
+          "classified_core_period": 790200000,
+          "category_sample_counts": {
+            "dequant_index_address": 3638,
+            "dequant_input_load": 3236,
+            "dequant_parameter_load": 714,
+            "dequant_convert_mul": 98,
+            "dequant_output_store": 216,
+            "setup_other": 34,
+            "foreign_symbol": 0,
+            "unclassified": 1381
+          },
+          "category_periods": {
+            "dequant_index_address": 363800000,
+            "dequant_input_load": 323600000,
+            "dequant_parameter_load": 71400000,
+            "dequant_convert_mul": 9800000,
+            "dequant_output_store": 21600000,
+            "setup_other": 3400000,
+            "foreign_symbol": 0,
+            "unclassified": 138100000
+          },
+          "category_share_pct": {
+            "dequant_index_address": 39.046903509713424,
+            "dequant_input_load": 34.732209938821505,
+            "dequant_parameter_load": 7.663410969196092,
+            "dequant_convert_mul": 1.051840721262209,
+            "dequant_output_store": 2.318342814210583,
+            "setup_other": 0.36492433186648066,
+            "foreign_symbol": 0.0,
+            "unclassified": 14.8223677149297
+          },
+          "classified_core_share_pct": 84.81270795320383,
+          "top_bottleneck_set": [
+            "dequant_index_address",
+            "dequant_input_load"
+          ],
+          "top_lines": [
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 195700000,
+              "total_share_pct": 21.004615219491253
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 98300000,
+              "total_share_pct": 10.550606418375013
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 83200000,
+              "total_share_pct": 8.929913062144468
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 45900000,
+              "total_share_pct": 4.926478480197488
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 179,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 45600000,
+              "total_share_pct": 4.894279274444564
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 45400000,
+              "total_share_pct": 4.872813137275947
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 362,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 42300000,
+              "total_share_pct": 4.540088011162392
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 363,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 41200000,
+              "total_share_pct": 4.422024256735001
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 30900000,
+              "total_share_pct": 3.3165181925512504
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 215,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_parameter_load",
+              "sample_period": 22300000,
+              "total_share_pct": 2.3934742943007405
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 219,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_output_store",
+              "sample_period": 21500000,
+              "total_share_pct": 2.3076097456262747
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 361,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 21100000,
+              "total_share_pct": 2.2646774712890414
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 78,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 20500000,
+              "total_share_pct": 2.2002790597831923
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 197,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 18000000,
+              "total_share_pct": 1.9319523451754856
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 15200000,
+              "total_share_pct": 1.6314264248148544
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 184,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 12500000,
+              "total_share_pct": 1.3416335730385318
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 395,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 11300000,
+              "total_share_pct": 1.2128367500268327
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 218,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_convert_mul",
+              "sample_period": 9800000,
+              "total_share_pct": 1.051840721262209
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 141,
+              "symbol": "campp_reference_read_f32",
+              "category": "dequant_parameter_load",
+              "sample_period": 9300000,
+              "total_share_pct": 0.9981753783406676
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 9000000,
+              "total_share_pct": 0.9659761725877428
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+          "output_hash": "ddd80cee205bd964",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0005__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0005__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0005__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0005__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0005__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0005__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 9344,
+          "malformed_line_count": 69,
+          "total_sample_period": 934400000,
+          "classified_core_period": 787300000,
+          "category_sample_counts": {
+            "dequant_index_address": 3685,
+            "dequant_input_load": 3165,
+            "dequant_parameter_load": 742,
+            "dequant_convert_mul": 94,
+            "dequant_output_store": 187,
+            "setup_other": 23,
+            "foreign_symbol": 0,
+            "unclassified": 1448
+          },
+          "category_periods": {
+            "dequant_index_address": 368500000,
+            "dequant_input_load": 316500000,
+            "dequant_parameter_load": 74200000,
+            "dequant_convert_mul": 9400000,
+            "dequant_output_store": 18700000,
+            "setup_other": 2300000,
+            "foreign_symbol": 0,
+            "unclassified": 144800000
+          },
+          "category_share_pct": {
+            "dequant_index_address": 39.43707191780822,
+            "dequant_input_load": 33.872003424657535,
+            "dequant_parameter_load": 7.940924657534247,
+            "dequant_convert_mul": 1.0059931506849316,
+            "dequant_output_store": 2.0012842465753424,
+            "setup_other": 0.2461472602739726,
+            "foreign_symbol": 0.0,
+            "unclassified": 15.496575342465754
+          },
+          "classified_core_share_pct": 84.25727739726028,
+          "top_bottleneck_set": [
+            "dequant_index_address",
+            "dequant_input_load"
+          ],
+          "top_lines": [
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 194400000,
+              "total_share_pct": 20.804794520547944
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 97200000,
+              "total_share_pct": 10.402397260273972
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 88100000,
+              "total_share_pct": 9.428510273972602
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 362,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 44700000,
+              "total_share_pct": 4.783818493150685
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 44600000,
+              "total_share_pct": 4.773116438356165
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 363,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 44500000,
+              "total_share_pct": 4.7624143835616435
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 179,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 42500000,
+              "total_share_pct": 4.548373287671232
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 41800000,
+              "total_share_pct": 4.473458904109589
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 30700000,
+              "total_share_pct": 3.2855308219178085
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 215,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_parameter_load",
+              "sample_period": 25800000,
+              "total_share_pct": 2.7611301369863015
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 361,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 24100000,
+              "total_share_pct": 2.579195205479452
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 78,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 22300000,
+              "total_share_pct": 2.3865582191780823
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 219,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_output_store",
+              "sample_period": 18600000,
+              "total_share_pct": 1.990582191780822
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 197,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 16900000,
+              "total_share_pct": 1.8086472602739725
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "dequant_index_address",
+              "sample_period": 16000000,
+              "total_share_pct": 1.7123287671232876
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 184,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 12100000,
+              "total_share_pct": 1.2949486301369864
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_read_quantized",
+              "category": "dequant_input_load",
+              "sample_period": 10600000,
+              "total_share_pct": 1.134417808219178
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 141,
+              "symbol": "campp_reference_read_f32",
+              "category": "dequant_parameter_load",
+              "sample_period": 10000000,
+              "total_share_pct": 1.0702054794520548
+            },
+            {
+              "source": "quantization_operators.c",
+              "line": 218,
+              "symbol": "campp_reference_dequantize_linear",
+              "category": "dequant_convert_mul",
+              "sample_period": 9400000,
+              "total_share_pct": 1.0059931506849316
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 78,
+              "symbol": "campp_reference_read_f32",
+              "category": "dequant_parameter_load",
+              "sample_period": 9200000,
+              "total_share_pct": 0.9845890410958904
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0006__98.f32",
+          "output_hash": "feaaa7169ff85f7f",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0006__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0006__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0006__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0006__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0006__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/dequant_hotspot/dequantize_linear/multi__speaker_0006__98/microbench.json"
+          }
+        }
+      ],
+      "aggregate": {
+        "total_sample_period": 2796100000,
+        "classified_core_period": 2366200000,
+        "category_periods": {
+          "dequant_index_address": 1099300000,
+          "dequant_input_load": 958500000,
+          "dequant_parameter_load": 218200000,
+          "dequant_convert_mul": 29400000,
+          "dequant_output_store": 60800000,
+          "setup_other": 8700000,
+          "foreign_symbol": 0,
+          "unclassified": 421200000
+        },
+        "category_share_pct": {
+          "dequant_index_address": 39.31547512606845,
+          "dequant_input_load": 34.27988984657201,
+          "dequant_parameter_load": 7.803726619219627,
+          "dequant_convert_mul": 1.0514645398948534,
+          "dequant_output_store": 2.1744572797825543,
+          "setup_other": 0.3111476699688852,
+          "foreign_symbol": 0.0,
+          "unclassified": 15.063838918493616
+        },
+        "classified_core_share_pct": 84.6250134115375,
+        "top_bottleneck_set": [
+          "dequant_index_address",
+          "dequant_input_load"
+        ]
+      },
+      "decision": {
+        "ready": true,
+        "winner": "dequant_index_address",
+        "input_winners": [
+          "dequant_index_address",
+          "dequant_index_address",
+          "dequant_index_address"
+        ],
+        "maximum_unclassified_share_pct": 15.496575342465754,
+        "maximum_foreign_symbol_share_pct": 0.0,
+        "rule": "same top category on 3 inputs, unclassified <=20% and foreign_symbol <=5%; select cumulative 80% of classified Dequant core"
+      }
+    }
+  ],
+  "decision": {
+    "ready": true,
+    "overall": "dequant_index_address",
+    "top_bottleneck_set": [
+      "dequant_index_address",
+      "dequant_input_load"
+    ],
+    "next_candidates": [
+      "address"
+    ],
+    "next_step": "benchmark baseline/address/parameter/scalar_combined/neon_combined"
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/dequant_hotspot"
+  }
+}
