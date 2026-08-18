@@ -14,9 +14,10 @@ retained tensor bitwise 검증, Quick E2E 성능을 모두 통과한 구현만
 
 QConv 일반 경로와 fused Quant-QConv는 동일한 O4I4 core를 공유한다. QConv
 후보는 `candidates/qlinear_conv/`에 모으고 address, MAC, combined 모드로
-각각 측정한다. 후보가 검증되어 production QConv에 승격되면 기존 fused 경로도
-같은 QConv 함수를 호출하므로 별도 MAC 구현 없이 개선을 공유한다. 이후 fused
-input tile quantization, BN-ReLU-Quant, DequantizeLinear 순으로 분리한다.
+각각 측정한다. fused 후보는 production의 quantization/scratch driver를 그대로
+사용하고 QConv runner만 주입한다. 따라서 별도 MAC 구현 없이 같은 개선을
+공유하며, fused 측정에서 남는 input quantization 비중은 후속 tile quantization
+후보의 근거로 사용한다. 이후 BN-ReLU-Quant, DequantizeLinear를 분리한다.
 
 BN 후보도 production registry와 분리한다. `address`, `affine`, `quant`는
 각 원인의 독립 효과를 확인하고 `combined`는 channel-packed 입력에서 채널

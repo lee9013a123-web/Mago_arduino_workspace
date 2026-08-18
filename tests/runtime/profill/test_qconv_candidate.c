@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "backends/cpu_aarch64/aarch64_kernels.h"
+#include "fused_quant_qconv_candidate.h"
 #include "internal/runtime_model.h"
 #include "qconv_candidate.h"
 
@@ -112,6 +113,7 @@ static void init_channel_packed_view(
     const uint32_t *dimensions)
 {
     const uint32_t channels = dimensions[1];
+    const uint32_t element_size = campp_dtype_byte_size(dtype);
     uint8_t axis;
     memset(view, 0, sizeof(*view));
     view->data = data;
@@ -120,17 +122,20 @@ static void init_channel_packed_view(
     for (axis = 0u; axis < CAMPP_TENSOR_MAX_RANK; ++axis) {
         view->dimensions[axis] = axis < rank ? dimensions[axis] : 1u;
     }
-    view->byte_strides[1] = 1u;
+    view->byte_strides[1] = element_size;
     if (rank == 3u) {
-        view->byte_strides[2] = channels;
-        view->byte_strides[0] = channels * dimensions[2];
-    } else {
-        view->byte_strides[3] = channels;
-        view->byte_strides[2] = channels * dimensions[3];
+        view->byte_strides[2] = channels * element_size;
         view->byte_strides[0] =
-            channels * dimensions[2] * dimensions[3];
+            channels * dimensions[2] * element_size;
+    } else {
+        view->byte_strides[3] = channels * element_size;
+        view->byte_strides[2] =
+            channels * dimensions[3] * element_size;
+        view->byte_strides[0] =
+            channels * dimensions[2] * dimensions[3] * element_size;
     }
-    view->logical_byte_size = element_count(rank, dimensions);
+    view->logical_byte_size =
+        element_count(rank, dimensions) * element_size;
     view->storage_span_bytes = view->logical_byte_size;
 }
 
@@ -194,6 +199,7 @@ static int run_case(uint8_t rank)
     const uint64_t input_elements = element_count(rank, input_dimensions);
     const uint64_t output_elements = element_count(rank, output_dimensions);
     uint8_t input_data[128];
+    float input_float[128];
     int8_t logical_weight[256];
     uint8_t packed_weight[512];
     float input_scale = 0.25f;
@@ -205,11 +211,14 @@ static int run_case(uint8_t rank)
     int32_t bias[8];
     uint8_t baseline[128];
     uint8_t candidate[128];
+    uint8_t scratch[128];
     CamppTensorView inputs_view[9];
+    CamppTensorView fused_inputs_view[9];
     CamppTensorView baseline_output[1];
     CamppTensorView candidate_output[1];
     CamppRuntimeModel model;
     CamppOperatorDescriptor op;
+    CamppTensorDescriptor tensor_descriptor;
     uint8_t attributes_buffer[256];
     IntegerAttribute attributes[5];
     size_t packed_size;
@@ -247,9 +256,18 @@ static int run_case(uint8_t rank)
         attributes_buffer, attributes, 5u);
     model.attribute_section = attributes_buffer;
     model.attribute_section_size = op.attribute_size;
+    memset(&tensor_descriptor, 0, sizeof(tensor_descriptor));
+    tensor_descriptor.dtype = CAMPP_DTYPE_FLOAT32;
+    tensor_descriptor.storage_span_bytes = input_elements * sizeof(float);
+    model.tensors = &tensor_descriptor;
+    model.tensor_count = 1u;
+    op.input_count = 9u;
+    op.input_tensor_ids[0] = 0u;
 
     for (index = 0u; index < input_elements; ++index) {
         input_data[index] = (uint8_t)(119u + index % 19u);
+        input_float[index] =
+            ((float)input_data[index] - (float)input_zero) * input_scale;
     }
     for (output = 0u; output < outputs; ++output) {
         uint32_t input;
@@ -307,6 +325,10 @@ static int run_case(uint8_t rank)
     init_channel_packed_view(
         &candidate_output[0], candidate, CAMPP_DTYPE_UINT8,
         rank, output_dimensions);
+    memcpy(fused_inputs_view, inputs_view, sizeof(fused_inputs_view));
+    init_channel_packed_view(
+        &fused_inputs_view[0], input_float, CAMPP_DTYPE_FLOAT32,
+        rank, input_dimensions);
 
     CHECK_STATUS(campp_aarch64_qlinear_conv_o4i4(
         &model, &op, inputs_view, 9u, baseline_output, 1u, NULL, 0u));
@@ -322,6 +344,27 @@ static int run_case(uint8_t rank)
         CHECK_TRUE(memcmp(
             baseline, candidate, (size_t)output_elements) == 0);
     }
+    memset(baseline, 0, sizeof(baseline));
+    CHECK_STATUS(campp_fused_quant_qlinear_conv_o4i4(
+        &model, &op, fused_inputs_view, 9u, baseline_output, 1u,
+        scratch, (size_t)input_elements));
+    {
+        CamppFusedQconvCandidateMode fused_mode;
+        for (fused_mode = CAMPP_FUSED_QCONV_CANDIDATE_MAC;
+             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED;
+             fused_mode = (CamppFusedQconvCandidateMode)(fused_mode + 1)) {
+            const CamppKernelEntry *entry =
+                campp_fused_qconv_candidate_entry(fused_mode);
+            CHECK_TRUE(entry != NULL);
+            memset(candidate, 0, sizeof(candidate));
+            memset(scratch, 0, sizeof(scratch));
+            CHECK_STATUS(entry->run(
+                &model, &op, fused_inputs_view, 9u,
+                candidate_output, 1u, scratch, (size_t)input_elements));
+            CHECK_TRUE(memcmp(
+                baseline, candidate, (size_t)output_elements) == 0);
+        }
+    }
     return 0;
 }
 
@@ -334,6 +377,11 @@ int main(void)
             campp_qconv_candidate_mode_name(
                 CAMPP_QCONV_CANDIDATE_COMBINED),
             "combined") == 0);
-    puts("QConv optimization candidates: PASS");
+    CHECK_TRUE(
+        strcmp(
+            campp_fused_qconv_candidate_mode_name(
+                CAMPP_FUSED_QCONV_CANDIDATE_COMBINED),
+            "combined") == 0);
+    puts("QConv and fused QConv optimization candidates: PASS");
     return 0;
 }

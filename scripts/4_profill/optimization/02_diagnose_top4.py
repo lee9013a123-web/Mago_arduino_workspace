@@ -174,6 +174,7 @@ def _command(
     repeat: int,
     expected_hash: str | None = None,
     qconv_candidate: str = "baseline",
+    fused_qconv_candidate: str = "baseline",
     bn_candidate: str = "baseline",
 ) -> list[str]:
     command = [
@@ -194,6 +195,8 @@ def _command(
         "1",
         "--qconv-candidate",
         qconv_candidate,
+        "--fused-qconv-candidate",
+        fused_qconv_candidate,
         "--bn-candidate",
         bn_candidate,
     ]
@@ -237,6 +240,7 @@ def _validate_payload(
     payload: dict[str, Any], case: dict[str, Any], repeat: int,
     qconv_candidate: str | None = None,
     bn_candidate: str | None = None,
+    fused_qconv_candidate: str | None = None,
 ) -> None:
     if payload.get("mode") != "operator_microbench":
         raise DiagnosisError("unexpected microbench mode")
@@ -249,6 +253,11 @@ def _validate_payload(
         raise DiagnosisError("QConv candidate mode mismatch")
     if bn_candidate is not None and payload.get("bn_candidate") != bn_candidate:
         raise DiagnosisError("BN candidate mode mismatch")
+    if (
+        fused_qconv_candidate is not None
+        and payload.get("fused_qconv_candidate") != fused_qconv_candidate
+    ):
+        raise DiagnosisError("fused QConv candidate mode mismatch")
     operator = payload.get("operator")
     if not isinstance(operator, dict) or (
         operator.get("operator_id") != case["operator_id"]
@@ -369,6 +378,7 @@ def build_diagnosis(
     repeat: int,
     elapsed_seconds: float,
     qconv_candidate: str = "baseline",
+    fused_qconv_candidate: str = "baseline",
     bn_candidate: str = "baseline",
 ) -> dict[str, Any]:
     results = [
@@ -388,6 +398,7 @@ def build_diagnosis(
             "input_count": 3,
             "elapsed_seconds": elapsed_seconds,
             "qconv_candidate": qconv_candidate,
+            "fused_qconv_candidate": fused_qconv_candidate,
             "bn_candidate": bn_candidate,
         },
         "target_kernel_families": list(TARGET_KERNELS),
@@ -436,6 +447,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--qconv-only", action="store_true")
     parser.add_argument(
+        "--fused-qconv-candidate",
+        choices=("baseline", "mac", "combined"),
+        default="baseline",
+    )
+    parser.add_argument("--fused-qconv-only", action="store_true")
+    parser.add_argument(
         "--bn-candidate",
         choices=("baseline", "address", "affine", "quant", "combined"),
         default="baseline",
@@ -458,8 +475,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.warmup < 0 or args.repeat <= 0:
             raise DiagnosisError("warmup must be >= 0 and repeat must be > 0")
-        if args.qconv_only and args.bn_only:
-            raise DiagnosisError("--qconv-only and --bn-only are mutually exclusive")
+        selected_only_modes = sum(
+            (args.qconv_only, args.fused_qconv_only, args.bn_only)
+        )
+        if selected_only_modes > 1:
+            raise DiagnosisError(
+                "--qconv-only, --fused-qconv-only and --bn-only "
+                "are mutually exclusive"
+            )
         if os.name != "posix" and not args.preflight_only:
             raise DiagnosisError("actual diagnostics require Linux/QRB2210")
         if not args.profile.is_file():
@@ -471,6 +494,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                 case
                 for case in cases
                 if case["case_name"] in ("qconv_3x3", "qconv_1x1")
+            ]
+        elif args.fused_qconv_only:
+            cases = [
+                case for case in cases
+                if case["case_name"] == "fused_quant_qconv"
             ]
         elif args.bn_only:
             cases = [
@@ -495,6 +523,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise DiagnosisError("binary does not expose optimization stage probes")
         if args.qconv_candidate not in capabilities.get("qconv_candidates", []):
             raise DiagnosisError("binary does not expose requested QConv candidate")
+        if args.fused_qconv_candidate not in capabilities.get(
+            "fused_qconv_candidates", []
+        ):
+            raise DiagnosisError(
+                "binary does not expose requested fused QConv candidate"
+            )
         if args.bn_candidate not in capabilities.get("bn_candidates", []):
             raise DiagnosisError("binary does not expose requested BN candidate")
         if args.preflight_only:
@@ -507,6 +541,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "features": [_display_path(path) for path in args.features],
                         "cases": cases,
                         "qconv_candidate": args.qconv_candidate,
+                        "fused_qconv_candidate": args.fused_qconv_candidate,
                         "bn_candidate": args.bn_candidate,
                     },
                     ensure_ascii=False,
@@ -546,6 +581,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                             in ("qconv_3x3", "qconv_1x1")
                             else "baseline"
                         ),
+                        fused_qconv_candidate=(
+                            args.fused_qconv_candidate
+                            if case["case_name"] == "fused_quant_qconv"
+                            else "baseline"
+                        ),
                         bn_candidate=(
                             args.bn_candidate
                             if case["case_name"] == "fused_bn_relu_quant"
@@ -563,9 +603,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     if case["case_name"] == "fused_bn_relu_quant"
                     else "baseline"
                 )
+                expected_fused_qconv_candidate = (
+                    args.fused_qconv_candidate
+                    if case["case_name"] == "fused_quant_qconv"
+                    else "baseline"
+                )
                 _validate_payload(
                     payload, case, args.repeat, expected_candidate,
-                    expected_bn_candidate,
+                    expected_bn_candidate, expected_fused_qconv_candidate,
                 )
                 payload["input"] = {
                     "path": _display_path(feature),
@@ -585,6 +630,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             repeat=args.repeat,
             elapsed_seconds=time.monotonic() - started,
             qconv_candidate=args.qconv_candidate,
+            fused_qconv_candidate=args.fused_qconv_candidate,
             bn_candidate=args.bn_candidate,
         )
         diagnosis["artifacts"] = {

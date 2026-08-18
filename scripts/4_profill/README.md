@@ -248,6 +248,38 @@ done
 경우에만 production QConv의 fast path로 승격한다. 기존 구현은 지원하지 않는
 layout을 위한 fallback으로 유지한다.
 
+## Fused Quant-QConv 후보 비교
+
+fused 후보는 production의 FP32→UINT8 quantization과 scratch를 그대로 사용하고,
+그 뒤 호출되는 packed QConv runner만 `mac` 또는 `combined` 후보로 바꾼다.
+따라서 일반 QConv 코드를 복사하지 않으며 fused 전용 수치 의미도 바뀌지 않는다.
+
+```bash
+bash scripts/4_profill/optimization/01_build_optimization.sh
+build/profill/optimization/test_qconv_candidate
+
+for mode in baseline mac combined; do
+  python3 scripts/4_profill/optimization/02_diagnose_top4.py \
+    --fused-qconv-only \
+    --fused-qconv-candidate "${mode}" \
+    --runs-dir "runs/profiling/e7_98/optimization/fused_qconv_candidates/${mode}" \
+    --output "results/profiling/e7_98/optimization/fused_qconv_candidates/${mode}.json" \
+    --force
+done
+
+for mode in mac combined; do
+  python3 scripts/4_profill/optimization/03_compare_candidate.py \
+    --baseline results/profiling/e7_98/optimization/fused_qconv_candidates/baseline.json \
+    --candidate "results/profiling/e7_98/optimization/fused_qconv_candidates/${mode}.json" \
+    --output "results/profiling/e7_98/optimization/fused_qconv_candidates/${mode}_comparison.json" \
+    --force
+done
+```
+
+세 입력의 output hash가 bitwise 동일해야 하며, 후보 적용 뒤
+`fused_input_quantize`가 새 병목으로 커지는지는 stage 비중으로 다시 확인한다.
+microbench 통과 후에도 retained tensor bitwise와 Quick E2E 검증이 필요하다.
+
 ## BN 병목 분리와 후보 비교
 
 기존 coarse 진단의 `bn_elementwise`를 index/address, parameter load,

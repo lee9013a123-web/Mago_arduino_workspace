@@ -5,7 +5,7 @@
 ```text
 candidates/
 ├── qlinear_conv/            # QConv address/MAC/combined 후보
-├── fused_quant_qconv/       # full scratch 대신 tile quantization 실험
+├── fused_quant_qconv/       # 기존 fused quantization + QConv 후보 결합
 ├── bn_relu_quant/           # channel affine precompute/NEON 실험
 └── dequantize_linear/       # contiguous/per-axis NEON 실험
 ```
@@ -30,6 +30,23 @@ qlinear_conv/
 
 지원하지 않는 layout이나 안전한 int32 부분합 범위를 벗어나는 shape는 기존
 `campp_aarch64_qlinear_conv_o4i4()`로 fallback한다.
+
+`fused_quant_qconv/`는 quantization과 scratch layout을 다시 구현하지 않는다.
+production의 공용 fused driver에 검증된 QConv candidate runner만 주입해,
+일반 QConv에서 얻은 MAC/combined 개선이 fused Quant-QConv에도 그대로 적용되는지
+분리 측정한다.
+
+```text
+fused_quant_qconv/
+└── fused_quant_qconv_candidate.h/.c  # baseline/mac/combined dispatch adapter
+```
+
+- `baseline`: production fused Quant-QConv를 그대로 실행
+- `mac`: 기존 full-tensor quantization 뒤 QConv MAC candidate 실행
+- `combined`: 기존 full-tensor quantization 뒤 QConv combined candidate 실행
+
+따라서 세 모드의 차이는 QConv runner뿐이다. input quantization, scratch 크기,
+입출력 descriptor, requantization 의미는 production 경로와 동일하다.
 
 `bn_relu_quant/` 후보 역시 target Operator에서만 교체한다.
 

@@ -1,6 +1,7 @@
 /* Quantized CAM++ epilogues and QuantizeLinear -> packed QLinearConv. */
 
 #include "backends/cpu_aarch64/aarch64_kernels.h"
+#include "backends/cpu_aarch64/fused_kernels/fused_quant_qconv_internal.h"
 
 #include <limits.h>
 #include <math.h>
@@ -120,11 +121,11 @@ CamppStatus campp_fused_quant_qlinear_conv_scratch_bytes(
     return CAMPP_STATUS_OK;
 }
 
-CamppStatus campp_fused_quant_qlinear_conv_o4i4(
+CamppStatus campp_fused_quant_qlinear_conv_with_runner(
     const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
     const CamppTensorView *inputs, uint8_t input_count,
     CamppTensorView *outputs, uint8_t output_count, void *scratch,
-    size_t scratch_size)
+    size_t scratch_size, CamppKernelRun qconv_run)
 {
     CamppTensorView quantized;
     CamppTensorView qconv_inputs[CAMPP_OPERATOR_INPUT_CAPACITY];
@@ -135,6 +136,7 @@ CamppStatus campp_fused_quant_qlinear_conv_o4i4(
     uint8_t axis;
     CamppStatus status;
 
+    if (qconv_run == NULL) return CAMPP_STATUS_INVALID_ARGUMENT;
     status = campp_reference_validate_invocation(
         inputs, input_count, 8u, 9u, outputs, output_count);
     if (status != CAMPP_STATUS_OK) return status;
@@ -175,12 +177,23 @@ CamppStatus campp_fused_quant_qlinear_conv_o4i4(
     qconv_inputs[0] = quantized;
     for (axis = 1u; axis < input_count; ++axis) qconv_inputs[axis] = inputs[axis];
     CAMPP_OPTIMIZATION_STAGE_BEGIN(qconv_started_ns);
-    status = campp_aarch64_qlinear_conv_o4i4(
+    status = qconv_run(
         model, op, qconv_inputs, input_count, outputs, output_count,
         NULL, 0u);
     CAMPP_OPTIMIZATION_STAGE_END(
         CAMPP_OPT_STAGE_FUSED_QCONV, qconv_started_ns);
     return status;
+}
+
+CamppStatus campp_fused_quant_qlinear_conv_o4i4(
+    const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
+    const CamppTensorView *inputs, uint8_t input_count,
+    CamppTensorView *outputs, uint8_t output_count, void *scratch,
+    size_t scratch_size)
+{
+    return campp_fused_quant_qlinear_conv_with_runner(
+        model, op, inputs, input_count, outputs, output_count,
+        scratch, scratch_size, campp_aarch64_qlinear_conv_o4i4);
 }
 
 CamppStatus campp_fused_dequant_relu_quant(

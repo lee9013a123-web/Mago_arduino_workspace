@@ -17,11 +17,13 @@ mapfile -t RUNTIME_SOURCES < <(
 )
 
 CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv"
+FUSED_QCONV_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_quant_qconv"
 BN_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant"
 CANDIDATE_SOURCES=(
     "${CANDIDATE_DIR}/qconv_address_fastpath.c"
     "${CANDIDATE_DIR}/qconv_mac_neon.c"
     "${CANDIDATE_DIR}/qconv_candidate.c"
+    "${FUSED_QCONV_CANDIDATE_DIR}/fused_quant_qconv_candidate.c"
     "${BN_CANDIDATE_DIR}/bn_iteration_fastpath.c"
     "${BN_CANDIDATE_DIR}/bn_affine_fastpath.c"
     "${BN_CANDIDATE_DIR}/bn_quant_neon.c"
@@ -34,6 +36,7 @@ INCLUDES=(
     -I "${ROOT}/src/c/profill/include"
     -I "${ROOT}/src/c/profill/optimization/include"
     -I "${CANDIDATE_DIR}"
+    -I "${FUSED_QCONV_CANDIDATE_DIR}"
     -I "${BN_CANDIDATE_DIR}"
 )
 
@@ -95,6 +98,7 @@ INCLUDES=(
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
     printf 'hotspot_stage_probe=disabled\n'
     printf 'qconv_candidate_modes=baseline,address,mac,combined\n'
+    printf 'fused_qconv_candidate_modes=baseline,mac,combined\n'
     printf 'bn_candidate_modes=baseline,address,affine,quant,combined\n'
 } > "${BUILD_DIR}/build_metadata.txt"
 
