@@ -31,14 +31,29 @@ INCLUDES=(
     "${ROOT}/src/c/profill/runtime_fixture.c" \
     "${ROOT}/src/c/profill/optimization/diagnostics/stage_probe.c" \
     "${ROOT}/src/c/profill/optimization/diagnostics/linux_pmu.c" \
+    "${ROOT}/src/c/profill/optimization/diagnostics/perf_sample_window.c" \
     "${ROOT}/src/c/profill/optimization/command_line/campp_operator_microbench.c" \
     -lm -o "${BUILD_DIR}/campp_operator_microbench"
+
+# perf annotate용 binary. Runtime kernel에는 stage clock 호출을 컴파일하지 않는다.
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${ROOT}/src/c/profill/operator_profiler.c" \
+    "${ROOT}/src/c/profill/runtime_fixture.c" \
+    "${ROOT}/src/c/profill/optimization/diagnostics/stage_probe.c" \
+    "${ROOT}/src/c/profill/optimization/diagnostics/linux_pmu.c" \
+    "${ROOT}/src/c/profill/optimization/diagnostics/perf_sample_window.c" \
+    "${ROOT}/src/c/profill/optimization/command_line/campp_operator_microbench.c" \
+    -lm -o "${BUILD_DIR}/campp_operator_hotspot"
 
 # shellcheck disable=SC2086
 "${CC}" ${CFLAGS} \
     "${INCLUDES[@]}" \
     "${ROOT}/src/c/profill/operator_profiler.c" \
     "${ROOT}/src/c/profill/optimization/diagnostics/stage_probe.c" \
+    "${ROOT}/src/c/profill/optimization/diagnostics/perf_sample_window.c" \
     "${ROOT}/tests/runtime/profill/test_optimization_probe.c" \
     -lm -o "${BUILD_DIR}/test_optimization_probe"
 
@@ -46,8 +61,10 @@ INCLUDES=(
     printf 'cc=%s\n' "${CC}"
     printf 'cflags=%s\n' "${CFLAGS}"
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
+    printf 'hotspot_stage_probe=disabled\n'
 } > "${BUILD_DIR}/build_metadata.txt"
 
 echo "Optimization diagnostics build complete"
 echo "  microbench: ${BUILD_DIR}/campp_operator_microbench"
+echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"

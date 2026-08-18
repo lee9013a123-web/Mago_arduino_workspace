@@ -12,6 +12,7 @@
 #include "backends/cpu_reference/reference_kernel_utils.h"
 #include "campp_profill/operator_profiler.h"
 #include "campp_profill/optimization/linux_pmu.h"
+#include "campp_profill/optimization/perf_sample_window.h"
 #include "campp_profill/optimization/stage_probe.h"
 #include "campp_profill/runtime_fixture.h"
 #include "campp_runtime/operator_descriptor.h"
@@ -33,6 +34,7 @@ typedef struct MicrobenchOptions {
     uint32_t requested_threads;
     uint64_t expected_output_hash;
     int has_expected_output_hash;
+    int perf_window;
 } MicrobenchOptions;
 
 typedef struct TensorSnapshot {
@@ -83,7 +85,7 @@ static void usage(const char *program)
         stderr,
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
         "--operator-id N [--warmup 5] [--repeat 20] [--threads 1] "
-        "[--expected-output-hash HEX]\n",
+        "[--expected-output-hash HEX] [--perf-window]\n",
         program);
 }
 
@@ -105,6 +107,10 @@ static int parse_options(
         if (strcmp(name, "--help") == 0 || strcmp(name, "-h") == 0) {
             usage(argv[0]);
             return 2;
+        }
+        if (strcmp(name, "--perf-window") == 0) {
+            options->perf_window = 1;
+            continue;
         }
         if (index + 1 >= argc) {
             fprintf(stderr, "missing value for %s\n", name);
@@ -275,6 +281,17 @@ static CamppStatus run_target_kernel(TargetInvocation *invocation)
         invocation->scratch_size);
 }
 
+static void initialize_empty_pmu(CamppOptimizationPmu *pmu)
+{
+    uint32_t event;
+
+    memset(pmu, 0, sizeof(*pmu));
+    pmu->leader_fd = -1;
+    for (event = 0u; event < CAMPP_OPT_PMU_EVENT_COUNT; ++event) {
+        pmu->file_descriptors[event] = -1;
+    }
+}
+
 static void clear_outputs(
     CamppRuntimeContext *context, const CamppOperatorDescriptor *op)
 {
@@ -340,7 +357,9 @@ static void print_u64_samples(const uint64_t *samples, uint32_t count)
     uint32_t index;
     putchar('[');
     for (index = 0u; index < count; ++index) {
-        printf("%s%" PRIu64, index == 0u ? "" : ",", samples[index]);
+        printf(
+            "%s%" PRIu64, index == 0u ? "" : ",",
+            samples == NULL ? 0u : samples[index]);
     }
     putchar(']');
 }
@@ -349,7 +368,9 @@ static void print_result(
     const MicrobenchOptions *options, const CamppRuntimeModel *model,
     const CamppRuntimeContext *context, const CamppOperatorDescriptor *op,
     const uint64_t *samples_ns, const CamppOptimizationProbe *probe,
-    const CamppOptimizationPmu *pmu, uint64_t hash, int hash_matches)
+    const CamppOptimizationPmu *pmu,
+    const CamppPerfSampleWindow *perf_window, uint64_t hash,
+    int hash_matches)
 {
     uint32_t index;
 
@@ -405,7 +426,13 @@ static void print_result(
         print_u64_samples(event_samples, options->repeat);
         putchar('}');
     }
-    fputs("]}}\n", stdout);
+    printf(
+        "]},\"perf_window\":{\"requested\":%s,\"supported\":%s,"
+        "\"enabled_at_exit\":%s,\"error_number\":%d}}\n",
+        perf_window->requested ? "true" : "false",
+        perf_window->supported ? "true" : "false",
+        perf_window->enabled ? "true" : "false",
+        perf_window->error_number);
 }
 
 int main(int argc, char **argv)
@@ -415,6 +442,7 @@ int main(int argc, char **argv)
     CamppRuntimeContext context;
     CamppOptimizationProbe probe;
     CamppOptimizationPmu pmu;
+    CamppPerfSampleWindow perf_window;
     TargetInvocation invocation;
     const CamppKernelRegistry *registry;
     const CamppTensorDescriptor *input_descriptor;
@@ -438,7 +466,17 @@ int main(int argc, char **argv)
             "{\"runtime\":\"campp-operator-microbench\","
             "\"effective_threads\":1,\"bucket\":98,"
             "\"measurement_scope\":\"single_kernel_run\","
-            "\"stage_probe\":true,\"pmu\":true}\n",
+            "\"pmu\":true,"
+#if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
+            "\"stage_probe\":true,"
+#else
+            "\"stage_probe\":false,"
+#endif
+#if defined(__linux__)
+            "\"perf_sample_window\":true}\n",
+#else
+            "\"perf_sample_window\":false}\n",
+#endif
             stdout);
         return 0;
     }
@@ -448,8 +486,14 @@ int main(int argc, char **argv)
     memset(&model, 0, sizeof(model));
     memset(&context, 0, sizeof(context));
     memset(&probe, 0, sizeof(probe));
-    memset(&pmu, 0, sizeof(pmu));
+    initialize_empty_pmu(&pmu);
     memset(&invocation, 0, sizeof(invocation));
+    campp_perf_sample_window_initialize(
+        &perf_window, options.perf_window != 0);
+    if (campp_perf_sample_window_disable(&perf_window) != 0) {
+        fprintf(stderr, "cannot disable perf events during prelude\n");
+        goto cleanup;
+    }
     status = campp_runtime_model_load(
         options.plan_path, options.weights_path, &model);
     if (status != CAMPP_STATUS_OK) {
@@ -535,9 +579,14 @@ int main(int argc, char **argv)
     samples_ns = (uint64_t *)calloc(options.repeat, sizeof(*samples_ns));
     if (samples_ns == NULL ||
         campp_optimization_probe_create(options.repeat, &probe) !=
-            CAMPP_STATUS_OK ||
-        campp_optimization_pmu_create(options.repeat, &pmu) != 0) {
+            CAMPP_STATUS_OK) {
         fprintf(stderr, "cannot allocate diagnostic samples\n");
+        goto cleanup;
+    }
+    if (options.perf_window) {
+        pmu.sample_capacity = options.repeat;
+    } else if (campp_optimization_pmu_create(options.repeat, &pmu) != 0) {
+        fprintf(stderr, "cannot allocate PMU samples\n");
         goto cleanup;
     }
     campp_optimization_probe_set_active(&probe);
@@ -557,7 +606,15 @@ int main(int argc, char **argv)
                 CAMPP_STATUS_OK) {
             goto cleanup;
         }
+        if (campp_perf_sample_window_enable(&perf_window) != 0) {
+            fprintf(stderr, "cannot enable target perf window\n");
+            goto cleanup;
+        }
         status = run_target_kernel(&invocation);
+        if (campp_perf_sample_window_disable(&perf_window) != 0) {
+            fprintf(stderr, "cannot disable target perf window\n");
+            goto cleanup;
+        }
         if (campp_operator_profiler_clock_now_ns(&finished_ns) !=
                 CAMPP_STATUS_OK ||
             campp_optimization_pmu_end(&pmu, iteration) != 0 ||
@@ -580,12 +637,13 @@ int main(int argc, char **argv)
     }
     campp_optimization_probe_set_active(NULL);
     print_result(
-        &options, &model, &context, op, samples_ns, &probe, &pmu, hash,
-        hash_matches);
+        &options, &model, &context, op, samples_ns, &probe, &pmu,
+        &perf_window, hash, hash_matches);
     if (ferror(stdout)) goto cleanup;
     exit_code = hash_matches ? 0 : 3;
 
 cleanup:
+    (void)campp_perf_sample_window_disable(&perf_window);
     campp_optimization_probe_set_active(NULL);
     free(samples_ns);
     release_snapshots(input_snapshots, input_snapshot_count);

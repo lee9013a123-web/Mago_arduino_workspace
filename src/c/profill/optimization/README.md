@@ -12,6 +12,13 @@ retained tensor bitwise 검증, Quick E2E 성능을 모두 통과한 구현만
 `src/c/runtime/backends/cpu_aarch64/`로 이동한다. production runtime이 이
 디렉터리에 의존하게 만들지 않는다.
 
-QConv 일반 경로와 fused Quant-QConv는 동일한 O4I4 core를 공유하므로 첫 후보는
-`candidates/common/`의 공통 microkernel이어야 한다. 이후 shape dispatch,
-fused input tile quantization, BN-ReLU-Quant, DequantizeLinear 순으로 분리한다.
+QConv 일반 경로와 fused Quant-QConv는 동일한 O4I4 core를 공유한다. 하지만 첫
+후보는 MAC sampling 결과가 두 대표 shape에서 안정적으로 MAC 우세일 때에만
+`candidates/common/`의 공통 microkernel으로 정한다. 주소·load·제어가
+우세하면 QConv address fast path를 먼저 만들고, shape별 승자가 다르면 3x3과
+1x1 후보를 분리한다. 이후 fused input tile quantization, BN-ReLU-Quant,
+DequantizeLinear 순으로 분리한다.
+
+`perf_sample_window.c`는 외부 Linux `perf record`를 target kernel 호출 동안만
+활성화한다. sampling 전용 `campp_operator_hotspot`은 runtime kernel의 stage
+probe를 컴파일하지 않아 소스 라인 표본에 계측 clock 호출이 섞이지 않는다.

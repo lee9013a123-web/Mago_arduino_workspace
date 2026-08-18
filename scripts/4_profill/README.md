@@ -154,3 +154,56 @@ python3 scripts/4_profill/optimization/03_compare_candidate.py \
 대상 case가 개선되고 다른 case의 회귀가 1% 이내이며 세 입력의 output hash가
 bitwise 동일할 때만 `candidate_microbench_gate_passed=true`가 된다. 이 판정
 이후에도 전체 retained tensor 검증과 Quick E2E profiling은 별도로 통과해야 한다.
+
+## QConv MAC 대 주소 비용 분리
+
+`qconv_mac_address` 단계가 지배적이어도 그 결과만으로 실제 MAC이 병목인지,
+좌표 계산·분기·입력/weight load가 병목인지 판단할 수 없다. 다음 측정은 기존
+profile에서 선택한 `qconv_3x3`(Operator 2)와 `qconv_1x1`(Operator 825)을
+그대로 사용하고, target kernel 구간의 cycle sample을 소스 라인별로 분류한다.
+
+```bash
+bash scripts/4_profill/optimization/01_build_optimization.sh
+
+python3 scripts/4_profill/optimization/04_profile_qconv_hotspot.py \
+  --preflight-only
+python3 scripts/4_profill/optimization/04_profile_qconv_hotspot.py
+```
+
+`campp_operator_hotspot`은 내부 stage clock을 컴파일하지 않은 sampling 전용
+binary다. 외부 `perf record`는 프로세스 전체를 실행하지만 C의
+`PR_TASK_PERF_EVENTS_DISABLE/ENABLE` 경계 때문에 반복 중
+`run_target_kernel()`에서만 sample을 수집한다. 전처리, target 입력 복원,
+warm-up, 출력 hash 계산은 표본에 포함되지 않는다. 보드에 Linux `perf`와
+userspace cycle sampling 권한이 필요하며, 빌드의 `-g` line 정보로 표본을
+분류한다.
+
+각 shape를 고정 입력 3개로 검사한다. 모든 입력에서 같은 항목이 55% 이상이고
+미분류 표본이 20% 이하일 때만 결과를 안정적이라고 판정한다.
+기본값은 기존 Quick 진단과 같은 warm-up 5회·측정 20회이며, 최종 확인이
+필요하면 `--repeat 100 --force`로 표본을 늘린다.
+
+```text
+address_load_control  좌표·offset 계산, bounds/valid 분기, 입력·weight load
+mac_reduction         4-lane dot product와 accumulator 갱신
+requant_write         scale, rounding, quantized output write
+setup_other           QConv 함수 내부의 나머지 setup
+unclassified          debug line으로 귀속하지 못한 sample
+```
+
+Raw 결과:
+
+```text
+runs/profiling/e7_98/optimization/qconv_hotspot/
+```
+
+요약 결과:
+
+```text
+results/profiling/e7_98/optimization/qconv_hotspot/qconv_hotspot.json
+results/profiling/e7_98/optimization/qconv_hotspot/qconv_hotspot.csv
+```
+
+두 shape에서 `mac_reduction`이 안정적으로 우세할 때만 공통 O4I4 NEON
+microkernel을 먼저 구현한다. `address_load_control`이 우세하면 좌표/offset
+fast path를 먼저 만들고, shape별 승자가 다르면 3x3과 1x1 후보를 분리한다.
