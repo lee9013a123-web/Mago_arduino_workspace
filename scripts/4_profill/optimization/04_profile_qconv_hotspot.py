@@ -27,12 +27,49 @@ QCONV_SOURCE = (
     / "src/c/runtime/backends/cpu_aarch64/int8_neon/qlinear_convolution_neon.c"
 )
 TARGET_CASE_NAMES = ("qconv_3x3", "qconv_1x1")
+# MAC v2 lives in the candidate tree, so profiling it needs its own source map:
+# the production classifier would drop nearly every v2 sample as unclassified.
+V2_MAC_SOURCE = (
+    ROOT
+    / "src/c/profill/optimization/candidates/qlinear_conv/qconv_mac_neon.c"
+)
+V2_CANDIDATE_SOURCE = (
+    ROOT
+    / "src/c/profill/optimization/candidates/qlinear_conv/qconv_candidate.c"
+)
 CATEGORIES = (
     "address_load_control",
     "mac_reduction",
     "requant_write",
     "setup_other",
+    "foreign_symbol",
     "unclassified",
+)
+V2_CATEGORIES = (
+    "v2_input_address",
+    "v2_weight_transform",
+    "v2_mac_smlal",
+    "v2_requant",
+    "v2_output_store",
+    "setup_other",
+    "foreign_symbol",
+    "unclassified",
+)
+V2_CORE_CATEGORIES = (
+    "v2_input_address",
+    "v2_weight_transform",
+    "v2_mac_smlal",
+    "v2_requant",
+    "v2_output_store",
+)
+# Second line of defence behind the perf control FIFO: samples raised by another
+# kernel or by the measurement harness must never reach a QConv bucket. Inlined
+# headers report the *enclosing* symbol, so matching on the symbol is what keeps
+# foreign work out of address_load_control / mac_reduction.
+FOREIGN_SYMBOL_TOKENS = (
+    "sha256",
+    "runtime_model_load",
+    "fused_bn_relu_quant",
 )
 PERF_LINE = re.compile(
     r"^\s*(?P<period>\d+)\s+"
@@ -120,6 +157,222 @@ def _find_line(
         if text in lines[index]:
             return index + 1
     raise HotspotError(f"source marker not found: {text}")
+
+
+def build_v2_source_map(
+    mac_source: Path = V2_MAC_SOURCE,
+    candidate_source: Path = V2_CANDIDATE_SOURCE,
+) -> dict[str, Any]:
+    """Function spans for the MAC v2 candidate.
+
+    The v2 helpers are `static` and get inlined, so perf reports the enclosing
+    symbol. Source-line spans are therefore what separates weight transform,
+    SMLAL body, requant and store. Register spill cannot be split this way at
+    all -- it is instruction level, so it is measured from `perf annotate`.
+    """
+    mac_lines = mac_source.read_text(encoding="utf-8").splitlines()
+    cand_lines = candidate_source.read_text(encoding="utf-8").splitlines()
+    return {
+        "mac_source_name": mac_source.name,
+        "candidate_source_name": candidate_source.name,
+        "mac_line_count": len(mac_lines),
+        "candidate_line_count": len(cand_lines),
+        # qconv_mac_neon.c spans
+        "neon_input_span": _function_span(
+            mac_lines, "static int16x4_t campp_qconv_neon_input("
+        ),
+        "dot_input_span": _function_span(
+            mac_lines, "static int8x8_t campp_qconv_dot_input("
+        ),
+        "weight_columns_span": _function_span(
+            mac_lines, "static void campp_qconv_neon_weight_columns("
+        ),
+        "dot_weight_span": _function_span(
+            mac_lines, "static int8x16_t campp_qconv_dot_weight("
+        ),
+        "dot_weight_zero_span": _function_span(
+            mac_lines, "static int32x4_t campp_qconv_dot_weight_zero("
+        ),
+        "dot_accumulate_span": _function_span(
+            mac_lines, "static int32x4_t campp_qconv_dot_accumulate("
+        ),
+        "smlal_accumulate_span": _function_span(
+            mac_lines, "static int32x4_t campp_qconv_smlal_accumulate("
+        ),
+        "half_tile_v2_span": _function_span(
+            mac_lines, "static int campp_qconv_mac_neon_half_tile_v2("
+        ),
+        "scalar_tile_v2_span": _function_span(
+            mac_lines, "static int campp_qconv_mac_scalar_tile_v2("
+        ),
+        "tile_v2_span": _function_span(
+            mac_lines, "int campp_qconv_mac_neon_tile_v2("
+        ),
+        "requantize_neon4_span": _function_span(
+            mac_lines, "static uint32_t campp_qconv_requantize_neon4("
+        ),
+        "requantize_scalar_span": _function_span(
+            mac_lines, "static uint8_t campp_qconv_requantize_scalar("
+        ),
+        "requantize_store_span": _function_span(
+            mac_lines, "int campp_qconv_requantize_store_neon_tile("
+        ),
+        "candidate_read_span": _function_span(
+            mac_lines, "static int32_t campp_qconv_candidate_read("
+        ),
+        # qconv_candidate.c spans
+        "cand_spatial_span": _function_span(
+            cand_lines, "static void campp_qconv_candidate_spatial_coordinates("
+        ),
+        "cand_write_span": _function_span(
+            cand_lines, "static CamppStatus campp_qconv_candidate_write("
+        ),
+        "cand_prepare_span": _function_span(
+            cand_lines, "static CamppStatus campp_qconv_candidate_prepare("
+        ),
+        "cand_load_parameters_span": _function_span(
+            cand_lines, "static CamppStatus campp_qconv_candidate_load_parameters("
+        ),
+        "cand_run_v2_span": _function_span(
+            cand_lines, "static CamppStatus campp_qconv_candidate_run_v2("
+        ),
+    }
+
+
+def classify_v2_sample(
+    sample: dict[str, Any], source_map: dict[str, Any]
+) -> str:
+    symbol = str(sample["symbol"]).lower()
+    source_name = Path(str(sample["source"])).name
+    line = int(sample["line"])
+
+    if any(token in symbol for token in FOREIGN_SYMBOL_TOKENS):
+        return "foreign_symbol"
+    # Production kernel means the shape fell back out of the candidate path.
+    if "campp_aarch64_qlinear_conv_o4i4" in symbol:
+        return "foreign_symbol"
+
+    if source_name == source_map["mac_source_name"]:
+        for key, category in (
+            ("weight_columns_span", "v2_weight_transform"),
+            ("dot_weight_span", "v2_weight_transform"),
+            ("dot_weight_zero_span", "v2_weight_transform"),
+            ("neon_input_span", "v2_input_address"),
+            ("dot_input_span", "v2_input_address"),
+            ("candidate_read_span", "v2_input_address"),
+            ("smlal_accumulate_span", "v2_mac_smlal"),
+            ("dot_accumulate_span", "v2_mac_smlal"),
+            ("half_tile_v2_span", "v2_mac_smlal"),
+            ("scalar_tile_v2_span", "v2_mac_smlal"),
+            ("tile_v2_span", "v2_mac_smlal"),
+            ("requantize_neon4_span", "v2_requant"),
+            ("requantize_scalar_span", "v2_requant"),
+            ("requantize_store_span", "v2_output_store"),
+        ):
+            if _inside(line, source_map[key]):
+                return category
+        return "setup_other"
+
+    if source_name == source_map["candidate_source_name"]:
+        if _inside(line, source_map["cand_spatial_span"]):
+            return "v2_input_address"
+        if _inside(line, source_map["cand_write_span"]):
+            return "v2_output_store"
+        if _inside(line, source_map["cand_run_v2_span"]):
+            return "v2_input_address"
+        if _inside(line, source_map["cand_prepare_span"]) or _inside(
+            line, source_map["cand_load_parameters_span"]
+        ):
+            return "setup_other"
+        return "setup_other"
+
+    # tensor_view.h / arm_neon.h inline into the candidate; attribute by intent.
+    if source_name == "tensor_view.h":
+        return "v2_input_address"
+    if source_name == "arm_neon.h":
+        return "v2_mac_smlal"
+    return "unclassified"
+
+
+def classify_v2_perf_script(
+    text: str, source_map: dict[str, Any]
+) -> dict[str, Any]:
+    periods = {category: 0 for category in V2_CATEGORIES}
+    counts = {category: 0 for category in V2_CATEGORIES}
+    line_periods: dict[tuple[str, int, str, str], int] = {}
+    samples, malformed = COMMON.iter_perf_samples(text)
+    for sample in samples:
+        category = classify_v2_sample(sample, source_map)
+        period = int(sample["period"])
+        periods[category] += period
+        counts[category] += 1
+        key = (
+            Path(str(sample["source"])).name,
+            int(sample["line"]),
+            str(sample["symbol"]),
+            category,
+        )
+        line_periods[key] = line_periods.get(key, 0) + period
+    total = sum(periods.values())
+    if total == 0:
+        raise HotspotError("perf script contains no attributable cycle samples")
+    core = sum(periods[name] for name in V2_CORE_CATEGORIES)
+    top = sorted(line_periods.items(), key=lambda item: item[1], reverse=True)
+    return {
+        "parsed_sample_count": sum(counts.values()),
+        "malformed_line_count": malformed,
+        "total_sample_period": total,
+        "category_sample_counts": counts,
+        "category_periods": periods,
+        "category_share_pct": {
+            name: value / total * 100.0 for name, value in periods.items()
+        },
+        "classified_core_period": core,
+        "classified_core_share_pct": core / total * 100.0 if total else 0.0,
+        "top_lines": [
+            {
+                "source": source,
+                "line": line,
+                "symbol": symbol,
+                "category": category,
+                "sample_period": period,
+                "total_share_pct": period / total * 100.0,
+            }
+            for (source, line, symbol, category), period in top[:20]
+        ],
+    }
+
+
+def measure_spill_share(annotate_text: str) -> dict[str, Any]:
+    """Quantify stack spill/reload traffic from `perf annotate` output.
+
+    Source lines cannot separate spill from real work, so this reads the
+    disassembly and sums the sampled percentage of ldr/str against [sp].
+    """
+    spill = 0.0
+    vector_memory = 0.0
+    total = 0.0
+    for raw in annotate_text.splitlines():
+        match = re.match(r"\s*(\d+\.\d+)\s*:?\s+[0-9a-f]+:\s+(\S+)\s+(.*)$", raw)
+        if match is None:
+            continue
+        percent = float(match.group(1))
+        mnemonic = match.group(2).lower()
+        operands = match.group(3).lower()
+        total += percent
+        if mnemonic.startswith(("ldr", "str", "ldp", "stp")):
+            if "[sp" in operands or "[x29" in operands:
+                spill += percent
+            else:
+                vector_memory += percent
+    return {
+        "annotated_percent_total": total,
+        "stack_spill_percent": spill,
+        "other_memory_percent": vector_memory,
+        "stack_spill_share_of_annotated_pct": (
+            spill / total * 100.0 if total else 0.0
+        ),
+    }
 
 
 def build_source_map(source: Path = QCONV_SOURCE) -> dict[str, Any]:
@@ -214,6 +467,8 @@ def classify_sample(sample: dict[str, Any], source_map: dict[str, Any]) -> str:
     line = int(sample["line"])
     lower_symbol = symbol.lower()
 
+    if any(token in lower_symbol for token in FOREIGN_SYMBOL_TOKENS):
+        return "foreign_symbol"
     if "campp_dot4_i16" in lower_symbol:
         return "mac_reduction"
     if any(
@@ -331,6 +586,7 @@ def _microbench_command(
     operator_id: int,
     warmup: int,
     repeat: int,
+    qconv_candidate: str = "baseline",
 ) -> list[str]:
     command = DIAGNOSIS._command(
         binary,
@@ -341,6 +597,8 @@ def _microbench_command(
         warmup=warmup,
         repeat=repeat,
     )
+    if qconv_candidate != "baseline":
+        command.extend(["--qconv-candidate", qconv_candidate])
     command.append("--perf-window")
     return command
 
@@ -358,6 +616,8 @@ def _run_one(
     sample_period: int,
     output_dir: Path,
     source_map: dict[str, Any],
+    qconv_candidate: str = "baseline",
+    v2_source_map: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     perf_data = output_dir / "perf.data"
@@ -375,7 +635,24 @@ def _run_one(
         operator_id=int(case["operator_id"]),
         warmup=warmup,
         repeat=repeat,
+        qconv_candidate=qconv_candidate,
     )
+    # prctl cannot gate events owned by an external `perf record`, so the
+    # prelude used to leak in. perf starts disabled (-D -1) and the microbench
+    # turns sampling on through perf's own control FIFO instead.
+    control_fifo = output_dir / "perf_ctl.fifo"
+    ack_fifo = output_dir / "perf_ack.fifo"
+    for fifo in (control_fifo, ack_fifo):
+        if fifo.exists():
+            fifo.unlink()
+        os.mkfifo(fifo)
+    microbench = [
+        *microbench,
+        "--perf-control",
+        str(control_fifo),
+        "--perf-ack",
+        str(ack_fifo),
+    ]
     record_command = [
         perf,
         "record",
@@ -387,6 +664,10 @@ def _run_one(
         "cycles:u",
         "--count",
         str(sample_period),
+        "--delay",
+        "-1",
+        "--control",
+        f"fifo:{control_fifo},{ack_fifo}",
         "--",
         *microbench,
     ]
@@ -396,6 +677,9 @@ def _run_one(
                 "record": record_command,
                 "cpu_affinity": [0],
                 "measurement_scope": "target kernel only",
+                "isolation": (
+                    "perf control FIFO (-D -1) plus target symbol filter"
+                ),
             },
             ensure_ascii=False,
             indent=2,
@@ -404,7 +688,12 @@ def _run_one(
         encoding="utf-8",
         newline="\n",
     )
-    completed = _run(record_command)
+    try:
+        completed = _run(record_command)
+    finally:
+        for fifo in (control_fifo, ack_fifo):
+            if fifo.exists():
+                fifo.unlink()
     record_stderr_path.write_text(
         completed.stderr, encoding="utf-8", newline="\n"
     )
@@ -443,6 +732,11 @@ def _run_one(
     script = _run(script_command)
     script_path.write_text(script.stdout, encoding="utf-8", newline="\n")
 
+    annotate_symbol = (
+        "campp_qconv_mac_neon_tile_v2"
+        if qconv_candidate != "baseline"
+        else "campp_aarch64_qlinear_conv_o4i4"
+    )
     annotate = _run(
         [
             perf,
@@ -451,7 +745,7 @@ def _run_one(
             "--input",
             str(perf_data),
             "--symbol",
-            "campp_aarch64_qlinear_conv_o4i4",
+            annotate_symbol,
         ],
         check=False,
     )
@@ -475,7 +769,11 @@ def _run_one(
     report_path.write_text(
         report.stdout + report.stderr, encoding="utf-8", newline="\n"
     )
-    classification = classify_perf_script(script.stdout, source_map)
+    if qconv_candidate != "baseline" and v2_source_map is not None:
+        classification = classify_v2_perf_script(script.stdout, v2_source_map)
+        classification["spill"] = measure_spill_share(annotate.stdout)
+    else:
+        classification = classify_perf_script(script.stdout, source_map)
     classification.update(
         {
             "input": _display_path(feature),
@@ -491,6 +789,78 @@ def _run_one(
         }
     )
     return classification
+
+
+def _aggregate_v2_case(
+    case: dict[str, Any], inputs: Sequence[dict[str, Any]]
+) -> dict[str, Any]:
+    periods = {category: 0 for category in V2_CATEGORIES}
+    for item in inputs:
+        for category in V2_CATEGORIES:
+            periods[category] += int(item["category_periods"][category])
+    total = sum(periods.values())
+    input_winners = [
+        max(V2_CORE_CATEGORIES, key=lambda name: item["category_periods"][name])
+        for item in inputs
+    ]
+    unclassified_shares = [
+        float(item["category_share_pct"]["unclassified"]) for item in inputs
+    ]
+    foreign_shares = [
+        float(item["category_share_pct"]["foreign_symbol"]) for item in inputs
+    ]
+    spill_shares = [
+        float(item.get("spill", {}).get("stack_spill_share_of_annotated_pct", 0.0))
+        for item in inputs
+    ]
+    winner = input_winners[0] if len(set(input_winners)) == 1 else "mixed"
+    stable = (
+        winner != "mixed"
+        and max(unclassified_shares) <= 20.0
+        and max(foreign_shares) <= 5.0
+    )
+    ranked = sorted(
+        V2_CORE_CATEGORIES, key=lambda name: periods[name], reverse=True
+    )
+    core = sum(periods[name] for name in V2_CORE_CATEGORIES)
+    cumulative = 0
+    top_set: list[str] = []
+    for name in ranked:
+        if periods[name] == 0:
+            continue
+        cumulative += periods[name]
+        top_set.append(name)
+        if core and cumulative / core >= 0.8:
+            break
+    return {
+        **case,
+        "inputs": list(inputs),
+        "aggregate": {
+            "total_sample_period": total,
+            "category_periods": periods,
+            "category_share_pct": {
+                name: value / total * 100.0 if total else 0.0
+                for name, value in periods.items()
+            },
+            "classified_core_period": core,
+            "classified_core_share_pct": core / total * 100.0 if total else 0.0,
+            "top_bottleneck_set": top_set,
+            "stack_spill_share_of_annotated_pct": (
+                sum(spill_shares) / len(spill_shares) if spill_shares else 0.0
+            ),
+        },
+        "decision": {
+            "winner": winner,
+            "stable_across_inputs": stable,
+            "input_winners": input_winners,
+            "maximum_unclassified_share_pct": max(unclassified_shares),
+            "maximum_foreign_symbol_share_pct": max(foreign_shares),
+            "rule": (
+                "same top v2 category on 3 inputs, unclassified <=20%, "
+                "foreign_symbol <=5%"
+            ),
+        },
+    }
 
 
 def _aggregate_case(
@@ -522,11 +892,18 @@ def _aggregate_case(
     unclassified_shares = [
         float(item["category_share_pct"]["unclassified"]) for item in inputs
     ]
+    # A non-trivial foreign share means the perf window failed to isolate the
+    # target kernel, so the address/mac split cannot be trusted no matter how
+    # stable the winner looks.
+    foreign_shares = [
+        float(item["category_share_pct"]["foreign_symbol"]) for item in inputs
+    ]
     winner = input_winners[0] if len(set(input_winners)) == 1 else "mixed"
     stable = (
         winner not in ("unknown", "mixed")
         and min(input_winner_shares) >= 55.0
         and max(unclassified_shares) <= 20.0
+        and max(foreign_shares) <= 5.0
     )
     return {
         **case,
@@ -550,7 +927,8 @@ def _aggregate_case(
             "input_winners": input_winners,
             "minimum_winner_share_pct": min(input_winner_shares),
             "maximum_unclassified_share_pct": max(unclassified_shares),
-            "rule": "same winner on 3 inputs, winner >=55%, unclassified <=20%",
+            "maximum_foreign_symbol_share_pct": max(foreign_shares),
+            "rule": "same winner on 3 inputs, winner >=55%, unclassified <=20%, foreign_symbol <=5%",
         },
     }
 
@@ -563,6 +941,8 @@ def build_summary(
     sample_period: int,
     elapsed_seconds: float,
     source_map: dict[str, Any],
+    qconv_candidate: str = "baseline",
+    v2_source_map: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     winners = [case["decision"]["winner"] for case in cases]
     stable = all(case["decision"]["stable_across_inputs"] for case in cases)
@@ -575,7 +955,11 @@ def build_summary(
     return {
         "schema_version": 1,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "objective": "separate address/load/control cycles from MAC cycles in E7 QConv",
+        "objective": (
+            "locate the internal bottleneck of the MAC v2 candidate"
+            if qconv_candidate != "baseline"
+            else "separate address/load/control cycles from MAC cycles in E7 QConv"
+        ),
         "configuration": {
             "bucket_frames": 98,
             "threads": 1,
@@ -586,8 +970,10 @@ def build_summary(
             "perf_event": "cycles:u",
             "sample_period": sample_period,
             "stage_probe_compiled": False,
+            "qconv_candidate": qconv_candidate,
             "elapsed_seconds": elapsed_seconds,
         },
+        "v2_source_map": v2_source_map,
         "source_map": {
             key: value
             for key, value in source_map.items()
@@ -603,9 +989,56 @@ def build_summary(
                 "mac_reduction": "common O4I4 NEON microkernel",
                 "shape_specific": "separate 3x3 and 1x1 candidates",
                 "inconclusive": "inspect perf_annotate and reduce unclassified samples",
+                # MAC v2 categories
+                "v2_mac_smlal": "widen the SMLAL body: more accumulators in flight",
+                "v2_input_address": "hoist input point construction out of the tile loop",
+                "v2_weight_transform": "hoist or cache the weight column transform",
+                "v2_requant": "vectorise the requantize path",
+                "v2_output_store": "widen the output store",
+                "mixed": "shape-specific v2 follow-up",
             }[overall],
         },
     }
+
+
+def _write_v2_csv(path: Path, summary: dict[str, Any]) -> None:
+    fieldnames = [
+        "case_name",
+        "operator_id",
+        "input",
+        *[f"{name}_pct" for name in V2_CATEGORIES],
+        "classified_core_share_pct",
+        "stack_spill_share_of_annotated_pct",
+        "winner",
+    ]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8", newline="") as sink:
+        writer = csv.DictWriter(sink, fieldnames=fieldnames)
+        writer.writeheader()
+        for case in summary["cases"]:
+            for item in case["inputs"]:
+                shares = item["category_share_pct"]
+                writer.writerow(
+                    {
+                        "case_name": case["case_name"],
+                        "operator_id": case["operator_id"],
+                        "input": item["input"],
+                        **{
+                            f"{name}_pct": f"{shares[name]:.6f}"
+                            for name in V2_CATEGORIES
+                        },
+                        "classified_core_share_pct": (
+                            f"{item['classified_core_share_pct']:.6f}"
+                        ),
+                        "stack_spill_share_of_annotated_pct": (
+                            f"{item.get('spill', {}).get('stack_spill_share_of_annotated_pct', 0.0):.6f}"
+                        ),
+                        "winner": max(
+                            V2_CORE_CATEGORIES,
+                            key=lambda name: item["category_periods"][name],
+                        ),
+                    }
+                )
 
 
 def _write_csv(path: Path, summary: dict[str, Any]) -> None:
@@ -684,6 +1117,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--force", action="store_true")
+    parser.add_argument(
+        "--qconv-candidate",
+        choices=("baseline", "address", "mac", "combined"),
+        default="baseline",
+        help="profile a candidate instead of the production kernel; "
+        "'mac'/'combined' select the MAC v2 classifier",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -726,6 +1166,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         if capabilities.get("stage_probe") is not False:
             raise HotspotError("hotspot binary must be built without stage probes")
         source_map = build_source_map()
+        v2_source_map = (
+            build_v2_source_map() if args.qconv_candidate != "baseline" else None
+        )
         if args.preflight_only:
             print(
                 json.dumps(
@@ -737,11 +1180,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "weights": _display_path(weights),
                         "features": [_display_path(path) for path in args.features],
                         "cases": cases,
+                        "qconv_candidate": args.qconv_candidate,
                         "source_map": {
                             key: value
                             for key, value in source_map.items()
                             if key not in ("source", "source_name")
                         },
+                        "v2_source_map": v2_source_map,
                     },
                     ensure_ascii=False,
                     indent=2,
@@ -782,9 +1227,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                         sample_period=args.sample_period,
                         output_dir=output_dir,
                         source_map=source_map,
+                        qconv_candidate=args.qconv_candidate,
+                        v2_source_map=v2_source_map,
                     )
                 )
-            results.append(_aggregate_case(case, inputs))
+            results.append(
+                _aggregate_v2_case(case, inputs)
+                if args.qconv_candidate != "baseline"
+                else _aggregate_case(case, inputs)
+            )
         summary = build_summary(
             results,
             warmup=args.warmup,
@@ -792,6 +1243,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             sample_period=args.sample_period,
             elapsed_seconds=time.monotonic() - started,
             source_map=source_map,
+            qconv_candidate=args.qconv_candidate,
+            v2_source_map=v2_source_map,
         )
         summary["artifacts"] = {
             "profile": _display_path(args.profile),
@@ -805,9 +1258,29 @@ def main(argv: Sequence[str] | None = None) -> int:
             encoding="utf-8",
             newline="\n",
         )
-        _write_csv(csv_path, summary)
+        if args.qconv_candidate != "baseline":
+            _write_v2_csv(csv_path, summary)
+        else:
+            _write_csv(csv_path, summary)
         print(f"QConv hotspot 완료: {_display_path(summary_path)}")
         for case in summary["cases"]:
+            if args.qconv_candidate != "baseline":
+                aggregate = case["aggregate"]
+                print(f"  {case['case_name']}:")
+                for name in V2_CATEGORIES:
+                    print(
+                        f"    {name}: "
+                        f"{aggregate['category_share_pct'][name]:.2f}%"
+                    )
+                print(
+                    "    stack_spill(of annotated): "
+                    f"{aggregate['stack_spill_share_of_annotated_pct']:.2f}%"
+                )
+                print(
+                    f"    top={aggregate['top_bottleneck_set']} "
+                    f"winner={case['decision']['winner']}"
+                )
+                continue
             pair = case["aggregate"]["address_vs_mac"]
             print(
                 f"  {case['case_name']}: address={pair['address_pct']:.2f}% "

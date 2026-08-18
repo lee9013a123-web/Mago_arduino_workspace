@@ -41,6 +41,8 @@ typedef struct MicrobenchOptions {
     CamppBnCandidateMode bn_candidate;
     int has_expected_output_hash;
     int perf_window;
+    const char *perf_control_path;
+    const char *perf_ack_path;
 } MicrobenchOptions;
 
 typedef struct TensorSnapshot {
@@ -92,6 +94,7 @@ static void usage(const char *program)
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
         "--operator-id N [--warmup 5] [--repeat 20] [--threads 1] "
         "[--expected-output-hash HEX] [--perf-window] "
+        "[--perf-control CTL_FIFO --perf-ack ACK_FIFO] "
         "[--qconv-candidate baseline|address|mac|combined] "
         "[--fused-qconv-candidate baseline|mac|combined] "
         "[--bn-candidate baseline|address|affine|quant|combined]\n",
@@ -132,6 +135,10 @@ static int parse_options(
         value = argv[++index];
         if (strcmp(name, "--plan") == 0) {
             options->plan_path = value;
+        } else if (strcmp(name, "--perf-control") == 0) {
+            options->perf_control_path = value;
+        } else if (strcmp(name, "--perf-ack") == 0) {
+            options->perf_ack_path = value;
         } else if (strcmp(name, "--weights") == 0) {
             options->weights_path = value;
         } else if (strcmp(name, "--input") == 0) {
@@ -539,7 +546,20 @@ int main(int argc, char **argv)
     memset(&invocation, 0, sizeof(invocation));
     campp_perf_sample_window_initialize(
         &perf_window, options.perf_window != 0);
-    if (campp_perf_sample_window_disable(&perf_window) != 0) {
+    if (options.perf_window && options.perf_control_path != NULL &&
+        options.perf_ack_path != NULL) {
+        /*
+         * perf was started with -D -1, so its events are already disabled and
+         * the prelude cannot leak into the profile. Attaching here only wires
+         * up the control FIFOs; sampling stays off until the measurement loop.
+         */
+        if (campp_perf_sample_window_attach_control(
+                &perf_window, options.perf_control_path,
+                options.perf_ack_path) != 0) {
+            fprintf(stderr, "cannot attach perf control FIFOs\n");
+            goto cleanup;
+        }
+    } else if (campp_perf_sample_window_disable(&perf_window) != 0) {
         fprintf(stderr, "cannot disable perf events during prelude\n");
         goto cleanup;
     }
@@ -680,6 +700,16 @@ int main(int argc, char **argv)
         goto cleanup;
     }
     campp_optimization_probe_set_active(&probe);
+    /*
+     * Sampling covers the measurement loop only. Enabling per iteration would
+     * put a FIFO round-trip inside the timed region, so the loop overhead
+     * (snapshot restore, output hash) is excluded by symbol instead.
+     */
+    if (perf_window.control_active &&
+        campp_perf_sample_window_enable(&perf_window) != 0) {
+        fprintf(stderr, "cannot enable target perf window\n");
+        goto cleanup;
+    }
     for (iteration = 0u; iteration < options.repeat; ++iteration) {
         uint64_t started_ns;
         uint64_t finished_ns;
@@ -696,12 +726,14 @@ int main(int argc, char **argv)
                 CAMPP_STATUS_OK) {
             goto cleanup;
         }
-        if (campp_perf_sample_window_enable(&perf_window) != 0) {
+        if (!perf_window.control_active &&
+            campp_perf_sample_window_enable(&perf_window) != 0) {
             fprintf(stderr, "cannot enable target perf window\n");
             goto cleanup;
         }
         status = run_target_kernel(&invocation);
-        if (campp_perf_sample_window_disable(&perf_window) != 0) {
+        if (!perf_window.control_active &&
+            campp_perf_sample_window_disable(&perf_window) != 0) {
             fprintf(stderr, "cannot disable target perf window\n");
             goto cleanup;
         }
@@ -721,6 +753,11 @@ int main(int argc, char **argv)
             goto cleanup;
         }
     }
+    if (perf_window.control_active &&
+        campp_perf_sample_window_disable(&perf_window) != 0) {
+        fprintf(stderr, "cannot disable target perf window\n");
+        goto cleanup;
+    }
     if (campp_memory_bounds_check_operator(&context, op) != CAMPP_STATUS_OK) {
         fprintf(stderr, "target kernel violated Tensor bounds\n");
         goto cleanup;
@@ -734,6 +771,7 @@ int main(int argc, char **argv)
 
 cleanup:
     (void)campp_perf_sample_window_disable(&perf_window);
+    campp_perf_sample_window_release(&perf_window);
     campp_optimization_probe_set_active(NULL);
     free(samples_ns);
     release_snapshots(input_snapshots, input_snapshot_count);
