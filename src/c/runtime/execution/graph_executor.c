@@ -10,6 +10,9 @@
 #include "internal/runtime_model.h"
 #include "internal/tensor_view.h"
 #include "memory_management/memory_bounds_checker.h"
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+#include "campp_profill/operator_profiler.h"
+#endif
 
 static CamppStatus campp_graph_fail(
     CamppRuntimeContext *context, CamppStatus status)
@@ -46,6 +49,11 @@ CamppStatus campp_graph_execute_operator(
     CamppStatus status;
     CamppStatus kernel_status;
     CamppStatus post_check_status;
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+    CamppOperatorProfiler *operator_profiler;
+    uint64_t profile_started_ns = 0u;
+    bool profile_active = false;
+#endif
 
     status = campp_graph_validate_context(context);
     if (status != CAMPP_STATUS_OK) {
@@ -106,11 +114,33 @@ CamppStatus campp_graph_execute_operator(
         return campp_graph_fail(context, status);
     }
 
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+    operator_profiler = context->diagnostics.operator_profiler;
+    if (campp_operator_profiler_is_enabled(operator_profiler)) {
+        status = campp_operator_profiler_begin(
+            operator_profiler, &profile_started_ns);
+        if (status != CAMPP_STATUS_OK) {
+            return campp_graph_fail(context, status);
+        }
+        profile_active = true;
+    }
+#endif
+
     kernel_status = kernel->run(
         model, operator_descriptor, input_views,
         operator_descriptor->input_count, output_views,
         operator_descriptor->output_count, context->scratch,
         context->scratch_size);
+
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+    if (profile_active) {
+        status = campp_operator_profiler_end(
+            operator_profiler, operator_id, profile_started_ns);
+        if (status != CAMPP_STATUS_OK) {
+            return campp_graph_fail(context, status);
+        }
+    }
+#endif
 
     /* Kernel 실패 시에도 guard 손상을 먼저 보고해 실제 원인을 보존한다. */
     post_check_status = campp_memory_bounds_check_operator(

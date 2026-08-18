@@ -82,6 +82,10 @@ typedef struct CamppDiagnosticsState {
 
     CamppTensorReadyCallback tensor_ready;
     void *tensor_ready_user_data;
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+    /* profill build에서만 존재하며 일반 Runtime ABI에는 영향을 주지 않는다. */
+    struct CamppOperatorProfiler *operator_profiler;
+#endif
 } CamppDiagnosticsState;
 
 /* 한 번의 inference 상태 전체. */

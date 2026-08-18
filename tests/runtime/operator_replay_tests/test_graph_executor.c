@@ -13,6 +13,9 @@
 #include "internal/kernel_registry.h"
 #include "internal/runtime_context.h"
 #include "internal/runtime_model.h"
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+#include "campp_profill/operator_profiler.h"
+#endif
 
 #define CHECK_TRUE(condition)                                                   \
     do {                                                                        \
@@ -94,6 +97,9 @@ static int test_synthetic_execution(void)
     CamppRuntimeContext context;
     TestTensorReadyState ready_state;
     const CamppKernelRegistry *registry = campp_cpu_reference_registry();
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+    CamppOperatorProfiler profiler;
+#endif
 
     init_tensor_descriptor(
         &tensors[0], 0u, CAMPP_TENSOR_STORAGE_INPUT, 1u, 2u);
@@ -136,6 +142,15 @@ static int test_synthetic_execution(void)
     CHECK_TRUE(
         strcmp(context.resolved_kernels[0]->name, "relu_reference") == 0);
 
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+    memset(&profiler, 0, sizeof(profiler));
+    CHECK_STATUS(
+        campp_operator_profiler_create(1u, 1u, &profiler),
+        CAMPP_STATUS_OK);
+    campp_operator_profiler_set_enabled(&profiler, true);
+    context.diagnostics.operator_profiler = &profiler;
+#endif
+
     memset(&ready_state, 0, sizeof(ready_state));
     context.diagnostics.tensor_ready = test_tensor_ready;
     context.diagnostics.tensor_ready_user_data = &ready_state;
@@ -152,6 +167,12 @@ static int test_synthetic_execution(void)
     CHECK_TRUE(ready_state.values[0] == 0.0f);
     CHECK_TRUE(ready_state.values[1] == 2.0f);
 
+#ifdef CAMPP_ENABLE_OPERATOR_PROFILING
+    CHECK_TRUE(campp_operator_profiler_call_count(&profiler, 0u) == 1u);
+    CHECK_TRUE(campp_operator_profiler_samples(&profiler, 0u) != NULL);
+    context.diagnostics.operator_profiler = NULL;
+    campp_operator_profiler_release(&profiler);
+#endif
     campp_runtime_context_release(&context);
     return 0;
 }
