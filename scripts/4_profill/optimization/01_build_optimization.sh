@@ -21,6 +21,7 @@ QCONV_MICROKERNEL_DIR="${CANDIDATE_DIR}/microkernels"
 FUSED_QCONV_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_quant_qconv"
 BN_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant"
 DEQUANT_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/dequantize_linear"
+FUSED_DQRQ_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_dequant_relu_quant"
 COMMON_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/common"
 REMAINING_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/remaining_ops"
 CANDIDATE_SOURCES=(
@@ -40,6 +41,7 @@ CANDIDATE_SOURCES=(
     "${DEQUANT_CANDIDATE_DIR}/dequant_scalar_fastpath.c"
     "${DEQUANT_CANDIDATE_DIR}/dequant_neon.c"
     "${DEQUANT_CANDIDATE_DIR}/dequant_candidate.c"
+    "${FUSED_DQRQ_CANDIDATE_DIR}/fused_dequant_relu_quant_candidate.c"
     "${COMMON_CANDIDATE_DIR}/packed_iteration.c"
     "${COMMON_CANDIDATE_DIR}/elementwise_neon.c"
     "${COMMON_CANDIDATE_DIR}/reduction_neon.c"
@@ -58,6 +60,7 @@ INCLUDES=(
     -I "${FUSED_QCONV_CANDIDATE_DIR}"
     -I "${BN_CANDIDATE_DIR}"
     -I "${DEQUANT_CANDIDATE_DIR}"
+    -I "${FUSED_DQRQ_CANDIDATE_DIR}"
     -I "${COMMON_CANDIDATE_DIR}"
     -I "${REMAINING_CANDIDATE_DIR}"
 )
@@ -147,6 +150,14 @@ INCLUDES=(
     "${INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
     "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/test_fused_dequant_relu_quant_candidate.c" \
+    -lm -o "${BUILD_DIR}/test_fused_dequant_relu_quant_candidate"
+
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${CANDIDATE_SOURCES[@]}" \
     "${ROOT}/tests/runtime/profill/test_remaining_candidates.c" \
     -lm -o "${BUILD_DIR}/test_remaining_candidates"
 
@@ -159,6 +170,7 @@ INCLUDES=(
     printf 'fused_qconv_candidate_modes=baseline,mac,combined,mac_fixed,quant_neon,combined_fixed\n'
     printf 'bn_candidate_modes=baseline,address,affine,quant,combined\n'
     printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
+    printf 'fused_dqrq_candidate_modes=baseline,scalar,neon\n'
     printf 'remaining_candidate_modes=baseline,optimized\n'
     printf 'fused_family_batch_graph_traversal=enabled\n'
 } > "${BUILD_DIR}/build_metadata.txt"
@@ -172,4 +184,5 @@ echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"
 echo "  QConv 4x8:  ${BUILD_DIR}/test_qconv_microkernel_4x8"
 echo "  BN test:    ${BUILD_DIR}/test_bn_candidate"
 echo "  Dequant:    ${BUILD_DIR}/test_dequant_candidate"
+echo "  Fused DQRQ: ${BUILD_DIR}/test_fused_dequant_relu_quant_candidate"
 echo "  Remaining:  ${BUILD_DIR}/test_remaining_candidates"

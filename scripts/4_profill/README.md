@@ -570,6 +570,24 @@ bash scripts/4_profill/03_profile_final_e7.sh
 bash scripts/4_profill/03_profile_final_e7.sh --mode official --force
 ```
 
+### 현재 E7 성능 baseline
+
+최종 suite의 2026-08-19 Quick 결과를 현재 성능 기준선으로 사용한다. canonical
+기준선은 `results/profiling/e7_98/baseline.json`, 원본 profile은
+`results/profiling/e7_98/final_combined/summary.json`이다.
+
+| 지표 | 기준값 |
+|---|---:|
+| RTF p50 | 0.522350 (표기 0.52) |
+| E2E mean / p50 / p95 | 522.322 / 522.350 / 523.983 ms |
+| CV | 0.167% |
+| 표본 | 60 |
+| 이전 stock Quick 대비 | 16.22x |
+
+이 값은 `quick-baseline`이며 공식 프로토콜 결과는 아니다. 성능 회귀 비교의 현재
+기준으로는 사용하되, 공식 수치가 필요할 때는 `--mode official --force`로 다시
+측정한다. final suite 예상 시간 계산도 비계측 mean 522.329 ms를 사용한다.
+
 final binary는 `--capabilities`와 결과 JSON에
 `"optimization_suite":"final"`을 기록한다. runner는 비계측 binary와 계측
 binary가 둘 다 `final`인지 실행 전에 확인하며, 서로 다른 suite를 이용한 잘못된

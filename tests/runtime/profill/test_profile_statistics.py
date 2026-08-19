@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 from pathlib import Path
 import sys
 from types import SimpleNamespace
@@ -96,9 +97,32 @@ class ProfileStatisticsTests(unittest.TestCase):
             "baseline_repeat": 5,
         }
 
-        estimated = PROFILE._estimated_minutes(protocol, 3)
+        estimated = PROFILE._estimated_minutes(protocol, 3, "stock")
 
         self.assertAlmostEqual(estimated, 14.7)
+
+    def test_final_quick_estimate_uses_promoted_baseline(self) -> None:
+        protocol = {
+            "warmup": 5,
+            "repeat": 20,
+            "baseline_repeat": 5,
+        }
+
+        estimated = PROFILE._estimated_minutes(protocol, 3, "final")
+
+        self.assertAlmostEqual(estimated, 0.9140750934)
+
+    def test_final_estimate_matches_canonical_baseline(self) -> None:
+        baseline_path = ROOT / "results" / "profiling" / "e7_98" / "baseline.json"
+        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+
+        measured_seconds = baseline["metrics"]["non_instrumented_same_suite"][
+            "rtf"
+        ]["mean"]
+
+        self.assertAlmostEqual(
+            PROFILE.FINAL_E7_BASELINE_INFERENCE_SECONDS, measured_seconds
+        )
 
     def test_profiler_payload_rejects_mixed_optimization_suite(self) -> None:
         with self.assertRaises(PROFILE.ProfileError):

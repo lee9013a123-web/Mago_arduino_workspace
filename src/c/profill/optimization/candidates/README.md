@@ -5,6 +5,7 @@
 ```text
 candidates/
 ├── qlinear_conv/            # QConv address/MAC/fixed microkernel 후보
+├── qlinear_conv_v4/         # shape별 MAC, wide requant/store 후속 후보
 ├── fused_quant_qconv/       # 기존 fused quantization + QConv 후보 결합
 ├── bn_relu_quant/           # channel affine precompute/NEON 실험
 └── dequantize_linear/       # contiguous/per-axis NEON 실험

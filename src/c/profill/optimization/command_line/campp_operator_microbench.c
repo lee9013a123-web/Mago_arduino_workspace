@@ -25,6 +25,7 @@
 #include "memory_management/memory_bounds_checker.h"
 #include "bn_candidate.h"
 #include "dequant_candidate.h"
+#include "fused_dequant_relu_quant_candidate.h"
 #include "fused_quant_qconv_candidate.h"
 #include "qconv_candidate.h"
 #include "remaining_candidate.h"
@@ -42,6 +43,7 @@ typedef struct MicrobenchOptions {
     CamppFusedQconvCandidateMode fused_qconv_candidate;
     CamppBnCandidateMode bn_candidate;
     CamppDequantCandidateMode dequant_candidate;
+    CamppFusedDqRqCandidateMode fused_dqrq_candidate;
     CamppRemainingCandidateMode remaining_candidate;
     int has_expected_output_hash;
     int perf_window;
@@ -104,7 +106,8 @@ static void usage(const char *program)
         "quant_neon|combined_fixed] "
         "[--bn-candidate baseline|address|affine|quant|combined] "
         "[--dequant-candidate baseline|address|parameter|scalar_combined|"
-        "neon_combined] [--remaining-candidate baseline|optimized]\n",
+        "neon_combined] [--fused-dqrq-candidate baseline|scalar|neon] "
+        "[--remaining-candidate baseline|optimized]\n",
         program);
 }
 
@@ -124,6 +127,7 @@ static int parse_options(
         CAMPP_FUSED_QCONV_CANDIDATE_BASELINE;
     options->bn_candidate = CAMPP_BN_CANDIDATE_BASELINE;
     options->dequant_candidate = CAMPP_DEQUANT_CANDIDATE_BASELINE;
+    options->fused_dqrq_candidate = CAMPP_FUSED_DQRQ_CANDIDATE_BASELINE;
     options->remaining_candidate = CAMPP_REMAINING_CANDIDATE_BASELINE;
 
     for (index = 1; index < argc; ++index) {
@@ -191,6 +195,14 @@ static int parse_options(
             if (campp_dequant_candidate_mode_parse(
                     value, &options->dequant_candidate) != 0) {
                 fprintf(stderr, "invalid Dequant candidate: %s\n", value);
+                return 1;
+            }
+        } else if (strcmp(name, "--fused-dqrq-candidate") == 0) {
+            if (campp_fused_dqrq_candidate_mode_parse(
+                    value, &options->fused_dqrq_candidate) != 0) {
+                fprintf(
+                    stderr, "invalid fused DQ/ReLU/Q candidate: %s\n",
+                    value);
                 return 1;
             }
         } else if (strcmp(name, "--remaining-candidate") == 0) {
@@ -461,6 +473,10 @@ static void print_result(
     print_json_string(campp_dequant_candidate_mode_name(
         options->dequant_candidate));
     putchar(',');
+    fputs("\"fused_dqrq_candidate\":", stdout);
+    print_json_string(campp_fused_dqrq_candidate_mode_name(
+        options->fused_dqrq_candidate));
+    putchar(',');
     fputs("\"remaining_candidate\":", stdout);
     print_json_string(campp_remaining_candidate_mode_name(
         options->remaining_candidate));
@@ -555,6 +571,8 @@ int main(int argc, char **argv)
             "\"affine\",\"quant\",\"combined\"],"
             "\"dequant_candidates\":[\"baseline\",\"address\","
             "\"parameter\",\"scalar_combined\",\"neon_combined\"],"
+            "\"fused_dqrq_candidates\":[\"baseline\",\"scalar\","
+            "\"neon\"],"
             "\"remaining_candidates\":[\"baseline\",\"optimized\"],"
 #if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
             "\"stage_probe\":true,"
@@ -657,6 +675,8 @@ int main(int argc, char **argv)
         if (options.fused_qconv_candidate !=
                 CAMPP_FUSED_QCONV_CANDIDATE_BASELINE ||
             options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE ||
+            options.fused_dqrq_candidate !=
+                CAMPP_FUSED_DQRQ_CANDIDATE_BASELINE ||
             options.remaining_candidate !=
                 CAMPP_REMAINING_CANDIDATE_BASELINE ||
             candidate == NULL || op->opcode != CAMPP_OP_QLINEAR_CONV ||
@@ -674,6 +694,8 @@ int main(int argc, char **argv)
         if (options.qconv_candidate != CAMPP_QCONV_CANDIDATE_BASELINE ||
             options.bn_candidate != CAMPP_BN_CANDIDATE_BASELINE ||
             options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE ||
+            options.fused_dqrq_candidate !=
+                CAMPP_FUSED_DQRQ_CANDIDATE_BASELINE ||
             options.remaining_candidate !=
                 CAMPP_REMAINING_CANDIDATE_BASELINE ||
             candidate == NULL || op->opcode != CAMPP_OP_QLINEAR_CONV ||
@@ -692,6 +714,8 @@ int main(int argc, char **argv)
             options.fused_qconv_candidate !=
                 CAMPP_FUSED_QCONV_CANDIDATE_BASELINE ||
             options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE ||
+            options.fused_dqrq_candidate !=
+                CAMPP_FUSED_DQRQ_CANDIDATE_BASELINE ||
             options.remaining_candidate !=
                 CAMPP_REMAINING_CANDIDATE_BASELINE ||
             candidate == NULL || op->opcode != CAMPP_OP_BATCH_NORMALIZATION ||
@@ -708,6 +732,8 @@ int main(int argc, char **argv)
             options.fused_qconv_candidate !=
                 CAMPP_FUSED_QCONV_CANDIDATE_BASELINE ||
             options.bn_candidate != CAMPP_BN_CANDIDATE_BASELINE ||
+            options.fused_dqrq_candidate !=
+                CAMPP_FUSED_DQRQ_CANDIDATE_BASELINE ||
             options.remaining_candidate !=
                 CAMPP_REMAINING_CANDIDATE_BASELINE ||
             candidate == NULL || op->opcode != CAMPP_OP_DEQUANTIZE_LINEAR ||
@@ -715,6 +741,27 @@ int main(int argc, char **argv)
             fprintf(
                 stderr,
                 "Dequant candidate requires DequantizeLinear stride kernel\n");
+            goto cleanup;
+        }
+        invocation.kernel = candidate;
+    }
+    if (options.fused_dqrq_candidate !=
+        CAMPP_FUSED_DQRQ_CANDIDATE_BASELINE) {
+        const CamppKernelEntry *candidate =
+            campp_fused_dqrq_candidate_entry(
+                options.fused_dqrq_candidate);
+        if (options.qconv_candidate != CAMPP_QCONV_CANDIDATE_BASELINE ||
+            options.fused_qconv_candidate !=
+                CAMPP_FUSED_QCONV_CANDIDATE_BASELINE ||
+            options.bn_candidate != CAMPP_BN_CANDIDATE_BASELINE ||
+            options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE ||
+            options.remaining_candidate !=
+                CAMPP_REMAINING_CANDIDATE_BASELINE ||
+            candidate == NULL || op->opcode != CAMPP_OP_DEQUANTIZE_LINEAR ||
+            op->kernel_id != candidate->kernel_id) {
+            fprintf(
+                stderr,
+                "fused DQ/ReLU/Q candidate requires fused epilogue\n");
             goto cleanup;
         }
         invocation.kernel = candidate;
@@ -727,6 +774,8 @@ int main(int argc, char **argv)
                 CAMPP_FUSED_QCONV_CANDIDATE_BASELINE ||
             options.bn_candidate != CAMPP_BN_CANDIDATE_BASELINE ||
             options.dequant_candidate != CAMPP_DEQUANT_CANDIDATE_BASELINE ||
+            options.fused_dqrq_candidate !=
+                CAMPP_FUSED_DQRQ_CANDIDATE_BASELINE ||
             candidate == NULL) {
             fprintf(stderr, "remaining candidate does not support target\n");
             goto cleanup;

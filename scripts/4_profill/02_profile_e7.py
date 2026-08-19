@@ -49,7 +49,8 @@ QUICK_BASELINE_REPEAT = 5
 OFFICIAL_WARMUP = 20
 OFFICIAL_REPEAT = 100
 TOP_THRESHOLD_PCT = 80.0
-HISTORICAL_E7_INFERENCE_SECONDS = 8.4
+STOCK_E7_INFERENCE_SECONDS = 8.4
+FINAL_E7_BASELINE_INFERENCE_SECONDS = 0.5223286248
 
 
 def _load_benchmark_module() -> Any:
@@ -409,14 +410,21 @@ def _overhead_document(
     }
 
 
-def _estimated_minutes(protocol: dict[str, Any], input_count: int) -> float:
-    """기존 QRB2210 E7 p50을 이용해 전체 Quick/Official 시간을 예측한다."""
+def _estimated_minutes(
+    protocol: dict[str, Any], input_count: int, expected_suite: str = "stock",
+) -> float:
+    """suite별 QRB2210 E7 baseline으로 Quick/Official 시간을 예측한다."""
 
     inference_count = input_count * (
         protocol["warmup"] + protocol["repeat"]
         + protocol["warmup"] + protocol["baseline_repeat"]
     )
-    return inference_count * HISTORICAL_E7_INFERENCE_SECONDS / 60.0
+    inference_seconds = (
+        FINAL_E7_BASELINE_INFERENCE_SECONDS
+        if expected_suite == "final"
+        else STOCK_E7_INFERENCE_SECONDS
+    )
+    return inference_count * inference_seconds / 60.0
 
 
 def _aggregate_operator_field(
@@ -786,7 +794,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         args.raw_dir.mkdir(parents=True, exist_ok=True)
         args.output_dir.mkdir(parents=True, exist_ok=True)
-        estimated_minutes = _estimated_minutes(protocol, len(features))
+        estimated_minutes = _estimated_minutes(
+            protocol, len(features), args.expected_suite
+        )
         print(f"예상 시간: 약 {estimated_minutes:.0f}분")
         print("진행 중", flush=True)
         measurement_started = time.perf_counter()

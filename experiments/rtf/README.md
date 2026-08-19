@@ -9,12 +9,16 @@ experiments/rtf/
 ├── README.md          이 문서 (baseline 조건)
 ├── measure_rtf.py     측정 스크립트
 └── result/
-    ├── baseline.json                        현재 baseline (항상 최신 기준선)
+    ├── baseline.json                        legacy reference 실험 내부 기준선
     ├── 20260813T033426Z__baseline.json      -O3 baseline 원본
     └── 20260813T032455Z__O2-reference.json  같은 커밋 -O2 참고 측정
 ```
 
-## Baseline
+프로젝트의 현재 E7 성능 baseline은
+`results/profiling/e7_98/baseline.json`이다. 이 폴더의 `baseline.json`은
+초기 portable C reference 측정 이력을 재현하기 위해 그대로 보존한다.
+
+## Legacy reference baseline
 
 **RTF p50 = 35.490** (2026-08-13, commit `56f5fc66`)
 

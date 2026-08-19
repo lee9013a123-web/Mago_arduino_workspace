@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "baseline_id": "e7-98-final-suite-quick-20260819",
+  "status": "current",
+  "baseline_kind": "performance",
+  "backend": "campp-c-runtime-final-suite",
+  "optimization_suite": "final",
+  "generated_at_utc": "2026-08-19T02:31:50.667578+00:00",
+  "promoted_at_utc": "2026-08-19T03:26:04.649483+00:00",
+  "primary_metric": {
+    "name": "rtf_p50",
+    "value": 0.5223499735,
+    "display_value": 0.52,
+    "latency_ms": 522.3499735
+  },
+  "workload": {
+    "model": "CAM++ E7 fused bundle",
+    "bucket_frames": 98,
+    "audio_seconds": 1.0,
+    "input_ids": [
+      "multi__speaker_0000",
+      "multi__speaker_0005",
+      "multi__speaker_0006"
+    ],
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ]
+  },
+  "protocol": {
+    "mode": "quick",
+    "official": false,
+    "warmup": 5,
+    "profile_repeat": 20,
+    "profile_samples": 60,
+    "non_instrumented_repeat": 5,
+    "non_instrumented_samples": 15,
+    "measurement_scope": "runtime inference only; prepared feature input, model load, and context creation are outside the timed loop"
+  },
+  "metrics": {
+    "profiled_end_to_end": {
+      "latency_ms": {
+        "min": 520.651718,
+        "mean": 522.3222150666667,
+        "p50": 522.3499735,
+        "p95": 523.98305455,
+        "max": 524.328385
+      },
+      "rtf": {
+        "min": 0.520651718,
+        "mean": 0.5223222150666667,
+        "p50": 0.5223499735,
+        "p95": 0.52398305455,
+        "max": 0.524328385
+      },
+      "cv_pct": 0.1668522996565842
+    },
+    "non_instrumented_same_suite": {
+      "latency_ms": {
+        "mean": 522.3286248
+      },
+      "rtf": {
+        "mean": 0.5223286248
+      }
+    },
+    "profiling_overhead": {
+      "value_pct": -0.0012271457142110087,
+      "threshold_pct": 1.0,
+      "preliminary": true,
+      "passes": true
+    },
+    "comparison_to_previous_stock_quick": {
+      "previous_profiled_mean_ms": 8472.557383083333,
+      "current_profiled_mean_ms": 522.3222150666667,
+      "speedup": 16.220940137501017
+    }
+  },
+  "environment": {
+    "device_tree_model": "Arduino UnoQ",
+    "platform": "Linux-7.0.0-g122c2c22d838-aarch64-with-glibc2.41",
+    "machine": "aarch64",
+    "logical_cpu_count": 4,
+    "cpu_governors": [
+      "schedutil"
+    ],
+    "maximum_start_temperature_c": 42.1,
+    "environment_mismatches": []
+  },
+  "validation": {
+    "profile_valid": true,
+    "all_operator_call_counts_valid": true,
+    "environment_matched": true,
+    "e7_validation_evidence": {
+      "path": "results/runtime/fusion/e7_validation.json",
+      "sha256": "143298ddfcb245fa8b295ab5aedfb2d010e9b5d3ac10f4b72ff60c74a9afc748",
+      "all_bitwise_identical": true
+    },
+    "performance_protocol_status": "quick-baseline",
+    "official_measurement_pending": true
+  },
+  "provenance": {
+    "summary": {
+      "path": "results/profiling/e7_98/final_combined/summary.json",
+      "sha256": "9441ce2522fbbfcd9d4b372e0547fbf7b17c07fbf500e3fea8bf9d39279fd8d4"
+    },
+    "operator_profile": "results/profiling/e7_98/final_combined/operator_profile.json",
+    "raw_overhead": "runs/profiling/e7_98/final_combined/raw/overhead_comparison.json",
+    "baseline_binary_sha256": "0184d45335b72ce208f3e5f6547b3d2bc30dda871857eb5375d0bf22c75d54fe",
+    "profiler_binary_sha256": "9f3a5fdcb73a21cdfd834bcb80f32e9e6a7dbd594bd0a1c507123c21327d26a6"
+  }
+}
