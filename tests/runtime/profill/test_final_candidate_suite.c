@@ -40,14 +40,14 @@ static int check_entry(
     const CamppKernelRegistry *registry, uint16_t opcode, uint16_t kernel_id,
     const CamppKernelEntry *expected, const char *expected_name)
 {
-    const CamppKernelEntry *actual = NULL;
+    const CamppKernelEntry *resolved = NULL;
     CHECK_STATUS(campp_kernel_registry_lookup(
-        registry, opcode, kernel_id, &actual));
-    CHECK_TRUE(actual != NULL);
+        registry, opcode, kernel_id, &resolved));
+    CHECK_TRUE(resolved != NULL);
     CHECK_TRUE(expected != NULL);
-    CHECK_TRUE(actual->run == expected->run);
-    CHECK_TRUE(actual->scratch_bytes == expected->scratch_bytes);
-    CHECK_TRUE(strcmp(actual->name, expected_name) == 0);
+    CHECK_TRUE(resolved->run == expected->run);
+    CHECK_TRUE(resolved->scratch_bytes == expected->scratch_bytes);
+    CHECK_TRUE(strcmp(resolved->name, expected_name) == 0);
     return 0;
 }
 
