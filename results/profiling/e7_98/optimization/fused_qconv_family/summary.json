@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-19T02:17:05.015624+00:00",
+  "objective": "all fused_quant_qlinear_conv_o4i4 operators",
+  "measurement_strategy": "one graph traversal per input",
+  "modes": [
+    "baseline",
+    "combined_fixed"
+  ],
+  "comparisons": [
+    {
+      "mode": "combined_fixed",
+      "gate_passed": true,
+      "all_output_hashes_bitwise_identical": true,
+      "no_case_regressed_over_1pct": true,
+      "operator_count": 110,
+      "baseline_mean_ms": 1524.2771922166667,
+      "candidate_mean_ms": 152.37241353333334,
+      "mean_speedup_ratio": 10.003629639188016,
+      "baseline_sum_p50_ms": 1520.058227,
+      "candidate_sum_p50_ms": 151.93940500000002,
+      "sum_p50_speedup_ratio": 10.004371328162037,
+      "baseline_sum_p95_ms": 1549.44887,
+      "candidate_sum_p95_ms": 154.9080609,
+      "sum_p95_speedup_ratio": 10.002377287520483,
+      "note": "p50/p95 sums are operator-level aggregate indicators, not a synchronized whole-graph percentile",
+      "shape_groups": [
+        {
+          "weight_shape": [
+            32,
+            1,
+            3,
+            3
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 73.63064505000001,
+          "candidate_mean_ms": 72.59030800000001,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 1.0143316246846619
+        },
+        {
+          "weight_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "operator_count": 3,
+          "baseline_mean_ms": 743.8618417666667,
+          "candidate_mean_ms": 40.458599033333336,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 18.385753820932063
+        },
+        {
+          "weight_shape": [
+            32,
+            128,
+            3
+          ],
+          "operator_count": 52,
+          "baseline_mean_ms": 348.74302353333326,
+          "candidate_mean_ms": 19.995312716666668,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 17.441238778058516
+        },
+        {
+          "weight_shape": [
+            64,
+            128,
+            1
+          ],
+          "operator_count": 52,
+          "baseline_mean_ms": 249.90130259999998,
+          "candidate_mean_ms": 14.351860483333336,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 17.41246738638574
+        },
+        {
+          "weight_shape": [
+            128,
+            320,
+            5
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 104.76325256666668,
+          "candidate_mean_ms": 4.569516466666667,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 22.926551054336937
+        },
+        {
+          "weight_shape": [
+            192,
+            1024,
+            1
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 3.3771267,
+          "candidate_mean_ms": 0.4068168333333333,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 8.301344544494022
+        }
+      ],
+      "comparison": "results/profiling/e7_98/optimization/fused_qconv_family/combined_fixed_comparison.json"
+    }
+  ],
+  "winner": "combined_fixed",
+  "production_gate_ready": true,
+  "next_gate": "retained-tensor bitwise validation and Quick E2E profiling",
+  "elapsed_seconds": 151.61369258499963,
+  "estimated_seconds": 203.1371636143146
+}
