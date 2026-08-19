@@ -1,0 +1,493 @@
+ Percent |	Source code & Disassembly of campp_operator_hotspot for cycles:u (22 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3     Disassembly of section .text:
+         :
+         : 5     0000000000019820 <campp_fused_input_quantize_neon>:
+         : 6     const float *source;
+         : 7     uint8_t *target;
+         : 8     uint64_t count;
+         : 9     uint64_t index = 0u;
+         :
+         : 11    if (!(scale > 0.0f) || !isfinite(scale)) {
+    0.00 :   19820:  fcmpe   s0, #0.0
+    0.00 :   19824:  b.gt    19830 <campp_fused_input_quantize_neon+0x10>
+         : 14    return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   19828:  mov     w0, #0x3c                       // #60
+         : 16    if (!isfinite(source[index])) return CAMPP_STATUS_KERNEL_FAILED;
+         : 17    target[index] = campp_fused_quantize_scalar_byte(
+         : 18    source[index], scale, zero_point, output->dtype);
+         : 19    }
+         : 20    return CAMPP_STATUS_OK;
+         : 21    }
+    0.00 :   1982c:  ret
+         : 23    if (!(scale > 0.0f) || !isfinite(scale)) {
+    0.00 :   19830:  fabs    s30, s0
+    0.00 :   19834:  mov     w3, #0x7f7fffff                 // #2139095039
+    0.00 :   19838:  fmov    s31, w3
+    0.00 :   1983c:  fcmp    s30, s31
+    0.00 :   19840:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+         : 29    if (input == NULL || output == NULL || input->data == NULL ||
+    0.00 :   19844:  cmp     x0, #0x0
+    0.00 :   19848:  ccmp    x1, #0x0, #0x4, ne      // ne = any
+    0.00 :   1984c:  b.eq    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.none
+    0.00 :   19850:  ldr     x8, [x0]
+    0.00 :   19854:  cbz     x8, 19a3c <campp_fused_input_quantize_neon+0x21c>
+         : 35    output->data == NULL || input->dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   19858:  ldr     x9, [x1]
+         : 37    if (input == NULL || output == NULL || input->data == NULL ||
+    0.00 :   1985c:  cbz     x9, 19a3c <campp_fused_input_quantize_neon+0x21c>
+         : 39    output->data == NULL || input->dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   19860:  ldrb    w3, [x0, #8]
+    0.00 :   19864:  cmp     w3, #0x1
+    0.00 :   19868:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 43    (output->dtype != CAMPP_DTYPE_UINT8 &&
+    0.00 :   1986c:  ldrb    w3, [x1, #8]
+    4.55 :   19870:  sub     w4, w3, #0x2
+         : 46    output->data == NULL || input->dtype != CAMPP_DTYPE_FLOAT32 ||
+    0.00 :   19874:  and     w4, w4, #0xff
+    0.00 :   19878:  cmp     w4, #0x1
+    0.00 :   1987c:  b.hi    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.pmore
+         : 50    input->rank != output->rank ||
+    0.00 :   19880:  ldrb    w4, [x0, #9]
+         : 52    output->dtype != CAMPP_DTYPE_INT8) ||
+    0.00 :   19884:  ldrb    w5, [x1, #9]
+    0.00 :   19888:  cmp     w5, w4
+    0.00 :   1988c:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 56    input->rank != output->rank ||
+    0.00 :   19890:  ldp     x5, x6, [x0, #48]
+    0.00 :   19894:  cmp     x5, x6
+    0.00 :   19898:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 60    input->logical_byte_size != input->storage_span_bytes ||
+    0.00 :   1989c:  ldp     x6, x7, [x1, #48]
+    0.00 :   198a0:  cmp     x6, x7
+    0.00 :   198a4:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 64    output->logical_byte_size != output->storage_span_bytes ||
+    0.00 :   198a8:  cmp     x5, x6, lsl #2
+    0.00 :   198ac:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 67    for (axis = 0u; axis < input->rank; ++axis) {
+    0.00 :   198b0:  cbz     w4, 19cd8 <campp_fused_input_quantize_neon+0x4b8>
+         : 69    if (input->dimensions[axis] != output->dimensions[axis] ||
+    0.00 :   198b4:  ldr     w7, [x0, #12]
+    0.00 :   198b8:  ldr     w5, [x1, #12]
+    0.00 :   198bc:  cmp     w7, w5
+    0.00 :   198c0:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 74    input->byte_strides[axis] !=
+    0.00 :   198c4:  ldr     w5, [x0, #28]
+         : 76    output->byte_strides[axis] * sizeof(float)) {
+    0.00 :   198c8:  ldr     w6, [x1, #28]
+         : 78    if (input->dimensions[axis] != output->dimensions[axis] ||
+    0.00 :   198cc:  cmp     x5, x6, lsl #2
+    0.00 :   198d0:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 81    for (axis = 0u; axis < input->rank; ++axis) {
+    0.00 :   198d4:  cmp     w4, #0x1
+    0.00 :   198d8:  b.eq    19cd0 <campp_fused_input_quantize_neon+0x4b0>  // b.none
+         : 84    if (input->dimensions[axis] != output->dimensions[axis] ||
+    0.00 :   198dc:  ldr     w5, [x0, #16]
+    0.00 :   198e0:  ldr     w6, [x1, #16]
+    0.00 :   198e4:  cmp     w6, w5
+    0.00 :   198e8:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 89    input->byte_strides[axis] !=
+    0.00 :   198ec:  ldr     w10, [x0, #32]
+         : 91    output->byte_strides[axis] * sizeof(float)) {
+    0.00 :   198f0:  ldr     w11, [x1, #32]
+         : 93    if (input->dimensions[axis] != output->dimensions[axis] ||
+    0.00 :   198f4:  cmp     x10, x11, lsl #2
+    0.00 :   198f8:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 96    for (axis = 0u; axis < input->rank; ++axis) {
+    0.00 :   198fc:  cmp     w4, #0x2
+    0.00 :   19900:  b.eq    19cc8 <campp_fused_input_quantize_neon+0x4a8>  // b.none
+         : 99    if (input->dimensions[axis] != output->dimensions[axis] ||
+    0.00 :   19904:  ldr     w10, [x0, #20]
+    0.00 :   19908:  ldr     w6, [x1, #20]
+    0.00 :   1990c:  cmp     w10, w6
+    0.00 :   19910:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 104   input->byte_strides[axis] !=
+    0.00 :   19914:  ldr     w6, [x0, #36]
+         : 106   output->byte_strides[axis] * sizeof(float)) {
+    0.00 :   19918:  ldr     w10, [x1, #36]
+         : 108   if (input->dimensions[axis] != output->dimensions[axis] ||
+    0.00 :   1991c:  cmp     x6, x10, lsl #2
+    0.00 :   19920:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 111   for (axis = 0u; axis < input->rank; ++axis) {
+    0.00 :   19924:  cmp     w4, #0x3
+    0.00 :   19928:  b.eq    19cb8 <campp_fused_input_quantize_neon+0x498>  // b.none
+         : 114   if (input->dimensions[axis] != output->dimensions[axis] ||
+    0.00 :   1992c:  ldr     w4, [x0, #24]
+    0.00 :   19930:  ldr     w6, [x1, #24]
+    0.00 :   19934:  cmp     w6, w4
+    0.00 :   19938:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         : 119   input->byte_strides[axis] !=
+    0.00 :   1993c:  ldr     w4, [x0, #40]
+         : 121   output->byte_strides[axis] * sizeof(float)) {
+    0.00 :   19940:  ldr     w6, [x1, #40]
+         : 123   if (input->dimensions[axis] != output->dimensions[axis] ||
+    0.00 :   19944:  cmp     x4, x6, lsl #2
+    0.00 :   19948:  b.ne    19a3c <campp_fused_input_quantize_neon+0x21c>  // b.any
+         :
+         : 127   if (view == NULL) {
+         : 128   return 0u;
+         : 129   }
+         : 130   for (axis = 0u; axis < view->rank; ++axis) {
+         : 131   count *= (uint64_t)view->dimensions[axis];
+    0.00 :   1994c:  umull   x5, w5, w7
+    0.00 :   19950:  ldp     w4, w7, [x0, #20]
+    0.00 :   19954:  mul     x4, x4, x5
+    0.00 :   19958:  mul     x7, x7, x4
+         : 136   output->dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   1995c:  cmp     w3, #0x2
+    0.00 :   19960:  mov     w4, #0x7f                       // #127
+    0.00 :   19964:  mov     w3, #0xff                       // #255
+    0.00 :   19968:  mov     w0, #0xffffff80                 // #-128
+    0.00 :   1996c:  csel    w3, w3, w4, eq  // eq = none
+    0.00 :   19970:  csel    w0, wzr, w0, eq // eq = none
+         : 143   vdupq_n_f32((float)(maximum - zero_point));
+    0.00 :   19974:  sub     w3, w3, w2
+         : 145   vdupq_n_f32((float)(minimum - zero_point));
+    0.00 :   19978:  sub     w0, w0, w2
+         :
+         : 148   __extension__ extern __inline float32x4_t
+         : 149   __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
+         : 150   vdupq_n_f32 (float32_t __a)
+         : 151   {
+         : 152   return (float32x4_t) {__a, __a, __a, __a};
+    0.00 :   1997c:  dup     v22.4s, v0.s[0]
+         : 154   vdupq_n_f32((float)(maximum - zero_point));
+    0.00 :   19980:  scvtf   s25, w3
+         : 156   vdupq_n_f32((float)(minimum - zero_point));
+    0.00 :   19984:  scvtf   s26, w0
+         :
+         : 159   __extension__ extern __inline int32x4_t
+         : 160   __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
+         : 161   vdupq_n_s32 (int32_t __a)
+         : 162   {
+         : 163   return (int32x4_t) {__a, __a, __a, __a};
+    0.00 :   19988:  dup     v23.4s, w2
+         : 165   return (float32x4_t) {__a, __a, __a, __a};
+    0.00 :   1998c:  dup     v25.4s, v25.s[0]
+    0.00 :   19990:  dup     v26.4s, v26.s[0]
+         : 168   for (; index + 4u <= count; index += 4u) {
+    0.00 :   19994:  cmp     x7, #0x3
+    0.00 :   19998:  b.ls    19a40 <campp_fused_input_quantize_neon+0x220>  // b.plast
+    0.00 :   1999c:  mov     x0, x9
+    0.00 :   199a0:  sub     x6, x8, #0x10
+         : 173   if (!isfinite(lanes[lane])) {
+    0.00 :   199a4:  mov     w3, #0x7f7fffff                 // #2139095039
+         : 175   for (; index + 4u <= count; index += 4u) {
+    0.00 :   199a8:  mov     x4, #0x4                        // #4
+         : 177   if (!isfinite(lanes[lane])) {
+    0.00 :   199ac:  fmov    s30, w3
+         :
+         : 180   __extension__ extern __inline float32x4_t
+         : 181   __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
+         : 182   vld1q_f32 (const float32_t *__a)
+         : 183   {
+         : 184   return __builtin_aarch64_ld1v4sf ((const __builtin_aarch64_simd_sf *) __a);
+    0.00 :   199b0:  lsl     x3, x4, #2
+         : 186   for (; index + 4u <= count; index += 4u) {
+    9.09 :   199b4:  add     x5, x4, #0x4
+    4.55 :   199b8:  ldr     q31, [x6, x3]
+         : 189   if (!isfinite(lanes[lane])) {
+   13.64 :   199bc:  fabs    s24, s31
+    0.00 :   199c0:  mov     s29, v31.s[1]
+    0.00 :   199c4:  mov     s28, v31.s[2]
+    0.00 :   199c8:  mov     s27, v31.s[3]
+    4.55 :   199cc:  fcmp    s24, s30
+    4.55 :   199d0:  fabs    s29, s29
+    0.00 :   199d4:  fabs    s28, s28
+    0.00 :   199d8:  fabs    s27, s27
+    0.00 :   199dc:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+    0.00 :   199e0:  fcmp    s29, s30
+    0.00 :   199e4:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+    0.00 :   199e8:  fcmp    s28, s30
+    0.00 :   199ec:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+    0.00 :   199f0:  fcmp    s27, s30
+    4.55 :   199f4:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+         : 205   return __a / __b;
+    0.00 :   199f8:  fdiv    v31.4s, v31.4s, v22.4s
+         : 207   for (; index + 4u <= count; index += 4u) {
+    0.00 :   199fc:  add     x0, x0, #0x4
+         :
+         : 210   __extension__ extern __inline float32x4_t
+         : 211   __attribute__ ((__always_inline__, __gnu_inline__, __artificial__))
+         : 212   vminq_f32 (float32x4_t __a, float32x4_t __b)
+         : 213   {
+         : 214   return __builtin_aarch64_fmin_nanv4sf (__a, __b);
+   18.18 :   19a00:  fmin    v31.4s, v25.4s, v31.4s
+         : 216   return __builtin_aarch64_fmax_nanv4sf (__a, __b);
+    4.55 :   19a04:  fmax    v31.4s, v26.4s, v31.4s
+         : 218   return __builtin_aarch64_lfrintnv4sfv4si (__a);
+    4.55 :   19a08:  fcvtns  v31.4s, v31.4s
+         : 220   return __a + __b;
+    4.55 :   19a0c:  add     v31.4s, v31.4s, v23.4s
+         : 222   ? (uint8_t)rounded[lane]
+    0.00 :   19a10:  mov     s27, v31.s[1]
+    0.00 :   19a14:  stur    b31, [x0, #-4]
+    4.55 :   19a18:  mov     s28, v31.s[2]
+    0.00 :   19a1c:  mov     s29, v31.s[3]
+    4.55 :   19a20:  stur    b27, [x0, #-3]
+    4.55 :   19a24:  stur    b28, [x0, #-2]
+    4.55 :   19a28:  stur    b29, [x0, #-1]
+         : 230   for (; index + 4u <= count; index += 4u) {
+    0.00 :   19a2c:  cmp     x5, x7
+    4.55 :   19a30:  b.hi    19a44 <campp_fused_input_quantize_neon+0x224>  // b.pmore
+    0.00 :   19a34:  mov     x4, x5
+    0.00 :   19a38:  b       199b0 <campp_fused_input_quantize_neon+0x190>
+         : 235   return campp_fused_quantize_input_scalar(
+    0.00 :   19a3c:  b       3fc0 <campp_fused_quantize_input_scalar>
+         : 237   uint64_t index = 0u;
+    0.00 :   19a40:  mov     x4, #0x0                        // #0
+         : 239   for (; index < count; ++index) {
+    0.00 :   19a44:  cmp     x4, x7
+    0.00 :   19a48:  b.cs    19c60 <campp_fused_input_quantize_neon+0x440>  // b.hs, b.nlast
+         : 242   if (!isfinite(source[index])) return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   19a4c:  lsl     x6, x4, #2
+    0.00 :   19a50:  mov     w0, #0x7f7fffff                 // #2139095039
+    0.00 :   19a54:  fmov    s30, w0
+    0.00 :   19a58:  ldr     s31, [x8, x6]
+    0.00 :   19a5c:  fabs    s29, s31
+    0.00 :   19a60:  fcmp    s29, s30
+    0.00 :   19a64:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+         : 250   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19a68:  ldrb    w0, [x1, #8]
+         : 252   target[index] = campp_fused_quantize_scalar_byte(
+    0.00 :   19a6c:  add     x13, x9, x4
+         : 254   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19a70:  cmp     w0, #0x2
+    0.00 :   19a74:  b.eq    19c68 <campp_fused_input_quantize_neon+0x448>  // b.none
+    0.00 :   19a78:  mov     x10, #0x7f                      // #127
+    0.00 :   19a7c:  mov     x11, #0xffffffffffffff80        // #-128
+         : 259   const int32_t maximum = dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
+    0.00 :   19a80:  mov     w0, w10
+         : 261   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19a84:  mov     w3, w11
+         : 263   float scaled = value / scale;
+    0.00 :   19a88:  fdiv    s29, s31, s0
+         : 265   const float lower = (float)(minimum - zero_point);
+    0.00 :   19a8c:  sub     w3, w3, w2
+         : 267   const float upper = (float)(maximum - zero_point);
+    0.00 :   19a90:  sub     w0, w0, w2
+         : 269   rounded = (int64_t)nearbyintf(scaled) + zero_point;
+    0.00 :   19a94:  sxtw    x5, w2
+         : 271   const float lower = (float)(minimum - zero_point);
+    0.00 :   19a98:  scvtf   s30, w3
+         : 273   for (; index < count; ++index) {
+    0.00 :   19a9c:  add     x12, x4, #0x1
+         : 275   const float upper = (float)(maximum - zero_point);
+    0.00 :   19aa0:  scvtf   s31, w0
+         : 277   if (scaled < lower) scaled = lower;
+    0.00 :   19aa4:  fcmpe   s30, s29
+    0.00 :   19aa8:  fcsel   s30, s30, s29, gt
+         : 280   rounded = (int64_t)nearbyintf(scaled) + zero_point;
+    0.00 :   19aac:  fcmpe   s30, s31
+    0.00 :   19ab0:  fcsel   s31, s31, s30, gt
+    0.00 :   19ab4:  frinti  s31, s31
+    0.00 :   19ab8:  fcvtzs  x0, s31
+    0.00 :   19abc:  add     x0, x0, x5
+         : 286   if (rounded < minimum) rounded = minimum;
+    0.00 :   19ac0:  cmp     x0, x11
+    0.00 :   19ac4:  csel    x0, x0, x11, ge // ge = tcont
+         : 289   if (rounded > maximum) rounded = maximum;
+    0.00 :   19ac8:  cmp     x0, x10
+    0.00 :   19acc:  csel    x0, x0, x10, le
+         : 292   ? (uint8_t)rounded : (uint8_t)(int8_t)rounded;
+    0.00 :   19ad0:  strb    w0, [x13]
+         : 294   for (; index < count; ++index) {
+    0.00 :   19ad4:  cmp     x12, x7
+    0.00 :   19ad8:  b.cs    19c60 <campp_fused_input_quantize_neon+0x440>  // b.hs, b.nlast
+         : 297   if (!isfinite(source[index])) return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   19adc:  add     x6, x8, x6
+    0.00 :   19ae0:  mov     w0, #0x7f7fffff                 // #2139095039
+    0.00 :   19ae4:  fmov    s30, w0
+    0.00 :   19ae8:  ldr     s31, [x6, #4]
+    0.00 :   19aec:  fabs    s29, s31
+    0.00 :   19af0:  fcmp    s29, s30
+    0.00 :   19af4:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+         : 305   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19af8:  ldrb    w0, [x1, #8]
+    0.00 :   19afc:  cmp     w0, #0x2
+    0.00 :   19b00:  b.eq    19c7c <campp_fused_input_quantize_neon+0x45c>  // b.none
+    0.00 :   19b04:  mov     x8, #0x7f                       // #127
+    0.00 :   19b08:  mov     x10, #0xffffffffffffff80        // #-128
+         : 311   const int32_t maximum = dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
+    0.00 :   19b0c:  mov     w0, w8
+         : 313   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19b10:  mov     w3, w10
+         : 315   float scaled = value / scale;
+    0.00 :   19b14:  fdiv    s29, s31, s0
+         : 317   const float lower = (float)(minimum - zero_point);
+    0.00 :   19b18:  sub     w3, w3, w2
+         : 319   const float upper = (float)(maximum - zero_point);
+    0.00 :   19b1c:  sub     w0, w0, w2
+         : 321   for (; index < count; ++index) {
+    0.00 :   19b20:  add     x11, x4, #0x2
+         : 323   const float lower = (float)(minimum - zero_point);
+    0.00 :   19b24:  scvtf   s30, w3
+         : 325   const float upper = (float)(maximum - zero_point);
+    0.00 :   19b28:  scvtf   s31, w0
+         : 327   if (scaled < lower) scaled = lower;
+    0.00 :   19b2c:  fcmpe   s29, s30
+    0.00 :   19b30:  fcsel   s30, s30, s29, mi       // mi = first
+         : 330   rounded = (int64_t)nearbyintf(scaled) + zero_point;
+    0.00 :   19b34:  fcmpe   s31, s30
+    0.00 :   19b38:  fcsel   s31, s31, s30, mi       // mi = first
+    0.00 :   19b3c:  frinti  s31, s31
+    0.00 :   19b40:  fcvtzs  x0, s31
+    0.00 :   19b44:  add     x0, x0, x5
+         : 336   if (rounded < minimum) rounded = minimum;
+    0.00 :   19b48:  cmp     x0, x10
+    0.00 :   19b4c:  csel    x0, x0, x10, ge // ge = tcont
+         : 339   if (rounded > maximum) rounded = maximum;
+    0.00 :   19b50:  cmp     x0, x8
+    0.00 :   19b54:  csel    x0, x0, x8, le
+         : 342   ? (uint8_t)rounded : (uint8_t)(int8_t)rounded;
+    0.00 :   19b58:  strb    w0, [x9, x12]
+         : 344   for (; index < count; ++index) {
+    0.00 :   19b5c:  cmp     x7, x11
+    0.00 :   19b60:  b.ls    19c60 <campp_fused_input_quantize_neon+0x440>  // b.plast
+         : 347   if (!isfinite(source[index])) return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   19b64:  ldr     s29, [x6, #8]
+    0.00 :   19b68:  mov     w0, #0x7f7fffff                 // #2139095039
+    0.00 :   19b6c:  fmov    s31, w0
+    0.00 :   19b70:  fabs    s30, s29
+    0.00 :   19b74:  fcmp    s30, s31
+    0.00 :   19b78:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+         : 354   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19b7c:  ldrb    w0, [x1, #8]
+    0.00 :   19b80:  cmp     w0, #0x2
+    0.00 :   19b84:  b.eq    19c90 <campp_fused_input_quantize_neon+0x470>  // b.none
+    0.00 :   19b88:  mov     x8, #0x7f                       // #127
+    0.00 :   19b8c:  mov     x10, #0xffffffffffffff80        // #-128
+         : 360   const int32_t maximum = dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
+    0.00 :   19b90:  mov     w0, w8
+         : 362   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19b94:  mov     w3, w10
+         : 364   float scaled = value / scale;
+    0.00 :   19b98:  fdiv    s29, s29, s0
+         : 366   const float lower = (float)(minimum - zero_point);
+    0.00 :   19b9c:  sub     w3, w3, w2
+         : 368   const float upper = (float)(maximum - zero_point);
+    0.00 :   19ba0:  sub     w0, w0, w2
+         : 370   for (; index < count; ++index) {
+    0.00 :   19ba4:  add     x4, x4, #0x3
+         : 372   const float lower = (float)(minimum - zero_point);
+    0.00 :   19ba8:  scvtf   s30, w3
+         : 374   const float upper = (float)(maximum - zero_point);
+    0.00 :   19bac:  scvtf   s31, w0
+         : 376   if (scaled < lower) scaled = lower;
+    0.00 :   19bb0:  fcmpe   s29, s30
+    0.00 :   19bb4:  fcsel   s30, s30, s29, mi       // mi = first
+         : 379   rounded = (int64_t)nearbyintf(scaled) + zero_point;
+    0.00 :   19bb8:  fcmpe   s31, s30
+    0.00 :   19bbc:  fcsel   s31, s31, s30, mi       // mi = first
+    0.00 :   19bc0:  frinti  s31, s31
+    0.00 :   19bc4:  fcvtzs  x0, s31
+    0.00 :   19bc8:  add     x0, x0, x5
+         : 385   if (rounded < minimum) rounded = minimum;
+    0.00 :   19bcc:  cmp     x0, x10
+    0.00 :   19bd0:  csel    x0, x0, x10, ge // ge = tcont
+         : 388   if (rounded > maximum) rounded = maximum;
+    0.00 :   19bd4:  cmp     x0, x8
+    0.00 :   19bd8:  csel    x0, x0, x8, le
+         : 391   ? (uint8_t)rounded : (uint8_t)(int8_t)rounded;
+    0.00 :   19bdc:  strb    w0, [x9, x11]
+         : 393   for (; index < count; ++index) {
+    0.00 :   19be0:  cmp     x7, x4
+    0.00 :   19be4:  b.ls    19c60 <campp_fused_input_quantize_neon+0x440>  // b.plast
+         : 396   if (!isfinite(source[index])) return CAMPP_STATUS_KERNEL_FAILED;
+    0.00 :   19be8:  ldr     s31, [x6, #12]
+    0.00 :   19bec:  mov     w0, #0x7f7fffff                 // #2139095039
+    0.00 :   19bf0:  fmov    s30, w0
+    0.00 :   19bf4:  fabs    s29, s31
+    0.00 :   19bf8:  fcmp    s29, s30
+    0.00 :   19bfc:  b.hi    19828 <campp_fused_input_quantize_neon+0x8>  // b.pmore
+         : 403   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19c00:  ldrb    w0, [x1, #8]
+    0.00 :   19c04:  cmp     w0, #0x2
+    0.00 :   19c08:  b.eq    19ca4 <campp_fused_input_quantize_neon+0x484>  // b.none
+    0.00 :   19c0c:  mov     x3, #0x7f                       // #127
+    0.00 :   19c10:  mov     x6, #0xffffffffffffff80         // #-128
+         : 409   const int32_t maximum = dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
+    0.00 :   19c14:  mov     w0, w3
+         : 411   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19c18:  mov     w1, w6
+         : 413   float scaled = value / scale;
+    0.00 :   19c1c:  fdiv    s29, s31, s0
+         : 415   const float lower = (float)(minimum - zero_point);
+    0.00 :   19c20:  sub     w1, w1, w2
+         : 417   const float upper = (float)(maximum - zero_point);
+    0.00 :   19c24:  sub     w0, w0, w2
+         : 419   const float lower = (float)(minimum - zero_point);
+    0.00 :   19c28:  scvtf   s30, w1
+         : 421   const float upper = (float)(maximum - zero_point);
+    0.00 :   19c2c:  scvtf   s31, w0
+         : 423   if (scaled < lower) scaled = lower;
+    0.00 :   19c30:  fcmpe   s29, s30
+    0.00 :   19c34:  fcsel   s30, s30, s29, mi       // mi = first
+         : 426   rounded = (int64_t)nearbyintf(scaled) + zero_point;
+    0.00 :   19c38:  fcmpe   s31, s30
+    0.00 :   19c3c:  fcsel   s31, s31, s30, mi       // mi = first
+    0.00 :   19c40:  frinti  s31, s31
+    0.00 :   19c44:  fcvtzs  x0, s31
+    0.00 :   19c48:  add     x0, x0, x5
+         : 432   if (rounded < minimum) rounded = minimum;
+    0.00 :   19c4c:  cmp     x0, x6
+    0.00 :   19c50:  csel    x0, x0, x6, ge  // ge = tcont
+         : 435   if (rounded > maximum) rounded = maximum;
+    0.00 :   19c54:  cmp     x0, x3
+    0.00 :   19c58:  csel    x0, x0, x3, le
+         : 438   ? (uint8_t)rounded : (uint8_t)(int8_t)rounded;
+    0.00 :   19c5c:  strb    w0, [x9, x4]
+         : 440   return CAMPP_STATUS_OK;
+    0.00 :   19c60:  mov     w0, #0x0                        // #0
+         : 442   }
+    0.00 :   19c64:  ret
+         : 444   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19c68:  mov     x10, #0xff                      // #255
+    0.00 :   19c6c:  mov     x11, #0x0                       // #0
+         : 447   const int32_t maximum = dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
+    0.00 :   19c70:  mov     w0, w10
+         : 449   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19c74:  mov     w3, #0x0                        // #0
+    0.00 :   19c78:  b       19a88 <campp_fused_input_quantize_neon+0x268>
+    0.00 :   19c7c:  mov     x8, #0xff                       // #255
+    0.00 :   19c80:  mov     x10, #0x0                       // #0
+         : 454   const int32_t maximum = dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
+    0.00 :   19c84:  mov     w0, w8
+         : 456   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19c88:  mov     w3, #0x0                        // #0
+    0.00 :   19c8c:  b       19b14 <campp_fused_input_quantize_neon+0x2f4>
+    0.00 :   19c90:  mov     x8, #0xff                       // #255
+    0.00 :   19c94:  mov     x10, #0x0                       // #0
+         : 461   const int32_t maximum = dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
+    0.00 :   19c98:  mov     w0, w8
+         : 463   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19c9c:  mov     w3, #0x0                        // #0
+    0.00 :   19ca0:  b       19b98 <campp_fused_input_quantize_neon+0x378>
+    0.00 :   19ca4:  mov     x3, #0xff                       // #255
+    0.00 :   19ca8:  mov     x6, #0x0                        // #0
+         : 468   const int32_t maximum = dtype == CAMPP_DTYPE_UINT8 ? 255 : 127;
+    0.00 :   19cac:  mov     w0, w3
+         : 470   const int32_t minimum = dtype == CAMPP_DTYPE_UINT8 ? 0 : -128;
+    0.00 :   19cb0:  mov     w1, #0x0                        // #0
+    0.00 :   19cb4:  b       19c1c <campp_fused_input_quantize_neon+0x3fc>
+    0.00 :   19cb8:  umull   x5, w5, w7
+    0.00 :   19cbc:  ldr     w7, [x0, #20]
+    0.00 :   19cc0:  mul     x7, x7, x5
+         : 476   for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   19cc4:  b       1995c <campp_fused_input_quantize_neon+0x13c>
+         : 478   count *= (uint64_t)view->dimensions[axis];
+    0.00 :   19cc8:  umull   x7, w7, w6
+         : 480   for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   19ccc:  b       1995c <campp_fused_input_quantize_neon+0x13c>
+         : 482   count *= (uint64_t)view->dimensions[axis];
+    0.00 :   19cd0:  mov     w7, w7
+         : 484   for (axis = 0u; axis < view->rank; ++axis) {
+    0.00 :   19cd4:  b       1995c <campp_fused_input_quantize_neon+0x13c>
+         : 486   uint64_t index = 0u;
+    0.00 :   19cd8:  mov     x4, #0x0                        // #0
+         : 488   uint64_t count = 1u;
+    0.00 :   19cdc:  mov     x7, #0x1                        // #1
+    0.00 :   19ce0:  b       19a4c <campp_fused_input_quantize_neon+0x22c>

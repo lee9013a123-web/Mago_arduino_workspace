@@ -1,0 +1,7 @@
+stage,variant,parent_variant,candidate,status,p50_ms,p95_ms,cv_pct,peak_rss_bytes,binary_size_bytes,hashes_match,retained_hashes_match,cflags,ldflags
+performance,01_performance__o2_generic,,o2_generic,passed,598.59802,600.0963796000001,0.3171000990753295,11874304,155864,True,True,-std=c11 -DNDEBUG -Wall -Wextra -O2,
+performance,01_performance__o3_generic,,o3_generic,passed,527.0275,527.7225151,0.4239353982072495,11886592,220496,True,True,-std=c11 -DNDEBUG -Wall -Wextra -O3,
+performance,01_performance__o3_a53,,o3_a53,passed,530.727396,531.3722082,0.08126291925375317,11890688,220496,True,True,-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53,
+performance,01_performance__o3_a53_lto,,o3_a53_lto,passed,504.516458,505.194833,0.0791357567555268,11907072,210880,True,True,-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53 -flto,-flto
+final_flags,02_final_flags__compiler_default,01_performance__o3_a53_lto,compiler_default,passed,501.612239,501.6969893,0.11602826517024048,11907072,210880,True,True,-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53 -flto,-flto
+final_flags,02_final_flags__aggressive_packaged,01_performance__o3_a53_lto,aggressive_packaged,passed,502.370365,503.9382865,0.7349706507114095,11935744,198952,True,True,-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53 -flto -finline-functions -finline-small-functions -funroll-loops -fomit-frame-pointer -ffunction-sections -fdata-sections,"-flto -Wl,--gc-sections"

@@ -1,0 +1,249 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-19T06:22:37.239836+00:00",
+  "objective": "vectorize fused Dequantize/ReLU/Quantize with NEON",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "modes": [
+      "baseline",
+      "scalar",
+      "neon"
+    ],
+    "scope": "shape_representatives",
+    "elapsed_seconds": 117.25380535499994
+  },
+  "all_output_hashes_bitwise_identical": true,
+  "no_winner_regressed_over_1pct": true,
+  "any_case_faster": true,
+  "candidate_microbench_gate_passed": true,
+  "winner_modes": [
+    "neon"
+  ],
+  "cases": [
+    {
+      "case_name": "op_1",
+      "operator_id": 1,
+      "kernel_id": 4,
+      "kernel_name": "fused_dequant_relu_quant",
+      "operator_type": "DEQUANTIZE_LINEAR",
+      "input_shape": [
+        1,
+        32,
+        80,
+        98
+      ],
+      "profile_mean_ms": 36.13681151666666,
+      "profile_share_pct": 0.426515984286149,
+      "modes": {
+        "baseline": {
+          "sample_count": 60,
+          "mean_ms": 35.80825866666667,
+          "p50_ms": 35.7746615,
+          "p95_ms": 36.456513,
+          "min_ms": 35.111875,
+          "max_ms": 37.057291
+        },
+        "scalar": {
+          "sample_count": 60,
+          "mean_ms": 5.9082917,
+          "p50_ms": 5.8871875,
+          "p95_ms": 6.09583055,
+          "min_ms": 5.816094,
+          "max_ms": 6.288021
+        },
+        "neon": {
+          "sample_count": 60,
+          "mean_ms": 1.0013601833333334,
+          "p50_ms": 0.990052,
+          "p95_ms": 1.04587735,
+          "min_ms": 0.941302,
+          "max_ms": 1.272135
+        }
+      },
+      "bitwise_by_mode": {
+        "scalar": true,
+        "neon": true
+      },
+      "output_hashes": [
+        "616b9ab425843f0b",
+        "cdb0f63770a3441d",
+        "640ff4b2e303b7cc"
+      ],
+      "winner": "neon",
+      "winner_speedup_ratio": 35.759619028857266,
+      "winner_latency_reduction_pct": 97.20354962620542
+    },
+    {
+      "case_name": "op_11",
+      "operator_id": 11,
+      "kernel_id": 4,
+      "kernel_name": "fused_dequant_relu_quant",
+      "operator_type": "DEQUANTIZE_LINEAR",
+      "input_shape": [
+        1,
+        32,
+        40,
+        98
+      ],
+      "profile_mean_ms": 17.397162283333333,
+      "profile_share_pct": 0.20533543175605096,
+      "modes": {
+        "baseline": {
+          "sample_count": 60,
+          "mean_ms": 17.3165755,
+          "p50_ms": 17.24487,
+          "p95_ms": 17.645422449999998,
+          "min_ms": 17.168906,
+          "max_ms": 18.240573
+        },
+        "scalar": {
+          "sample_count": 60,
+          "mean_ms": 2.8983949833333336,
+          "p50_ms": 2.883698,
+          "p95_ms": 2.9543963,
+          "min_ms": 2.850208,
+          "max_ms": 3.201719
+        },
+        "neon": {
+          "sample_count": 60,
+          "mean_ms": 0.48272218333333333,
+          "p50_ms": 0.480026,
+          "p95_ms": 0.51355245,
+          "min_ms": 0.464948,
+          "max_ms": 0.534427
+        }
+      },
+      "bitwise_by_mode": {
+        "scalar": true,
+        "neon": true
+      },
+      "output_hashes": [
+        "98612a1a2b976483",
+        "2589eaf1f18d6383",
+        "acd6c48c184b0bce"
+      ],
+      "winner": "neon",
+      "winner_speedup_ratio": 35.8727568317332,
+      "winner_latency_reduction_pct": 97.21236925087565
+    },
+    {
+      "case_name": "op_19",
+      "operator_id": 19,
+      "kernel_id": 4,
+      "kernel_name": "fused_dequant_relu_quant",
+      "operator_type": "DEQUANTIZE_LINEAR",
+      "input_shape": [
+        1,
+        32,
+        20,
+        98
+      ],
+      "profile_mean_ms": 8.677362766666667,
+      "profile_share_pct": 0.10241727939184285,
+      "modes": {
+        "baseline": {
+          "sample_count": 60,
+          "mean_ms": 8.601736983333332,
+          "p50_ms": 8.5696615,
+          "p95_ms": 8.73173165,
+          "min_ms": 8.53474,
+          "max_ms": 9.066511
+        },
+        "scalar": {
+          "sample_count": 60,
+          "mean_ms": 1.44445745,
+          "p50_ms": 1.4317185,
+          "p95_ms": 1.4855234499999999,
+          "min_ms": 1.423281,
+          "max_ms": 1.769844
+        },
+        "neon": {
+          "sample_count": 60,
+          "mean_ms": 0.23702858333333335,
+          "p50_ms": 0.233464,
+          "p95_ms": 0.25071605,
+          "min_ms": 0.231979,
+          "max_ms": 0.257448
+        }
+      },
+      "bitwise_by_mode": {
+        "scalar": true,
+        "neon": true
+      },
+      "output_hashes": [
+        "b7fcea39d1b664ac",
+        "25b7ffe9b26db393",
+        "f0d347d5bc20affc"
+      ],
+      "winner": "neon",
+      "winner_speedup_ratio": 36.289872142705704,
+      "winner_latency_reduction_pct": 97.24441024187792
+    },
+    {
+      "case_name": "op_821",
+      "operator_id": 821,
+      "kernel_id": 4,
+      "kernel_name": "fused_dequant_relu_quant",
+      "operator_type": "DEQUANTIZE_LINEAR",
+      "input_shape": [
+        1,
+        64,
+        49
+      ],
+      "profile_mean_ms": 0.36150950000000004,
+      "profile_share_pct": 0.004266828581436405,
+      "modes": {
+        "baseline": {
+          "sample_count": 60,
+          "mean_ms": 0.35434376666666667,
+          "p50_ms": 0.352969,
+          "p95_ms": 0.36315919999999996,
+          "min_ms": 0.351562,
+          "max_ms": 0.369114
+        },
+        "scalar": {
+          "sample_count": 60,
+          "mean_ms": 0.07058243333333333,
+          "p50_ms": 0.070365,
+          "p95_ms": 0.071466,
+          "min_ms": 0.070312,
+          "max_ms": 0.073854
+        },
+        "neon": {
+          "sample_count": 60,
+          "mean_ms": 0.0113976,
+          "p50_ms": 0.011094,
+          "p95_ms": 0.012149149999999994,
+          "min_ms": 0.01099,
+          "max_ms": 0.018125
+        }
+      },
+      "bitwise_by_mode": {
+        "scalar": true,
+        "neon": true
+      },
+      "output_hashes": [
+        "1416a92a31e856ee",
+        "c1cf81ea1b418421",
+        "c19ed11781b9adfe"
+      ],
+      "winner": "neon",
+      "winner_speedup_ratio": 31.0893316721649,
+      "winner_latency_reduction_pct": 96.78346253774465
+    }
+  ],
+  "next_gate": "all-operator family benchmark, retained-tensor bitwise validation, and Quick E2E profiling",
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/fused_dequant_relu_quant/raw"
+  }
+}

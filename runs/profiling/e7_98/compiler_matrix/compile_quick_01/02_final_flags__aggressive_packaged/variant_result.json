@@ -1,0 +1,114 @@
+{
+  "schema_version": 1,
+  "variant": "02_final_flags__aggressive_packaged",
+  "parent_variant": "01_performance__o3_a53_lto",
+  "stage": "final_flags",
+  "candidate": "aggressive_packaged",
+  "status": "passed",
+  "flags": {
+    "cppflags": "",
+    "cflags": "-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53 -flto -finline-functions -finline-small-functions -funroll-loops -fomit-frame-pointer -ffunction-sections -fdata-sections",
+    "ldflags": "-flto -Wl,--gc-sections",
+    "strip_final": true
+  },
+  "build": {
+    "directory": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged",
+    "scope": "compiler_quick",
+    "seconds": 106.57761721199995,
+    "metadata": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/build_metadata.txt"
+  },
+  "binary": {
+    "path": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/campp_runtime_benchmark_final",
+    "sha256": "1b68cf69a53f924f996b2a9a6b4b8d8fcd4529c11173da22437c1d310152d9ff",
+    "size_bytes": 198952
+  },
+  "capabilities": {
+    "runtime": "campp-c-runtime",
+    "effective_threads": 1,
+    "threading": "single-thread",
+    "backends": [
+      "cpu_reference",
+      "cpu_aarch64_o4i4"
+    ],
+    "optimization_suite": "final"
+  },
+  "retained_tensors": [
+    {
+      "input_id": "multi__speaker_0000",
+      "tensor_count": 832,
+      "payload_bytes": 19125888,
+      "payload_sha256": "0776dda4cf76ead3587ca0b1b8b8d4383044a23a6bec0874fca9668649cd6275"
+    },
+    {
+      "input_id": "multi__speaker_0005",
+      "tensor_count": 832,
+      "payload_bytes": 19125888,
+      "payload_sha256": "181a1c9c0b69fc8c9dc6a06ecc0863045d33261cb84fc29f7e9e2177d1163efa"
+    },
+    {
+      "input_id": "multi__speaker_0006",
+      "tensor_count": 832,
+      "payload_bytes": 19125888,
+      "payload_sha256": "00db14048af8da0a2616b10138ce309644a6caefe0fc2d84f0bea7a570b10f4b"
+    }
+  ],
+  "benchmark_seconds": 1.6538877000002685,
+  "per_input": [
+    {
+      "input_id": "multi__speaker_0000",
+      "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+      "embedding_sha256": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05",
+      "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/raw/multi__speaker_0000/result.json"
+    },
+    {
+      "input_id": "multi__speaker_0005",
+      "feature_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+      "embedding_sha256": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd",
+      "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/raw/multi__speaker_0005/result.json"
+    },
+    {
+      "input_id": "multi__speaker_0006",
+      "feature_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+      "embedding_sha256": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1",
+      "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/raw/multi__speaker_0006/result.json"
+    }
+  ],
+  "aggregate": {
+    "runtime": "campp-c-runtime",
+    "bucket_frames": 98,
+    "input_count": 3,
+    "latency": {
+      "count": 3,
+      "mean_ms": 500.68840299999994,
+      "stddev_ms": 3.679912813565664,
+      "cv_pct": 0.7349706507114095,
+      "min_ms": 495.582344,
+      "p50_ms": 502.370365,
+      "p95_ms": 503.9382865,
+      "p99_ms": 504.07765730000006,
+      "max_ms": 504.1125
+    },
+    "rtf": {
+      "count": 3,
+      "mean_rtf": 0.500688403,
+      "stddev_rtf": 0.0036799128135656597,
+      "cv_pct": 0.7349706507114087,
+      "min_rtf": 0.49558234399999995,
+      "p50_rtf": 0.502370365,
+      "p95_rtf": 0.5039382864999999,
+      "p99_rtf": 0.5040776573,
+      "max_rtf": 0.5041125
+    },
+    "first_inference": null,
+    "warm_peak_rss_bytes": 11935744,
+    "cold_peak_rss_bytes": null,
+    "peak_rss_bytes": 11935744,
+    "stability_gate": {
+      "threshold_cv_pct": 3.0,
+      "all_inputs_passed": true,
+      "aggregate_passed": true
+    }
+  },
+  "all_output_hashes_match_reference": true,
+  "all_retained_tensor_hashes_match_reference": true
+}
