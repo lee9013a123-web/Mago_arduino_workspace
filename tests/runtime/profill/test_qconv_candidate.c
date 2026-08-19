@@ -384,7 +384,7 @@ static int run_case(uint8_t rank)
     {
         CamppFusedQconvCandidateMode fused_mode;
         for (fused_mode = CAMPP_FUSED_QCONV_CANDIDATE_MAC;
-             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED;
+             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V4;
              fused_mode = (CamppFusedQconvCandidateMode)(fused_mode + 1)) {
             const CamppKernelEntry *entry =
                 campp_fused_qconv_candidate_entry(fused_mode);
@@ -420,6 +420,11 @@ int main(void)
             campp_fused_qconv_candidate_mode_name(
                 CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED),
             "combined_fixed") == 0);
+    CHECK_TRUE(
+        strcmp(
+            campp_fused_qconv_candidate_mode_name(
+                CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V4),
+            "combined_v4") == 0);
     puts("QConv and fused QConv optimization candidates: PASS");
     return 0;
 }

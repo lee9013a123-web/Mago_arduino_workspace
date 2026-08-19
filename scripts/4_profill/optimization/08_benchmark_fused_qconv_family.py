@@ -32,11 +32,11 @@ EXPECTED_INPUTS = (
 )
 SUPPORTED_MODES = (
     "baseline", "mac", "combined", "mac_fixed", "quant_neon",
-    "combined_fixed",
+    "combined_fixed", "combined_v4",
 )
-DEFAULT_MODES = ("baseline", "combined_fixed")
+DEFAULT_MODES = ("baseline", "combined_fixed", "combined_v4")
 FULL_DIAGNOSTIC_MODES = (
-    "baseline", "mac_fixed", "quant_neon", "combined_fixed",
+    "baseline", "mac_fixed", "quant_neon", "combined_fixed", "combined_v4",
 )
 
 
@@ -445,6 +445,7 @@ def estimate_seconds(
         "mac_fixed": 0.08,
         "quant_neon": 0.98,
         "combined_fixed": 0.08,
+        "combined_v4": 0.08,
     }
     measured = (
         family_ms / 1000.0 * (warmup + repeat + 1) * input_count

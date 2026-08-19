@@ -26,7 +26,7 @@
 #include "internal/runtime_model.h"
 #include "memory_management/memory_bounds_checker.h"
 
-#define CAMPP_FAMILY_MODE_CAPACITY 6u
+#define CAMPP_FAMILY_MODE_CAPACITY 7u
 
 typedef struct FamilyOptions {
     const char *plan_path;
@@ -105,7 +105,7 @@ static void usage(const char *program)
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
         "[--warmup 5] [--repeat 20] [--threads 1] "
         "[--mode baseline] [--mode mac_fixed] [--mode quant_neon] "
-        "[--mode combined_fixed]\n",
+        "[--mode combined_fixed] [--mode combined_v4]\n",
         program);
 }
 
@@ -620,7 +620,7 @@ int main(int argc, char **argv)
             "\"batch_graph_traversal\":true,"
             "\"fused_qconv_candidates\":[\"baseline\",\"mac\"," 
             "\"combined\",\"mac_fixed\",\"quant_neon\"," 
-            "\"combined_fixed\"]}\n",
+            "\"combined_fixed\",\"combined_v4\"]}\n",
             stdout);
         return 0;
     }

@@ -33,6 +33,29 @@ class QConvHotspotTests(unittest.TestCase):
         self.assertLess(source_map["mac_loop_begin"], source_map["core_end"])
         self.assertLessEqual(source_map["requant_begin"], source_map["requant_end"])
 
+    def test_all_scope_selects_every_1x1_and_3x3_operator(self) -> None:
+        def operator(operator_id: int, shape: list[int], mean_ms: float) -> dict:
+            return {
+                "operator_id": operator_id,
+                "kernel_id": 1,
+                "kernel_name": "qlinear_conv_o4i4_neon",
+                "operator_type": "QLINEAR_CONV",
+                "weight_shapes": [shape],
+                "mean_ms": mean_ms,
+                "end_to_end_share_pct": mean_ms,
+            }
+
+        cases = HOTSPOT.select_qconv_cases(
+            [
+                operator(2, [32, 32, 3, 3], 5.0),
+                operator(10, [64, 32, 3, 3], 4.0),
+                operator(825, [512, 1024, 1], 3.0),
+            ],
+            case_scope="all",
+        )
+        self.assertEqual([case["operator_id"] for case in cases], [2, 10, 825])
+        self.assertEqual([case["shape"] for case in cases], ["3x3", "3x3", "1x1"])
+
     def test_parses_and_classifies_perf_source_lines(self) -> None:
         source_map = self.source_map
         source = "/tmp/qlinear_convolution_neon.c"
@@ -125,6 +148,88 @@ class QConvHotspotTests(unittest.TestCase):
             source_map,
         )
         self.assertEqual(parsed["fixed_microkernel_sample_count"], 1)
+
+    def test_fixed_microkernel_is_split_into_load_weight_mac_and_store(self) -> None:
+        source_map = HOTSPOT.build_v2_source_map()
+        source = "/tmp/qconv_mac_4x8_intrinsics.c"
+        rows = (
+            (
+                source_map["fixed_input_calls_span"][0],
+                "address_input_load_transform",
+            ),
+            (
+                source_map["fixed_weight_call_lines"][0],
+                "mac_weight_load_transform",
+            ),
+            (source_map["fixed_accumulate_call_lines"][0], "mac_accumulate"),
+            (
+                source_map["fixed_accumulator_store_span"][0],
+                "mac_accumulator_store",
+            ),
+        )
+        for line, expected in rows:
+            detail = HOTSPOT.classify_v2_detail_sample(
+                {
+                    "symbol": HOTSPOT.FIXED_INTRINSICS_SYMBOL,
+                    "source": source,
+                    "line": line,
+                },
+                source_map,
+            )
+            self.assertEqual(detail, expected)
+
+    def test_candidate_breakdown_reports_address_mac_and_requant_areas(self) -> None:
+        source_map = HOTSPOT.build_v2_source_map()
+        rows = (
+            (
+                "campp_qconv_candidate_run_v2",
+                "/tmp/qconv_candidate.c",
+                source_map["cand_point_table_span"][0],
+                100,
+                "address_point_table",
+            ),
+            (
+                HOTSPOT.FIXED_INTRINSICS_SYMBOL,
+                "/tmp/qconv_mac_4x8_intrinsics.c",
+                source_map["fixed_accumulate_call_lines"][0],
+                300,
+                "mac_accumulate",
+            ),
+            (
+                "campp_qconv_requantize_neon4",
+                "/tmp/requantization_neon.c",
+                source_map["requantize_neon4_scale_span"][0],
+                200,
+                "requant_scale_multiply",
+            ),
+        )
+        text = "\n".join(
+            f" {period} ffff {symbol} {source}:{line}"
+            for symbol, source, line, period, _ in rows
+        )
+        result = HOTSPOT.classify_v2_perf_script(text, source_map)
+        for _, _, _, period, detail in rows:
+            self.assertEqual(result["detail_category_periods"][detail], period)
+        self.assertEqual(result["area_periods"]["address"], 100)
+        self.assertEqual(result["area_periods"]["mac"], 300)
+        self.assertEqual(result["area_periods"]["requant"], 200)
+        self.assertAlmostEqual(
+            result["area_share_of_classified_pct"]["mac"], 50.0
+        )
+
+        case = {
+            "case_name": "qconv_1x1",
+            "operator_id": 825,
+            "kernel_id": 1,
+            "kernel_name": "qlinear_conv_o4i4_neon",
+        }
+        aggregate = HOTSPOT._aggregate_v2_case(case, [result, result, result])
+        self.assertEqual(aggregate["shape"], "1x1")
+        self.assertEqual(aggregate["decision"]["area_winner"], "mac")
+        self.assertEqual(
+            aggregate["decision"]["detail_winner"], "mac_accumulate"
+        )
+        self.assertTrue(aggregate["decision"]["detail_stable_across_inputs"])
 
     def test_spill_parser_separates_stack_and_tensor_loads(self) -> None:
         annotate = "\n".join(

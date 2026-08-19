@@ -28,6 +28,7 @@ class FusedQconvFamilyTests(unittest.TestCase):
                 ("mac_fixed", True, 10.0),
                 ("quant_neon", False, 80.0),
                 ("combined_fixed", True, 8.0),
+                ("combined_v4", True, 6.0),
             ):
                 document = {
                     "candidate_microbench_gate_passed": passed,
@@ -45,12 +46,13 @@ class FusedQconvFamilyTests(unittest.TestCase):
                 )
             summary = FAMILY.build_summary(FAMILY.FULL_DIAGNOSTIC_MODES, root)
             self.assertTrue(summary["production_gate_ready"])
-            self.assertEqual(summary["winner"], "combined_fixed")
-            self.assertEqual(len(summary["comparisons"]), 3)
+            self.assertEqual(summary["winner"], "combined_v4")
+            self.assertEqual(len(summary["comparisons"]), 4)
 
     def test_quick_defaults_to_baseline_and_final_candidate(self) -> None:
         self.assertEqual(
-            FAMILY.DEFAULT_MODES, ("baseline", "combined_fixed")
+            FAMILY.DEFAULT_MODES,
+            ("baseline", "combined_fixed", "combined_v4"),
         )
 
     def test_batch_payload_builds_comparison_compatible_documents(self) -> None:
@@ -92,6 +94,12 @@ class FusedQconvFamilyTests(unittest.TestCase):
                                 "output_hash": "abc",
                                 "matches_baseline": True,
                             },
+                            {
+                                "name": "combined_v4",
+                                "samples_ns": [8 + offset, 9 + offset],
+                                "output_hash": "abc",
+                                "matches_baseline": True,
+                            },
                         ],
                     }
                 ],
@@ -116,6 +124,9 @@ class FusedQconvFamilyTests(unittest.TestCase):
         )
         self.assertTrue(
             documents["combined_fixed"]["optimization_gate"]["ready"]
+        )
+        self.assertTrue(
+            documents["combined_v4"]["optimization_gate"]["ready"]
         )
 
 

@@ -61,6 +61,9 @@ CAMPP_DEFINE_FUSED_QCONV_CANDIDATE(
 CAMPP_DEFINE_FUSED_QCONV_CANDIDATE(
     campp_fused_qconv_candidate_combined_fixed,
     CAMPP_QCONV_CANDIDATE_MAC_FIXED, 1)
+CAMPP_DEFINE_FUSED_QCONV_CANDIDATE(
+    campp_fused_qconv_candidate_combined_v4,
+    CAMPP_QCONV_CANDIDATE_V4, 1)
 
 static const CamppKernelEntry CAMPP_FUSED_QCONV_CANDIDATE_ENTRIES[] = {
     {
@@ -97,6 +100,13 @@ static const CamppKernelEntry CAMPP_FUSED_QCONV_CANDIDATE_ENTRIES[] = {
         campp_fused_qconv_candidate_combined_fixed,
         campp_fused_quant_qlinear_conv_scratch_bytes,
         "fused_quant_qlinear_conv_o4i4"
+    },
+    {
+        CAMPP_OP_QLINEAR_CONV,
+        CAMPP_FUSION_QUANT_QCONV_KERNEL_ID,
+        campp_fused_qconv_candidate_combined_v4,
+        campp_fused_quant_qlinear_conv_scratch_bytes,
+        "fused_quant_qlinear_conv_o4i4"
     }
 };
 
@@ -105,10 +115,10 @@ const char *campp_fused_qconv_candidate_mode_name(
 {
     static const char *const names[] = {
         "baseline", "mac", "combined", "mac_fixed", "quant_neon",
-        "combined_fixed"
+        "combined_fixed", "combined_v4"
     };
     return mode >= CAMPP_FUSED_QCONV_CANDIDATE_BASELINE &&
-        mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED
+        mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V4
         ? names[mode] : "invalid";
 }
 
@@ -118,7 +128,7 @@ int campp_fused_qconv_candidate_mode_parse(
     CamppFusedQconvCandidateMode mode;
     if (text == NULL || out_mode == NULL) return 1;
     for (mode = CAMPP_FUSED_QCONV_CANDIDATE_BASELINE;
-         mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED;
+         mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V4;
          mode = (CamppFusedQconvCandidateMode)(mode + 1)) {
         if (strcmp(
                 text, campp_fused_qconv_candidate_mode_name(mode)) == 0) {
@@ -134,7 +144,7 @@ const CamppKernelEntry *campp_fused_qconv_candidate_entry(
 {
     if (mode == CAMPP_FUSED_QCONV_CANDIDATE_BASELINE) return NULL;
     if (mode < CAMPP_FUSED_QCONV_CANDIDATE_MAC ||
-        mode > CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED) {
+        mode > CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V4) {
         return NULL;
     }
     return &CAMPP_FUSED_QCONV_CANDIDATE_ENTRIES[mode - 1];

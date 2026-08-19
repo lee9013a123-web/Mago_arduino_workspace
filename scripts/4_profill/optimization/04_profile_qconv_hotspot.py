@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""QConv 3x3/1x1의 target-only cycle sample을 MAC과 address로 분리한다."""
+"""QConv 3x3/1x1의 target-only cycle을 address/MAC/requant로 세분화한다."""
 
 from __future__ import annotations
 
@@ -41,6 +41,11 @@ V2_CANDIDATE_SOURCE = (
     ROOT
     / "src/c/profill/optimization/candidates/qlinear_conv/qconv_candidate.c"
 )
+V2_ADDRESS_SOURCE = (
+    ROOT
+    / "src/c/profill/optimization/candidates/qlinear_conv"
+    / "qconv_address_fastpath.c"
+)
 FIXED_MAC_SOURCE = (
     ROOT
     / "src/c/profill/optimization/candidates/qlinear_conv/microkernels"
@@ -50,6 +55,11 @@ FIXED_DISPATCH_SOURCE = (
     ROOT
     / "src/c/profill/optimization/candidates/qlinear_conv/microkernels"
     / "qconv_mac_4x8.c"
+)
+FIXED_ASSEMBLY_SOURCE = (
+    ROOT
+    / "src/c/profill/optimization/candidates/qlinear_conv/microkernels"
+    / "qconv_mac_4x8_aarch64.S"
 )
 FIXED_INTRINSICS_SYMBOL = "campp_qconv_mac_4x8_intrinsics_raw"
 FIXED_ASSEMBLY_SYMBOL = "campp_qconv_mac_4x8_aarch64_raw"
@@ -81,6 +91,71 @@ V2_CORE_CATEGORIES = (
     "v2_requant",
     "v2_output_store",
 )
+V2_DETAIL_CATEGORIES = (
+    "address_output_coordinates",
+    "address_kernel_coordinates",
+    "address_padding_bounds",
+    "address_offset",
+    "address_point_table",
+    "address_input_load_transform",
+    "mac_dispatch_guard",
+    "mac_weight_load_transform",
+    "mac_accumulate",
+    "mac_accumulator_store",
+    "mac_bias_tail",
+    "requant_parameter_load",
+    "requant_dispatch",
+    "requant_scale_multiply",
+    "requant_round_clamp_narrow",
+    "requant_output_address",
+    "requant_tail_control",
+    "requant_output_store",
+    "requant_scalar_fallback",
+    "setup_other",
+    "foreign_symbol",
+    "unclassified",
+)
+V2_DETAIL_AREAS = ("address", "mac", "requant", "setup", "foreign", "unclassified")
+V2_DETAIL_PARENT = {
+    "address_output_coordinates": "v2_input_address",
+    "address_kernel_coordinates": "v2_input_address",
+    "address_padding_bounds": "v2_input_address",
+    "address_offset": "v2_input_address",
+    "address_point_table": "v2_input_address",
+    "address_input_load_transform": "v2_input_address",
+    "mac_dispatch_guard": "setup_other",
+    "mac_weight_load_transform": "v2_weight_transform",
+    "mac_accumulate": "v2_mac_smlal",
+    "mac_accumulator_store": "v2_mac_smlal",
+    "mac_bias_tail": "v2_mac_smlal",
+    "requant_parameter_load": "v2_requant",
+    "requant_dispatch": "v2_requant",
+    "requant_scale_multiply": "v2_requant",
+    "requant_round_clamp_narrow": "v2_requant",
+    "requant_output_address": "v2_output_store",
+    "requant_tail_control": "v2_output_store",
+    "requant_output_store": "v2_output_store",
+    "requant_scalar_fallback": "v2_requant",
+    "setup_other": "setup_other",
+    "foreign_symbol": "foreign_symbol",
+    "unclassified": "unclassified",
+}
+
+
+def _detail_area(category: str) -> str:
+    if category.startswith("address_"):
+        return "address"
+    if category.startswith("mac_"):
+        return "mac"
+    if category.startswith("requant_"):
+        return "requant"
+    return {
+        "setup_other": "setup",
+        "foreign_symbol": "foreign",
+        "unclassified": "unclassified",
+    }[category]
+
+
 # Second line of defence behind the perf control FIFO: samples raised by another
 # kernel or by the measurement harness must never reach a QConv bucket. Inlined
 # headers report the *enclosing* symbol, so matching on the symbol is what keeps
@@ -136,6 +211,63 @@ DIAGNOSIS = _load_diagnosis_module()
 COMMON = _load_common_module()
 
 
+def select_qconv_cases(
+    operators: Sequence[dict[str, Any]], *, case_scope: str
+) -> list[dict[str, Any]]:
+    """Select one representative per shape or every ordinary QConv operator."""
+
+    if case_scope == "representative":
+        selected = DIAGNOSIS.select_representative_cases(operators)
+        cases = [
+            dict(case)
+            for case in selected
+            if case["case_name"] in TARGET_CASE_NAMES
+        ]
+        for case in cases:
+            case["shape"] = case["case_name"].removeprefix("qconv_")
+        return cases
+    if case_scope != "all":
+        raise HotspotError(f"unsupported case scope: {case_scope}")
+
+    cases = []
+    for operator in operators:
+        if operator.get("kernel_name") != "qlinear_conv_o4i4_neon":
+            continue
+        weight_shape = DIAGNOSIS._meaningful_weight_shape(operator)
+        kernel_shape = weight_shape[2:]
+        if kernel_shape == (3, 3):
+            shape = "3x3"
+        elif kernel_shape and all(value == 1 for value in kernel_shape):
+            shape = "1x1"
+        else:
+            continue
+        operator_id = int(operator["operator_id"])
+        cases.append(
+            {
+                "case_name": f"qconv_{shape}_op_{operator_id}",
+                "shape": shape,
+                "operator_id": operator_id,
+                "kernel_id": int(operator["kernel_id"]),
+                "kernel_name": str(operator["kernel_name"]),
+                "operator_type": str(operator["operator_type"]),
+                "weight_shape": list(weight_shape),
+                "profile_mean_ms": float(operator["mean_ms"]),
+                "profile_share_pct": float(operator["end_to_end_share_pct"]),
+            }
+        )
+    cases.sort(
+        key=lambda case: (
+            0 if case["shape"] == "3x3" else 1,
+            -float(case["profile_mean_ms"]),
+            int(case["operator_id"]),
+        )
+    )
+    shapes = {case["shape"] for case in cases}
+    if shapes != {"3x3", "1x1"}:
+        raise HotspotError("profile does not contain both 3x3 and 1x1 QConv")
+    return cases
+
+
 def _path(value: str) -> Path:
     candidate = Path(value)
     return candidate if candidate.is_absolute() else ROOT / candidate
@@ -178,10 +310,21 @@ def _find_line(
     raise HotspotError(f"source marker not found: {text}")
 
 
+def _marker_span(
+    lines: Sequence[str], begin: str, end: str, *, start: int = 1
+) -> tuple[int, int]:
+    begin_line = _find_line(lines, begin, start=start)
+    return begin_line, _find_line(lines, end, start=begin_line)
+
+
 def build_v2_source_map(
     mac_source: Path = V2_MAC_SOURCE,
     candidate_source: Path = V2_CANDIDATE_SOURCE,
+    address_source: Path = V2_ADDRESS_SOURCE,
     requant_source: Path = REQUANT_SOURCE,
+    fixed_mac_source: Path = FIXED_MAC_SOURCE,
+    fixed_dispatch_source: Path = FIXED_DISPATCH_SOURCE,
+    fixed_assembly_source: Path = FIXED_ASSEMBLY_SOURCE,
 ) -> dict[str, Any]:
     """Function spans for the MAC v2 candidate.
 
@@ -192,16 +335,189 @@ def build_v2_source_map(
     """
     mac_lines = mac_source.read_text(encoding="utf-8").splitlines()
     cand_lines = candidate_source.read_text(encoding="utf-8").splitlines()
+    address_lines = address_source.read_text(encoding="utf-8").splitlines()
     requant_lines = requant_source.read_text(encoding="utf-8").splitlines()
+    fixed_lines = fixed_mac_source.read_text(encoding="utf-8").splitlines()
+    fixed_dispatch_lines = fixed_dispatch_source.read_text(
+        encoding="utf-8"
+    ).splitlines()
+    assembly_lines = fixed_assembly_source.read_text(
+        encoding="utf-8"
+    ).splitlines()
+
+    cand_run_v2_span = _function_span(
+        cand_lines, "static CamppStatus campp_qconv_candidate_run_v2("
+    )
+    cand_address_output_span = _marker_span(
+        cand_lines,
+        "campp_qconv_address_output_tile(",
+        "output_coordinates);",
+        start=cand_run_v2_span[0],
+    )
+    cand_kernel_coordinates_span = _marker_span(
+        cand_lines,
+        "campp_qconv_candidate_spatial_coordinates(",
+        "kernel_coordinates);",
+        start=cand_run_v2_span[0],
+    )
+    cand_point_table_span = _marker_span(
+        cand_lines,
+        "input_points[kernel_index][tile] =",
+        "mode == CAMPP_QCONV_CANDIDATE_COMBINED);",
+        start=cand_run_v2_span[0],
+    )
+    cand_mac_dispatch_span = _marker_span(
+        cand_lines,
+        "if (mode == CAMPP_QCONV_CANDIDATE_MAC_FIXED ||",
+        "CAMPP_OPT_STAGE_QCONV_MAC_ADDRESS,",
+        start=cand_run_v2_span[0],
+    )
+    cand_requant_dispatch_span = _marker_span(
+        cand_lines,
+        "CAMPP_OPTIMIZATION_STAGE_BEGIN(requant_started_ns)",
+        "requant_started_ns);",
+        start=cand_run_v2_span[0],
+    )
+
+    address_input_span = _function_span(
+        address_lines, "const uint8_t *campp_qconv_address_input_base("
+    )
+    address_coordinate_begin = _find_line(
+        address_lines,
+        "for (axis = 0u; axis < plan->spatial_rank; ++axis)",
+        start=address_input_span[0],
+    )
+    address_direct_begin = _find_line(
+        address_lines, "if (direct_offset)", start=address_coordinate_begin
+    )
+    address_check_begin = _find_line(
+        address_lines,
+        "if (offset >= plan->input->storage_span_bytes)",
+        start=address_direct_begin,
+    )
+
+    fixed_main_span = _function_span(
+        fixed_lines, "int campp_qconv_mac_4x8_intrinsics_raw("
+    )
+    fixed_weight_macro_begin = _find_line(
+        fixed_lines, "#define CAMPP_QCONV_LOAD_COLUMNS"
+    )
+    fixed_accumulate_macro_begin = _find_line(
+        fixed_lines, "#define CAMPP_QCONV_ACCUMULATE"
+    )
+    fixed_weight_calls = [
+        index + 1
+        for index, line in enumerate(fixed_lines)
+        if fixed_main_span[0] <= index + 1 <= fixed_main_span[1]
+        and "CAMPP_QCONV_LOAD_COLUMNS(" in line
+    ]
+    fixed_accumulate_calls = [
+        index + 1
+        for index, line in enumerate(fixed_lines)
+        if fixed_main_span[0] <= index + 1 <= fixed_main_span[1]
+        and "CAMPP_QCONV_ACCUMULATE(" in line
+    ]
+
+    half_tile_v2_span = _function_span(
+        mac_lines, "static int campp_qconv_mac_neon_half_tile_v2("
+    )
+    half_store_begin = _find_line(
+        mac_lines, "vst1q_s32(output[tile_offset]", start=half_tile_v2_span[0]
+    )
+    half_bias_begin = _find_line(
+        mac_lines,
+        "for (tile = tile_offset; tile < tile_offset + 4u; ++tile)",
+        start=half_store_begin,
+    )
+    tile_v2_span = _function_span(
+        mac_lines, "int campp_qconv_mac_neon_tile_v2("
+    )
+    tile_tail_store_begin = _find_line(
+        mac_lines,
+        "vst1q_s32(accumulators[tile]",
+        start=tile_v2_span[0],
+    )
+    tile_tail_bias_begin = _find_line(
+        mac_lines,
+        "const int64_t value =",
+        start=tile_tail_store_begin,
+    )
+
+    scalar_requant_span = _function_span(
+        requant_lines, "static CamppStatus campp_qconv_requantize_scalar("
+    )
+    neon_requant_span = _function_span(
+        requant_lines, "static uint32_t campp_qconv_requantize_neon4("
+    )
+    store4_span = _function_span(
+        requant_lines, "CamppStatus campp_aarch64_qconv_requantize_store4("
+    )
+    requant_direct_lookup_span = _marker_span(
+        requant_lines,
+        "if (campp_qconv_channel_store_offset(",
+        "&direct_offset, &channel_capacity))",
+        start=store4_span[0],
+    )
+    requant_vector_call_span = _marker_span(
+        requant_lines,
+        "#if defined(__aarch64__) && defined(__ARM_NEON)",
+        "#endif",
+        start=requant_direct_lookup_span[1],
+    )
+    requant_tail_span = _marker_span(
+        requant_lines,
+        "A non-aliased channel-packed tensor owns its padded channel block",
+        "return CAMPP_STATUS_BUFFER_OVERFLOW;",
+        start=requant_vector_call_span[1],
+    )
+    requant_fallback_begin = _find_line(
+        requant_lines,
+        "for (lane = 0u; lane < valid_outputs; ++lane)",
+        start=requant_tail_span[1],
+    )
+
+    requant_tile_span = _function_span(
+        mac_lines, "int campp_qconv_requantize_store_neon_tile("
+    )
+    requant_tile_address_span = _marker_span(
+        mac_lines,
+        "const uint32_t spatial_index =",
+        "output_coordinates[tile][1];",
+        start=requant_tile_span[0],
+    )
+    requant_tile_tail_span = _marker_span(
+        mac_lines,
+        "for (output_block = 0u;",
+        "if (lanes == 0u) continue;",
+        start=requant_tile_address_span[1],
+    )
+    requant_tile_call_span = _marker_span(
+        mac_lines,
+        "if (campp_aarch64_qconv_requantize_store4(",
+        "CAMPP_STATUS_OK)",
+        start=requant_tile_tail_span[1],
+    )
+
+    assembly_function_span = _marker_span(
+        assembly_lines,
+        "campp_qconv_mac_4x8_aarch64_raw:",
+        ".size campp_qconv_mac_4x8_aarch64_raw",
+    )
     return {
         "mac_source_name": mac_source.name,
         "candidate_source_name": candidate_source.name,
+        "address_source_name": address_source.name,
         "requant_source_name": requant_source.name,
-        "fixed_mac_source_name": FIXED_MAC_SOURCE.name,
-        "fixed_dispatch_source_name": FIXED_DISPATCH_SOURCE.name,
+        "fixed_mac_source_name": fixed_mac_source.name,
+        "fixed_dispatch_source_name": fixed_dispatch_source.name,
+        "fixed_assembly_source_name": fixed_assembly_source.name,
         "mac_line_count": len(mac_lines),
         "candidate_line_count": len(cand_lines),
+        "address_line_count": len(address_lines),
         "requant_line_count": len(requant_lines),
+        "fixed_mac_line_count": len(fixed_lines),
+        "fixed_dispatch_line_count": len(fixed_dispatch_lines),
+        "fixed_assembly_line_count": len(assembly_lines),
         # qconv_mac_neon.c spans
         "neon_input_span": _function_span(
             mac_lines, "static int16x4_t campp_qconv_neon_input("
@@ -224,28 +540,53 @@ def build_v2_source_map(
         "smlal_accumulate_span": _function_span(
             mac_lines, "static int32x4_t campp_qconv_smlal_accumulate("
         ),
-        "half_tile_v2_span": _function_span(
-            mac_lines, "static int campp_qconv_mac_neon_half_tile_v2("
-        ),
+        "half_tile_v2_span": half_tile_v2_span,
+        "half_tile_store_span": (half_store_begin, half_bias_begin - 1),
+        "half_tile_bias_span": (half_bias_begin, half_tile_v2_span[1]),
         "scalar_tile_v2_span": _function_span(
             mac_lines, "static int campp_qconv_mac_scalar_tile_v2("
         ),
-        "tile_v2_span": _function_span(
-            mac_lines, "int campp_qconv_mac_neon_tile_v2("
+        "tile_v2_span": tile_v2_span,
+        "tile_tail_store_span": (
+            tile_tail_store_begin,
+            tile_tail_bias_begin - 1,
         ),
-        "requantize_neon4_span": _function_span(
-            requant_lines, "static uint32_t campp_qconv_requantize_neon4("
-        ),
-        "requantize_scalar_span": _function_span(
-            requant_lines, "static CamppStatus campp_qconv_requantize_scalar("
-        ),
-        "requantize_store4_span": _function_span(
+        "tile_tail_bias_span": (tile_tail_bias_begin, tile_v2_span[1]),
+        "requantize_neon4_span": neon_requant_span,
+        "requantize_neon4_scale_span": _marker_span(
             requant_lines,
-            "CamppStatus campp_aarch64_qconv_requantize_store4(",
+            "float32x4_t scaled = vmulq_f32(",
+            "vld1q_f32(multipliers));",
+            start=neon_requant_span[0],
         ),
-        "requantize_store_span": _function_span(
-            mac_lines, "int campp_qconv_requantize_store_neon_tile("
+        "requantize_scalar_span": scalar_requant_span,
+        "requantize_scalar_scale_span": _marker_span(
+            requant_lines,
+            "scaled = (float)accumulator * multiplier;",
+            "scaled = (float)accumulator * multiplier;",
+            start=scalar_requant_span[0],
         ),
+        "requantize_store4_span": store4_span,
+        "requantize_channel_offset_span": _function_span(
+            requant_lines, "static bool campp_qconv_channel_store_offset("
+        ),
+        "requantize_direct_lookup_span": requant_direct_lookup_span,
+        "requantize_vector_call_span": requant_vector_call_span,
+        "requantize_tail_span": requant_tail_span,
+        "requantize_direct_store_span": _marker_span(
+            requant_lines,
+            "memcpy((uint8_t *)output->data + direct_offset",
+            "return CAMPP_STATUS_OK;",
+            start=requant_tail_span[1],
+        ),
+        "requantize_fallback_span": (
+            requant_fallback_begin,
+            store4_span[1],
+        ),
+        "requantize_store_span": requant_tile_span,
+        "requantize_tile_address_span": requant_tile_address_span,
+        "requantize_tile_tail_span": requant_tile_tail_span,
+        "requantize_tile_call_span": requant_tile_call_span,
         "candidate_read_span": _function_span(
             mac_lines, "static int32_t campp_qconv_candidate_read("
         ),
@@ -262,13 +603,109 @@ def build_v2_source_map(
         "cand_load_parameters_span": _function_span(
             cand_lines, "static CamppStatus campp_qconv_candidate_load_parameters("
         ),
-        "cand_run_v2_span": _function_span(
-            cand_lines, "static CamppStatus campp_qconv_candidate_run_v2("
+        "cand_run_v2_span": cand_run_v2_span,
+        "cand_address_output_span": cand_address_output_span,
+        "cand_kernel_coordinates_span": cand_kernel_coordinates_span,
+        "cand_point_table_span": cand_point_table_span,
+        "cand_mac_dispatch_span": cand_mac_dispatch_span,
+        "cand_requant_dispatch_span": cand_requant_dispatch_span,
+        # qconv_address_fastpath.c spans
+        "address_plan_span": _function_span(
+            address_lines, "bool campp_qconv_address_plan_create("
+        ),
+        "address_output_tile_span": _function_span(
+            address_lines, "void campp_qconv_address_output_tile("
+        ),
+        "address_input_span": address_input_span,
+        "address_padding_span": (
+            address_coordinate_begin,
+            address_direct_begin - 1,
+        ),
+        "address_offset_span": (address_direct_begin, address_input_span[1]),
+        "address_offset_check_span": (
+            address_check_begin,
+            address_input_span[1],
+        ),
+        # qconv_mac_4x8_intrinsics.c spans
+        "fixed_load_input_span": _function_span(
+            fixed_lines, "static inline int16x4_t campp_qconv_mac_4x8_load_input("
+        ),
+        "fixed_weight_macro_span": (
+            fixed_weight_macro_begin,
+            fixed_accumulate_macro_begin - 1,
+        ),
+        "fixed_accumulate_macro_span": _marker_span(
+            fixed_lines, "#define CAMPP_QCONV_ACCUMULATE", "} while (0)"
+        ),
+        "fixed_main_span": fixed_main_span,
+        "fixed_input_calls_span": _marker_span(
+            fixed_lines,
+            "const int16x4_t input0 =",
+            "points[3] + channel, input_zero);",
+            start=fixed_main_span[0],
+        ),
+        "fixed_weight_call_lines": fixed_weight_calls,
+        "fixed_accumulate_call_lines": fixed_accumulate_calls,
+        "fixed_accumulator_store_span": _marker_span(
+            fixed_lines,
+            "vst1q_s32(params->output, accumulator00);",
+            "vst1q_s32(params->output + 28u, accumulator13);",
+            start=fixed_main_span[0],
+        ),
+        # qconv_mac_4x8.c spans
+        "fixed_support_span": _function_span(
+            fixed_dispatch_lines, "static int campp_qconv_mac_4x8_is_supported("
+        ),
+        "fixed_try_tile_span": _function_span(
+            fixed_dispatch_lines, "CamppQconvMac4x8Result campp_qconv_mac_4x8_try_tile("
+        ),
+        # qconv_mac_4x8_aarch64.S spans
+        "assembly_weight_macro_span": _marker_span(
+            assembly_lines,
+            ".macro CAMPP_QCONV_LOAD_COLUMNS",
+            ".endm",
+        ),
+        "assembly_accumulate_macro_span": _marker_span(
+            assembly_lines,
+            ".macro CAMPP_QCONV_ACCUMULATE",
+            ".endm",
+            start=_find_line(assembly_lines, ".macro CAMPP_QCONV_ACCUMULATE"),
+        ),
+        "assembly_function_span": assembly_function_span,
+        "assembly_point_table_span": _marker_span(
+            assembly_lines,
+            ".Lcampp_qconv_4x8_kernel:",
+            "mov w15, w7",
+            start=assembly_function_span[0],
+        ),
+        "assembly_input_load_span": _marker_span(
+            assembly_lines,
+            ".Lcampp_qconv_4x8_input_block:",
+            "sub v27.4h, v27.4h, v31.4h",
+            start=assembly_function_span[0],
+        ),
+        "assembly_weight_call_lines": [
+            index + 1
+            for index, line in enumerate(assembly_lines)
+            if index + 1 >= assembly_function_span[0]
+            and "CAMPP_QCONV_LOAD_COLUMNS" in line
+        ],
+        "assembly_accumulate_call_lines": [
+            index + 1
+            for index, line in enumerate(assembly_lines)
+            if index + 1 >= assembly_function_span[0]
+            and "CAMPP_QCONV_ACCUMULATE" in line
+        ],
+        "assembly_accumulator_store_span": _marker_span(
+            assembly_lines,
+            "stp q16, q20, [x5]",
+            "stp q19, q23, [x5, #96]",
+            start=assembly_function_span[0],
         ),
     }
 
 
-def classify_v2_sample(
+def classify_v2_detail_sample(
     sample: dict[str, Any], source_map: dict[str, Any]
 ) -> str:
     symbol = str(sample["symbol"]).lower()
@@ -277,64 +714,173 @@ def classify_v2_sample(
 
     if any(token in symbol for token in FOREIGN_SYMBOL_TOKENS):
         return "foreign_symbol"
-    if "campp_qconv_mac_4x8_" in symbol:
-        return "v2_mac_smlal"
     # Production kernel means the shape fell back out of the candidate path.
     if "campp_aarch64_qlinear_conv_o4i4" in symbol:
         return "foreign_symbol"
 
+    if source_name == source_map["address_source_name"]:
+        if _inside(line, source_map["address_output_tile_span"]):
+            return "address_output_coordinates"
+        if _inside(line, source_map["address_padding_span"]):
+            return "address_padding_bounds"
+        if _inside(line, source_map["address_offset_span"]):
+            return "address_offset"
+        if _inside(line, source_map["address_plan_span"]):
+            return "setup_other"
+        return "unclassified"
+
+    if source_name == source_map["fixed_mac_source_name"]:
+        if _inside(line, source_map["fixed_load_input_span"]) or _inside(
+            line, source_map["fixed_input_calls_span"]
+        ):
+            return "address_input_load_transform"
+        if _inside(line, source_map["fixed_weight_macro_span"]) or line in (
+            source_map["fixed_weight_call_lines"]
+        ):
+            return "mac_weight_load_transform"
+        if _inside(line, source_map["fixed_accumulate_macro_span"]) or line in (
+            source_map["fixed_accumulate_call_lines"]
+        ):
+            return "mac_accumulate"
+        if _inside(line, source_map["fixed_accumulator_store_span"]):
+            return "mac_accumulator_store"
+        if _inside(line, source_map["fixed_main_span"]):
+            return "mac_dispatch_guard"
+
+    if source_name == source_map["fixed_assembly_source_name"]:
+        if _inside(line, source_map["assembly_input_load_span"]):
+            return "address_input_load_transform"
+        if _inside(line, source_map["assembly_point_table_span"]):
+            return "address_point_table"
+        if _inside(line, source_map["assembly_weight_macro_span"]) or line in (
+            source_map["assembly_weight_call_lines"]
+        ):
+            return "mac_weight_load_transform"
+        if _inside(line, source_map["assembly_accumulate_macro_span"]) or line in (
+            source_map["assembly_accumulate_call_lines"]
+        ):
+            return "mac_accumulate"
+        if _inside(line, source_map["assembly_accumulator_store_span"]):
+            return "mac_accumulator_store"
+        if _inside(line, source_map["assembly_function_span"]):
+            return "mac_dispatch_guard"
+
+    if source_name == source_map["fixed_dispatch_source_name"]:
+        if _inside(line, source_map["fixed_support_span"]) or _inside(
+            line, source_map["fixed_try_tile_span"]
+        ):
+            return "mac_dispatch_guard"
+        return "setup_other"
+
     if source_name == source_map["mac_source_name"]:
         for key, category in (
-            ("weight_columns_span", "v2_weight_transform"),
-            ("dot_weight_span", "v2_weight_transform"),
-            ("dot_weight_zero_span", "v2_weight_transform"),
-            ("neon_input_span", "v2_input_address"),
-            ("dot_input_span", "v2_input_address"),
-            ("candidate_read_span", "v2_input_address"),
-            ("smlal_accumulate_span", "v2_mac_smlal"),
-            ("dot_accumulate_span", "v2_mac_smlal"),
-            ("half_tile_v2_span", "v2_mac_smlal"),
-            ("scalar_tile_v2_span", "v2_mac_smlal"),
-            ("tile_v2_span", "v2_mac_smlal"),
-            ("requantize_store_span", "v2_output_store"),
+            ("weight_columns_span", "mac_weight_load_transform"),
+            ("dot_weight_span", "mac_weight_load_transform"),
+            ("dot_weight_zero_span", "mac_weight_load_transform"),
+            ("neon_input_span", "address_input_load_transform"),
+            ("dot_input_span", "address_input_load_transform"),
+            ("candidate_read_span", "address_input_load_transform"),
+            ("smlal_accumulate_span", "mac_accumulate"),
+            ("dot_accumulate_span", "mac_accumulate"),
+            ("half_tile_store_span", "mac_accumulator_store"),
+            ("half_tile_bias_span", "mac_bias_tail"),
+            ("tile_tail_store_span", "mac_accumulator_store"),
+            ("tile_tail_bias_span", "mac_bias_tail"),
+            ("requantize_tile_address_span", "requant_output_address"),
+            ("requantize_tile_tail_span", "requant_tail_control"),
+            ("requantize_tile_call_span", "requant_dispatch"),
         ):
             if _inside(line, source_map[key]):
                 return category
+        if _inside(line, source_map["requantize_store_span"]):
+            return "requant_dispatch"
+        if _inside(line, source_map["half_tile_v2_span"]) or _inside(
+            line, source_map["scalar_tile_v2_span"]
+        ):
+            return "mac_accumulate"
+        if _inside(line, source_map["tile_v2_span"]):
+            return "mac_dispatch_guard"
         return "setup_other"
 
     if source_name == source_map["candidate_source_name"]:
+        if _inside(line, source_map["cand_address_output_span"]):
+            return "address_output_coordinates"
+        if _inside(line, source_map["cand_kernel_coordinates_span"]):
+            return "address_kernel_coordinates"
+        if _inside(line, source_map["cand_point_table_span"]):
+            return "address_point_table"
+        if _inside(line, source_map["cand_mac_dispatch_span"]):
+            return "mac_dispatch_guard"
+        if _inside(line, source_map["cand_requant_dispatch_span"]):
+            return "requant_dispatch"
         if _inside(line, source_map["cand_spatial_span"]):
-            return "v2_input_address"
+            return "address_kernel_coordinates"
         if _inside(line, source_map["cand_write_span"]):
-            return "v2_output_store"
+            return "requant_scalar_fallback"
+        if _inside(line, source_map["cand_load_parameters_span"]):
+            return "requant_parameter_load"
+        if _inside(line, source_map["cand_prepare_span"]):
+            return "setup_other"
         if _inside(line, source_map["cand_run_v2_span"]):
-            return "v2_input_address"
-        if _inside(line, source_map["cand_prepare_span"]) or _inside(
-            line, source_map["cand_load_parameters_span"]
-        ):
             return "setup_other"
         return "setup_other"
 
     if source_name == source_map["requant_source_name"]:
-        if _inside(line, source_map["requantize_neon4_span"]) or _inside(
-            line, source_map["requantize_scalar_span"]
+        if _inside(line, source_map["requantize_neon4_scale_span"]) or _inside(
+            line, source_map["requantize_scalar_scale_span"]
         ):
-            return "v2_requant"
+            return "requant_scale_multiply"
+        if _inside(line, source_map["requantize_neon4_span"]):
+            return "requant_round_clamp_narrow"
+        if _inside(line, source_map["requantize_scalar_span"]):
+            return "requant_round_clamp_narrow"
+        if _inside(line, source_map["requantize_channel_offset_span"]) or _inside(
+            line, source_map["requantize_direct_lookup_span"]
+        ):
+            return "requant_output_address"
+        if _inside(line, source_map["requantize_vector_call_span"]):
+            return "requant_dispatch"
+        if _inside(line, source_map["requantize_tail_span"]):
+            return "requant_tail_control"
+        if _inside(line, source_map["requantize_direct_store_span"]):
+            return "requant_output_store"
+        if _inside(line, source_map["requantize_fallback_span"]):
+            return "requant_scalar_fallback"
         if _inside(line, source_map["requantize_store4_span"]):
-            return "v2_output_store"
-        return "setup_other"
-
-    if source_name == source_map["fixed_mac_source_name"]:
-        return "v2_mac_smlal"
-    if source_name == source_map["fixed_dispatch_source_name"]:
+            return "requant_dispatch"
         return "setup_other"
 
     # tensor_view.h / arm_neon.h inline into the candidate; attribute by intent.
     if source_name == "tensor_view.h":
-        return "v2_input_address"
+        return "address_offset"
     if source_name == "arm_neon.h":
-        return "v2_mac_smlal"
+        if "requant" in symbol:
+            return "requant_round_clamp_narrow"
+        if "weight" in symbol:
+            return "mac_weight_load_transform"
+        if "input" in symbol:
+            return "address_input_load_transform"
+        return "mac_accumulate"
+    if "campp_qconv_mac_4x8_" in symbol:
+        return "mac_accumulate"
+    if "campp_qconv_mac_neon_tile_v2" in symbol:
+        return "mac_accumulate"
+    if "campp_qconv_address_output_tile" in symbol:
+        return "address_output_coordinates"
+    if "campp_qconv_address_input_base" in symbol:
+        return "address_offset"
+    if "campp_qconv_requantize" in symbol or "nearbyint" in symbol:
+        return "requant_round_clamp_narrow"
     return "unclassified"
+
+
+def classify_v2_sample(
+    sample: dict[str, Any], source_map: dict[str, Any]
+) -> str:
+    """Return the legacy top-level category for one detailed sample."""
+
+    detail = classify_v2_detail_sample(sample, source_map)
+    return V2_DETAIL_PARENT[detail]
 
 
 def classify_v2_perf_script(
@@ -342,27 +888,45 @@ def classify_v2_perf_script(
 ) -> dict[str, Any]:
     periods = {category: 0 for category in V2_CATEGORIES}
     counts = {category: 0 for category in V2_CATEGORIES}
-    line_periods: dict[tuple[str, int, str, str], int] = {}
+    detail_periods = {category: 0 for category in V2_DETAIL_CATEGORIES}
+    detail_counts = {category: 0 for category in V2_DETAIL_CATEGORIES}
+    area_periods = {area: 0 for area in V2_DETAIL_AREAS}
+    area_symbol_periods: dict[str, dict[str, int]] = {
+        area: {} for area in V2_DETAIL_AREAS
+    }
+    line_periods: dict[tuple[str, int, str, str, str, str], int] = {}
     fixed_microkernel_sample_count = 0
     samples, malformed = COMMON.iter_perf_samples(text)
     for sample in samples:
         if "campp_qconv_mac_4x8_" in str(sample["symbol"]).lower():
             fixed_microkernel_sample_count += 1
-        category = classify_v2_sample(sample, source_map)
+        detail = classify_v2_detail_sample(sample, source_map)
+        category = V2_DETAIL_PARENT[detail]
+        area = _detail_area(detail)
         period = int(sample["period"])
         periods[category] += period
         counts[category] += 1
+        detail_periods[detail] += period
+        detail_counts[detail] += 1
+        area_periods[area] += period
+        symbol = str(sample["symbol"])
+        area_symbol_periods[area][symbol] = (
+            area_symbol_periods[area].get(symbol, 0) + period
+        )
         key = (
             Path(str(sample["source"])).name,
             int(sample["line"]),
-            str(sample["symbol"]),
+            symbol,
             category,
+            detail,
+            area,
         )
         line_periods[key] = line_periods.get(key, 0) + period
     total = sum(periods.values())
     if total == 0:
         raise HotspotError("perf script contains no attributable cycle samples")
     core = sum(periods[name] for name in V2_CORE_CATEGORIES)
+    detailed_core = sum(area_periods[name] for name in ("address", "mac", "requant"))
     top = sorted(line_periods.items(), key=lambda item: item[1], reverse=True)
     return {
         "parsed_sample_count": sum(counts.values()),
@@ -376,16 +940,52 @@ def classify_v2_perf_script(
         },
         "classified_core_period": core,
         "classified_core_share_pct": core / total * 100.0 if total else 0.0,
+        "detail_category_sample_counts": detail_counts,
+        "detail_category_periods": detail_periods,
+        "detail_category_share_pct": {
+            name: value / total * 100.0
+            for name, value in detail_periods.items()
+        },
+        "area_periods": area_periods,
+        "area_share_pct": {
+            name: value / total * 100.0 for name, value in area_periods.items()
+        },
+        "area_share_of_classified_pct": {
+            name: area_periods[name] / detailed_core * 100.0
+            if detailed_core
+            else 0.0
+            for name in ("address", "mac", "requant")
+        },
+        "top_symbols_by_area": {
+            area: [
+                {
+                    "symbol": symbol,
+                    "sample_period": period,
+                    "area_share_pct": period / area_periods[area] * 100.0
+                    if area_periods[area]
+                    else 0.0,
+                    "total_share_pct": period / total * 100.0,
+                }
+                for symbol, period in sorted(
+                    symbol_periods.items(),
+                    key=lambda item: item[1],
+                    reverse=True,
+                )[:5]
+            ]
+            for area, symbol_periods in area_symbol_periods.items()
+        },
         "top_lines": [
             {
                 "source": source,
                 "line": line,
                 "symbol": symbol,
                 "category": category,
+                "detail_category": detail,
+                "area": area,
                 "sample_period": period,
                 "total_share_pct": period / total * 100.0,
             }
-            for (source, line, symbol, category), period in top[:20]
+            for (source, line, symbol, category, detail, area), period in top[:40]
         ],
     }
 
@@ -440,6 +1040,7 @@ def select_mac_annotate_target(
             "combined": "combined",
             "mac_fixed": "mac_fixed",
             "combined_fixed": "mac_fixed",
+            "combined_v4": "mac_fixed",
             "quant_neon": "baseline",
         }.get(fused_qconv_candidate, "baseline")
 
@@ -867,7 +1468,9 @@ def _run_one(
         annotate.stdout + annotate.stderr, encoding="utf-8", newline="\n"
     )
     quantize_spill = None
-    if fused_qconv_candidate in ("quant_neon", "combined_fixed"):
+    if fused_qconv_candidate in (
+        "quant_neon", "combined_fixed", "combined_v4"
+    ):
         quantize_annotate = _run(
             [
                 perf,
@@ -943,9 +1546,17 @@ def _aggregate_v2_case(
     case: dict[str, Any], inputs: Sequence[dict[str, Any]]
 ) -> dict[str, Any]:
     periods = {category: 0 for category in V2_CATEGORIES}
+    detail_periods = {category: 0 for category in V2_DETAIL_CATEGORIES}
+    area_periods = {area: 0 for area in V2_DETAIL_AREAS}
     for item in inputs:
         for category in V2_CATEGORIES:
             periods[category] += int(item["category_periods"][category])
+        for category in V2_DETAIL_CATEGORIES:
+            detail_periods[category] += int(
+                item["detail_category_periods"][category]
+            )
+        for area in V2_DETAIL_AREAS:
+            area_periods[area] += int(item["area_periods"][area])
     total = sum(periods.values())
     input_winners = [
         max(V2_CORE_CATEGORIES, key=lambda name: item["category_periods"][name])
@@ -965,8 +1576,43 @@ def _aggregate_v2_case(
         int(item.get("fixed_microkernel_sample_count", 0)) for item in inputs
     )
     winner = input_winners[0] if len(set(input_winners)) == 1 else "mixed"
+    area_input_winners = [
+        max(
+            ("address", "mac", "requant"),
+            key=lambda name: item["area_periods"][name],
+        )
+        for item in inputs
+    ]
+    detail_core_categories = [
+        name
+        for name in V2_DETAIL_CATEGORIES
+        if _detail_area(name) in ("address", "mac", "requant")
+    ]
+    detail_input_winners = [
+        max(
+            detail_core_categories,
+            key=lambda name: item["detail_category_periods"][name],
+        )
+        for item in inputs
+    ]
+    area_winner = (
+        area_input_winners[0]
+        if len(set(area_input_winners)) == 1
+        else "mixed"
+    )
+    detail_winner = (
+        detail_input_winners[0]
+        if len(set(detail_input_winners)) == 1
+        else "mixed"
+    )
     stable = (
         winner != "mixed"
+        and max(unclassified_shares) <= 20.0
+        and max(foreign_shares) <= 5.0
+    )
+    detail_stable = (
+        area_winner != "mixed"
+        and detail_winner != "mixed"
         and max(unclassified_shares) <= 20.0
         and max(foreign_shares) <= 5.0
     )
@@ -983,8 +1629,54 @@ def _aggregate_v2_case(
         top_set.append(name)
         if core and cumulative / core >= 0.8:
             break
+    detailed_core = sum(
+        area_periods[name] for name in ("address", "mac", "requant")
+    )
+    detail_ranked = sorted(
+        detail_core_categories,
+        key=lambda name: detail_periods[name],
+        reverse=True,
+    )
+    detail_cumulative = 0
+    detail_top_set: list[str] = []
+    for name in detail_ranked:
+        if detail_periods[name] == 0:
+            continue
+        detail_cumulative += detail_periods[name]
+        detail_top_set.append(name)
+        if detailed_core and detail_cumulative / detailed_core >= 0.8:
+            break
+    detail_by_area = {}
+    for area in ("address", "mac", "requant"):
+        area_categories = [
+            name for name in detail_core_categories if _detail_area(name) == area
+        ]
+        area_total = area_periods[area]
+        detail_by_area[area] = [
+            {
+                "category": name,
+                "sample_period": detail_periods[name],
+                "area_share_pct": (
+                    detail_periods[name] / area_total * 100.0
+                    if area_total
+                    else 0.0
+                ),
+                "total_share_pct": (
+                    detail_periods[name] / total * 100.0 if total else 0.0
+                ),
+            }
+            for name in sorted(
+                area_categories,
+                key=lambda category: detail_periods[category],
+                reverse=True,
+            )
+            if detail_periods[name] > 0
+        ]
     return {
         **case,
+        "shape": case.get(
+            "shape", case["case_name"].removeprefix("qconv_")
+        ),
         "inputs": list(inputs),
         "aggregate": {
             "total_sample_period": total,
@@ -996,6 +1688,24 @@ def _aggregate_v2_case(
             "classified_core_period": core,
             "classified_core_share_pct": core / total * 100.0 if total else 0.0,
             "top_bottleneck_set": top_set,
+            "detail_category_periods": detail_periods,
+            "detail_category_share_pct": {
+                name: value / total * 100.0 if total else 0.0
+                for name, value in detail_periods.items()
+            },
+            "area_periods": area_periods,
+            "area_share_pct": {
+                name: value / total * 100.0 if total else 0.0
+                for name, value in area_periods.items()
+            },
+            "area_share_of_classified_pct": {
+                name: area_periods[name] / detailed_core * 100.0
+                if detailed_core
+                else 0.0
+                for name in ("address", "mac", "requant")
+            },
+            "detail_top_bottleneck_set": detail_top_set,
+            "detail_by_area": detail_by_area,
             "stack_spill_share_of_annotated_pct": (
                 sum(spill_shares) / len(spill_shares) if spill_shares else 0.0
             ),
@@ -1005,11 +1715,20 @@ def _aggregate_v2_case(
             "winner": winner,
             "stable_across_inputs": stable,
             "input_winners": input_winners,
+            "area_winner": area_winner,
+            "area_input_winners": area_input_winners,
+            "detail_winner": detail_winner,
+            "detail_input_winners": detail_input_winners,
+            "detail_stable_across_inputs": detail_stable,
             "maximum_unclassified_share_pct": max(unclassified_shares),
             "maximum_foreign_symbol_share_pct": max(foreign_shares),
             "rule": (
                 "same top v2 category on 3 inputs, unclassified <=20%, "
                 "foreign_symbol <=5%"
+            ),
+            "detail_rule": (
+                "same address/MAC/requant area and same detailed winner on "
+                "3 inputs, unclassified <=20%, foreign_symbol <=5%"
             ),
         },
     }
@@ -1085,6 +1804,117 @@ def _aggregate_case(
     }
 
 
+def _build_v2_shape_breakdown(
+    cases: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    grouped: dict[str, dict[str, Any]] = {}
+    for case in cases:
+        shape = str(case.get("shape", case["case_name"]))
+        bucket = grouped.setdefault(
+            shape,
+            {
+                "operator_ids": [],
+                "profile_mean_ms_total": 0.0,
+                "profile_share_pct_total": 0.0,
+                "total_sample_period": 0,
+                "area_periods": {area: 0 for area in V2_DETAIL_AREAS},
+                "detail_category_periods": {
+                    name: 0 for name in V2_DETAIL_CATEGORIES
+                },
+            },
+        )
+        bucket["operator_ids"].append(int(case["operator_id"]))
+        bucket["profile_mean_ms_total"] += float(
+            case.get("profile_mean_ms", 0.0)
+        )
+        bucket["profile_share_pct_total"] += float(
+            case.get("profile_share_pct", 0.0)
+        )
+        aggregate = case["aggregate"]
+        bucket["total_sample_period"] += int(aggregate["total_sample_period"])
+        for area in V2_DETAIL_AREAS:
+            bucket["area_periods"][area] += int(
+                aggregate["area_periods"][area]
+            )
+        for name in V2_DETAIL_CATEGORIES:
+            bucket["detail_category_periods"][name] += int(
+                aggregate["detail_category_periods"][name]
+            )
+
+    breakdown = {}
+    detail_core_categories = [
+        name
+        for name in V2_DETAIL_CATEGORIES
+        if _detail_area(name) in ("address", "mac", "requant")
+    ]
+    for shape, bucket in grouped.items():
+        total = int(bucket["total_sample_period"])
+        area_periods = bucket["area_periods"]
+        detail_periods = bucket["detail_category_periods"]
+        detailed_core = sum(
+            area_periods[name] for name in ("address", "mac", "requant")
+        )
+        detail_by_area = {}
+        for area in ("address", "mac", "requant"):
+            area_total = area_periods[area]
+            names = [
+                name for name in detail_core_categories if _detail_area(name) == area
+            ]
+            detail_by_area[area] = [
+                {
+                    "category": name,
+                    "sample_period": detail_periods[name],
+                    "area_share_pct": (
+                        detail_periods[name] / area_total * 100.0
+                        if area_total
+                        else 0.0
+                    ),
+                    "total_share_pct": (
+                        detail_periods[name] / total * 100.0 if total else 0.0
+                    ),
+                }
+                for name in sorted(
+                    names,
+                    key=lambda category: detail_periods[category],
+                    reverse=True,
+                )
+                if detail_periods[name] > 0
+            ]
+        breakdown[shape] = {
+            "operator_count": len(bucket["operator_ids"]),
+            "operator_ids": sorted(bucket["operator_ids"]),
+            "profile_mean_ms_total": bucket["profile_mean_ms_total"],
+            "profile_share_pct_total": bucket["profile_share_pct_total"],
+            "total_sample_period": total,
+            "area_periods": area_periods,
+            "area_share_pct": {
+                name: area_periods[name] / total * 100.0 if total else 0.0
+                for name in V2_DETAIL_AREAS
+            },
+            "area_share_of_classified_pct": {
+                name: area_periods[name] / detailed_core * 100.0
+                if detailed_core
+                else 0.0
+                for name in ("address", "mac", "requant")
+            },
+            "detail_category_periods": detail_periods,
+            "detail_category_share_pct": {
+                name: detail_periods[name] / total * 100.0 if total else 0.0
+                for name in V2_DETAIL_CATEGORIES
+            },
+            "detail_by_area": detail_by_area,
+            "area_winner": max(
+                ("address", "mac", "requant"),
+                key=lambda name: area_periods[name],
+            ),
+            "detail_winner": max(
+                detail_core_categories,
+                key=lambda name: detail_periods[name],
+            ),
+        }
+    return breakdown
+
+
 def build_summary(
     cases: Sequence[dict[str, Any]],
     *,
@@ -1095,6 +1925,7 @@ def build_summary(
     source_map: dict[str, Any],
     qconv_candidate: str = "baseline",
     v2_source_map: dict[str, Any] | None = None,
+    case_scope: str = "representative",
 ) -> dict[str, Any]:
     winners = [case["decision"]["winner"] for case in cases]
     stable = all(case["decision"]["stable_across_inputs"] for case in cases)
@@ -1104,11 +1935,16 @@ def build_summary(
         overall = "shape_specific"
     else:
         overall = "inconclusive"
+    shape_breakdown = (
+        _build_v2_shape_breakdown(cases)
+        if qconv_candidate != "baseline"
+        else None
+    )
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "objective": (
-            "locate the internal bottleneck of the MAC v2 candidate"
+            "separate address, MAC and requant sub-stages for 3x3/1x1 QConv"
             if qconv_candidate != "baseline"
             else "separate address/load/control cycles from MAC cycles in E7 QConv"
         ),
@@ -1123,9 +1959,24 @@ def build_summary(
             "sample_period": sample_period,
             "stage_probe_compiled": False,
             "qconv_candidate": qconv_candidate,
+            "case_scope": case_scope,
             "elapsed_seconds": elapsed_seconds,
         },
         "v2_source_map": v2_source_map,
+        "detail_classification": (
+            {
+                "categories": list(V2_DETAIL_CATEGORIES),
+                "areas": list(V2_DETAIL_AREAS),
+                "parent_categories": V2_DETAIL_PARENT,
+                "measurement": "perf cycles:u source-line samples",
+                "limitation": (
+                    "macro-expanded instructions can share one source line; "
+                    "inspect perf_annotate for the winning detail category"
+                ),
+            }
+            if qconv_candidate != "baseline"
+            else None
+        ),
         "source_map": {
             key: value
             for key, value in source_map.items()
@@ -1133,8 +1984,17 @@ def build_summary(
         }
         | {"source": _display_path(source_map["source"])},
         "cases": list(cases),
+        "shape_breakdown": shape_breakdown,
         "decision": {
             "ready": stable,
+            "detail_ready": (
+                all(
+                    case["decision"].get("detail_stable_across_inputs", False)
+                    for case in cases
+                )
+                if qconv_candidate != "baseline"
+                else None
+            ),
             "overall": overall,
             "next_candidate": {
                 "address_load_control": "QConv address fast path",
@@ -1156,12 +2016,23 @@ def build_summary(
 def _write_v2_csv(path: Path, summary: dict[str, Any]) -> None:
     fieldnames = [
         "case_name",
+        "shape",
         "operator_id",
         "input",
+        "execution_path",
+        "fixed_microkernel_sample_count",
         *[f"{name}_pct" for name in V2_CATEGORIES],
         "classified_core_share_pct",
+        *[f"area_{name}_pct" for name in V2_DETAIL_AREAS],
+        *[
+            f"area_{name}_pct_of_classified"
+            for name in ("address", "mac", "requant")
+        ],
+        *[f"detail_{name}_pct" for name in V2_DETAIL_CATEGORIES],
         "stack_spill_share_of_annotated_pct",
         "winner",
+        "area_winner",
+        "detail_winner",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8", newline="") as sink:
@@ -1170,11 +2041,24 @@ def _write_v2_csv(path: Path, summary: dict[str, Any]) -> None:
         for case in summary["cases"]:
             for item in case["inputs"]:
                 shares = item["category_share_pct"]
+                area_shares = item["area_share_pct"]
+                area_classified = item["area_share_of_classified_pct"]
+                detail_shares = item["detail_category_share_pct"]
+                detail_core_categories = [
+                    name
+                    for name in V2_DETAIL_CATEGORIES
+                    if _detail_area(name) in ("address", "mac", "requant")
+                ]
                 writer.writerow(
                     {
                         "case_name": case["case_name"],
+                        "shape": case.get("shape", case["case_name"]),
                         "operator_id": case["operator_id"],
                         "input": item["input"],
+                        "execution_path": item.get("execution_path"),
+                        "fixed_microkernel_sample_count": item.get(
+                            "fixed_microkernel_sample_count", 0
+                        ),
                         **{
                             f"{name}_pct": f"{shares[name]:.6f}"
                             for name in V2_CATEGORIES
@@ -1182,12 +2066,34 @@ def _write_v2_csv(path: Path, summary: dict[str, Any]) -> None:
                         "classified_core_share_pct": (
                             f"{item['classified_core_share_pct']:.6f}"
                         ),
+                        **{
+                            f"area_{name}_pct": f"{area_shares[name]:.6f}"
+                            for name in V2_DETAIL_AREAS
+                        },
+                        **{
+                            f"area_{name}_pct_of_classified": (
+                                f"{area_classified[name]:.6f}"
+                            )
+                            for name in ("address", "mac", "requant")
+                        },
+                        **{
+                            f"detail_{name}_pct": f"{detail_shares[name]:.6f}"
+                            for name in V2_DETAIL_CATEGORIES
+                        },
                         "stack_spill_share_of_annotated_pct": (
                             f"{item.get('spill', {}).get('stack_spill_share_of_annotated_pct', 0.0):.6f}"
                         ),
                         "winner": max(
                             V2_CORE_CATEGORIES,
                             key=lambda name: item["category_periods"][name],
+                        ),
+                        "area_winner": max(
+                            ("address", "mac", "requant"),
+                            key=lambda name: item["area_periods"][name],
+                        ),
+                        "detail_winner": max(
+                            detail_core_categories,
+                            key=lambda name: item["detail_category_periods"][name],
                         ),
                     }
                 )
@@ -1270,6 +2176,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--force", action="store_true")
     parser.add_argument(
+        "--case-scope",
+        choices=("representative", "all"),
+        default="representative",
+        help="profile the hottest 3x3/1x1 pair or every ordinary QConv layer",
+    )
+    parser.add_argument(
         "--qconv-candidate",
         choices=(
             "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm",
@@ -1292,17 +2204,36 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not args.profile.is_file():
             raise HotspotError(f"profile not found: {args.profile}")
         profile = json.loads(args.profile.read_text(encoding="utf-8"))
-        selected = DIAGNOSIS.select_representative_cases(profile.get("operators", []))
-        cases = [case for case in selected if case["case_name"] in TARGET_CASE_NAMES]
-        if [case["case_name"] for case in cases] != list(TARGET_CASE_NAMES):
+        cases = select_qconv_cases(
+            profile.get("operators", []), case_scope=args.case_scope
+        )
+        if args.case_scope == "representative" and [
+            case["case_name"] for case in cases
+        ] != list(TARGET_CASE_NAMES):
             raise HotspotError("QConv 3x3/1x1 cases were not selected")
         plan = args.plan or DIAGNOSIS._resolve_profile_artifact(profile, "plan")
         weights = args.weights or DIAGNOSIS._resolve_profile_artifact(
             profile, "weights"
         )
-        required = [args.binary, plan, weights, QCONV_SOURCE, *args.features]
-        if args.qconv_candidate in ("mac_fixed", "mac_asm"):
-            required.extend([FIXED_MAC_SOURCE, FIXED_DISPATCH_SOURCE])
+        required = [
+            args.binary,
+            plan,
+            weights,
+            QCONV_SOURCE,
+            REQUANT_SOURCE,
+            *args.features,
+        ]
+        if args.qconv_candidate != "baseline":
+            required.extend(
+                [
+                    V2_MAC_SOURCE,
+                    V2_CANDIDATE_SOURCE,
+                    V2_ADDRESS_SOURCE,
+                    FIXED_MAC_SOURCE,
+                    FIXED_DISPATCH_SOURCE,
+                    FIXED_ASSEMBLY_SOURCE,
+                ]
+            )
         missing = [path for path in required if not path.is_file()]
         if missing:
             raise HotspotError(
@@ -1337,6 +2268,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         "weights": _display_path(weights),
                         "features": [_display_path(path) for path in args.features],
                         "cases": cases,
+                        "case_scope": args.case_scope,
                         "qconv_candidate": args.qconv_candidate,
                         "source_map": {
                             key: value
@@ -1402,6 +2334,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             source_map=source_map,
             qconv_candidate=args.qconv_candidate,
             v2_source_map=v2_source_map,
+            case_scope=args.case_scope,
         )
         summary["artifacts"] = {
             "profile": _display_path(args.profile),
@@ -1433,9 +2366,21 @@ def main(argv: Sequence[str] | None = None) -> int:
                     "    stack_spill(of annotated): "
                     f"{aggregate['stack_spill_share_of_annotated_pct']:.2f}%"
                 )
+                area = aggregate["area_share_of_classified_pct"]
+                print(
+                    "    detailed areas(classified): "
+                    f"address={area['address']:.2f}% "
+                    f"mac={area['mac']:.2f}% "
+                    f"requant={area['requant']:.2f}%"
+                )
                 print(
                     f"    top={aggregate['top_bottleneck_set']} "
-                    f"winner={case['decision']['winner']}"
+                    f"winner={case['decision']['winner']} "
+                    f"detail={case['decision']['detail_winner']}"
+                )
+                print(
+                    "    detail_top="
+                    f"{aggregate['detail_top_bottleneck_set']}"
                 )
                 continue
             pair = case["aggregate"]["address_vs_mac"]
