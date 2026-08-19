@@ -51,6 +51,11 @@ FIXED_DISPATCH_SOURCE = (
     / "src/c/profill/optimization/candidates/qlinear_conv/microkernels"
     / "qconv_mac_4x8.c"
 )
+FIXED_INTRINSICS_SYMBOL = "campp_qconv_mac_4x8_intrinsics_raw"
+FIXED_ASSEMBLY_SYMBOL = "campp_qconv_mac_4x8_aarch64_raw"
+V2_MAC_SYMBOL = "campp_qconv_mac_neon_tile_v2"
+PRODUCTION_MAC_SYMBOL = "campp_aarch64_qlinear_conv_o4i4"
+FUSED_QUANTIZE_SYMBOL = "campp_fused_input_quantize_neon"
 CATEGORIES = (
     "address_load_control",
     "mac_reduction",
@@ -417,6 +422,49 @@ def measure_spill_share(annotate_text: str) -> dict[str, Any]:
     }
 
 
+def select_mac_annotate_target(
+    perf_script_text: str, *, qconv_candidate: str = "baseline",
+    fused_qconv_candidate: str = "baseline",
+) -> dict[str, Any]:
+    """Select the symbol that actually executed, including fixed fallback."""
+
+    if qconv_candidate != "baseline" and fused_qconv_candidate != "baseline":
+        raise HotspotError("QConv and fused QConv candidates are exclusive")
+    samples, _ = COMMON.iter_perf_samples(perf_script_text)
+    symbols = [str(sample["symbol"]).lower() for sample in samples]
+
+    requested = qconv_candidate
+    if fused_qconv_candidate != "baseline":
+        requested = {
+            "mac": "mac",
+            "combined": "combined",
+            "mac_fixed": "mac_fixed",
+            "combined_fixed": "mac_fixed",
+            "quant_neon": "baseline",
+        }.get(fused_qconv_candidate, "baseline")
+
+    if requested == "mac_fixed":
+        if any(FIXED_INTRINSICS_SYMBOL in symbol for symbol in symbols):
+            return {
+                "execution_path": "fixed_4x8_intrinsics",
+                "symbol": FIXED_INTRINSICS_SYMBOL,
+            }
+        return {"execution_path": "fallback_v2", "symbol": V2_MAC_SYMBOL}
+    if requested == "mac_asm":
+        if any(FIXED_ASSEMBLY_SYMBOL in symbol for symbol in symbols):
+            return {
+                "execution_path": "fixed_4x8_assembly",
+                "symbol": FIXED_ASSEMBLY_SYMBOL,
+            }
+        return {"execution_path": "fallback_v2", "symbol": V2_MAC_SYMBOL}
+    if requested != "baseline":
+        return {"execution_path": "v2", "symbol": V2_MAC_SYMBOL}
+    return {
+        "execution_path": "production",
+        "symbol": PRODUCTION_MAC_SYMBOL,
+    }
+
+
 def build_source_map(
     source: Path = QCONV_SOURCE,
     requant_source: Path = REQUANT_SOURCE,
@@ -642,6 +690,7 @@ def _microbench_command(
     warmup: int,
     repeat: int,
     qconv_candidate: str = "baseline",
+    fused_qconv_candidate: str = "baseline",
 ) -> list[str]:
     command = DIAGNOSIS._command(
         binary,
@@ -654,6 +703,10 @@ def _microbench_command(
     )
     if qconv_candidate != "baseline":
         command.extend(["--qconv-candidate", qconv_candidate])
+    if fused_qconv_candidate != "baseline":
+        command.extend(
+            ["--fused-qconv-candidate", fused_qconv_candidate]
+        )
     command.append("--perf-window")
     return command
 
@@ -672,6 +725,7 @@ def _run_one(
     output_dir: Path,
     source_map: dict[str, Any],
     qconv_candidate: str = "baseline",
+    fused_qconv_candidate: str = "baseline",
     v2_source_map: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -679,6 +733,7 @@ def _run_one(
     payload_path = output_dir / "microbench.json"
     script_path = output_dir / "perf_script.txt"
     annotate_path = output_dir / "perf_annotate.txt"
+    quantize_annotate_path = output_dir / "perf_annotate_quantize.txt"
     report_path = output_dir / "perf_report.txt"
     command_path = output_dir / "command.json"
     record_stderr_path = output_dir / "perf_record.stderr.txt"
@@ -691,6 +746,7 @@ def _run_one(
         warmup=warmup,
         repeat=repeat,
         qconv_candidate=qconv_candidate,
+        fused_qconv_candidate=fused_qconv_candidate,
     )
     # prctl cannot gate events owned by an external `perf record`, so the
     # prelude used to leak in. perf starts disabled (-D -1) and the microbench
@@ -762,6 +818,8 @@ def _run_one(
         operator.get("operator_id") != case["operator_id"]
         or operator.get("kernel_name") != case["kernel_name"]
         or payload.get("output_hash_matches") is not True
+        or payload.get("qconv_candidate") != qconv_candidate
+        or payload.get("fused_qconv_candidate") != fused_qconv_candidate
         or window.get("requested") is not True
         or window.get("supported") is not True
         or window.get("enabled_at_exit") is not False
@@ -787,14 +845,12 @@ def _run_one(
     script = _run(script_command)
     script_path.write_text(script.stdout, encoding="utf-8", newline="\n")
 
-    if qconv_candidate == "mac_fixed":
-        annotate_symbol = "campp_qconv_mac_4x8_intrinsics_raw"
-    elif qconv_candidate == "mac_asm":
-        annotate_symbol = "campp_qconv_mac_4x8_aarch64_raw"
-    elif qconv_candidate != "baseline":
-        annotate_symbol = "campp_qconv_mac_neon_tile_v2"
-    else:
-        annotate_symbol = "campp_aarch64_qlinear_conv_o4i4"
+    annotate_target = select_mac_annotate_target(
+        script.stdout,
+        qconv_candidate=qconv_candidate,
+        fused_qconv_candidate=fused_qconv_candidate,
+    )
+    annotate_symbol = str(annotate_target["symbol"])
     annotate = _run(
         [
             perf,
@@ -810,6 +866,26 @@ def _run_one(
     annotate_path.write_text(
         annotate.stdout + annotate.stderr, encoding="utf-8", newline="\n"
     )
+    quantize_spill = None
+    if fused_qconv_candidate in ("quant_neon", "combined_fixed"):
+        quantize_annotate = _run(
+            [
+                perf,
+                "annotate",
+                "--stdio",
+                "--input",
+                str(perf_data),
+                "--symbol",
+                FUSED_QUANTIZE_SYMBOL,
+            ],
+            check=False,
+        )
+        quantize_annotate_path.write_text(
+            quantize_annotate.stdout + quantize_annotate.stderr,
+            encoding="utf-8",
+            newline="\n",
+        )
+        quantize_spill = measure_spill_share(quantize_annotate.stdout)
     report = _run(
         [
             perf,
@@ -827,13 +903,23 @@ def _run_one(
     report_path.write_text(
         report.stdout + report.stderr, encoding="utf-8", newline="\n"
     )
-    if qconv_candidate != "baseline" and v2_source_map is not None:
+    candidate_active = (
+        qconv_candidate != "baseline"
+        or fused_qconv_candidate not in ("baseline", "quant_neon")
+    )
+    if candidate_active and v2_source_map is not None:
         classification = classify_v2_perf_script(script.stdout, v2_source_map)
-        classification["spill"] = measure_spill_share(annotate.stdout)
     else:
         classification = classify_perf_script(script.stdout, source_map)
+    classification["spill"] = measure_spill_share(annotate.stdout)
     classification.update(
         {
+            "execution_path": annotate_target["execution_path"],
+            "mac_annotate_symbol": annotate_symbol,
+            "quantize_annotate_symbol": (
+                FUSED_QUANTIZE_SYMBOL if quantize_spill is not None else None
+            ),
+            "quantize_spill": quantize_spill,
             "input": _display_path(feature),
             "output_hash": payload["output_hash"],
             "artifacts": {
@@ -841,6 +927,10 @@ def _run_one(
                 "perf_record_stderr": _display_path(record_stderr_path),
                 "perf_script": _display_path(script_path),
                 "perf_annotate": _display_path(annotate_path),
+                "perf_annotate_quantize": (
+                    _display_path(quantize_annotate_path)
+                    if quantize_spill is not None else None
+                ),
                 "perf_report": _display_path(report_path),
                 "microbench": _display_path(payload_path),
             },

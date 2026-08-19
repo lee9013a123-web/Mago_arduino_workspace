@@ -32,10 +32,36 @@ fi
 
 COMPARE="${ROOT}/scripts/4_profill/compiler/03_compare_matrix.py"
 PROFILE="${ROOT}/scripts/4_profill/02_profile_e7.py"
+BUILD_SCRIPT="${ROOT}/scripts/4_profill/01_build_profiler.sh"
+MATRIX_CC="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field cc)"
 WINNER_BUILD="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field winner-build-dir)"
 WINNER_VARIANT="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field winner-variant)"
 BASELINE_BUILD="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field baseline-build-dir)"
 BASELINE_VARIANT="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field baseline-variant)"
+
+materialize_profiler() {
+    local target="$1"
+    local variant="$2"
+    local build_dir="$3"
+    local cppflags cflags ldflags strip_final
+    if [[ -f "${build_dir}/campp_e7_profiler_final" ]]; then
+        return
+    fi
+    cppflags="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field "${target}-cppflags")"
+    cflags="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field "${target}-cflags")"
+    ldflags="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field "${target}-ldflags")"
+    strip_final="$(python3 "${COMPARE}" --run-id "${RUN_ID}" --print-field "${target}-strip-final")"
+    echo "building deferred profiler for ${target}: ${variant}"
+    BUILD_DIR="${build_dir}" \
+    BUILD_VARIANT="${variant}" \
+    BUILD_SCOPE="profiler_finalist" \
+    CC="${MATRIX_CC}" \
+    CPPFLAGS="${cppflags}" \
+    CFLAGS="${cflags}" \
+    LDFLAGS="${ldflags}" \
+    STRIP_FINAL="${strip_final}" \
+        bash "${BUILD_SCRIPT}"
+}
 
 profile_variant() {
     local label="$1"
@@ -55,8 +81,10 @@ profile_variant() {
 }
 
 if [[ "${WINNER_ONLY}" != "1" ]]; then
+    materialize_profiler baseline "${BASELINE_VARIANT}" "${BASELINE_BUILD}"
     profile_variant baseline "${BASELINE_VARIANT}" "${BASELINE_BUILD}"
 fi
 if [[ "${WINNER_BUILD}" != "${BASELINE_BUILD}" || "${WINNER_ONLY}" == "1" ]]; then
+    materialize_profiler winner "${WINNER_VARIANT}" "${WINNER_BUILD}"
     profile_variant winner "${WINNER_VARIANT}" "${WINNER_BUILD}"
 fi

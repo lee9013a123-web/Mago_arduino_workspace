@@ -139,6 +139,40 @@ class QConvHotspotTests(unittest.TestCase):
         self.assertAlmostEqual(result["stack_spill_percent"], 20.0)
         self.assertAlmostEqual(result["other_memory_percent"], 20.0)
 
+    def test_fixed_annotate_target_falls_back_when_symbol_did_not_run(self) -> None:
+        fixed = HOTSPOT.select_mac_annotate_target(
+            " 100000 ffff campp_qconv_mac_4x8_intrinsics_raw "
+            "/tmp/qconv_mac_4x8_intrinsics.c:20",
+            fused_qconv_candidate="combined_fixed",
+        )
+        self.assertEqual(fixed["execution_path"], "fixed_4x8_intrinsics")
+        self.assertEqual(fixed["symbol"], HOTSPOT.FIXED_INTRINSICS_SYMBOL)
+
+        fallback = HOTSPOT.select_mac_annotate_target(
+            " 100000 ffff campp_qconv_mac_neon_tile_v2 "
+            "/tmp/qconv_mac_neon.c:580",
+            fused_qconv_candidate="combined_fixed",
+        )
+        self.assertEqual(fallback["execution_path"], "fallback_v2")
+        self.assertEqual(fallback["symbol"], HOTSPOT.V2_MAC_SYMBOL)
+
+    def test_microbench_command_accepts_fused_candidate(self) -> None:
+        command = HOTSPOT._microbench_command(
+            Path("bench"),
+            plan=Path("plan.bin"),
+            weights=Path("weights.bin"),
+            feature=Path("input.f32"),
+            operator_id=10,
+            warmup=5,
+            repeat=20,
+            fused_qconv_candidate="combined_fixed",
+        )
+        index = len(command) - 1 - command[::-1].index(
+            "--fused-qconv-candidate"
+        )
+        self.assertEqual(command[index + 1], "combined_fixed")
+        self.assertEqual(command[-1], "--perf-window")
+
 
 if __name__ == "__main__":
     unittest.main()

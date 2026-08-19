@@ -45,13 +45,14 @@ section GC/strip을 순서대로 비교하며 fast-math는 별도 설정으로 �
 
 ```bash
 bash scripts/4_profill/compiler/01_run_matrix.sh --preflight-only
-bash scripts/4_profill/compiler/01_run_matrix.sh --run-id strict_quick_01
-python3 scripts/4_profill/compiler/03_compare_matrix.py --run-id strict_quick_01
+bash scripts/4_profill/compiler/01_run_matrix.sh --run-id compile_quick_01
+python3 scripts/4_profill/compiler/03_compare_matrix.py --run-id compile_quick_01
 ```
 
 후보별 build와 raw 측정은 `build/`·`runs/` 아래에 격리되고, 선정 근거만
 `results/profiling/e7_98/compiler_matrix/<run-id>/`에 저장된다. 상세한 재개,
-최종 후보 profile, fast-math 명령은 `compiler/README.md`를 참고한다.
+최종 후보 profile, fast-math 명령은 `compiler/README.md`를 참고한다. 기본은
+6개 조합의 Quick이며, 기존 18개 전수조사는 `--mode full`로 실행한다.
 
 ## 실행 모드
 
@@ -374,6 +375,36 @@ results/profiling/e7_98/optimization/fused_qconv_family/summary.json
 family speedup은 Operator별 speedup 평균이 아니라 110개 baseline mean 합계를
 candidate mean 합계로 나눈 값이다. 합산 p50/p95는 동기화된 whole-graph
 percentile이 아니므로 E2E percentile 대신 사용하지 않는다.
+
+### Fused Quant-QConv register spill
+
+`combined_fixed`가 실제 S4×O8 microkernel을 실행했는지와 MAC/input-quantize의
+stack spill을 확인할 때는 fused spill profiler를 사용한다. 기본값은 profile에
+존재하는 6개 weight shape에서 exclusive time이 가장 큰 Operator 하나씩이다.
+fixed 심볼 sample이 없으면 IC tail 등의 이유로 v2 fallback을 실행한 것으로
+판정하고 `campp_qconv_mac_neon_tile_v2`를 자동으로 annotate한다.
+
+```bash
+python3 scripts/4_profill/optimization/09_profile_fused_qconv_spill.py \
+  --preflight-only
+
+python3 scripts/4_profill/optimization/09_profile_fused_qconv_spill.py \
+  --force
+```
+
+Operator 0과 대표 3×3만 먼저 확인하려면 다음처럼 범위를 제한한다.
+
+```bash
+python3 scripts/4_profill/optimization/09_profile_fused_qconv_spill.py \
+  --operator-ids 0 10 --force \
+  --runs-dir runs/profiling/e7_98/optimization/fused_qconv_spill_smoke \
+  --results-dir results/profiling/e7_98/optimization/fused_qconv_spill_smoke
+```
+
+결과는 `fused_qconv_spill.json`과 `fused_qconv_spill.csv`에 기록한다. 기본
+spill gate는 세 입력의 실행 경로가 같고 MAC과 input quantize의 annotated stack
+spill이 각각 5% 이하인 경우다. quantize sample이 부족하면 spill 0%가 아니라
+inconclusive로 처리하며 `--sample-period`를 낮춰 다시 측정한다.
 
 ## BN 병목 분리와 후보 비교
 

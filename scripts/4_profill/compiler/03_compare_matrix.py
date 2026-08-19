@@ -25,12 +25,19 @@ def _load_decision(path: Path) -> dict[str, Any]:
 
 
 def _print_field(document: dict[str, Any], field: str) -> None:
+    if field == "cc":
+        print(document.get("cc", "gcc"))
+        return
     target_name, value_name = field.split("-", 1)
     target = document[target_name]
     if value_name == "build-dir":
         value = target["build"]["directory"]
     elif value_name == "variant":
         value = target["variant"]
+    elif value_name in ("cppflags", "cflags", "ldflags"):
+        value = target["flags"][value_name]
+    elif value_name == "strip-final":
+        value = "1" if target["flags"]["strip_final"] else "0"
     else:
         raise ValueError(f"unsupported field: {field}")
     path = Path(value) if value_name == "build-dir" else None
@@ -44,8 +51,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--print-field",
         choices=(
+            "cc",
             "baseline-build-dir", "baseline-variant",
+            "baseline-cppflags", "baseline-cflags", "baseline-ldflags",
+            "baseline-strip-final",
             "winner-build-dir", "winner-variant",
+            "winner-cppflags", "winner-cflags", "winner-ldflags",
+            "winner-strip-final",
         ),
     )
     args = parser.parse_args(argv)

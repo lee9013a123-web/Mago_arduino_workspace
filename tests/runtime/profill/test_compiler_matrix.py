@@ -52,6 +52,21 @@ def result(
 
 
 class CompilerMatrixTests(unittest.TestCase):
+    def test_quick_config_uses_six_reduced_builds(self) -> None:
+        config = MATRIX._load_matrix_config(
+            ROOT / "configs" / "runtime" / "compiler_qrb2210_quick.json"
+        )
+        benchmark = MATRIX.BENCHMARK.load_config(
+            config["_benchmark_config_path"], repository_root=ROOT
+        )
+
+        self.assertEqual(config["build_scope"], "compiler_quick")
+        self.assertEqual(sum(len(stage["candidates"]) for stage in config["stages"]), 6)
+        self.assertEqual(len(benchmark.input_ids), 3)
+        self.assertEqual(benchmark.warmup, 0)
+        self.assertEqual(benchmark.repeat, 1)
+        self.assertEqual(benchmark.cold_runs, 0)
+
     def test_strict_config_targets_final_suite_in_stages(self) -> None:
         config = MATRIX._load_matrix_config(
             ROOT / "configs" / "runtime" / "compiler_qrb2210_strict.json"
@@ -60,6 +75,7 @@ class CompilerMatrixTests(unittest.TestCase):
         self.assertEqual(config["expected_suite"], "final")
         self.assertEqual(config["stages"][0]["name"], "optimization_level")
         self.assertEqual(config["stages"][-1]["name"], "packaging")
+        self.assertEqual(config["build_scope"], "compiler_matrix")
         self.assertNotIn("-ffast-math", config["base_cflags"])
 
     def test_merge_flags_rejects_non_option_tokens(self) -> None:

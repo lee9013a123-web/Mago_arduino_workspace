@@ -15,8 +15,11 @@ BUILD_SCOPE="${BUILD_SCOPE:-all}"
 STRIP="${STRIP:-strip}"
 STRIP_FINAL="${STRIP_FINAL:-0}"
 
-if [[ "${BUILD_SCOPE}" != "all" && "${BUILD_SCOPE}" != "compiler_matrix" ]]; then
-    echo "BUILD_SCOPE must be all or compiler_matrix" >&2
+if [[ "${BUILD_SCOPE}" != "all" && \
+      "${BUILD_SCOPE}" != "compiler_matrix" && \
+      "${BUILD_SCOPE}" != "compiler_quick" && \
+      "${BUILD_SCOPE}" != "profiler_finalist" ]]; then
+    echo "invalid BUILD_SCOPE: ${BUILD_SCOPE}" >&2
     exit 2
 fi
 
@@ -113,19 +116,21 @@ fi
     "${ROOT}/src/c/runtime/command_line/campp_runtime_benchmark.c" \
     ${LDFLAGS} -lm -o "${BUILD_DIR}/campp_runtime_benchmark_final"
 
-# shellcheck disable=SC2086
-"${CC}" ${CPPFLAGS} ${CFLAGS} \
-    -DCAMPP_ENABLE_OPERATOR_PROFILING=1 \
-    -DCAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1 \
-    "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
-    "${FINAL_INCLUDES[@]}" \
-    "${RUNTIME_SOURCES[@]}" \
-    "${ROOT}/src/c/profill/operator_profiler.c" \
-    "${ROOT}/src/c/profill/runtime_fixture.c" \
-    "${FINAL_CANDIDATE_SOURCES[@]}" \
-    "${FINAL_SUITE_SOURCE}" \
-    "${ROOT}/src/c/profill/command_line/campp_e7_profiler.c" \
-    ${LDFLAGS} -lm -o "${BUILD_DIR}/campp_e7_profiler_final"
+if [[ "${BUILD_SCOPE}" != "compiler_quick" ]]; then
+    # shellcheck disable=SC2086
+    "${CC}" ${CPPFLAGS} ${CFLAGS} \
+        -DCAMPP_ENABLE_OPERATOR_PROFILING=1 \
+        -DCAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1 \
+        "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
+        "${FINAL_INCLUDES[@]}" \
+        "${RUNTIME_SOURCES[@]}" \
+        "${ROOT}/src/c/profill/operator_profiler.c" \
+        "${ROOT}/src/c/profill/runtime_fixture.c" \
+        "${FINAL_CANDIDATE_SOURCES[@]}" \
+        "${FINAL_SUITE_SOURCE}" \
+        "${ROOT}/src/c/profill/command_line/campp_e7_profiler.c" \
+        ${LDFLAGS} -lm -o "${BUILD_DIR}/campp_e7_profiler_final"
+fi
 
 if [[ "${BUILD_SCOPE}" == "all" ]]; then
     # shellcheck disable=SC2086
@@ -145,18 +150,21 @@ if [[ "${BUILD_SCOPE}" == "all" ]]; then
         ${LDFLAGS} -lm -o "${BUILD_DIR}/test_profiled_graph_executor"
 fi
 
-# 최종 registry가 정확한 14개 entry만 교체하는지 검증한다.
-# shellcheck disable=SC2086
-"${CC}" ${CPPFLAGS} ${CFLAGS} \
-    "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
-    "${FINAL_INCLUDES[@]}" \
-    "${RUNTIME_SOURCES[@]}" \
-    "${FINAL_CANDIDATE_SOURCES[@]}" \
-    "${FINAL_SUITE_SOURCE}" \
-    "${ROOT}/tests/runtime/profill/test_final_candidate_suite.c" \
-    ${LDFLAGS} -lm -o "${BUILD_DIR}/test_final_candidate_suite"
+if [[ "${BUILD_SCOPE}" != "compiler_quick" ]]; then
+    # 최종 registry가 정확한 14개 entry만 교체하는지 검증한다.
+    # shellcheck disable=SC2086
+    "${CC}" ${CPPFLAGS} ${CFLAGS} \
+        "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
+        "${FINAL_INCLUDES[@]}" \
+        "${RUNTIME_SOURCES[@]}" \
+        "${FINAL_CANDIDATE_SOURCES[@]}" \
+        "${FINAL_SUITE_SOURCE}" \
+        "${ROOT}/tests/runtime/profill/test_final_candidate_suite.c" \
+        ${LDFLAGS} -lm -o "${BUILD_DIR}/test_final_candidate_suite"
+fi
 
-if [[ "${BUILD_SCOPE}" == "compiler_matrix" ]]; then
+if [[ "${BUILD_SCOPE}" == "compiler_matrix" || \
+      "${BUILD_SCOPE}" == "compiler_quick" ]]; then
     # Retained Tensor 전체를 compiler variant 사이에서 bitwise 비교한다.
     # shellcheck disable=SC2086
     "${CC}" ${CPPFLAGS} ${CFLAGS} \
@@ -192,8 +200,10 @@ fi
 
 metadata_binaries=(
     campp_runtime_benchmark_final
-    campp_e7_profiler_final
 )
+if [[ "${BUILD_SCOPE}" != "compiler_quick" ]]; then
+    metadata_binaries+=(campp_e7_profiler_final)
+fi
 if [[ "${BUILD_SCOPE}" == "all" ]]; then
     metadata_binaries+=(campp_runtime_benchmark campp_e7_profiler)
 fi
@@ -208,12 +218,17 @@ if [[ "${BUILD_SCOPE}" == "all" ]]; then
     echo "  profiler: ${BUILD_DIR}/campp_e7_profiler"
 fi
 echo "  final baseline: ${BUILD_DIR}/campp_runtime_benchmark_final"
-echo "  final profiler: ${BUILD_DIR}/campp_e7_profiler_final"
+if [[ "${BUILD_SCOPE}" != "compiler_quick" ]]; then
+    echo "  final profiler: ${BUILD_DIR}/campp_e7_profiler_final"
+fi
 if [[ "${BUILD_SCOPE}" == "all" ]]; then
     echo "  C test:   ${BUILD_DIR}/test_operator_profiler"
     echo "  hook test:${BUILD_DIR}/test_profiled_graph_executor"
 fi
-echo "  suite test:${BUILD_DIR}/test_final_candidate_suite"
-if [[ "${BUILD_SCOPE}" == "compiler_matrix" ]]; then
+if [[ "${BUILD_SCOPE}" != "compiler_quick" ]]; then
+    echo "  suite test:${BUILD_DIR}/test_final_candidate_suite"
+fi
+if [[ "${BUILD_SCOPE}" == "compiler_matrix" || \
+      "${BUILD_SCOPE}" == "compiler_quick" ]]; then
     echo "  tensor dump:${BUILD_DIR}/campp_reference_dump_final"
 fi

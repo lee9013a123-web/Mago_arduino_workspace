@@ -78,6 +78,10 @@ def _load_matrix_config(path: Path, *, root: Path = ROOT) -> dict[str, Any]:
         raise MatrixError("unsupported compiler matrix schema")
     if document.get("expected_suite") != "final":
         raise MatrixError("compiler matrix must target the final optimization suite")
+    build_scope = document.get("build_scope", "compiler_matrix")
+    if build_scope not in ("compiler_matrix", "compiler_quick"):
+        raise MatrixError("build_scope must be compiler_matrix or compiler_quick")
+    document["build_scope"] = build_scope
     stages = document.get("stages")
     if not isinstance(stages, list) or not stages:
         raise MatrixError("compiler matrix has no stages")
@@ -405,7 +409,7 @@ def _measure_variant(
         {
             "BUILD_DIR": str(build_dir),
             "BUILD_VARIANT": variant,
-            "BUILD_SCOPE": "compiler_matrix",
+            "BUILD_SCOPE": matrix["build_scope"],
             "CC": cc,
             "CPPFLAGS": cppflags,
             "CFLAGS": cflags,
@@ -418,24 +422,29 @@ def _measure_variant(
         environment=build_environment, log_path=run_dir / "build.log",
     )
     build_seconds = time.perf_counter() - build_started
-    test_binary = BENCHMARK.executable_path(build_dir / "test_final_candidate_suite")
     runtime_binary = BENCHMARK.executable_path(
         build_dir / "campp_runtime_benchmark_final"
     )
     dump_binary = BENCHMARK.executable_path(
         build_dir / "campp_reference_dump_final"
     )
-    for path, name in (
-        (test_binary, "suite test"),
+    required_binaries = [
         (runtime_binary, "runtime"),
         (dump_binary, "retained Tensor dump"),
-    ):
+    ]
+    test_binary = BENCHMARK.executable_path(
+        build_dir / "test_final_candidate_suite"
+    )
+    if matrix["build_scope"] != "compiler_quick":
+        required_binaries.append((test_binary, "suite test"))
+    for path, name in required_binaries:
         if not path.is_file():
             raise MatrixError(f"{name} binary not found: {path}")
-    _run_logged(
-        [str(test_binary)], cwd=ROOT, environment=os.environ.copy(),
-        log_path=run_dir / "suite_test.log",
-    )
+    if matrix["build_scope"] != "compiler_quick":
+        _run_logged(
+            [str(test_binary)], cwd=ROOT, environment=os.environ.copy(),
+            log_path=run_dir / "suite_test.log",
+        )
     capabilities, _ = BENCHMARK.run_json_command(
         [str(runtime_binary), "--capabilities"], environment=os.environ.copy()
     )
@@ -507,6 +516,7 @@ def _measure_variant(
         },
         "build": {
             "directory": _display_path(build_dir),
+            "scope": matrix["build_scope"],
             "seconds": build_seconds,
             "metadata": _display_path(build_dir / "build_metadata.txt"),
         },
@@ -600,8 +610,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--config", type=Path,
-        default=ROOT / "configs/runtime/compiler_qrb2210_strict.json",
+        help="explicit matrix config; overrides --mode",
     )
+    parser.add_argument("--mode", choices=("quick", "full"), default="quick")
     parser.add_argument("--run-id")
     parser.add_argument("--cc", default=os.environ.get("CC", "gcc"))
     parser.add_argument("--base-decision", type=Path)
@@ -611,9 +622,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--allow-environment-mismatch", action="store_true")
     args = parser.parse_args(argv)
+    config_path = args.config or (
+        ROOT / "configs/runtime/compiler_qrb2210_quick.json"
+        if args.mode == "quick"
+        else ROOT / "configs/runtime/compiler_qrb2210_strict.json"
+    )
 
     try:
-        matrix = _load_matrix_config(args.config)
+        matrix = _load_matrix_config(config_path)
         for path, name in (
             (matrix["_benchmark_config_path"], "benchmark config"),
             (matrix["_build_script_path"], "build script"),
@@ -870,6 +886,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
         "matrix": matrix["name"],
+        "cc": args.cc,
         "ready": True,
         "baseline": _compact_result(baseline_variant),
         "winner": _compact_result(final_winner),

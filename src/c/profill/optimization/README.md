@@ -27,6 +27,11 @@ BN-ReLU-Quant, DequantizeLinear를 분리한다.
 값으로 측정하고 baseline을 마지막에 실행해 그 출력을 graph 진행에 사용한다.
 따라서 Operator별 prelude 재실행은 측정시간에 포함되지 않는다.
 
+fused 후보의 register spill은 `09_profile_fused_qconv_spill.py`가 기존
+`04_profile_qconv_hotspot.py`의 perf control FIFO와 annotate parser를 재사용해
+측정한다. S4×O8 심볼이 실제 표본에 없으면 v2 fallback을 자동 선택하며 input
+quantize와 MAC spill을 서로 다른 annotate 결과로 보존한다.
+
 BN 후보도 production registry와 분리한다. `address`, `affine`, `quant`는
 각 원인의 독립 효과를 확인하고 `combined`는 channel-packed 입력에서 채널
 4개를 함께 처리한다. 지원하지 않는 shape, stride, rounding mode는 기존
