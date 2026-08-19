@@ -71,34 +71,32 @@ static int campp_qconv_mac_4x8_is_supported(
     return 1;
 }
 
-CamppQconvMac4x8Result campp_qconv_mac_4x8_try_tile(
+static CamppQconvMac4x8Result campp_qconv_mac_4x8_run_validated(
     const uint8_t *const input_points
         [CAMPP_QCONV_CANDIDATE_MAX_KERNEL_ELEMENTS]
         [CAMPP_QCONV_CANDIDATE_TILE],
-    uint32_t kernel_elements, uint32_t tile_count,
+    uint32_t kernel_elements,
     const uint8_t *const packed_weights[2], uint32_t input_channels,
-    uint8_t input_dtype, uint8_t weight_dtype, int32_t input_zero,
+    int32_t input_zero,
     const int32_t weight_zero[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
     const int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
-    uint32_t valid_outputs, CamppQconvMac4x8Implementation implementation,
+    CamppQconvMac4x8Implementation implementation,
     int32_t accumulators[CAMPP_QCONV_CANDIDATE_TILE]
         [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE])
 {
     uint32_t half;
     uint32_t tile;
 
-    if (implementation != CAMPP_QCONV_MAC_4X8_INTRINSICS &&
-        implementation != CAMPP_QCONV_MAC_4X8_ASSEMBLY) {
-        return CAMPP_QCONV_MAC_4X8_FAILED;
-    }
-    if (!campp_qconv_mac_4x8_is_supported(
-            input_points, kernel_elements, tile_count, packed_weights,
-            input_channels, input_dtype, weight_dtype, input_zero,
-            weight_zero, bias, valid_outputs, accumulators)) {
-        return CAMPP_QCONV_MAC_4X8_UNSUPPORTED;
-    }
-
 #if !defined(__aarch64__) || !defined(__ARM_NEON)
+    (void)input_points;
+    (void)kernel_elements;
+    (void)packed_weights;
+    (void)input_channels;
+    (void)input_zero;
+    (void)weight_zero;
+    (void)bias;
+    (void)implementation;
+    (void)accumulators;
     (void)half;
     (void)tile;
     return CAMPP_QCONV_MAC_4X8_UNSUPPORTED;
@@ -135,4 +133,50 @@ CamppQconvMac4x8Result campp_qconv_mac_4x8_try_tile(
     }
     return CAMPP_QCONV_MAC_4X8_OK;
 #endif
+}
+
+CamppQconvMac4x8Result campp_qconv_mac_4x8_intrinsics_validated(
+    const uint8_t *const input_points
+        [CAMPP_QCONV_CANDIDATE_MAX_KERNEL_ELEMENTS]
+        [CAMPP_QCONV_CANDIDATE_TILE],
+    uint32_t kernel_elements,
+    const uint8_t *const packed_weights[2], uint32_t input_channels,
+    int32_t input_zero,
+    const int32_t weight_zero[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    const int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    int32_t accumulators[CAMPP_QCONV_CANDIDATE_TILE]
+        [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE])
+{
+    return campp_qconv_mac_4x8_run_validated(
+        input_points, kernel_elements, packed_weights, input_channels,
+        input_zero, weight_zero, bias, CAMPP_QCONV_MAC_4X8_INTRINSICS,
+        accumulators);
+}
+
+CamppQconvMac4x8Result campp_qconv_mac_4x8_try_tile(
+    const uint8_t *const input_points
+        [CAMPP_QCONV_CANDIDATE_MAX_KERNEL_ELEMENTS]
+        [CAMPP_QCONV_CANDIDATE_TILE],
+    uint32_t kernel_elements, uint32_t tile_count,
+    const uint8_t *const packed_weights[2], uint32_t input_channels,
+    uint8_t input_dtype, uint8_t weight_dtype, int32_t input_zero,
+    const int32_t weight_zero[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    const int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    uint32_t valid_outputs, CamppQconvMac4x8Implementation implementation,
+    int32_t accumulators[CAMPP_QCONV_CANDIDATE_TILE]
+        [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE])
+{
+    if (implementation != CAMPP_QCONV_MAC_4X8_INTRINSICS &&
+        implementation != CAMPP_QCONV_MAC_4X8_ASSEMBLY) {
+        return CAMPP_QCONV_MAC_4X8_FAILED;
+    }
+    if (!campp_qconv_mac_4x8_is_supported(
+            input_points, kernel_elements, tile_count, packed_weights,
+            input_channels, input_dtype, weight_dtype, input_zero,
+            weight_zero, bias, valid_outputs, accumulators)) {
+        return CAMPP_QCONV_MAC_4X8_UNSUPPORTED;
+    }
+    return campp_qconv_mac_4x8_run_validated(
+        input_points, kernel_elements, packed_weights, input_channels,
+        input_zero, weight_zero, bias, implementation, accumulators);
 }

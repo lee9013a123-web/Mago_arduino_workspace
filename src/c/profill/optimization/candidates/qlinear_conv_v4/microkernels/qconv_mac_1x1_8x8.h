@@ -14,4 +14,13 @@ CamppQconvMac4x8Result campp_qconv_v4_mac_1x1_8x8(
     int32_t accumulators[CAMPP_QCONV_CANDIDATE_TILE]
         [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE]);
 
+CamppQconvMac4x8Result campp_qconv_v4_mac_1x1_8x8_validated(
+    const CamppQconvV4TilePlan *tile_plan,
+    const uint8_t *const packed_weights[2], uint32_t input_channels,
+    int32_t input_zero,
+    const int32_t weight_zero[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    const int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    int32_t accumulators[CAMPP_QCONV_CANDIDATE_TILE]
+        [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE]);
+
 #endif /* CAMPP_PROFILL_QCONV_V4_MAC_1X1_8X8_H */

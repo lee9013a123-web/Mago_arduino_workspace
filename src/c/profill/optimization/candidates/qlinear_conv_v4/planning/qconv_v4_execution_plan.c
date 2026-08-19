@@ -198,5 +198,16 @@ CamppStatus campp_qconv_v4_execution_plan_create(
     } else {
         out_plan->preferred_path = CAMPP_QCONV_V4_PATH_GENERIC;
     }
+#if defined(__aarch64__) && defined(__ARM_NEON)
+    out_plan->fixed_mac_plan_eligible =
+        out_plan->preferred_path != CAMPP_QCONV_V4_PATH_GENERIC &&
+        out_plan->input->dtype == CAMPP_DTYPE_UINT8 &&
+        out_plan->weight->dtype == CAMPP_DTYPE_INT8 &&
+        out_plan->inputs_per_group > 0u &&
+        out_plan->inputs_per_group % CAMPP_QCONV_CANDIDATE_INPUT_BLOCK == 0u &&
+        out_plan->input_zero >= 0 && out_plan->input_zero <= UINT8_MAX;
+#else
+    out_plan->fixed_mac_plan_eligible = false;
+#endif
     return CAMPP_STATUS_OK;
 }

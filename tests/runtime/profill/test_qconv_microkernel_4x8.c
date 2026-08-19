@@ -88,6 +88,8 @@ static int run_case(
         [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE] = {{0}};
     int32_t candidate[CAMPP_QCONV_CANDIDATE_TILE]
         [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE] = {{0}};
+    int32_t validated[CAMPP_QCONV_CANDIDATE_TILE]
+        [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE] = {{0}};
     CamppQconvMac4x8Result result;
 
     initialize_case(
@@ -109,6 +111,17 @@ static int run_case(
 #else
     CHECK_TRUE(result == CAMPP_QCONV_MAC_4X8_UNSUPPORTED);
 #endif
+    if (implementation == CAMPP_QCONV_MAC_4X8_INTRINSICS) {
+        result = campp_qconv_mac_4x8_intrinsics_validated(
+            input_points, kernel_elements, packed_weights, 8u, 127,
+            weight_zero, bias, validated);
+#if defined(__aarch64__) && defined(__ARM_NEON)
+        CHECK_TRUE(result == CAMPP_QCONV_MAC_4X8_OK);
+        CHECK_TRUE(memcmp(reference, validated, sizeof(reference)) == 0);
+#else
+        CHECK_TRUE(result == CAMPP_QCONV_MAC_4X8_UNSUPPORTED);
+#endif
+    }
     return 0;
 }
 

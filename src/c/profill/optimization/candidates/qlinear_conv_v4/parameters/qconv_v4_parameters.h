@@ -1,6 +1,7 @@
 #ifndef CAMPP_PROFILL_QCONV_V4_PARAMETERS_H
 #define CAMPP_PROFILL_QCONV_V4_PARAMETERS_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include "qconv_v4_execution_plan.h"
@@ -11,6 +12,8 @@ typedef struct CamppQconvV4ParameterBlock {
     int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE];
     float multiplier[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE];
     uint32_t valid_outputs;
+    /* Output-block invariants hoisted out of the spatial tile loop. */
+    bool fixed_mac_block_eligible;
 } CamppQconvV4ParameterBlock;
 
 CamppStatus campp_qconv_v4_parameters_load(

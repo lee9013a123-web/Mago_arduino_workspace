@@ -148,11 +148,24 @@ CamppStatus campp_qconv_v4_tile_plan_create(
         &plan->address, tile_start, tile_count,
         out_tile->output_coordinates);
 
-    if (campp_qconv_v4_plan_1x1(
-            plan, batch, group_channel, tile_start, tile_count, out_tile) ||
-        campp_qconv_v4_plan_3x3_interior(
-            plan, batch, group_channel, tile_start, tile_count, out_tile)) {
-        return CAMPP_STATUS_OK;
+    switch (plan->preferred_path) {
+    case CAMPP_QCONV_V4_PATH_1X1:
+        if (campp_qconv_v4_plan_1x1(
+                plan, batch, group_channel, tile_start, tile_count,
+                out_tile)) {
+            return CAMPP_STATUS_OK;
+        }
+        break;
+    case CAMPP_QCONV_V4_PATH_3X3_INTERIOR:
+        if (campp_qconv_v4_plan_3x3_interior(
+                plan, batch, group_channel, tile_start, tile_count,
+                out_tile)) {
+            return CAMPP_STATUS_OK;
+        }
+        break;
+    case CAMPP_QCONV_V4_PATH_GENERIC:
+    default:
+        break;
     }
     campp_qconv_v4_plan_generic(
         plan, batch, group_channel, tile_count, out_tile);

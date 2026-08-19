@@ -1,5 +1,6 @@
 #include "qconv_v4_parameters.h"
 
+#include <limits.h>
 #include <math.h>
 #include <string.h>
 
@@ -24,6 +25,8 @@ CamppStatus campp_qconv_v4_parameters_load(
     out_parameters->valid_outputs =
         remaining < CAMPP_QCONV_CANDIDATE_OUTPUT_TILE
         ? remaining : CAMPP_QCONV_CANDIDATE_OUTPUT_TILE;
+    out_parameters->fixed_mac_block_eligible =
+        out_parameters->valid_outputs == CAMPP_QCONV_CANDIDATE_OUTPUT_TILE;
 
     for (lane = 0u; lane < out_parameters->valid_outputs; ++lane) {
         const uint32_t channel = group_index * plan->outputs_per_group
@@ -39,6 +42,10 @@ CamppStatus campp_qconv_v4_parameters_load(
         status = campp_reference_read_quantized(
             &inputs[5], zero_index, &out_parameters->weight_zero[lane]);
         if (status != CAMPP_STATUS_OK) return status;
+        if (out_parameters->weight_zero[lane] < INT8_MIN ||
+            out_parameters->weight_zero[lane] > INT8_MAX) {
+            out_parameters->fixed_mac_block_eligible = false;
+        }
         if (!(weight_scale > 0.0f) || !isfinite(weight_scale)) {
             return CAMPP_STATUS_KERNEL_FAILED;
         }

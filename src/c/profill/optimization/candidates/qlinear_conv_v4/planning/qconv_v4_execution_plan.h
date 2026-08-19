@@ -39,6 +39,8 @@ typedef struct CamppQconvV4ExecutionPlan {
     int32_t output_zero;
     CamppQconvV4Path preferred_path;
     bool direct_channel_store;
+    /* Invariants shared by every full spatial tile in this invocation. */
+    bool fixed_mac_plan_eligible;
     bool scalar_weight_scale;
     bool scalar_weight_zero;
     bool has_bias;

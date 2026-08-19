@@ -83,6 +83,7 @@ CamppStatus campp_qconv_v4_run(
                     group_index * plan.outputs_per_group + first_within;
                 CamppQconvV4ParameterBlock parameters;
                 const uint8_t *packed_weights[2] = {NULL, NULL};
+                bool fixed_mac_block_eligible;
                 uint32_t tile_start;
 
                 status = campp_qconv_v4_parameters_load(
@@ -99,6 +100,10 @@ CamppStatus campp_qconv_v4_run(
                             + output_block + 1u) * plan.kernel_elements
                            * plan.input_blocks * 16u);
                 }
+                fixed_mac_block_eligible =
+                    plan.fixed_mac_plan_eligible &&
+                    parameters.fixed_mac_block_eligible &&
+                    packed_weights[0] != NULL && packed_weights[1] != NULL;
 
                 for (tile_start = 0u; tile_start < plan.output_spatial;
                      tile_start += CAMPP_QCONV_CANDIDATE_TILE) {
@@ -119,26 +124,28 @@ CamppStatus campp_qconv_v4_run(
                         group_index * plan.inputs_per_group,
                         tile_start, tile_count, &tile_plan);
                     if (status != CAMPP_STATUS_OK) return status;
-                    if (tile_plan.path == CAMPP_QCONV_V4_PATH_1X1) {
-                        fixed_result = campp_qconv_v4_mac_1x1_8x8(
+                    if (fixed_mac_block_eligible &&
+                        tile_plan.path == CAMPP_QCONV_V4_PATH_1X1) {
+                        fixed_result =
+                            campp_qconv_v4_mac_1x1_8x8_validated(
                             &tile_plan, packed_weights,
-                            plan.inputs_per_group, plan.input->dtype,
-                            plan.weight->dtype, plan.input_zero,
+                            plan.inputs_per_group, plan.input_zero,
                             parameters.weight_zero, parameters.bias,
-                            parameters.valid_outputs, accumulators);
-                    } else if (tile_plan.path ==
-                               CAMPP_QCONV_V4_PATH_3X3_INTERIOR) {
-                        fixed_result = campp_qconv_v4_mac_3x3_interior_8x8(
+                            accumulators);
+                    } else if (fixed_mac_block_eligible &&
+                               tile_plan.path ==
+                                   CAMPP_QCONV_V4_PATH_3X3_INTERIOR) {
+                        fixed_result =
+                            campp_qconv_v4_mac_3x3_interior_8x8_validated(
                             &tile_plan, packed_weights,
-                            plan.inputs_per_group, plan.input->dtype,
-                            plan.weight->dtype, plan.input_zero,
+                            plan.inputs_per_group, plan.input_zero,
                             parameters.weight_zero, parameters.bias,
-                            parameters.valid_outputs, accumulators);
+                            accumulators);
                     }
                     if (fixed_result == CAMPP_QCONV_MAC_4X8_FAILED) {
                         return CAMPP_STATUS_KERNEL_FAILED;
                     }
-                    if (fixed_result == CAMPP_QCONV_MAC_4X8_UNSUPPORTED &&
+                    if (fixed_result != CAMPP_QCONV_MAC_4X8_OK &&
                         campp_qconv_v4_mac_tail(
                             &plan, &tile_plan, packed_weights,
                             parameters.weight_zero, parameters.bias,

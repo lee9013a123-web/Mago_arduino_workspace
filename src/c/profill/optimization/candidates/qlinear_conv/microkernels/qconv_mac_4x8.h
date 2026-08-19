@@ -49,6 +49,25 @@ CamppQconvMac4x8Result campp_qconv_mac_4x8_try_tile(
     int32_t accumulators[CAMPP_QCONV_CANDIDATE_TILE]
         [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE]);
 
+/*
+ * Runs the intrinsics kernel after the caller has proved the fixed-tile
+ * contract once at plan/block scope. This deliberately skips dtype, shape,
+ * pointer and zero-point eligibility scans that campp_qconv_mac_4x8_try_tile
+ * performs for every tile. Border and tail callers must keep using the
+ * checked entry point or a generic fallback.
+ */
+CamppQconvMac4x8Result campp_qconv_mac_4x8_intrinsics_validated(
+    const uint8_t *const input_points
+        [CAMPP_QCONV_CANDIDATE_MAX_KERNEL_ELEMENTS]
+        [CAMPP_QCONV_CANDIDATE_TILE],
+    uint32_t kernel_elements,
+    const uint8_t *const packed_weights[2], uint32_t input_channels,
+    int32_t input_zero,
+    const int32_t weight_zero[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    const int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
+    int32_t accumulators[CAMPP_QCONV_CANDIDATE_TILE]
+        [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE]);
+
 int campp_qconv_mac_4x8_intrinsics_raw(
     const CamppQconvMac4x8Params *params);
 

@@ -689,11 +689,19 @@ def build_v2_source_map(
         "out_tile->output_coordinates);",
         start=v4_tile_create_span[0],
     )
-    v4_tile_dispatch_span = _marker_span(
+    v4_tile_dispatch_begin = _find_line(
         v4_tile_lines,
-        "if (campp_qconv_v4_plan_1x1(",
-        "plan, batch, group_channel, tile_count, out_tile);",
+        "switch (plan->preferred_path)",
         start=v4_tile_create_span[0],
+    )
+    v4_tile_generic_call = _find_line(
+        v4_tile_lines,
+        "campp_qconv_v4_plan_generic(",
+        start=v4_tile_dispatch_begin,
+    )
+    v4_tile_dispatch_span = (
+        v4_tile_dispatch_begin,
+        v4_tile_generic_call - 1,
     )
 
     v4_dispatch_run_span = _function_span(
@@ -729,13 +737,22 @@ def build_v2_source_map(
         "packed_weights[0] =",
         start=v4_dispatch_parameter_span[1],
     )
+    v4_dispatch_mac_eligibility_begin = _find_line(
+        v4_dispatch_lines,
+        "fixed_mac_block_eligible =",
+        start=v4_dispatch_weight_begin,
+    )
     v4_dispatch_tile_loop_begin = _find_line(
         v4_dispatch_lines,
         "for (tile_start = 0u; tile_start < plan.output_spatial;",
-        start=v4_dispatch_weight_begin,
+        start=v4_dispatch_mac_eligibility_begin,
     )
     v4_dispatch_weight_span = (
         v4_dispatch_weight_begin,
+        v4_dispatch_mac_eligibility_begin - 1,
+    )
+    v4_dispatch_mac_eligibility_span = (
+        v4_dispatch_mac_eligibility_begin,
         v4_dispatch_tile_loop_begin - 1,
     )
     v4_dispatch_mac_span = _marker_span(
@@ -989,6 +1006,23 @@ def build_v2_source_map(
         "fixed_try_tile_span": _function_span(
             fixed_dispatch_lines, "CamppQconvMac4x8Result campp_qconv_mac_4x8_try_tile("
         ),
+        "fixed_run_validated_span": _function_span(
+            fixed_dispatch_lines,
+            "static CamppQconvMac4x8Result campp_qconv_mac_4x8_run_validated(",
+        ),
+        "fixed_validated_entry_span": _function_span(
+            fixed_dispatch_lines,
+            "CamppQconvMac4x8Result campp_qconv_mac_4x8_intrinsics_validated(",
+        ),
+        "fixed_validated_bias_span": _marker_span(
+            fixed_dispatch_lines,
+            "for (tile = 0u; tile < CAMPP_QCONV_CANDIDATE_TILE; ++tile)",
+            "return CAMPP_QCONV_MAC_4X8_OK;",
+            start=_function_span(
+                fixed_dispatch_lines,
+                "static CamppQconvMac4x8Result campp_qconv_mac_4x8_run_validated(",
+            )[0],
+        ),
         # qconv_mac_4x8_aarch64.S spans
         "assembly_weight_macro_span": _marker_span(
             assembly_lines,
@@ -1081,6 +1115,11 @@ def build_v2_source_map(
         "v4_parameter_span": _function_span(
             v4_parameter_lines, "CamppStatus campp_qconv_v4_parameters_load("
         ),
+        "v4_parameter_fixed_mac_guard_span": _marker_span(
+            v4_parameter_lines,
+            "if (out_parameters->weight_zero[lane] < INT8_MIN ||",
+            "out_parameters->fixed_mac_block_eligible = false;",
+        ),
         "v4_dispatch_spatial_span": _function_span(
             v4_dispatch_lines, "static uint32_t campp_qconv_v4_spatial_index("
         ),
@@ -1088,6 +1127,9 @@ def build_v2_source_map(
         "v4_dispatch_setup_span": v4_dispatch_setup_span,
         "v4_dispatch_parameter_span": v4_dispatch_parameter_span,
         "v4_dispatch_weight_span": v4_dispatch_weight_span,
+        "v4_dispatch_mac_eligibility_span": (
+            v4_dispatch_mac_eligibility_span
+        ),
         "v4_dispatch_mac_span": v4_dispatch_mac_span,
         "v4_dispatch_requant_span": v4_dispatch_requant_span,
         "v4_dispatch_store_span": v4_dispatch_store_span,
@@ -1181,6 +1223,8 @@ def classify_v2_detail_sample(
         return "unclassified"
 
     if source_name == source_map["v4_parameter_source_name"]:
+        if _inside(line, source_map["v4_parameter_fixed_mac_guard_span"]):
+            return "mac_dispatch_guard"
         if _inside(line, source_map["v4_parameter_span"]):
             return "requant_parameter_load"
         return "unclassified"
@@ -1192,6 +1236,8 @@ def classify_v2_detail_sample(
             return "requant_parameter_load"
         if _inside(line, source_map["v4_dispatch_weight_span"]):
             return "mac_weight_load_transform"
+        if _inside(line, source_map["v4_dispatch_mac_eligibility_span"]):
+            return "mac_dispatch_guard"
         if _inside(line, source_map["v4_dispatch_mac_span"]):
             return "mac_dispatch_guard"
         if _inside(line, source_map["v4_dispatch_requant_span"]):
@@ -1278,8 +1324,14 @@ def classify_v2_detail_sample(
             return "mac_dispatch_guard"
 
     if source_name == source_map["fixed_dispatch_source_name"]:
+        if _inside(line, source_map["fixed_validated_bias_span"]):
+            return "mac_bias_tail"
         if _inside(line, source_map["fixed_support_span"]) or _inside(
             line, source_map["fixed_try_tile_span"]
+        ) or _inside(
+            line, source_map["fixed_run_validated_span"]
+        ) or _inside(
+            line, source_map["fixed_validated_entry_span"]
         ):
             return "mac_dispatch_guard"
         return "setup_other"
