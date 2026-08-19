@@ -366,7 +366,7 @@ static int run_case(uint8_t rank)
     CHECK_STATUS(campp_aarch64_qlinear_conv_o4i4(
         &model, &op, inputs_view, 9u, baseline_output, 1u, NULL, 0u));
     for (mode = CAMPP_QCONV_CANDIDATE_ADDRESS;
-         mode <= CAMPP_QCONV_CANDIDATE_MAC_ASM;
+         mode <= CAMPP_QCONV_CANDIDATE_V4;
          mode = (CamppQconvCandidateMode)(mode + 1)) {
         const CamppKernelEntry *entry = campp_qconv_candidate_entry(mode);
         CHECK_TRUE(entry != NULL);
@@ -411,6 +411,10 @@ int main(void)
             campp_qconv_candidate_mode_name(
                 CAMPP_QCONV_CANDIDATE_MAC_FIXED),
             "mac_fixed") == 0);
+    CHECK_TRUE(
+        strcmp(
+            campp_qconv_candidate_mode_name(CAMPP_QCONV_CANDIDATE_V4),
+            "v4") == 0);
     CHECK_TRUE(
         strcmp(
             campp_fused_qconv_candidate_mode_name(

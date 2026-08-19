@@ -3,7 +3,7 @@
 현재 `qlinear_conv/microkernels/qconv_mac_4x8.*` ABI와 검증 코드를 재사용하고
 shape별 hot loop만 추가한다.
 
-예정 파일:
+구현 파일:
 
 ```text
 qconv_mac_1x1_8x8.h
@@ -20,4 +20,3 @@ qconv_mac_tail_intrinsics.c
 - 미지원 dtype/layout/range: 기존 `mac_fixed`로 fallback
 
 assembly는 intrinsics의 bitwise·latency·spill 결과가 나온 뒤에만 추가한다.
-

@@ -12,6 +12,7 @@
 #include "microkernels/qconv_mac_4x8.h"
 #include "qconv_address_fastpath.h"
 #include "qconv_mac_neon.h"
+#include "qconv_v4_dispatch.h"
 
 #if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
 #include "campp_profill/optimization/stage_probe.h"
@@ -705,6 +706,17 @@ CAMPP_DEFINE_QCONV_CANDIDATE(
 CAMPP_DEFINE_QCONV_CANDIDATE(
     campp_qconv_candidate_mac_asm, CAMPP_QCONV_CANDIDATE_MAC_ASM)
 
+static CamppStatus campp_qconv_candidate_v4(
+    const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
+    const CamppTensorView *inputs, uint8_t input_count,
+    CamppTensorView *outputs, uint8_t output_count,
+    void *scratch, size_t scratch_size)
+{
+    return campp_qconv_v4_run(
+        model, op, inputs, input_count, outputs, output_count,
+        scratch, scratch_size);
+}
+
 static const CamppKernelEntry CAMPP_QCONV_CANDIDATE_ENTRIES[] = {
     {
         CAMPP_OP_QLINEAR_CONV,
@@ -740,16 +752,24 @@ static const CamppKernelEntry CAMPP_QCONV_CANDIDATE_ENTRIES[] = {
         campp_qconv_candidate_mac_asm,
         NULL,
         "qlinear_conv_o4i4_neon"
+    },
+    {
+        CAMPP_OP_QLINEAR_CONV,
+        CAMPP_AARCH64_PACKED_KERNEL_ID,
+        campp_qconv_candidate_v4,
+        NULL,
+        "qlinear_conv_o4i4_v4"
     }
 };
 
 const char *campp_qconv_candidate_mode_name(CamppQconvCandidateMode mode)
 {
     static const char *const names[] = {
-        "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm"
+        "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm",
+        "v4"
     };
     return mode >= CAMPP_QCONV_CANDIDATE_BASELINE &&
-        mode <= CAMPP_QCONV_CANDIDATE_MAC_ASM
+        mode <= CAMPP_QCONV_CANDIDATE_V4
         ? names[mode] : "invalid";
 }
 
@@ -759,7 +779,7 @@ int campp_qconv_candidate_mode_parse(
     CamppQconvCandidateMode mode;
     if (text == NULL || out_mode == NULL) return 1;
     for (mode = CAMPP_QCONV_CANDIDATE_BASELINE;
-         mode <= CAMPP_QCONV_CANDIDATE_MAC_ASM;
+         mode <= CAMPP_QCONV_CANDIDATE_V4;
          mode = (CamppQconvCandidateMode)(mode + 1)) {
         if (strcmp(text, campp_qconv_candidate_mode_name(mode)) == 0) {
             *out_mode = mode;
@@ -774,7 +794,7 @@ const CamppKernelEntry *campp_qconv_candidate_entry(
 {
     if (mode == CAMPP_QCONV_CANDIDATE_BASELINE) return NULL;
     if (mode < CAMPP_QCONV_CANDIDATE_ADDRESS ||
-        mode > CAMPP_QCONV_CANDIDATE_MAC_ASM) {
+        mode > CAMPP_QCONV_CANDIDATE_V4) {
         return NULL;
     }
     return &CAMPP_QCONV_CANDIDATE_ENTRIES[mode - 1];

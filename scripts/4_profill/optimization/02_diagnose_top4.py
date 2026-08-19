@@ -486,7 +486,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--qconv-candidate",
         choices=(
-            "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm"
+            "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm",
+            "v4",
         ),
         default="baseline",
     )

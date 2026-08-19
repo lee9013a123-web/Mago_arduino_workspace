@@ -18,6 +18,13 @@ mapfile -t RUNTIME_SOURCES < <(
 
 CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv"
 QCONV_MICROKERNEL_DIR="${CANDIDATE_DIR}/microkernels"
+QCONV_V4_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv_v4"
+QCONV_V4_DISPATCH_DIR="${QCONV_V4_DIR}/dispatch"
+QCONV_V4_PLANNING_DIR="${QCONV_V4_DIR}/planning"
+QCONV_V4_PARAMETERS_DIR="${QCONV_V4_DIR}/parameters"
+QCONV_V4_MICROKERNEL_DIR="${QCONV_V4_DIR}/microkernels"
+QCONV_V4_REQUANT_DIR="${QCONV_V4_DIR}/requant"
+QCONV_V4_STORE_DIR="${QCONV_V4_DIR}/store"
 FUSED_QCONV_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_quant_qconv"
 BN_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant"
 DEQUANT_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/dequantize_linear"
@@ -30,6 +37,15 @@ CANDIDATE_SOURCES=(
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8.c"
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8_intrinsics.c"
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8_aarch64.S"
+    "${QCONV_V4_PLANNING_DIR}/qconv_v4_execution_plan.c"
+    "${QCONV_V4_PLANNING_DIR}/qconv_v4_tile_plan.c"
+    "${QCONV_V4_PARAMETERS_DIR}/qconv_v4_parameters.c"
+    "${QCONV_V4_MICROKERNEL_DIR}/qconv_mac_1x1_8x8_intrinsics.c"
+    "${QCONV_V4_MICROKERNEL_DIR}/qconv_mac_3x3_interior_8x8_intrinsics.c"
+    "${QCONV_V4_MICROKERNEL_DIR}/qconv_mac_tail_intrinsics.c"
+    "${QCONV_V4_REQUANT_DIR}/qconv_requant_neon8.c"
+    "${QCONV_V4_STORE_DIR}/qconv_store_channel_packed.c"
+    "${QCONV_V4_DISPATCH_DIR}/qconv_v4_dispatch.c"
     "${CANDIDATE_DIR}/qconv_candidate.c"
     "${FUSED_QCONV_CANDIDATE_DIR}/fused_input_quant_neon.c"
     "${FUSED_QCONV_CANDIDATE_DIR}/fused_quant_qconv_candidate.c"
@@ -57,6 +73,13 @@ INCLUDES=(
     -I "${ROOT}/src/c/profill/optimization/include"
     -I "${CANDIDATE_DIR}"
     -I "${QCONV_MICROKERNEL_DIR}"
+    -I "${QCONV_V4_DIR}"
+    -I "${QCONV_V4_DISPATCH_DIR}"
+    -I "${QCONV_V4_PLANNING_DIR}"
+    -I "${QCONV_V4_PARAMETERS_DIR}"
+    -I "${QCONV_V4_MICROKERNEL_DIR}"
+    -I "${QCONV_V4_REQUANT_DIR}"
+    -I "${QCONV_V4_STORE_DIR}"
     -I "${FUSED_QCONV_CANDIDATE_DIR}"
     -I "${BN_CANDIDATE_DIR}"
     -I "${DEQUANT_CANDIDATE_DIR}"
@@ -134,6 +157,14 @@ INCLUDES=(
     "${INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
     "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/qconv_v4/test_qconv_v4_primitives.c" \
+    -lm -o "${BUILD_DIR}/test_qconv_v4_primitives"
+
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${CANDIDATE_SOURCES[@]}" \
     "${ROOT}/tests/runtime/profill/test_bn_candidate.c" \
     -lm -o "${BUILD_DIR}/test_bn_candidate"
 
@@ -166,7 +197,7 @@ INCLUDES=(
     printf 'cflags=%s\n' "${CFLAGS}"
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
     printf 'hotspot_stage_probe=disabled\n'
-    printf 'qconv_candidate_modes=baseline,address,mac,combined,mac_fixed,mac_asm\n'
+    printf 'qconv_candidate_modes=baseline,address,mac,combined,mac_fixed,mac_asm,v4\n'
     printf 'fused_qconv_candidate_modes=baseline,mac,combined,mac_fixed,quant_neon,combined_fixed\n'
     printf 'bn_candidate_modes=baseline,address,affine,quant,combined\n'
     printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
@@ -182,6 +213,7 @@ echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"
 echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"
 echo "  QConv 4x8:  ${BUILD_DIR}/test_qconv_microkernel_4x8"
+echo "  QConv v4:   ${BUILD_DIR}/test_qconv_v4_primitives"
 echo "  BN test:    ${BUILD_DIR}/test_bn_candidate"
 echo "  Dequant:    ${BUILD_DIR}/test_dequant_candidate"
 echo "  Fused DQRQ: ${BUILD_DIR}/test_fused_dequant_relu_quant_candidate"
