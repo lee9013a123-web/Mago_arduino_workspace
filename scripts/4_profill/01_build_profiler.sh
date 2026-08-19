@@ -7,7 +7,18 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-${ROOT}/build/profill}"
 CC="${CC:-gcc}"
+CPPFLAGS="${CPPFLAGS:-}"
 CFLAGS="${CFLAGS:--std=c11 -O3 -DNDEBUG -Wall -Wextra}"
+LDFLAGS="${LDFLAGS:-}"
+BUILD_VARIANT="${BUILD_VARIANT:-default}"
+BUILD_SCOPE="${BUILD_SCOPE:-all}"
+STRIP="${STRIP:-strip}"
+STRIP_FINAL="${STRIP_FINAL:-0}"
+
+if [[ "${BUILD_SCOPE}" != "all" && "${BUILD_SCOPE}" != "compiler_matrix" ]]; then
+    echo "BUILD_SCOPE must be all or compiler_matrix" >&2
+    exit 2
+fi
 
 mkdir -p "${BUILD_DIR}"
 
@@ -72,36 +83,38 @@ FINAL_CANDIDATE_SOURCES=(
 echo "E7 profiling tools build (${CC})"
 echo "  build dir: ${BUILD_DIR}"
 
-# shellcheck disable=SC2086
-"${CC}" ${CFLAGS} \
-    "${COMMON_INCLUDES[@]}" \
-    "${RUNTIME_SOURCES[@]}" \
-    "${ROOT}/src/c/runtime/command_line/campp_runtime_benchmark.c" \
-    -lm -o "${BUILD_DIR}/campp_runtime_benchmark"
+if [[ "${BUILD_SCOPE}" == "all" ]]; then
+    # shellcheck disable=SC2086
+    "${CC}" ${CPPFLAGS} ${CFLAGS} \
+        "${COMMON_INCLUDES[@]}" \
+        "${RUNTIME_SOURCES[@]}" \
+        "${ROOT}/src/c/runtime/command_line/campp_runtime_benchmark.c" \
+        ${LDFLAGS} -lm -o "${BUILD_DIR}/campp_runtime_benchmark"
 
-# shellcheck disable=SC2086
-"${CC}" ${CFLAGS} -DCAMPP_ENABLE_OPERATOR_PROFILING=1 \
-    "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
-    "${RUNTIME_SOURCES[@]}" \
-    "${ROOT}/src/c/profill/operator_profiler.c" \
-    "${ROOT}/src/c/profill/runtime_fixture.c" \
-    "${ROOT}/src/c/profill/command_line/campp_e7_profiler.c" \
-    -lm -o "${BUILD_DIR}/campp_e7_profiler"
+    # shellcheck disable=SC2086
+    "${CC}" ${CPPFLAGS} ${CFLAGS} -DCAMPP_ENABLE_OPERATOR_PROFILING=1 \
+        "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
+        "${RUNTIME_SOURCES[@]}" \
+        "${ROOT}/src/c/profill/operator_profiler.c" \
+        "${ROOT}/src/c/profill/runtime_fixture.c" \
+        "${ROOT}/src/c/profill/command_line/campp_e7_profiler.c" \
+        ${LDFLAGS} -lm -o "${BUILD_DIR}/campp_e7_profiler"
+fi
 
 # 최종 후보를 실제 RuntimeContext registry에 적용한 비계측/계측 쌍이다.
 # 두 실행 파일은 같은 runtime/candidate source와 Release option을 사용한다.
 # shellcheck disable=SC2086
-"${CC}" ${CFLAGS} -DCAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1 \
+"${CC}" ${CPPFLAGS} ${CFLAGS} -DCAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1 \
     "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
     "${FINAL_INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
     "${FINAL_CANDIDATE_SOURCES[@]}" \
     "${FINAL_SUITE_SOURCE}" \
     "${ROOT}/src/c/runtime/command_line/campp_runtime_benchmark.c" \
-    -lm -o "${BUILD_DIR}/campp_runtime_benchmark_final"
+    ${LDFLAGS} -lm -o "${BUILD_DIR}/campp_runtime_benchmark_final"
 
 # shellcheck disable=SC2086
-"${CC}" ${CFLAGS} \
+"${CC}" ${CPPFLAGS} ${CFLAGS} \
     -DCAMPP_ENABLE_OPERATOR_PROFILING=1 \
     -DCAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1 \
     "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
@@ -112,48 +125,95 @@ echo "  build dir: ${BUILD_DIR}"
     "${FINAL_CANDIDATE_SOURCES[@]}" \
     "${FINAL_SUITE_SOURCE}" \
     "${ROOT}/src/c/profill/command_line/campp_e7_profiler.c" \
-    -lm -o "${BUILD_DIR}/campp_e7_profiler_final"
+    ${LDFLAGS} -lm -o "${BUILD_DIR}/campp_e7_profiler_final"
 
-# shellcheck disable=SC2086
-"${CC}" ${CFLAGS} \
-    "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
-    "${ROOT}/src/c/profill/operator_profiler.c" \
-    "${ROOT}/tests/runtime/profill/test_operator_profiler.c" \
-    -lm -o "${BUILD_DIR}/test_operator_profiler"
+if [[ "${BUILD_SCOPE}" == "all" ]]; then
+    # shellcheck disable=SC2086
+    "${CC}" ${CPPFLAGS} ${CFLAGS} \
+        "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
+        "${ROOT}/src/c/profill/operator_profiler.c" \
+        "${ROOT}/tests/runtime/profill/test_operator_profiler.c" \
+        ${LDFLAGS} -lm -o "${BUILD_DIR}/test_operator_profiler"
 
-# graph_executor의 compile-time hook이 실제 sample을 남기는지 검증한다.
-# shellcheck disable=SC2086
-"${CC}" ${CFLAGS} -DCAMPP_ENABLE_OPERATOR_PROFILING=1 \
-    "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
-    "${RUNTIME_SOURCES[@]}" \
-    "${ROOT}/src/c/profill/operator_profiler.c" \
-    "${ROOT}/tests/runtime/operator_replay_tests/test_graph_executor.c" \
-    -lm -o "${BUILD_DIR}/test_profiled_graph_executor"
+    # graph_executor의 compile-time hook이 실제 sample을 남기는지 검증한다.
+    # shellcheck disable=SC2086
+    "${CC}" ${CPPFLAGS} ${CFLAGS} -DCAMPP_ENABLE_OPERATOR_PROFILING=1 \
+        "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
+        "${RUNTIME_SOURCES[@]}" \
+        "${ROOT}/src/c/profill/operator_profiler.c" \
+        "${ROOT}/tests/runtime/operator_replay_tests/test_graph_executor.c" \
+        ${LDFLAGS} -lm -o "${BUILD_DIR}/test_profiled_graph_executor"
+fi
 
 # 최종 registry가 정확한 14개 entry만 교체하는지 검증한다.
 # shellcheck disable=SC2086
-"${CC}" ${CFLAGS} \
+"${CC}" ${CPPFLAGS} ${CFLAGS} \
     "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
     "${FINAL_INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
     "${FINAL_CANDIDATE_SOURCES[@]}" \
     "${FINAL_SUITE_SOURCE}" \
     "${ROOT}/tests/runtime/profill/test_final_candidate_suite.c" \
-    -lm -o "${BUILD_DIR}/test_final_candidate_suite"
+    ${LDFLAGS} -lm -o "${BUILD_DIR}/test_final_candidate_suite"
+
+if [[ "${BUILD_SCOPE}" == "compiler_matrix" ]]; then
+    # Retained Tensor 전체를 compiler variant 사이에서 bitwise 비교한다.
+    # shellcheck disable=SC2086
+    "${CC}" ${CPPFLAGS} ${CFLAGS} \
+        -DCAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1 \
+        "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
+        "${FINAL_INCLUDES[@]}" \
+        "${RUNTIME_SOURCES[@]}" \
+        "${FINAL_CANDIDATE_SOURCES[@]}" \
+        "${FINAL_SUITE_SOURCE}" \
+        "${ROOT}/tests/runtime/operator_replay_tests/campp_reference_dump.c" \
+        ${LDFLAGS} -lm -o "${BUILD_DIR}/campp_reference_dump_final"
+fi
+
+if [[ "${STRIP_FINAL}" == "1" ]]; then
+    cp "${BUILD_DIR}/campp_runtime_benchmark_final" \
+        "${BUILD_DIR}/campp_runtime_benchmark_final.unstripped"
+    "${STRIP}" --strip-unneeded \
+        "${BUILD_DIR}/campp_runtime_benchmark_final"
+fi
 
 {
     printf 'cc=%s\n' "${CC}"
+    printf 'cppflags=%s\n' "${CPPFLAGS}"
     printf 'cflags=%s\n' "${CFLAGS}"
+    printf 'ldflags=%s\n' "${LDFLAGS}"
+    printf 'build_variant=%s\n' "${BUILD_VARIANT}"
+    printf 'build_scope=%s\n' "${BUILD_SCOPE}"
+    printf 'strip_final=%s\n' "${STRIP_FINAL}"
     printf 'profiling_macro=CAMPP_ENABLE_OPERATOR_PROFILING=1\n'
     printf 'final_suite_macro=CAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1\n'
     printf 'final_suite=%s\n' 'qconv_mac_fixed+fused_combined_fixed+bn_combined+dequant_neon_combined+remaining_optimized'
 } > "${BUILD_DIR}/build_metadata.txt"
 
+metadata_binaries=(
+    campp_runtime_benchmark_final
+    campp_e7_profiler_final
+)
+if [[ "${BUILD_SCOPE}" == "all" ]]; then
+    metadata_binaries+=(campp_runtime_benchmark campp_e7_profiler)
+fi
+for binary in "${metadata_binaries[@]}"; do
+    cp "${BUILD_DIR}/build_metadata.txt" \
+        "${BUILD_DIR}/${binary}.build.txt"
+done
+
 echo "Build complete"
-echo "  baseline: ${BUILD_DIR}/campp_runtime_benchmark"
-echo "  profiler: ${BUILD_DIR}/campp_e7_profiler"
+if [[ "${BUILD_SCOPE}" == "all" ]]; then
+    echo "  baseline: ${BUILD_DIR}/campp_runtime_benchmark"
+    echo "  profiler: ${BUILD_DIR}/campp_e7_profiler"
+fi
 echo "  final baseline: ${BUILD_DIR}/campp_runtime_benchmark_final"
 echo "  final profiler: ${BUILD_DIR}/campp_e7_profiler_final"
-echo "  C test:   ${BUILD_DIR}/test_operator_profiler"
-echo "  hook test:${BUILD_DIR}/test_profiled_graph_executor"
+if [[ "${BUILD_SCOPE}" == "all" ]]; then
+    echo "  C test:   ${BUILD_DIR}/test_operator_profiler"
+    echo "  hook test:${BUILD_DIR}/test_profiled_graph_executor"
+fi
 echo "  suite test:${BUILD_DIR}/test_final_candidate_suite"
+if [[ "${BUILD_SCOPE}" == "compiler_matrix" ]]; then
+    echo "  tensor dump:${BUILD_DIR}/campp_reference_dump_final"
+fi

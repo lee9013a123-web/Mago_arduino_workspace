@@ -23,6 +23,10 @@
 #include "internal/runtime_context.h"
 #include "internal/runtime_model.h"
 
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+#include "campp_profill/optimization/final_candidate_suite.h"
+#endif
+
 static int read_entire_file(const char *path, uint8_t **out_data, size_t *out_size)
 {
     FILE *file = fopen(path, "rb");
@@ -191,6 +195,9 @@ int main(int argc, char **argv)
     CamppRuntimeModel model;
     CamppRuntimeContext context;
     const CamppKernelRegistry *registry = NULL;
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+    CamppFinalCandidateSuite final_candidate_suite;
+#endif
     const CamppTensorDescriptor *input_descriptor;
     uint32_t input_dimensions[CAMPP_TENSOR_MAX_RANK];
     uint32_t input_tensor_id;
@@ -219,6 +226,18 @@ int main(int argc, char **argv)
         model.operator_count != 0u && model.operators[0].kernel_id != 0u
             ? campp_cpu_aarch64_registry()
             : campp_cpu_reference_registry();
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+    memset(&final_candidate_suite, 0, sizeof(final_candidate_suite));
+    status = campp_final_candidate_suite_create(registry, &final_candidate_suite);
+    if (status != CAMPP_STATUS_OK) {
+        fprintf(
+            stderr, "final candidate suite create failed: %s\n",
+            campp_status_name(status));
+        campp_runtime_model_release(&model);
+        return 1;
+    }
+    registry = &final_candidate_suite.registry;
+#endif
 
     memset(&context, 0, sizeof(context));
     status = campp_runtime_context_create(&model, registry, &context);

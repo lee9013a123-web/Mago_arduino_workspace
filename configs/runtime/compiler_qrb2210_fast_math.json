@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "name": "qrb2210-final-suite-fast-math-isolation",
+  "benchmark_config": "configs/benchmark/runtime_e7_98_fast.json",
+  "build_script": "scripts/4_profill/01_build_profiler.sh",
+  "expected_suite": "final",
+  "requires_base_decision": true,
+  "base_cppflags": "",
+  "base_cflags": "",
+  "base_ldflags": "",
+  "selection": {
+    "minimum_p50_improvement_pct": 2.0,
+    "maximum_p95_regression_pct": 1.0,
+    "maximum_cv_pct": 3.0,
+    "maximum_peak_rss_increase_bytes": 1048576
+  },
+  "stages": [
+    {
+      "name": "fast_math",
+      "objective": "latency",
+      "inherit_winner": false,
+      "candidates": [
+        {"name": "strict"},
+        {"name": "no_math_errno", "cflags": "-fno-math-errno"},
+        {"name": "fast_math", "cflags": "-ffast-math"}
+      ]
+    }
+  ]
+}

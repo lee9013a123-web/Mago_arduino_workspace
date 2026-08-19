@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "name": "qrb2210-final-suite-strict-compile-matrix",
+  "benchmark_config": "configs/benchmark/runtime_e7_98_fast.json",
+  "build_script": "scripts/4_profill/01_build_profiler.sh",
+  "expected_suite": "final",
+  "base_cppflags": "",
+  "base_cflags": "-std=c11 -DNDEBUG -Wall -Wextra",
+  "base_ldflags": "",
+  "selection": {
+    "minimum_p50_improvement_pct": 2.0,
+    "maximum_p95_regression_pct": 1.0,
+    "maximum_cv_pct": 3.0,
+    "maximum_peak_rss_increase_bytes": 1048576
+  },
+  "stages": [
+    {
+      "name": "optimization_level",
+      "objective": "latency",
+      "inherit_winner": false,
+      "candidates": [
+        {"name": "o2", "cflags": "-O2"},
+        {"name": "o3", "cflags": "-O3"}
+      ]
+    },
+    {
+      "name": "cpu",
+      "objective": "latency",
+      "inherit_winner": true,
+      "candidates": [
+        {"name": "generic"},
+        {"name": "cortex_a53", "cflags": "-mcpu=cortex-a53"},
+        {
+          "name": "march_tune_a53",
+          "cflags": "-march=armv8-a+simd -mtune=cortex-a53"
+        },
+        {"name": "native", "cflags": "-mcpu=native"}
+      ]
+    },
+    {
+      "name": "lto",
+      "objective": "latency",
+      "inherit_winner": true,
+      "candidates": [
+        {"name": "disabled"},
+        {"name": "enabled", "cflags": "-flto", "ldflags": "-flto"}
+      ]
+    },
+    {
+      "name": "inline",
+      "objective": "latency",
+      "inherit_winner": true,
+      "candidates": [
+        {"name": "compiler_default"},
+        {
+          "name": "explicit",
+          "cflags": "-finline-functions -finline-small-functions"
+        }
+      ]
+    },
+    {
+      "name": "loop_unroll",
+      "objective": "latency",
+      "inherit_winner": true,
+      "candidates": [
+        {"name": "compiler_default"},
+        {"name": "enabled", "cflags": "-funroll-loops"}
+      ]
+    },
+    {
+      "name": "frame_pointer",
+      "objective": "latency",
+      "inherit_winner": true,
+      "candidates": [
+        {"name": "compiler_default"},
+        {"name": "omit", "cflags": "-fomit-frame-pointer"},
+        {"name": "keep", "cflags": "-fno-omit-frame-pointer"}
+      ]
+    },
+    {
+      "name": "packaging",
+      "objective": "size",
+      "inherit_winner": true,
+      "candidates": [
+        {"name": "default"},
+        {
+          "name": "gc_sections",
+          "cflags": "-ffunction-sections -fdata-sections",
+          "ldflags": "-Wl,--gc-sections"
+        },
+        {
+          "name": "gc_sections_strip",
+          "cflags": "-ffunction-sections -fdata-sections",
+          "ldflags": "-Wl,--gc-sections",
+          "strip": true
+        }
+      ]
+    }
+  ]
+}

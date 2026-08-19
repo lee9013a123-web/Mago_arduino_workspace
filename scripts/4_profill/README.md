@@ -37,6 +37,22 @@ python3 -m unittest tests.runtime.profill.test_profile_statistics
 기본 빌드 옵션은 두 실행 파일 모두
 `-std=c11 -O3 -DNDEBUG -Wall -Wextra`이다.
 
+## QRB2210 컴파일 옵션 Quick matrix
+
+통합 `final_candidate_suite`의 C 코드를 복제하지 않고 컴파일 옵션만 단계별로
+바꿔 빌드·측정한다. O2/O3, CPU target, LTO, inline, loop unroll, frame pointer,
+section GC/strip을 순서대로 비교하며 fast-math는 별도 설정으로 격리한다.
+
+```bash
+bash scripts/4_profill/compiler/01_run_matrix.sh --preflight-only
+bash scripts/4_profill/compiler/01_run_matrix.sh --run-id strict_quick_01
+python3 scripts/4_profill/compiler/03_compare_matrix.py --run-id strict_quick_01
+```
+
+후보별 build와 raw 측정은 `build/`·`runs/` 아래에 격리되고, 선정 근거만
+`results/profiling/e7_98/compiler_matrix/<run-id>/`에 저장된다. 상세한 재개,
+최종 후보 profile, fast-math 명령은 `compiler/README.md`를 참고한다.
+
 ## 실행 모드
 
 기본값은 병목을 빠르게 찾기 위한 Quick 모드다.
