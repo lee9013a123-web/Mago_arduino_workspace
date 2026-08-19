@@ -155,13 +155,17 @@ def _validate_payload(
 ) -> None:
     operator = payload.get("operator", {})
     samples = payload.get("samples_ns")
+    if payload.get("output_hash_matches") is not True:
+        raise RemainingBenchmarkError(
+            f"bitwise mismatch for {case['case_name']} ({mode}): "
+            f"output_hash={payload.get('output_hash', '<missing>')}"
+        )
     if (
         payload.get("mode") != "operator_microbench"
         or payload.get("remaining_candidate") != mode
         or operator.get("operator_id") != case["operator_id"]
         or operator.get("kernel_id") != case["kernel_id"]
         or operator.get("kernel_name") != case["kernel_name"]
-        or payload.get("output_hash_matches") is not True
         or not isinstance(samples, list)
         or len(samples) != repeat
         or any(not isinstance(value, int) or value <= 0 for value in samples)
@@ -169,6 +173,24 @@ def _validate_payload(
         raise RemainingBenchmarkError(
             f"invalid {mode} payload for {case['case_name']}"
         )
+
+
+def _save_raw_payload(
+    runs_dir: Path,
+    case_name: str,
+    mode: str,
+    feature: Path,
+    payload: dict[str, Any],
+) -> None:
+    payload["input"] = _display_path(feature)
+    raw = runs_dir / mode / case_name
+    raw.mkdir(parents=True, exist_ok=True)
+    raw_path = raw / f"{feature.stem}.json"
+    raw_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
 
 
 def build_result(
@@ -366,6 +388,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                         mode="baseline",
                     )
                 )
+                _save_raw_payload(
+                    args.runs_dir, case["case_name"], "baseline", feature,
+                    baseline,
+                )
                 _validate_payload(baseline, case, "baseline", args.repeat)
                 optimized = DIAGNOSIS._run_payload(
                     _command(
@@ -380,20 +406,15 @@ def main(argv: Sequence[str] | None = None) -> int:
                         expected_hash=str(baseline["output_hash"]),
                     )
                 )
+                _save_raw_payload(
+                    args.runs_dir, case["case_name"], "optimized", feature,
+                    optimized,
+                )
                 _validate_payload(optimized, case, "optimized", args.repeat)
                 for mode, payload in (
                     ("baseline", baseline),
                     ("optimized", optimized),
                 ):
-                    payload["input"] = _display_path(feature)
-                    raw = args.runs_dir / mode / case["case_name"]
-                    raw.mkdir(parents=True, exist_ok=True)
-                    raw_path = raw / f"{feature.stem}.json"
-                    raw_path.write_text(
-                        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-                        encoding="utf-8",
-                        newline="\n",
-                    )
                     mode_payloads[mode].append(payload)
             baseline_samples = [
                 int(sample)

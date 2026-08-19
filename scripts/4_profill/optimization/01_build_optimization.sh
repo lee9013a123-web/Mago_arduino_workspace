@@ -30,6 +30,7 @@ CANDIDATE_SOURCES=(
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8_intrinsics.c"
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8_aarch64.S"
     "${CANDIDATE_DIR}/qconv_candidate.c"
+    "${FUSED_QCONV_CANDIDATE_DIR}/fused_input_quant_neon.c"
     "${FUSED_QCONV_CANDIDATE_DIR}/fused_quant_qconv_candidate.c"
     "${BN_CANDIDATE_DIR}/bn_iteration_fastpath.c"
     "${BN_CANDIDATE_DIR}/bn_affine_fastpath.c"
@@ -143,7 +144,7 @@ INCLUDES=(
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
     printf 'hotspot_stage_probe=disabled\n'
     printf 'qconv_candidate_modes=baseline,address,mac,combined,mac_fixed,mac_asm\n'
-    printf 'fused_qconv_candidate_modes=baseline,mac,combined\n'
+    printf 'fused_qconv_candidate_modes=baseline,mac,combined,mac_fixed,quant_neon,combined_fixed\n'
     printf 'bn_candidate_modes=baseline,address,affine,quant,combined\n'
     printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
     printf 'remaining_candidate_modes=baseline,optimized\n'

@@ -53,6 +53,10 @@ def compare_diagnoses(
         all_bitwise = all_bitwise and bitwise
         before_mean = float(before["wall"]["mean_ms"])
         after_mean = float(after["wall"]["mean_ms"])
+        before_p50 = float(before["wall"]["p50_ms"])
+        after_p50 = float(after["wall"]["p50_ms"])
+        before_p95 = float(before["wall"]["p95_ms"])
+        after_p95 = float(after["wall"]["p95_ms"])
         comparisons.append(
             {
                 "case_name": name,
@@ -69,10 +73,16 @@ def compare_diagnoses(
                     if before_mean
                     else None
                 ),
-                "baseline_p50_ms": before["wall"]["p50_ms"],
-                "candidate_p50_ms": after["wall"]["p50_ms"],
-                "baseline_p95_ms": before["wall"]["p95_ms"],
-                "candidate_p95_ms": after["wall"]["p95_ms"],
+                "baseline_p50_ms": before_p50,
+                "candidate_p50_ms": after_p50,
+                "p50_speedup_ratio": (
+                    before_p50 / after_p50 if after_p50 else None
+                ),
+                "baseline_p95_ms": before_p95,
+                "candidate_p95_ms": after_p95,
+                "p95_speedup_ratio": (
+                    before_p95 / after_p95 if after_p95 else None
+                ),
             }
         )
     any_faster = any(
@@ -83,6 +93,12 @@ def compare_diagnoses(
         item["candidate_mean_ms"] <= item["baseline_mean_ms"] * 1.01
         for item in comparisons
     )
+    baseline_sum_mean = sum(item["baseline_mean_ms"] for item in comparisons)
+    candidate_sum_mean = sum(item["candidate_mean_ms"] for item in comparisons)
+    baseline_sum_p50 = sum(item["baseline_p50_ms"] for item in comparisons)
+    candidate_sum_p50 = sum(item["candidate_p50_ms"] for item in comparisons)
+    baseline_sum_p95 = sum(item["baseline_p95_ms"] for item in comparisons)
+    candidate_sum_p95 = sum(item["candidate_p95_ms"] for item in comparisons)
     return {
         "schema_version": 1,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -93,6 +109,31 @@ def compare_diagnoses(
         "candidate_microbench_gate_passed": (
             all_bitwise and any_faster and no_case_regressed
         ),
+        "family_operator_sum": {
+            "operator_count": len(comparisons),
+            "baseline_mean_ms": baseline_sum_mean,
+            "candidate_mean_ms": candidate_sum_mean,
+            "mean_speedup_ratio": (
+                baseline_sum_mean / candidate_sum_mean
+                if candidate_sum_mean else None
+            ),
+            "baseline_sum_p50_ms": baseline_sum_p50,
+            "candidate_sum_p50_ms": candidate_sum_p50,
+            "sum_p50_speedup_ratio": (
+                baseline_sum_p50 / candidate_sum_p50
+                if candidate_sum_p50 else None
+            ),
+            "baseline_sum_p95_ms": baseline_sum_p95,
+            "candidate_sum_p95_ms": candidate_sum_p95,
+            "sum_p95_speedup_ratio": (
+                baseline_sum_p95 / candidate_sum_p95
+                if candidate_sum_p95 else None
+            ),
+            "note": (
+                "p50/p95 sums are operator-level aggregate indicators, not "
+                "a synchronized whole-graph percentile"
+            ),
+        },
         "cases": comparisons,
         "next_gate": "full retained-tensor bitwise validation and Quick E2E profiling",
     }

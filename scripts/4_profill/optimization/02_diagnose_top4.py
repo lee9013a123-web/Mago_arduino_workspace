@@ -159,6 +159,38 @@ def select_representative_cases(
     return cases
 
 
+def select_fused_qconv_family_cases(
+    operators: Sequence[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Select every fused QuantizeLinear -> packed QLinearConv operator."""
+
+    selected = [
+        operator
+        for operator in operators
+        if operator.get("kernel_name") == "fused_quant_qlinear_conv_o4i4"
+    ]
+    if not selected:
+        raise DiagnosisError("profile is missing fused Quant-QConv operators")
+    selected.sort(key=lambda item: int(item["operator_id"]))
+    return [
+        {
+            "case_name": f"fused_quant_qconv_op_{int(operator['operator_id'])}",
+            "operator_id": int(operator["operator_id"]),
+            "kernel_id": int(operator["kernel_id"]),
+            "kernel_name": str(operator["kernel_name"]),
+            "operator_type": str(operator["operator_type"]),
+            "weight_shape": list(_meaningful_weight_shape(operator)),
+            "profile_mean_ms": float(operator["mean_ms"]),
+            "profile_share_pct": float(operator["end_to_end_share_pct"]),
+        }
+        for operator in selected
+    ]
+
+
+def _is_fused_qconv_case(case: dict[str, Any]) -> bool:
+    return case.get("kernel_name") == "fused_quant_qlinear_conv_o4i4"
+
+
 def _pin_cpu_zero() -> None:
     os.sched_setaffinity(0, {0})
 
@@ -461,10 +493,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--qconv-only", action="store_true")
     parser.add_argument(
         "--fused-qconv-candidate",
-        choices=("baseline", "mac", "combined"),
+        choices=(
+            "baseline", "mac", "combined", "mac_fixed", "quant_neon",
+            "combined_fixed",
+        ),
         default="baseline",
     )
     parser.add_argument("--fused-qconv-only", action="store_true")
+    parser.add_argument(
+        "--fused-qconv-family",
+        action="store_true",
+        help="measure every fused Quant-QConv operator in the profile",
+    )
     parser.add_argument(
         "--bn-candidate",
         choices=("baseline", "address", "affine", "quant", "combined"),
@@ -500,13 +540,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         selected_only_modes = sum(
             (
                 args.qconv_only, args.fused_qconv_only,
+                args.fused_qconv_family,
                 args.bn_only, args.dequant_only,
             )
         )
         if selected_only_modes > 1:
             raise DiagnosisError(
-                "--qconv-only, --fused-qconv-only, --bn-only and "
-                "--dequant-only "
+                "--qconv-only, --fused-qconv-only, "
+                "--fused-qconv-family, --bn-only and --dequant-only "
                 "are mutually exclusive"
             )
         if os.name != "posix" and not args.preflight_only:
@@ -514,7 +555,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not args.profile.is_file():
             raise DiagnosisError(f"profile not found: {args.profile}")
         profile = json.loads(args.profile.read_text(encoding="utf-8"))
-        cases = select_representative_cases(profile.get("operators", []))
+        operators = profile.get("operators", [])
+        if args.fused_qconv_family:
+            cases = select_fused_qconv_family_cases(operators)
+        else:
+            cases = select_representative_cases(operators)
         if args.qconv_only:
             cases = [
                 case
@@ -621,7 +666,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                         ),
                         fused_qconv_candidate=(
                             args.fused_qconv_candidate
-                            if case["case_name"] == "fused_quant_qconv"
+                            if _is_fused_qconv_case(case)
                             else "baseline"
                         ),
                         bn_candidate=(
@@ -648,7 +693,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
                 expected_fused_qconv_candidate = (
                     args.fused_qconv_candidate
-                    if case["case_name"] == "fused_quant_qconv"
+                    if _is_fused_qconv_case(case)
                     else "baseline"
                 )
                 expected_dequant_candidate = (

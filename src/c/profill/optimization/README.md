@@ -16,10 +16,11 @@ QConv 일반 경로와 fused Quant-QConv는 동일한 O4I4 core를 공유한다.
 후보는 `candidates/qlinear_conv/`에 모으고 address, MAC, combined와 고정
 S4×O8 microkernel 모드로 각각 측정한다. `mac_fixed`는 compiler register
 allocation을 비교하고 `mac_asm`은 fixed intrinsics에도 spill이 남을 때만
-검증한다. fused 후보는 production의 quantization/scratch driver를 그대로
-사용하고 QConv runner만 주입한다. 따라서 별도 MAC 구현 없이 같은 개선을
-공유하며, fused 측정에서 남는 input quantization 비중은 후속 tile quantization
-후보의 근거로 사용한다. 이후 BN-ReLU-Quant, DequantizeLinear를 분리한다.
+검증한다. fused 후보는 production의 validation/scratch driver를 그대로
+사용하고 QConv runner와 input quantizer를 독립적으로 주입한다. `mac_fixed`는
+공통 QConv 효과, `quant_neon`은 fused input pass 효과, `combined_fixed`는 두
+효과를 함께 측정한다. 따라서 별도 MAC 구현 없이 같은 개선을 공유한다. 이후
+BN-ReLU-Quant, DequantizeLinear를 분리한다.
 
 BN 후보도 production registry와 분리한다. `address`, `affine`, `quant`는
 각 원인의 독립 효과를 확인하고 `combined`는 channel-packed 입력에서 채널

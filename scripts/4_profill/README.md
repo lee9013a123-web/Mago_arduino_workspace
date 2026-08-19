@@ -291,15 +291,16 @@ results/profiling/e7_98/optimization/qconv_spill/decision.json
 
 ## Fused Quant-QConv 후보 비교
 
-fused 후보는 production의 FP32→UINT8 quantization과 scratch를 그대로 사용하고,
-그 뒤 호출되는 packed QConv runner만 `mac` 또는 `combined` 후보로 바꾼다.
-따라서 일반 QConv 코드를 복사하지 않으며 fused 전용 수치 의미도 바뀌지 않는다.
+fused 후보는 production의 validation과 scratch 구성을 그대로 사용한다. `mac`,
+`combined`, `mac_fixed`는 packed QConv runner만 교체하고, `quant_neon`은 QConv를
+baseline으로 유지한 채 FP32→UINT8 pass만 교체한다. `combined_fixed`는
+`quant_neon`과 `mac_fixed`를 함께 적용한다. 일반 QConv 코드는 복사하지 않는다.
 
 ```bash
 bash scripts/4_profill/optimization/01_build_optimization.sh
 build/profill/optimization/test_qconv_candidate
 
-for mode in baseline mac combined; do
+for mode in baseline mac_fixed quant_neon combined_fixed; do
   python3 scripts/4_profill/optimization/02_diagnose_top4.py \
     --fused-qconv-only \
     --fused-qconv-candidate "${mode}" \
@@ -308,7 +309,7 @@ for mode in baseline mac combined; do
     --force
 done
 
-for mode in mac combined; do
+for mode in mac_fixed quant_neon combined_fixed; do
   python3 scripts/4_profill/optimization/03_compare_candidate.py \
     --baseline results/profiling/e7_98/optimization/fused_qconv_candidates/baseline.json \
     --candidate "results/profiling/e7_98/optimization/fused_qconv_candidates/${mode}.json" \
@@ -320,6 +321,31 @@ done
 세 입력의 output hash가 bitwise 동일해야 하며, 후보 적용 뒤
 `fused_input_quantize`가 새 병목으로 커지는지는 stage 비중으로 다시 확인한다.
 microbench 통과 후에도 retained tensor bitwise와 Quick E2E 검증이 필요하다.
+
+대표 Operator가 아니라 profile의 `fused_quant_qlinear_conv_o4i4` 전체를 비교할
+때는 family runner를 사용한다. 현재 E7 profile에서는 110개 Operator가 대상이다.
+
+```bash
+python3 scripts/4_profill/optimization/08_benchmark_fused_qconv_family.py \
+  --preflight-only
+
+python3 scripts/4_profill/optimization/08_benchmark_fused_qconv_family.py \
+  --force
+```
+
+결과는 다음 경로에 생성된다.
+
+```text
+runs/profiling/e7_98/optimization/fused_qconv_family/{mode}/raw/
+results/profiling/e7_98/optimization/fused_qconv_family/{mode}.json
+results/profiling/e7_98/optimization/fused_qconv_family/{mode}_comparison.json
+results/profiling/e7_98/optimization/fused_qconv_family/comparison.csv
+results/profiling/e7_98/optimization/fused_qconv_family/summary.json
+```
+
+family speedup은 Operator별 speedup 평균이 아니라 110개 baseline mean 합계를
+candidate mean 합계로 나눈 값이다. 합산 p50/p95는 동기화된 whole-graph
+percentile이 아니므로 E2E percentile 대신 사용하지 않는다.
 
 ## BN 병목 분리와 후보 비교
 

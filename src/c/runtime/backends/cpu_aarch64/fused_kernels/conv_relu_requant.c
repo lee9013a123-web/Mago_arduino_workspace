@@ -121,22 +121,50 @@ CamppStatus campp_fused_quant_qlinear_conv_scratch_bytes(
     return CAMPP_STATUS_OK;
 }
 
-CamppStatus campp_fused_quant_qlinear_conv_with_runner(
+CamppStatus campp_fused_quantize_input_scalar(
+    const CamppTensorView *input, CamppTensorView *output,
+    float scale, int32_t zero_point)
+{
+    uint64_t index;
+    CamppStatus status;
+
+    if (input == NULL || output == NULL ||
+        input->dtype != CAMPP_DTYPE_FLOAT32 ||
+        (output->dtype != CAMPP_DTYPE_UINT8 &&
+         output->dtype != CAMPP_DTYPE_INT8) ||
+        campp_tensor_view_element_count(input) !=
+            campp_tensor_view_element_count(output)) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+    for (index = 0u; index < campp_tensor_view_element_count(input); ++index) {
+        float value;
+        status = campp_reference_read_f32(input, index, &value);
+        if (status != CAMPP_STATUS_OK) return status;
+        status = campp_fused_quantized_value(
+            output, index, value, scale, zero_point);
+        if (status != CAMPP_STATUS_OK) return status;
+    }
+    return CAMPP_STATUS_OK;
+}
+
+CamppStatus campp_fused_quant_qlinear_conv_with_components(
     const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
     const CamppTensorView *inputs, uint8_t input_count,
     CamppTensorView *outputs, uint8_t output_count, void *scratch,
-    size_t scratch_size, CamppKernelRun qconv_run)
+    size_t scratch_size, CamppFusedInputQuantizeRun quantize_run,
+    CamppKernelRun qconv_run)
 {
     CamppTensorView quantized;
     CamppTensorView qconv_inputs[CAMPP_OPERATOR_INPUT_CAPACITY];
     size_t required;
     float scale;
     int32_t zero;
-    uint64_t index;
     uint8_t axis;
     CamppStatus status;
 
-    if (qconv_run == NULL) return CAMPP_STATUS_INVALID_ARGUMENT;
+    if (quantize_run == NULL || qconv_run == NULL) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
     status = campp_reference_validate_invocation(
         inputs, input_count, 8u, 9u, outputs, output_count);
     if (status != CAMPP_STATUS_OK) return status;
@@ -164,16 +192,10 @@ CamppStatus campp_fused_quant_qlinear_conv_with_runner(
         quantized.byte_strides[axis] /= sizeof(float);
     }
     CAMPP_OPTIMIZATION_STAGE_BEGIN(quantize_started_ns);
-    for (index = 0u; index < campp_tensor_view_element_count(&inputs[0]); ++index) {
-        float value;
-        status = campp_reference_read_f32(&inputs[0], index, &value);
-        if (status != CAMPP_STATUS_OK) return status;
-        status = campp_fused_quantized_value(
-            &quantized, index, value, scale, zero);
-        if (status != CAMPP_STATUS_OK) return status;
-    }
+    status = quantize_run(&inputs[0], &quantized, scale, zero);
     CAMPP_OPTIMIZATION_STAGE_END(
         CAMPP_OPT_STAGE_FUSED_INPUT_QUANTIZE, quantize_started_ns);
+    if (status != CAMPP_STATUS_OK) return status;
     qconv_inputs[0] = quantized;
     for (axis = 1u; axis < input_count; ++axis) qconv_inputs[axis] = inputs[axis];
     CAMPP_OPTIMIZATION_STAGE_BEGIN(qconv_started_ns);
@@ -183,6 +205,18 @@ CamppStatus campp_fused_quant_qlinear_conv_with_runner(
     CAMPP_OPTIMIZATION_STAGE_END(
         CAMPP_OPT_STAGE_FUSED_QCONV, qconv_started_ns);
     return status;
+}
+
+CamppStatus campp_fused_quant_qlinear_conv_with_runner(
+    const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
+    const CamppTensorView *inputs, uint8_t input_count,
+    CamppTensorView *outputs, uint8_t output_count, void *scratch,
+    size_t scratch_size, CamppKernelRun qconv_run)
+{
+    return campp_fused_quant_qlinear_conv_with_components(
+        model, op, inputs, input_count, outputs, output_count,
+        scratch, scratch_size, campp_fused_quantize_input_scalar,
+        qconv_run);
 }
 
 CamppStatus campp_fused_quant_qlinear_conv_o4i4(

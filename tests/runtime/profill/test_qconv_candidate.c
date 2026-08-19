@@ -3,6 +3,8 @@
 #include <string.h>
 
 #include "backends/cpu_aarch64/aarch64_kernels.h"
+#include "backends/cpu_aarch64/fused_kernels/fused_quant_qconv_internal.h"
+#include "fused_input_quant_neon.h"
 #include "fused_quant_qconv_candidate.h"
 #include "internal/runtime_model.h"
 #include "qconv_candidate.h"
@@ -179,6 +181,37 @@ static size_t pack_o4i4(
     return cursor;
 }
 
+static int run_fused_quantize_case(void)
+{
+    const uint32_t dimensions[3] = {1u, 4u, 5u};
+    const float source[20] = {
+        -40.0f, -31.875f, -0.625f, -0.5f, -0.375f,
+        -0.125f, 0.0f, 0.125f, 0.375f, 0.5f,
+        0.625f, 1.0f, 7.875f, 15.5f, 31.875f,
+        40.0f, -2.0f, 2.0f, -3.125f, 3.125f
+    };
+    uint8_t baseline[20];
+    uint8_t candidate[20];
+    CamppTensorView input;
+    CamppTensorView baseline_output;
+    CamppTensorView candidate_output;
+
+    memset(baseline, 0, sizeof(baseline));
+    memset(candidate, 0, sizeof(candidate));
+    init_channel_packed_view(
+        &input, (void *)source, CAMPP_DTYPE_FLOAT32, 3u, dimensions);
+    init_channel_packed_view(
+        &baseline_output, baseline, CAMPP_DTYPE_UINT8, 3u, dimensions);
+    init_channel_packed_view(
+        &candidate_output, candidate, CAMPP_DTYPE_UINT8, 3u, dimensions);
+    CHECK_STATUS(campp_fused_quantize_input_scalar(
+        &input, &baseline_output, 0.25f, 127));
+    CHECK_STATUS(campp_fused_input_quantize_neon(
+        &input, &candidate_output, 0.25f, 127));
+    CHECK_TRUE(memcmp(baseline, candidate, sizeof(baseline)) == 0);
+    return 0;
+}
+
 static int run_case(uint8_t rank)
 {
     const uint32_t input_dimensions_1d[3] = {1u, 5u, 7u};
@@ -351,7 +384,7 @@ static int run_case(uint8_t rank)
     {
         CamppFusedQconvCandidateMode fused_mode;
         for (fused_mode = CAMPP_FUSED_QCONV_CANDIDATE_MAC;
-             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED;
+             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED;
              fused_mode = (CamppFusedQconvCandidateMode)(fused_mode + 1)) {
             const CamppKernelEntry *entry =
                 campp_fused_qconv_candidate_entry(fused_mode);
@@ -370,6 +403,7 @@ static int run_case(uint8_t rank)
 
 int main(void)
 {
+    CHECK_TRUE(run_fused_quantize_case() == 0);
     CHECK_TRUE(run_case(3u) == 0);
     CHECK_TRUE(run_case(4u) == 0);
     CHECK_TRUE(
@@ -380,8 +414,8 @@ int main(void)
     CHECK_TRUE(
         strcmp(
             campp_fused_qconv_candidate_mode_name(
-                CAMPP_FUSED_QCONV_CANDIDATE_COMBINED),
-            "combined") == 0);
+                CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED),
+            "combined_fixed") == 0);
     puts("QConv and fused QConv optimization candidates: PASS");
     return 0;
 }

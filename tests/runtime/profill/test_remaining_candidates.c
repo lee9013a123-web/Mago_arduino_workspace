@@ -153,6 +153,7 @@ static int compare_kernel(
 {
     const CamppKernelEntry *entry = campp_remaining_candidate_entry(
         CAMPP_REMAINING_CANDIDATE_OPTIMIZED, op->opcode, op->kernel_id);
+    size_t mismatch;
     CHECK_TRUE(entry != NULL);
     memset(baseline->data, 0xA5, output_bytes);
     memset(candidate->data, 0x5A, output_bytes);
@@ -160,7 +161,20 @@ static int compare_kernel(
         model, op, inputs, input_count, baseline, 1u, NULL, 0u));
     CHECK_STATUS(entry->run(
         model, op, inputs, input_count, candidate, 1u, NULL, 0u));
-    CHECK_TRUE(memcmp(baseline->data, candidate->data, output_bytes) == 0);
+    if (memcmp(baseline->data, candidate->data, output_bytes) != 0) {
+        const uint8_t *expected = (const uint8_t *)baseline->data;
+        const uint8_t *actual = (const uint8_t *)candidate->data;
+        for (mismatch = 0u; mismatch < output_bytes; ++mismatch) {
+            if (expected[mismatch] != actual[mismatch]) break;
+        }
+        fprintf(
+            stderr,
+            "bitwise mismatch: opcode=%u kernel_id=%u byte=%zu "
+            "expected=0x%02x actual=0x%02x\n",
+            (unsigned)op->opcode, (unsigned)op->kernel_id, mismatch,
+            (unsigned)expected[mismatch], (unsigned)actual[mismatch]);
+        return 1;
+    }
     return 0;
 }
 
@@ -430,11 +444,11 @@ static int test_reshape(void)
 
 static int test_statistics(void)
 {
-    const uint32_t input_dims[3] = {1u, 8u, 5u};
+    const uint32_t input_dims[3] = {1u, 8u, 7u};
     const uint32_t output_dims[2] = {1u, 16u};
-    float input[40];
-    float multiplier = 1.0f;
-    float divisor = 1.0f;
+    float input[56];
+    float multiplier = 0.73125f;
+    float divisor = 1.1875f;
     float baseline[16];
     float candidate[16];
     CamppTensorView inputs[3];
@@ -443,7 +457,12 @@ static int test_statistics(void)
     CamppRuntimeModel model;
     CamppOperatorDescriptor op;
     uint8_t attributes[8];
-    fill_f32(input, 40u, 0.75f);
+    uint32_t index;
+    for (index = 0u; index < 56u; ++index) {
+        const int32_t numerator = (int32_t)((index * 37u + 11u) % 101u) - 50;
+        input[index] = (float)numerator * 0.0137f +
+            (float)(index % 3u) * 0.000013f;
+    }
     init_packed_view(&inputs[0], input, CAMPP_DTYPE_FLOAT32, 3u, input_dims);
     init_contiguous_view(
         &inputs[1], &multiplier, CAMPP_DTYPE_FLOAT32, 0u, NULL);

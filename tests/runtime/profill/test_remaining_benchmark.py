@@ -1,6 +1,8 @@
 import importlib.util
+import json
 from pathlib import Path
 import sys
+import tempfile
 import unittest
 
 
@@ -83,6 +85,42 @@ class RemainingBenchmarkTests(unittest.TestCase):
             [case], warmup=5, repeat=20, elapsed_seconds=1.0
         )
         self.assertFalse(result["candidate_gate_passed"])
+
+    def test_bitwise_failure_reports_case_and_actual_hash(self) -> None:
+        payload = {
+            "output_hash_matches": False,
+            "output_hash": "actual1234",
+        }
+        case = {"case_name": "fused_statistics_pooling"}
+        with self.assertRaisesRegex(
+            BENCHMARK.RemainingBenchmarkError,
+            "fused_statistics_pooling.*actual1234",
+        ):
+            BENCHMARK._validate_payload(payload, case, "optimized", 20)
+
+    def test_failed_payload_is_saved_before_validation(self) -> None:
+        payload = {
+            "output_hash_matches": False,
+            "output_hash": "actual1234",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            runs_dir = Path(directory)
+            feature = Path("multi__speaker_0000__98.f32")
+            BENCHMARK._save_raw_payload(
+                runs_dir,
+                "fused_statistics_pooling",
+                "optimized",
+                feature,
+                payload,
+            )
+            raw_path = (
+                runs_dir
+                / "optimized"
+                / "fused_statistics_pooling"
+                / "multi__speaker_0000__98.json"
+            )
+            saved = json.loads(raw_path.read_text(encoding="utf-8"))
+            self.assertEqual(saved["output_hash"], "actual1234")
 
 
 if __name__ == "__main__":

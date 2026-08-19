@@ -122,7 +122,8 @@ remaining_ops/
 - ReduceMean/AveragePool: frame 순서 유지 channel-vector reduction
 - fused Dequant/Sigmoid/Mul: 256-entry Sigmoid LUT와 vector Mul
 - Reshape: E7 `[N,C,H,W] -> [N,C*H,W]` 직접 offset 변환
-- Statistics Pooling: mean/variance 두 pass의 channel-vector reduction
+- Statistics Pooling: generic offset 제거 + reference와 같은 channel/frame
+  순서의 bitwise-safe 두 pass reduction
 
 지원하지 않는 rank, stride, broadcast, axis 또는 attribute는 해당 production
 reference/fused kernel로 fallback한다.

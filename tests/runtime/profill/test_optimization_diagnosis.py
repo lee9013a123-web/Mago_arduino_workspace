@@ -127,6 +127,16 @@ class OptimizationDiagnosisTests(unittest.TestCase):
         self.assertEqual(cases[0]["operator_id"], 2)
         self.assertEqual(cases[1]["operator_id"], 825)
 
+    def test_selects_every_fused_qconv_operator_for_family_run(self) -> None:
+        operators = [
+            _operator(10, "fused_quant_qlinear_conv_o4i4", 400, [32, 32, 3, 3]),
+            _operator(25, "fused_quant_qlinear_conv_o4i4", 300, [32, 128, 3]),
+            _operator(2, "qlinear_conv_o4i4_neon", 500, [32, 32, 3, 3]),
+        ]
+        cases = DIAGNOSE.select_fused_qconv_family_cases(operators)
+        self.assertEqual([case["operator_id"] for case in cases], [10, 25])
+        self.assertEqual(cases[0]["case_name"], "fused_quant_qconv_op_10")
+
     def test_aggregate_reports_dominant_stage_and_pmu_ratios(self) -> None:
         case = {
             "case_name": "qconv_3x3",
@@ -216,11 +226,11 @@ class OptimizationDiagnosisTests(unittest.TestCase):
             operator_id=10,
             warmup=5,
             repeat=20,
-            fused_qconv_candidate="combined",
+            fused_qconv_candidate="combined_fixed",
         )
         self.assertEqual(
             command[command.index("--fused-qconv-candidate") + 1],
-            "combined",
+            "combined_fixed",
         )
         case = {
             "case_name": "fused_quant_qconv",
@@ -229,9 +239,9 @@ class OptimizationDiagnosisTests(unittest.TestCase):
             "kernel_name": "fused_quant_qlinear_conv_o4i4",
         }
         payload = _payload(case)
-        payload["fused_qconv_candidate"] = "combined"
+        payload["fused_qconv_candidate"] = "combined_fixed"
         DIAGNOSE._validate_payload(
-            payload, case, 2, "baseline", "baseline", "combined"
+            payload, case, 2, "baseline", "baseline", "combined_fixed"
         )
         with self.assertRaises(DIAGNOSE.DiagnosisError):
             DIAGNOSE._validate_payload(
@@ -290,6 +300,12 @@ class OptimizationDiagnosisTests(unittest.TestCase):
         )
         self.assertTrue(result["candidate_microbench_gate_passed"])
         self.assertAlmostEqual(result["cases"][0]["speedup_ratio"], 1.25)
+        self.assertAlmostEqual(
+            result["cases"][0]["p50_speedup_ratio"], 1.25
+        )
+        self.assertAlmostEqual(
+            result["family_operator_sum"]["mean_speedup_ratio"], 1.25
+        )
 
         candidate["output_hashes"] = {"input_0": "different"}
         result = COMPARE.compare_diagnoses(
