@@ -1,0 +1,224 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-19T07:13:47.050090+00:00",
+  "objective": "select the exact 16-lane fused BN/ReLU/Quant v2 path",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "modes": [
+      "combined",
+      "v2_exact16",
+      "v2_spatial2",
+      "v2_prescaled"
+    ],
+    "required_bitwise_modes": [
+      "v2_exact16",
+      "v2_spatial2"
+    ],
+    "scope": "channel_representatives",
+    "elapsed_seconds": 192.24034774799998
+  },
+  "all_required_output_hashes_bitwise_identical": true,
+  "no_required_case_regressed_over_1pct": true,
+  "any_required_case_faster": true,
+  "candidate_microbench_gate_passed": true,
+  "winner_modes": [
+    "v2_prescaled",
+    "v2_spatial2"
+  ],
+  "cases": [
+    {
+      "case_name": "op_38",
+      "operator_id": 38,
+      "kernel_id": 2,
+      "kernel_name": "fused_bn_relu_quant_combined",
+      "operator_type": "BATCH_NORMALIZATION",
+      "output_shape": [
+        1,
+        128,
+        49
+      ],
+      "profile_mean_ms": 0.1667431,
+      "profile_share_pct": 0.03192341722986408,
+      "modes": {
+        "combined": {
+          "sample_count": 60,
+          "mean_ms": 0.15635848333333333,
+          "p50_ms": 0.1513805,
+          "p95_ms": 0.18782514999999997,
+          "min_ms": 0.148437,
+          "max_ms": 0.210625
+        },
+        "v2_exact16": {
+          "sample_count": 60,
+          "mean_ms": 0.0518064,
+          "p50_ms": 0.046615,
+          "p95_ms": 0.07768825,
+          "min_ms": 0.045833,
+          "max_ms": 0.083854
+        },
+        "v2_spatial2": {
+          "sample_count": 60,
+          "mean_ms": 0.04462926666666667,
+          "p50_ms": 0.042448,
+          "p95_ms": 0.05577374999999994,
+          "min_ms": 0.040052,
+          "max_ms": 0.075781
+        },
+        "v2_prescaled": {
+          "sample_count": 60,
+          "mean_ms": 0.047421816666666665,
+          "p50_ms": 0.0414325,
+          "p95_ms": 0.0709269,
+          "min_ms": 0.039479,
+          "max_ms": 0.209062
+        }
+      },
+      "bitwise_by_mode": {
+        "v2_exact16": true,
+        "v2_spatial2": true,
+        "v2_prescaled": true
+      },
+      "output_hashes": [
+        "007cc771ebe5c3c9",
+        "005a50da97059a21",
+        "b0a73025ecb0fa36"
+      ],
+      "winner": "v2_spatial2",
+      "winner_speedup_ratio": 3.5034965844535497
+    },
+    {
+      "case_name": "op_386",
+      "operator_id": 386,
+      "kernel_id": 2,
+      "kernel_name": "fused_bn_relu_quant_combined",
+      "operator_type": "BATCH_NORMALIZATION",
+      "output_shape": [
+        1,
+        608,
+        49
+      ],
+      "profile_mean_ms": 0.7202266666666667,
+      "profile_share_pct": 0.13788934222809965,
+      "modes": {
+        "combined": {
+          "sample_count": 60,
+          "mean_ms": 0.7163542166666667,
+          "p50_ms": 0.7112505,
+          "p95_ms": 0.7544115,
+          "min_ms": 0.682865,
+          "max_ms": 0.964323
+        },
+        "v2_exact16": {
+          "sample_count": 60,
+          "mean_ms": 0.2344123,
+          "p50_ms": 0.2228645,
+          "p95_ms": 0.27469235,
+          "min_ms": 0.21125,
+          "max_ms": 0.408802
+        },
+        "v2_spatial2": {
+          "sample_count": 60,
+          "mean_ms": 0.20629941666666665,
+          "p50_ms": 0.1946355,
+          "p95_ms": 0.2601095,
+          "min_ms": 0.180834,
+          "max_ms": 0.351354
+        },
+        "v2_prescaled": {
+          "sample_count": 60,
+          "mean_ms": 0.21160323333333333,
+          "p50_ms": 0.1944525,
+          "p95_ms": 0.2903305,
+          "min_ms": 0.18901,
+          "max_ms": 0.38625
+        }
+      },
+      "bitwise_by_mode": {
+        "v2_exact16": true,
+        "v2_spatial2": true,
+        "v2_prescaled": true
+      },
+      "output_hashes": [
+        "541f73a170adb0c3",
+        "b8bb160eea43c456",
+        "8fd7072f8a763267"
+      ],
+      "winner": "v2_spatial2",
+      "winner_speedup_ratio": 3.472400592504503
+    },
+    {
+      "case_name": "op_824",
+      "operator_id": 824,
+      "kernel_id": 2,
+      "kernel_name": "fused_bn_relu_quant_combined",
+      "operator_type": "BATCH_NORMALIZATION",
+      "output_shape": [
+        1,
+        1024,
+        49
+      ],
+      "profile_mean_ms": 1.2328150666666666,
+      "profile_share_pct": 0.2360257770214342,
+      "modes": {
+        "combined": {
+          "sample_count": 60,
+          "mean_ms": 1.2046944166666667,
+          "p50_ms": 1.191927,
+          "p95_ms": 1.26166135,
+          "min_ms": 1.160625,
+          "max_ms": 1.496094
+        },
+        "v2_exact16": {
+          "sample_count": 60,
+          "mean_ms": 0.37487406666666667,
+          "p50_ms": 0.370182,
+          "p95_ms": 0.4114166,
+          "min_ms": 0.357343,
+          "max_ms": 0.433437
+        },
+        "v2_spatial2": {
+          "sample_count": 60,
+          "mean_ms": 0.3569314333333333,
+          "p50_ms": 0.332943,
+          "p95_ms": 0.4339743,
+          "min_ms": 0.317604,
+          "max_ms": 0.66125
+        },
+        "v2_prescaled": {
+          "sample_count": 60,
+          "mean_ms": 0.3422969666666667,
+          "p50_ms": 0.3311455,
+          "p95_ms": 0.41006289999999995,
+          "min_ms": 0.310989,
+          "max_ms": 0.474271
+        }
+      },
+      "bitwise_by_mode": {
+        "v2_exact16": true,
+        "v2_spatial2": true,
+        "v2_prescaled": true
+      },
+      "output_hashes": [
+        "a45d6f98ea2f1bd0",
+        "3582a4717bc248b1",
+        "591e95addeb2d88e"
+      ],
+      "winner": "v2_prescaled",
+      "winner_speedup_ratio": 3.519442279603412
+    }
+  ],
+  "next_gate": "all-operator family benchmark, retained-tensor bitwise validation, all E7 buckets, and Quick E2E profiling",
+  "artifacts": {
+    "profile": "results/profiling/e7_98/final_combined/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/bn_v2/raw"
+  }
+}
