@@ -1,4 +1,5 @@
 #include "qconv_v5_zero_point_fastpath.h"
+#include <stddef.h>
 
 #include <limits.h>
 #include <stddef.h>
