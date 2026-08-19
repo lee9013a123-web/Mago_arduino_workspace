@@ -508,7 +508,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument(
         "--bn-candidate",
-        choices=("baseline", "address", "affine", "quant", "combined"),
+        choices=(
+            "baseline", "address", "affine", "quant", "combined",
+            "v2_exact16", "v2_spatial2", "v2_prescaled",
+        ),
         default="baseline",
     )
     parser.add_argument("--bn-only", action="store_true")

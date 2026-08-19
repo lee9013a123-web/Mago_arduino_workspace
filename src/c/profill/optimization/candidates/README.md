@@ -8,6 +8,7 @@ candidates/
 ├── qlinear_conv_v4/         # shape별 MAC, wide requant/store 후속 후보
 ├── fused_quant_qconv/       # 기존 fused quantization + QConv 후보 결합
 ├── bn_relu_quant/           # channel affine precompute/NEON 실험
+├── bn_relu_quant_v2/        # 16-lane/2-spatial/prescaled 후속 후보
 └── dequantize_linear/       # contiguous/per-axis NEON 실험
 ```
 
@@ -80,6 +81,24 @@ bn_relu_quant/
 후보는 최대 4096 channel을 실험 범위로 두며 범위를 벗어나거나 지원하지 않는
 layout이면 `campp_fused_bn_relu_quant()`를 호출한다. production 승격 전에는
 bundle format이나 runtime scratch plan을 바꾸지 않는다.
+
+`bn_relu_quant_v2/`는 기존 `combined`를 기준으로 별도 측정한다.
+
+```text
+bn_relu_quant_v2/
+├── planning/       # descriptor 검증, stride와 base pointer 계획
+├── parameters/     # 16-byte aligned affine/prescaled 계수
+├── dispatch/       # exact16, spatial2, prescaled 선택
+└── microkernels/   # 16-channel NEON quantize와 packed store
+```
+
+- `v2_exact16`: 기존 연산 순서로 16 channel 처리
+- `v2_spatial2`: 두 spatial 위치가 affine 계수 load를 공유
+- `v2_prescaled`: quant scale을 affine 계수에 결합하는 실험 경로
+
+v2는 input/output storage가 겹치거나 channel-contiguous가 아닌 경우 production
+fused BN으로 fallback한다. `v2_prescaled`는 별도 bitwise gate를 통과하기 전에는
+final suite 후보가 아니다.
 
 `dequantize_linear/`는 E7 channel-packed INT8/UINT8 입력을 저장 순서대로
 순회한다. 미지원 rank·stride·per-axis 축은 reference kernel로 fallback한다.

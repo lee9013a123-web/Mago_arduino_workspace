@@ -456,6 +456,28 @@ done
 모든 입력 hash가 bitwise 동일하고 BN case가 1% 넘게 회귀하지 않아야 한다.
 `combined`가 가장 빠르다는 가정은 하지 않고 측정 결과로 승격 후보를 정한다.
 
+기존 `combined`를 기준으로 16-channel BN v2 후보를 비교한다. 기본 실행은
+채널 수가 작은/중간/큰 대표 Operator 세 개를 선택하고 `--all-operators`는
+55개 전체 family를 측정한다. `v2_prescaled`는 실험 결과를 기록하지만 exact
+두 모드가 bitwise와 회귀 gate를 통과해야만 승격 준비 상태가 된다.
+
+```bash
+bash scripts/4_profill/optimization/01_build_optimization.sh
+build/profill/optimization/test_bn_v2_candidate
+
+python3 scripts/4_profill/optimization/11_benchmark_bn_v2.py \
+  --preflight-only
+python3 scripts/4_profill/optimization/11_benchmark_bn_v2.py --force
+python3 scripts/4_profill/optimization/11_benchmark_bn_v2.py \
+  --all-operators --force
+```
+
+```text
+runs/profiling/e7_98/optimization/bn_v2/raw/
+results/profiling/e7_98/optimization/bn_v2/summary.json
+results/profiling/e7_98/optimization/bn_v2/comparison.csv
+```
+
 ## DequantizeLinear 병목 분리와 후보 비교
 
 기존 `dequant_elementwise`를 index/address, input load, parameter load,

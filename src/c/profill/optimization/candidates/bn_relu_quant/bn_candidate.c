@@ -11,6 +11,7 @@
 #include "bn_affine_fastpath.h"
 #include "bn_iteration_fastpath.h"
 #include "bn_quant_neon.h"
+#include "bn_v2_candidate.h"
 #include "internal/runtime_model.h"
 
 #if defined(CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS)
@@ -391,10 +392,11 @@ static const CamppKernelEntry CAMPP_BN_CANDIDATE_ENTRIES[] = {
 const char *campp_bn_candidate_mode_name(CamppBnCandidateMode mode)
 {
     static const char *const names[] = {
-        "baseline", "address", "affine", "quant", "combined"
+        "baseline", "address", "affine", "quant", "combined",
+        "v2_exact16", "v2_spatial2", "v2_prescaled"
     };
     return mode >= CAMPP_BN_CANDIDATE_BASELINE &&
-        mode <= CAMPP_BN_CANDIDATE_COMBINED
+        mode <= CAMPP_BN_CANDIDATE_V2_PRESCALED
         ? names[mode] : "invalid";
 }
 
@@ -404,7 +406,7 @@ int campp_bn_candidate_mode_parse(
     CamppBnCandidateMode mode;
     if (text == NULL || out_mode == NULL) return 1;
     for (mode = CAMPP_BN_CANDIDATE_BASELINE;
-         mode <= CAMPP_BN_CANDIDATE_COMBINED;
+         mode <= CAMPP_BN_CANDIDATE_V2_PRESCALED;
          mode = (CamppBnCandidateMode)(mode + 1)) {
         if (strcmp(text, campp_bn_candidate_mode_name(mode)) == 0) {
             *out_mode = mode;
@@ -417,6 +419,11 @@ int campp_bn_candidate_mode_parse(
 const CamppKernelEntry *campp_bn_candidate_entry(CamppBnCandidateMode mode)
 {
     if (mode == CAMPP_BN_CANDIDATE_BASELINE) return NULL;
+    if (mode >= CAMPP_BN_CANDIDATE_V2_EXACT16 &&
+        mode <= CAMPP_BN_CANDIDATE_V2_PRESCALED) {
+        return campp_bn_v2_candidate_entry(
+            (CamppBnV2Mode)(mode - CAMPP_BN_CANDIDATE_V2_EXACT16));
+    }
     if (mode < CAMPP_BN_CANDIDATE_ADDRESS ||
         mode > CAMPP_BN_CANDIDATE_COMBINED) return NULL;
     return &CAMPP_BN_CANDIDATE_ENTRIES[mode - 1];

@@ -27,6 +27,11 @@ QCONV_V4_REQUANT_DIR="${QCONV_V4_DIR}/requant"
 QCONV_V4_STORE_DIR="${QCONV_V4_DIR}/store"
 FUSED_QCONV_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_quant_qconv"
 BN_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant"
+BN_V2_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant_v2"
+BN_V2_PLANNING_DIR="${BN_V2_DIR}/planning"
+BN_V2_PARAMETERS_DIR="${BN_V2_DIR}/parameters"
+BN_V2_DISPATCH_DIR="${BN_V2_DIR}/dispatch"
+BN_V2_MICROKERNEL_DIR="${BN_V2_DIR}/microkernels"
 DEQUANT_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/dequantize_linear"
 FUSED_DQRQ_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_dequant_relu_quant"
 COMMON_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/common"
@@ -53,6 +58,13 @@ CANDIDATE_SOURCES=(
     "${BN_CANDIDATE_DIR}/bn_affine_fastpath.c"
     "${BN_CANDIDATE_DIR}/bn_quant_neon.c"
     "${BN_CANDIDATE_DIR}/bn_candidate.c"
+    "${BN_V2_PLANNING_DIR}/bn_v2_execution_plan.c"
+    "${BN_V2_PARAMETERS_DIR}/bn_v2_parameter_block.c"
+    "${BN_V2_MICROKERNEL_DIR}/bn_neon16_exact.c"
+    "${BN_V2_MICROKERNEL_DIR}/bn_neon16_spatial2.c"
+    "${BN_V2_MICROKERNEL_DIR}/bn_neon16_prescaled.c"
+    "${BN_V2_DISPATCH_DIR}/bn_v2_dispatch.c"
+    "${BN_V2_DIR}/bn_v2_candidate.c"
     "${DEQUANT_CANDIDATE_DIR}/dequant_layout_plan.c"
     "${DEQUANT_CANDIDATE_DIR}/dequant_scalar_fastpath.c"
     "${DEQUANT_CANDIDATE_DIR}/dequant_neon.c"
@@ -82,6 +94,11 @@ INCLUDES=(
     -I "${QCONV_V4_STORE_DIR}"
     -I "${FUSED_QCONV_CANDIDATE_DIR}"
     -I "${BN_CANDIDATE_DIR}"
+    -I "${BN_V2_DIR}"
+    -I "${BN_V2_PLANNING_DIR}"
+    -I "${BN_V2_PARAMETERS_DIR}"
+    -I "${BN_V2_DISPATCH_DIR}"
+    -I "${BN_V2_MICROKERNEL_DIR}"
     -I "${DEQUANT_CANDIDATE_DIR}"
     -I "${FUSED_DQRQ_CANDIDATE_DIR}"
     -I "${COMMON_CANDIDATE_DIR}"
@@ -173,6 +190,14 @@ INCLUDES=(
     "${INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
     "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/test_bn_v2_candidate.c" \
+    -lm -o "${BUILD_DIR}/test_bn_v2_candidate"
+
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${CANDIDATE_SOURCES[@]}" \
     "${ROOT}/tests/runtime/profill/test_dequant_candidate.c" \
     -lm -o "${BUILD_DIR}/test_dequant_candidate"
 
@@ -199,7 +224,7 @@ INCLUDES=(
     printf 'hotspot_stage_probe=disabled\n'
     printf 'qconv_candidate_modes=baseline,address,mac,combined,mac_fixed,mac_asm,v4\n'
     printf 'fused_qconv_candidate_modes=baseline,mac,combined,mac_fixed,quant_neon,combined_fixed,combined_v4\n'
-    printf 'bn_candidate_modes=baseline,address,affine,quant,combined\n'
+    printf 'bn_candidate_modes=baseline,address,affine,quant,combined,v2_exact16,v2_spatial2,v2_prescaled\n'
     printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
     printf 'fused_dqrq_candidate_modes=baseline,scalar,neon\n'
     printf 'remaining_candidate_modes=baseline,optimized\n'
@@ -215,6 +240,7 @@ echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"
 echo "  QConv 4x8:  ${BUILD_DIR}/test_qconv_microkernel_4x8"
 echo "  QConv v4:   ${BUILD_DIR}/test_qconv_v4_primitives"
 echo "  BN test:    ${BUILD_DIR}/test_bn_candidate"
+echo "  BN v2 test: ${BUILD_DIR}/test_bn_v2_candidate"
 echo "  Dequant:    ${BUILD_DIR}/test_dequant_candidate"
 echo "  Fused DQRQ: ${BUILD_DIR}/test_fused_dequant_relu_quant_candidate"
 echo "  Remaining:  ${BUILD_DIR}/test_remaining_candidates"

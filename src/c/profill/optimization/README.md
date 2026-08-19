@@ -37,6 +37,14 @@ BN 후보도 production registry와 분리한다. `address`, `affine`, `quant`�
 4개를 함께 처리한다. 지원하지 않는 shape, stride, rounding mode는 기존
 `campp_fused_bn_relu_quant()`로 되돌아간다.
 
+`candidates/bn_relu_quant_v2/`는 기존 `combined`를 기준으로 유지하는 병렬
+staging 영역이다. descriptor 검증과 pointer 계획은 `planning`, affine 계수는
+`parameters`, 경로 선택은 `dispatch`, 16-channel packed store는
+`microkernels`로 분리한다. `v2_exact16`과 `v2_spatial2`는 기존 부동소수점 연산
+순서를 유지하고 `v2_prescaled`만 quant scale을 계수에 결합하는 실험 경로다.
+final candidate suite는 board family benchmark와 retained-tensor gate가 끝날
+때까지 기존 `combined`를 계속 선택한다.
+
 DequantizeLinear 후보 역시 production registry에 등록하지 않는다. 기존
 channel-packed Tensor view를 `N/spatial/channel` 순서로 직접 순회하고 scalar
 parameter를 hoist한 뒤, 최종 후보에서 16개 channel을 NEON으로 변환한다.
