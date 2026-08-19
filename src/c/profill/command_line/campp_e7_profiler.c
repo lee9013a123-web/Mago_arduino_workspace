@@ -249,8 +249,11 @@ int main(int argc, char **argv)
         fputs(",\"optimization_suite\":", stdout);
 #if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
         print_json_string("final");
+        fputs(",\"optimization_suite_config\":", stdout);
+        print_json_string(campp_final_candidate_suite_name());
 #else
         print_json_string("stock");
+        fputs(",\"optimization_suite_config\":null", stdout);
 #endif
         fputs("}\n", stdout);
         return 0;

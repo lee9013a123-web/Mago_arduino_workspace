@@ -207,11 +207,18 @@ def _profile_command(
 
 def _validate_profiler_payload(
     payload: dict[str, Any], plan: LoadedPlan, repeat: int,
-    expected_suite: str,
+    expected_suite: str, expected_suite_config: str | None = None,
 ) -> None:
     if payload.get("optimization_suite") != expected_suite:
         raise ProfileError(
             "profiler optimization suite does not match the experiment"
+        )
+    if (
+        expected_suite_config is not None
+        and payload.get("optimization_suite_config") != expected_suite_config
+    ):
+        raise ProfileError(
+            "profiler optimization suite config does not match the experiment"
         )
     if payload.get("measurement_scope") != "kernel_run_exclusive":
         raise ProfileError("profiler did not report kernel exclusive scope")
@@ -678,6 +685,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="두 binary가 보고해야 하는 runtime optimization suite",
     )
     parser.add_argument(
+        "--expected-suite-config",
+        help="final binary 두 개가 보고해야 하는 정확한 kernel 구성 문자열",
+    )
+    parser.add_argument(
         "--raw-dir",
         type=Path,
         default=ROOT / "runs" / "profiling" / "e7_98" / "raw",
@@ -754,6 +765,22 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "profiler binary optimization suite does not match "
                 f"--expected-suite {args.expected_suite}"
             )
+        baseline_suite_config = baseline_capabilities.get(
+            "optimization_suite_config"
+        )
+        profiler_suite_config = capabilities.get("optimization_suite_config")
+        if baseline_suite_config != profiler_suite_config:
+            raise ProfileError(
+                "baseline/profiler optimization suite configs do not match"
+            )
+        if (
+            args.expected_suite_config is not None
+            and profiler_suite_config != args.expected_suite_config
+        ):
+            raise ProfileError(
+                "binary optimization suite config does not match "
+                "--expected-suite-config"
+            )
         if capabilities.get("effective_threads") != EXPECTED_THREADS:
             raise ProfileError("profiler capability does not report one thread")
         if capabilities.get("clock") != "CLOCK_MONOTONIC_RAW":
@@ -778,6 +805,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"baseline_repeat={protocol['baseline_repeat']})"
         )
         print(f"  optimization suite: {args.expected_suite}")
+        if profiler_suite_config is not None:
+            print(f"  suite config: {profiler_suite_config}")
         print(f"  environment mismatches: {environment_mismatches or 'none'}")
         return 0
 
@@ -855,11 +884,25 @@ def main(argv: Sequence[str] | None = None) -> int:
                 raise ProfileError("baseline/profile pair is incomplete")
             _validate_profiler_payload(
                 profile_payload, plan, protocol["repeat"],
-                args.expected_suite,
+                args.expected_suite, args.expected_suite_config,
             )
             if baseline_payload.get("optimization_suite") != args.expected_suite:
                 raise ProfileError(
                     "baseline payload optimization suite changed during the run"
+                )
+            if baseline_payload.get("optimization_suite_config") != (
+                profile_payload.get("optimization_suite_config")
+            ):
+                raise ProfileError(
+                    "baseline/profile suite configs changed during the run"
+                )
+            if (
+                args.expected_suite_config is not None
+                and baseline_payload.get("optimization_suite_config")
+                != args.expected_suite_config
+            ):
+                raise ProfileError(
+                    "baseline payload suite config does not match the experiment"
                 )
             baseline_timings_ms = baseline_payload.get("warm", {}).get(
                 "timings_ms"
@@ -966,6 +1009,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "expected_call_count_per_operator": expected_call_count,
             "measurement_scope": "kernel_run_exclusive",
             "optimization_suite": args.expected_suite,
+            "optimization_suite_config": profiler_suite_config,
             "estimated_minutes": estimated_minutes,
         }
         operator_profile = {

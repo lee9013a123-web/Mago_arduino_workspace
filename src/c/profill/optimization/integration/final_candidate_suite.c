@@ -6,6 +6,7 @@
 #include "backends/cpu_aarch64/aarch64_kernels.h"
 #include "bn_candidate.h"
 #include "dequant_candidate.h"
+#include "fused_dequant_relu_quant_candidate.h"
 #include "fused_quant_qconv_candidate.h"
 #include "qconv_candidate.h"
 #include "remaining_candidate.h"
@@ -16,6 +17,7 @@ typedef enum CamppFinalCandidateFamily {
     CAMPP_FINAL_FAMILY_FUSED_QCONV,
     CAMPP_FINAL_FAMILY_BN,
     CAMPP_FINAL_FAMILY_DEQUANT,
+    CAMPP_FINAL_FAMILY_FUSED_DQRQ,
     CAMPP_FINAL_FAMILY_REMAINING
 } CamppFinalCandidateFamily;
 
@@ -59,21 +61,21 @@ static const CamppKernelEntry *campp_final_selected_entry(
     if (opcode == CAMPP_OP_QLINEAR_CONV &&
         kernel_id == CAMPP_AARCH64_PACKED_KERNEL_ID) {
         *out_family = CAMPP_FINAL_FAMILY_QCONV;
-        *out_name = "qlinear_conv_o4i4_mac_fixed";
-        return campp_qconv_candidate_entry(CAMPP_QCONV_CANDIDATE_MAC_FIXED);
+        *out_name = "qlinear_conv_o4i4_v4";
+        return campp_qconv_candidate_entry(CAMPP_QCONV_CANDIDATE_V4);
     }
     if (opcode == CAMPP_OP_QLINEAR_CONV &&
         kernel_id == CAMPP_FUSION_QUANT_QCONV_KERNEL_ID) {
         *out_family = CAMPP_FINAL_FAMILY_FUSED_QCONV;
-        *out_name = "fused_quant_qlinear_conv_o4i4_combined_fixed";
+        *out_name = "fused_quant_qlinear_conv_o4i4_combined_hybrid";
         return campp_fused_qconv_candidate_entry(
-            CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED);
+            CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_HYBRID);
     }
     if (opcode == CAMPP_OP_BATCH_NORMALIZATION &&
         kernel_id == CAMPP_FUSION_BN_RELU_QUANT_KERNEL_ID) {
         *out_family = CAMPP_FINAL_FAMILY_BN;
-        *out_name = "fused_bn_relu_quant_combined";
-        return campp_bn_candidate_entry(CAMPP_BN_CANDIDATE_COMBINED);
+        *out_name = "fused_bn_relu_quant_v2_spatial2";
+        return campp_bn_candidate_entry(CAMPP_BN_CANDIDATE_V2_SPATIAL2);
     }
     if (opcode == CAMPP_OP_DEQUANTIZE_LINEAR &&
         kernel_id == CAMPP_AARCH64_PACKED_KERNEL_ID) {
@@ -81,6 +83,13 @@ static const CamppKernelEntry *campp_final_selected_entry(
         *out_name = "dequantize_linear_neon_combined";
         return campp_dequant_candidate_entry(
             CAMPP_DEQUANT_CANDIDATE_NEON_COMBINED);
+    }
+    if (opcode == CAMPP_OP_DEQUANTIZE_LINEAR &&
+        kernel_id == CAMPP_FUSION_EPILOGUE_KERNEL_ID) {
+        *out_family = CAMPP_FINAL_FAMILY_FUSED_DQRQ;
+        *out_name = "fused_dequant_relu_quant_neon";
+        return campp_fused_dqrq_candidate_entry(
+            CAMPP_FUSED_DQRQ_CANDIDATE_NEON);
     }
 
     entry = campp_remaining_candidate_entry(
@@ -102,6 +111,9 @@ static void campp_final_count_entry(
         break;
     case CAMPP_FINAL_FAMILY_BN: stats->bn_entries += 1u; break;
     case CAMPP_FINAL_FAMILY_DEQUANT: stats->dequant_entries += 1u; break;
+    case CAMPP_FINAL_FAMILY_FUSED_DQRQ:
+        stats->fused_dqrq_entries += 1u;
+        break;
     case CAMPP_FINAL_FAMILY_REMAINING:
         stats->remaining_entries += 1u;
         break;
@@ -150,8 +162,9 @@ CamppStatus campp_final_candidate_suite_create(
         out_suite->stats.fused_qconv_entries != 1u ||
         out_suite->stats.bn_entries != 1u ||
         out_suite->stats.dequant_entries != 1u ||
+        out_suite->stats.fused_dqrq_entries != 1u ||
         out_suite->stats.remaining_entries != 10u ||
-        out_suite->stats.total_entries != 14u) {
+        out_suite->stats.total_entries != 15u) {
         memset(out_suite, 0, sizeof(*out_suite));
         return CAMPP_STATUS_MISSING_KERNEL;
     }
@@ -165,6 +178,6 @@ CamppStatus campp_final_candidate_suite_create(
 
 const char *campp_final_candidate_suite_name(void)
 {
-    return "qconv_mac_fixed+fused_combined_fixed+bn_combined+"
-        "dequant_neon_combined+remaining_optimized";
+    return "qconv_v4+fused_combined_hybrid+bn_v2_spatial2+"
+        "dequant_neon_combined+fused_dqrq_neon+remaining_optimized";
 }

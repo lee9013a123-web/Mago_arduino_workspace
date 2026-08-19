@@ -426,13 +426,17 @@ int main(int argc, char **argv)
         fputs(
             "{\"runtime\":\"campp-c-runtime\",\"effective_threads\":1,"
             "\"threading\":\"single-thread\","
-            "\"backends\":[\"cpu_reference\",\"cpu_aarch64_o4i4\"],"
-#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
-            "\"optimization_suite\":\"final\"}\n",
-#else
-            "\"optimization_suite\":\"stock\"}\n",
-#endif
+            "\"backends\":[\"cpu_reference\",\"cpu_aarch64_o4i4\"]",
             stdout);
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+        fputs(",\"optimization_suite\":\"final\","
+              "\"optimization_suite_config\":", stdout);
+        print_json_string(campp_final_candidate_suite_name());
+#else
+        fputs(",\"optimization_suite\":\"stock\","
+              "\"optimization_suite_config\":null", stdout);
+#endif
+        fputs("}\n", stdout);
         return 0;
     }
 

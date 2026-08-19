@@ -130,6 +130,19 @@ class ProfileStatisticsTests(unittest.TestCase):
                 {"optimization_suite": "stock"}, None, 20, "final"
             )
 
+    def test_profiler_payload_rejects_mixed_final_suite_config(self) -> None:
+        with self.assertRaises(PROFILE.ProfileError):
+            PROFILE._validate_profiler_payload(
+                {
+                    "optimization_suite": "final",
+                    "optimization_suite_config": "old_final",
+                },
+                None,
+                20,
+                "final",
+                "new_final",
+            )
+
     def test_analysis_aggregates_kernel_share(self) -> None:
         operators = [
             {

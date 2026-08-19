@@ -12,6 +12,7 @@ typedef struct CamppFinalCandidateSuiteStats {
     uint32_t fused_qconv_entries;
     uint32_t bn_entries;
     uint32_t dequant_entries;
+    uint32_t fused_dqrq_entries;
     uint32_t remaining_entries;
     uint32_t total_entries;
 } CamppFinalCandidateSuiteStats;

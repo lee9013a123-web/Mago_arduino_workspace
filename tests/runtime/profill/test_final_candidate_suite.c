@@ -5,6 +5,7 @@
 #include "bn_candidate.h"
 #include "campp_profill/optimization/final_candidate_suite.h"
 #include "dequant_candidate.h"
+#include "fused_dequant_relu_quant_candidate.h"
 #include "fused_quant_qconv_candidate.h"
 #include "qconv_candidate.h"
 #include "remaining_candidate.h"
@@ -90,31 +91,37 @@ int main(void)
     CHECK_TRUE(suite.stats.fused_qconv_entries == 1u);
     CHECK_TRUE(suite.stats.bn_entries == 1u);
     CHECK_TRUE(suite.stats.dequant_entries == 1u);
+    CHECK_TRUE(suite.stats.fused_dqrq_entries == 1u);
     CHECK_TRUE(suite.stats.remaining_entries == 10u);
-    CHECK_TRUE(suite.stats.total_entries == 14u);
+    CHECK_TRUE(suite.stats.total_entries == 15u);
 
     CHECK_TRUE(check_entry(
         &suite.registry, CAMPP_OP_QLINEAR_CONV,
         CAMPP_AARCH64_PACKED_KERNEL_ID,
-        campp_qconv_candidate_entry(CAMPP_QCONV_CANDIDATE_MAC_FIXED),
-        "qlinear_conv_o4i4_mac_fixed") == 0);
+        campp_qconv_candidate_entry(CAMPP_QCONV_CANDIDATE_V4),
+        "qlinear_conv_o4i4_v4") == 0);
     CHECK_TRUE(check_entry(
         &suite.registry, CAMPP_OP_QLINEAR_CONV,
         CAMPP_FUSION_QUANT_QCONV_KERNEL_ID,
         campp_fused_qconv_candidate_entry(
-            CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED),
-        "fused_quant_qlinear_conv_o4i4_combined_fixed") == 0);
+            CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_HYBRID),
+        "fused_quant_qlinear_conv_o4i4_combined_hybrid") == 0);
     CHECK_TRUE(check_entry(
         &suite.registry, CAMPP_OP_BATCH_NORMALIZATION,
         CAMPP_FUSION_BN_RELU_QUANT_KERNEL_ID,
-        campp_bn_candidate_entry(CAMPP_BN_CANDIDATE_COMBINED),
-        "fused_bn_relu_quant_combined") == 0);
+        campp_bn_candidate_entry(CAMPP_BN_CANDIDATE_V2_SPATIAL2),
+        "fused_bn_relu_quant_v2_spatial2") == 0);
     CHECK_TRUE(check_entry(
         &suite.registry, CAMPP_OP_DEQUANTIZE_LINEAR,
         CAMPP_AARCH64_PACKED_KERNEL_ID,
         campp_dequant_candidate_entry(
             CAMPP_DEQUANT_CANDIDATE_NEON_COMBINED),
         "dequantize_linear_neon_combined") == 0);
+    CHECK_TRUE(check_entry(
+        &suite.registry, CAMPP_OP_DEQUANTIZE_LINEAR,
+        CAMPP_FUSION_EPILOGUE_KERNEL_ID,
+        campp_fused_dqrq_candidate_entry(CAMPP_FUSED_DQRQ_CANDIDATE_NEON),
+        "fused_dequant_relu_quant_neon") == 0);
 
     for (index = 0u; index < sizeof(remaining) / sizeof(remaining[0]); ++index) {
         CHECK_TRUE(check_entry(
@@ -137,8 +144,8 @@ int main(void)
     CHECK_TRUE(strcmp(final_sigmoid->name, base_sigmoid->name) == 0);
     CHECK_TRUE(strcmp(
         campp_final_candidate_suite_name(),
-        "qconv_mac_fixed+fused_combined_fixed+bn_combined+"
-        "dequant_neon_combined+remaining_optimized") == 0);
+        "qconv_v4+fused_combined_hybrid+bn_v2_spatial2+"
+        "dequant_neon_combined+fused_dqrq_neon+remaining_optimized") == 0);
 
     puts("final candidate suite tests passed");
     return 0;

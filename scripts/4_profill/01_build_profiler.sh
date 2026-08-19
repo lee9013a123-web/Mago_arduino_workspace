@@ -40,6 +40,13 @@ PROFILL_INCLUDES=(
 
 QCONV_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv"
 QCONV_MICROKERNEL_DIR="${QCONV_CANDIDATE_DIR}/microkernels"
+QCONV_V4_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv_v4"
+QCONV_V4_DISPATCH_DIR="${QCONV_V4_DIR}/dispatch"
+QCONV_V4_PLANNING_DIR="${QCONV_V4_DIR}/planning"
+QCONV_V4_PARAMETERS_DIR="${QCONV_V4_DIR}/parameters"
+QCONV_V4_MICROKERNEL_DIR="${QCONV_V4_DIR}/microkernels"
+QCONV_V4_REQUANT_DIR="${QCONV_V4_DIR}/requant"
+QCONV_V4_STORE_DIR="${QCONV_V4_DIR}/store"
 FUSED_QCONV_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_quant_qconv"
 BN_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant"
 BN_V2_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant_v2"
@@ -48,14 +55,23 @@ BN_V2_PARAMETERS_DIR="${BN_V2_DIR}/parameters"
 BN_V2_DISPATCH_DIR="${BN_V2_DIR}/dispatch"
 BN_V2_MICROKERNEL_DIR="${BN_V2_DIR}/microkernels"
 DEQUANT_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/dequantize_linear"
+FUSED_DQRQ_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_dequant_relu_quant"
 COMMON_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/common"
 REMAINING_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/remaining_ops"
 FINAL_SUITE_SOURCE="${ROOT}/src/c/profill/optimization/integration/final_candidate_suite.c"
+FINAL_SUITE_CONFIG="qconv_v4+fused_combined_hybrid+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
 
 FINAL_INCLUDES=(
     -I "${ROOT}/src/c/profill/optimization/include"
     -I "${QCONV_CANDIDATE_DIR}"
     -I "${QCONV_MICROKERNEL_DIR}"
+    -I "${QCONV_V4_DIR}"
+    -I "${QCONV_V4_DISPATCH_DIR}"
+    -I "${QCONV_V4_PLANNING_DIR}"
+    -I "${QCONV_V4_PARAMETERS_DIR}"
+    -I "${QCONV_V4_MICROKERNEL_DIR}"
+    -I "${QCONV_V4_REQUANT_DIR}"
+    -I "${QCONV_V4_STORE_DIR}"
     -I "${FUSED_QCONV_CANDIDATE_DIR}"
     -I "${BN_CANDIDATE_DIR}"
     -I "${BN_V2_DIR}"
@@ -64,6 +80,7 @@ FINAL_INCLUDES=(
     -I "${BN_V2_DISPATCH_DIR}"
     -I "${BN_V2_MICROKERNEL_DIR}"
     -I "${DEQUANT_CANDIDATE_DIR}"
+    -I "${FUSED_DQRQ_CANDIDATE_DIR}"
     -I "${COMMON_CANDIDATE_DIR}"
     -I "${REMAINING_CANDIDATE_DIR}"
 )
@@ -74,6 +91,16 @@ FINAL_CANDIDATE_SOURCES=(
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8.c"
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8_intrinsics.c"
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8_aarch64.S"
+    "${QCONV_V4_PLANNING_DIR}/qconv_v4_execution_plan.c"
+    "${QCONV_V4_PLANNING_DIR}/qconv_v4_tile_plan.c"
+    "${QCONV_V4_PARAMETERS_DIR}/qconv_v4_parameters.c"
+    "${QCONV_V4_MICROKERNEL_DIR}/qconv_mac_1x1_8x8_intrinsics.c"
+    "${QCONV_V4_MICROKERNEL_DIR}/qconv_mac_3x3_interior_8x8_intrinsics.c"
+    "${QCONV_V4_MICROKERNEL_DIR}/qconv_mac_tail_intrinsics.c"
+    "${QCONV_V4_REQUANT_DIR}/qconv_requant_neon8.c"
+    "${QCONV_V4_STORE_DIR}/qconv_store_channel_packed.c"
+    "${QCONV_V4_DISPATCH_DIR}/qconv_v4_dispatch.c"
+    "${QCONV_V4_DISPATCH_DIR}/qconv_hybrid_dispatch.c"
     "${QCONV_CANDIDATE_DIR}/qconv_candidate.c"
     "${FUSED_QCONV_CANDIDATE_DIR}/fused_input_quant_neon.c"
     "${FUSED_QCONV_CANDIDATE_DIR}/fused_quant_qconv_candidate.c"
@@ -92,6 +119,7 @@ FINAL_CANDIDATE_SOURCES=(
     "${DEQUANT_CANDIDATE_DIR}/dequant_scalar_fastpath.c"
     "${DEQUANT_CANDIDATE_DIR}/dequant_neon.c"
     "${DEQUANT_CANDIDATE_DIR}/dequant_candidate.c"
+    "${FUSED_DQRQ_CANDIDATE_DIR}/fused_dequant_relu_quant_candidate.c"
     "${COMMON_CANDIDATE_DIR}/packed_iteration.c"
     "${COMMON_CANDIDATE_DIR}/elementwise_neon.c"
     "${COMMON_CANDIDATE_DIR}/reduction_neon.c"
@@ -168,7 +196,7 @@ if [[ "${BUILD_SCOPE}" == "all" ]]; then
 fi
 
 if [[ "${BUILD_SCOPE}" != "compiler_quick" ]]; then
-    # 최종 registry가 정확한 14개 entry만 교체하는지 검증한다.
+    # 최종 registry가 정확한 15개 entry만 교체하는지 검증한다.
     # shellcheck disable=SC2086
     "${CC}" ${CPPFLAGS} ${CFLAGS} \
         "${COMMON_INCLUDES[@]}" "${PROFILL_INCLUDES[@]}" \
@@ -212,7 +240,7 @@ fi
     printf 'strip_final=%s\n' "${STRIP_FINAL}"
     printf 'profiling_macro=CAMPP_ENABLE_OPERATOR_PROFILING=1\n'
     printf 'final_suite_macro=CAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1\n'
-    printf 'final_suite=%s\n' 'qconv_mac_fixed+fused_combined_fixed+bn_combined+dequant_neon_combined+remaining_optimized'
+    printf 'final_suite=%s\n' "${FINAL_SUITE_CONFIG}"
 } > "${BUILD_DIR}/build_metadata.txt"
 
 metadata_binaries=(

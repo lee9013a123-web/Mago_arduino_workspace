@@ -563,14 +563,15 @@ plan을 수정하지 않는다.
 
 개별 후보 검증이 끝나면 `01_build_profiler.sh`가 stock binary와 별도로 최종
 후보를 연결한 비계측/계측 binary 쌍을 만든다. 최종 registry는 production
-AArch64 registry를 복사한 뒤 아래 14개 entry만 교체한다.
+AArch64 registry를 복사한 뒤 아래 15개 entry만 교체한다.
 
 | 대상 | 최종 mode |
 |---|---|
-| 일반 QConv | `mac_fixed` |
-| fused Quant-QConv | `combined_fixed` (`mac_fixed` + input quant NEON) |
-| fused BN-ReLU-Quant | `combined` |
+| 일반 QConv | `v4` |
+| fused Quant-QConv | `combined_hybrid` (input quant NEON + hybrid QConv) |
+| fused BN-ReLU-Quant | `v2_spatial2` |
 | DequantizeLinear | `neon_combined` |
+| fused Dequant-ReLU-Quant | `neon` |
 | 나머지 10개 연산 | `optimized` |
 
 현재 production runtime source의 requant NEON 구현은 두 binary에 공통으로
@@ -579,12 +580,17 @@ AArch64 registry를 복사한 뒤 아래 14개 entry만 교체한다.
 target 우회가 아니라 실제 E7 graph executor 전체가 실행된다.
 
 ```bash
-bash scripts/4_profill/01_build_profiler.sh
-build/profill/test_final_candidate_suite
+bash scripts/4_profill/04_build_final_v2.sh
+build/profill/final_v2_aggressive/test_final_candidate_suite
 
 bash scripts/4_profill/03_profile_final_e7.sh --preflight-only
 bash scripts/4_profill/03_profile_final_e7.sh
 ```
+
+`04_build_final_v2.sh`는 compiler matrix winner인 GCC
+`-O3 -mcpu=cortex-a53 -flto`와 aggressive packaged flag, linker GC 및 strip을
+재현한다. runtime, profiler, suite test와 retained-Tensor dump를 같은 source와
+compile/link flag로 만든다.
 
 최종 공식 측정은 다음과 같다.
 
@@ -594,8 +600,9 @@ bash scripts/4_profill/03_profile_final_e7.sh --mode official --force
 
 ### 현재 E7 성능 baseline
 
-최종 suite의 2026-08-19 Quick 결과를 현재 성능 기준선으로 사용한다. canonical
-기준선은 `results/profiling/e7_98/baseline.json`, 원본 profile은
+이전 `mac_fixed+combined_fixed+BN combined` suite의 2026-08-19 Quick 결과를
+새 final v2의 회귀 비교 기준선으로 사용한다. canonical 기준선은
+`results/profiling/e7_98/baseline.json`, 원본 profile은
 `results/profiling/e7_98/final_combined/summary.json`이다.
 
 | 지표 | 기준값 |
@@ -610,14 +617,14 @@ bash scripts/4_profill/03_profile_final_e7.sh --mode official --force
 기준으로는 사용하되, 공식 수치가 필요할 때는 `--mode official --force`로 다시
 측정한다. final suite 예상 시간 계산도 비계측 mean 522.329 ms를 사용한다.
 
-final binary는 `--capabilities`와 결과 JSON에
-`"optimization_suite":"final"`을 기록한다. runner는 비계측 binary와 계측
-binary가 둘 다 `final`인지 실행 전에 확인하며, 서로 다른 suite를 이용한 잘못된
-overhead 비교를 거부한다.
+final binary는 `--capabilities`와 결과 JSON에 `optimization_suite`와 정확한
+`optimization_suite_config`를 기록한다. runner는 비계측 binary와 계측 binary의
+두 값이 모두 같은지 실행 전에 확인하므로, 과거 final runtime과 새 final v2
+profiler를 섞은 잘못된 overhead 비교를 거부한다.
 
 ```text
-build/profill/campp_runtime_benchmark_final
-build/profill/campp_e7_profiler_final
-runs/profiling/e7_98/final_combined/raw/
-results/profiling/e7_98/final_combined/
+build/profill/final_v2_aggressive/campp_runtime_benchmark_final
+build/profill/final_v2_aggressive/campp_e7_profiler_final
+runs/profiling/e7_98/final_v2_aggressive/raw/
+results/profiling/e7_98/final_v2_aggressive/
 ```
