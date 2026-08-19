@@ -30,6 +30,7 @@ Linux 또는 QRB2210 보드에서 실행한다.
 bash scripts/4_profill/01_build_profiler.sh
 build/profill/test_operator_profiler
 build/profill/test_profiled_graph_executor
+build/profill/test_final_candidate_suite
 python3 -m unittest tests.runtime.profill.test_profile_statistics
 ```
 
@@ -324,6 +325,9 @@ microbench 통과 후에도 retained tensor bitwise와 Quick E2E 검증이 필�
 
 대표 Operator가 아니라 profile의 `fused_quant_qlinear_conv_o4i4` 전체를 비교할
 때는 family runner를 사용한다. 현재 E7 profile에서는 110개 Operator가 대상이다.
+이 runner는 Operator마다 graph prelude를 다시 실행하지 않는다. 입력당 graph를
+한 번 순회하면서 fused Operator를 만날 때 같은 입력 snapshot으로 모든 후보를
+측정하고, 마지막 baseline 출력을 다음 Operator에 전달한다.
 
 ```bash
 python3 scripts/4_profill/optimization/08_benchmark_fused_qconv_family.py \
@@ -333,10 +337,18 @@ python3 scripts/4_profill/optimization/08_benchmark_fused_qconv_family.py \
   --force
 ```
 
+기본 Quick은 `baseline + combined_fixed`, warm-up 5회, 측정 20회, 입력 3개다.
+원인 분리까지 필요한 경우에만 네 모드를 실행한다.
+
+```bash
+python3 scripts/4_profill/optimization/08_benchmark_fused_qconv_family.py \
+  --modes baseline mac_fixed quant_neon combined_fixed --force
+```
+
 결과는 다음 경로에 생성된다.
 
 ```text
-runs/profiling/e7_98/optimization/fused_qconv_family/{mode}/raw/
+runs/profiling/e7_98/optimization/fused_qconv_family/raw/
 results/profiling/e7_98/optimization/fused_qconv_family/{mode}.json
 results/profiling/e7_98/optimization/fused_qconv_family/{mode}_comparison.json
 results/profiling/e7_98/optimization/fused_qconv_family/comparison.csv
@@ -477,3 +489,48 @@ results/profiling/e7_98/optimization/remaining_candidates.csv
 세 입력의 output hash가 모두 bitwise 동일하고 어떤 case도 1%를 초과해 회귀하지
 않아야 microbench gate를 통과한다. 이 단계는 production registry나 bundle fusion
 plan을 수정하지 않는다.
+
+## 최종 후보 통합 E2E 재프로파일
+
+개별 후보 검증이 끝나면 `01_build_profiler.sh`가 stock binary와 별도로 최종
+후보를 연결한 비계측/계측 binary 쌍을 만든다. 최종 registry는 production
+AArch64 registry를 복사한 뒤 아래 14개 entry만 교체한다.
+
+| 대상 | 최종 mode |
+|---|---|
+| 일반 QConv | `mac_fixed` |
+| fused Quant-QConv | `combined_fixed` (`mac_fixed` + input quant NEON) |
+| fused BN-ReLU-Quant | `combined` |
+| DequantizeLinear | `neon_combined` |
+| 나머지 10개 연산 | `optimized` |
+
+현재 production runtime source의 requant NEON 구현은 두 binary에 공통으로
+컴파일된다. 교체하지 않은 entry는 production registry의 함수와 scratch query를
+그대로 유지한다. `RuntimeContext`는 이 최종 registry로 생성되므로 microbench
+target 우회가 아니라 실제 E7 graph executor 전체가 실행된다.
+
+```bash
+bash scripts/4_profill/01_build_profiler.sh
+build/profill/test_final_candidate_suite
+
+bash scripts/4_profill/03_profile_final_e7.sh --preflight-only
+bash scripts/4_profill/03_profile_final_e7.sh
+```
+
+최종 공식 측정은 다음과 같다.
+
+```bash
+bash scripts/4_profill/03_profile_final_e7.sh --mode official --force
+```
+
+final binary는 `--capabilities`와 결과 JSON에
+`"optimization_suite":"final"`을 기록한다. runner는 비계측 binary와 계측
+binary가 둘 다 `final`인지 실행 전에 확인하며, 서로 다른 suite를 이용한 잘못된
+overhead 비교를 거부한다.
+
+```text
+build/profill/campp_runtime_benchmark_final
+build/profill/campp_e7_profiler_final
+runs/profiling/e7_98/final_combined/raw/
+results/profiling/e7_98/final_combined/
+```

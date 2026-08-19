@@ -205,8 +205,13 @@ def _profile_command(
 
 
 def _validate_profiler_payload(
-    payload: dict[str, Any], plan: LoadedPlan, repeat: int
+    payload: dict[str, Any], plan: LoadedPlan, repeat: int,
+    expected_suite: str,
 ) -> None:
+    if payload.get("optimization_suite") != expected_suite:
+        raise ProfileError(
+            "profiler optimization suite does not match the experiment"
+        )
     if payload.get("measurement_scope") != "kernel_run_exclusive":
         raise ProfileError("profiler did not report kernel exclusive scope")
     if payload.get("clock") != "CLOCK_MONOTONIC_RAW":
@@ -659,6 +664,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=ROOT / "build" / "profill" / "campp_e7_profiler",
     )
     parser.add_argument(
+        "--expected-suite",
+        choices=("stock", "final"),
+        default="stock",
+        help="두 binary가 보고해야 하는 runtime optimization suite",
+    )
+    parser.add_argument(
         "--raw-dir",
         type=Path,
         default=ROOT / "runs" / "profiling" / "e7_98" / "raw",
@@ -717,10 +728,24 @@ def main(argv: Sequence[str] | None = None) -> int:
                 allow_mismatch=args.allow_environment_mismatch,
             )
         )
+        baseline_capabilities, _ = BENCHMARK.run_json_command(
+            [str(baseline_binary), "--capabilities"],
+            environment=os.environ.copy(),
+        )
         capabilities, _ = BENCHMARK.run_json_command(
             [str(profiler_binary), "--capabilities"],
             environment=os.environ.copy(),
         )
+        if baseline_capabilities.get("optimization_suite") != args.expected_suite:
+            raise ProfileError(
+                "baseline binary optimization suite does not match "
+                f"--expected-suite {args.expected_suite}"
+            )
+        if capabilities.get("optimization_suite") != args.expected_suite:
+            raise ProfileError(
+                "profiler binary optimization suite does not match "
+                f"--expected-suite {args.expected_suite}"
+            )
         if capabilities.get("effective_threads") != EXPECTED_THREADS:
             raise ProfileError("profiler capability does not report one thread")
         if capabilities.get("clock") != "CLOCK_MONOTONIC_RAW":
@@ -744,6 +769,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"(warmup={protocol['warmup']}, repeat={protocol['repeat']}, "
             f"baseline_repeat={protocol['baseline_repeat']})"
         )
+        print(f"  optimization suite: {args.expected_suite}")
         print(f"  environment mismatches: {environment_mismatches or 'none'}")
         return 0
 
@@ -817,7 +843,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                     )
             if baseline_payload is None or profile_payload is None:
                 raise ProfileError("baseline/profile pair is incomplete")
-            _validate_profiler_payload(profile_payload, plan, protocol["repeat"])
+            _validate_profiler_payload(
+                profile_payload, plan, protocol["repeat"],
+                args.expected_suite,
+            )
+            if baseline_payload.get("optimization_suite") != args.expected_suite:
+                raise ProfileError(
+                    "baseline payload optimization suite changed during the run"
+                )
             baseline_timings_ms = baseline_payload.get("warm", {}).get(
                 "timings_ms"
             )
@@ -922,6 +955,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "input_ids": list(EXPECTED_INPUT_IDS),
             "expected_call_count_per_operator": expected_call_count,
             "measurement_scope": "kernel_run_exclusive",
+            "optimization_suite": args.expected_suite,
             "estimated_minutes": estimated_minutes,
         }
         operator_profile = {

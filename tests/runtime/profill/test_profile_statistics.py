@@ -100,6 +100,12 @@ class ProfileStatisticsTests(unittest.TestCase):
 
         self.assertAlmostEqual(estimated, 14.7)
 
+    def test_profiler_payload_rejects_mixed_optimization_suite(self) -> None:
+        with self.assertRaises(PROFILE.ProfileError):
+            PROFILE._validate_profiler_payload(
+                {"optimization_suite": "stock"}, None, 20, "final"
+            )
+
     def test_analysis_aggregates_kernel_share(self) -> None:
         operators = [
             {

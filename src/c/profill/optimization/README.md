@@ -4,7 +4,7 @@
 병목을 확인하는 격리된 진단 환경이다.
 
 - `diagnostics/`: 단계별 wall time과 target-only Linux PMU counter 수집
-- `command_line/`: 실제 E7 중간 Tensor를 만든 뒤 Operator 하나만 반복 실행
+- `command_line/`: 단일 Operator 진단과 입력당 1회 graph 순회의 family 측정
 - `candidates/`: 진단 결과로 채택된 실험 구현만 추가하는 staging 영역
 
 후보 구현은 기본 AArch64 registry에 등록하지 않는다. 세 입력의 output hash,
@@ -21,6 +21,11 @@ allocation을 비교하고 `mac_asm`은 fixed intrinsics에도 spill이 남을 �
 공통 QConv 효과, `quant_neon`은 fused input pass 효과, `combined_fixed`는 두
 효과를 함께 측정한다. 따라서 별도 MAC 구현 없이 같은 개선을 공유한다. 이후
 BN-ReLU-Quant, DequantizeLinear를 분리한다.
+
+전체 fused family 비교는 `campp_fused_qconv_family_bench`가 graph를 입력당
+한 번만 실행한다. 각 target에서 activation 입력을 잠시 복사해 후보들을 같은
+값으로 측정하고 baseline을 마지막에 실행해 그 출력을 graph 진행에 사용한다.
+따라서 Operator별 prelude 재실행은 측정시간에 포함되지 않는다.
 
 BN 후보도 production registry와 분리한다. `address`, `affine`, `quant`는
 각 원인의 독립 효과를 확인하고 `combined`는 channel-packed 입력에서 채널

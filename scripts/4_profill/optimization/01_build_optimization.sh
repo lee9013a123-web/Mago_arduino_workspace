@@ -75,6 +75,18 @@ INCLUDES=(
     "${ROOT}/src/c/profill/optimization/command_line/campp_operator_microbench.c" \
     -lm -o "${BUILD_DIR}/campp_operator_microbench"
 
+# fused family 전체를 입력당 단일 graph traversal로 측정한다. Stage probe를
+# 제외해 baseline과 candidate 모두 production에 가까운 kernel body만 잰다.
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${ROOT}/src/c/profill/operator_profiler.c" \
+    "${ROOT}/src/c/profill/runtime_fixture.c" \
+    "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/src/c/profill/optimization/command_line/campp_fused_qconv_family_bench.c" \
+    -lm -o "${BUILD_DIR}/campp_fused_qconv_family_bench"
+
 # perf annotate용 binary. Runtime kernel에는 stage clock 호출을 컴파일하지 않는다.
 # shellcheck disable=SC2086
 "${CC}" ${CFLAGS} \
@@ -148,10 +160,12 @@ INCLUDES=(
     printf 'bn_candidate_modes=baseline,address,affine,quant,combined\n'
     printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
     printf 'remaining_candidate_modes=baseline,optimized\n'
+    printf 'fused_family_batch_graph_traversal=enabled\n'
 } > "${BUILD_DIR}/build_metadata.txt"
 
 echo "Optimization diagnostics build complete"
 echo "  microbench: ${BUILD_DIR}/campp_operator_microbench"
+echo "  fused batch:${BUILD_DIR}/campp_fused_qconv_family_bench"
 echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"
 echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"

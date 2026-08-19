@@ -43,10 +43,80 @@ class FusedQconvFamilyTests(unittest.TestCase):
                 (root / f"{mode}_comparison.json").write_text(
                     json.dumps(document), encoding="utf-8"
                 )
-            summary = FAMILY.build_summary(FAMILY.DEFAULT_MODES, root)
+            summary = FAMILY.build_summary(FAMILY.FULL_DIAGNOSTIC_MODES, root)
             self.assertTrue(summary["production_gate_ready"])
             self.assertEqual(summary["winner"], "combined_fixed")
             self.assertEqual(len(summary["comparisons"]), 3)
+
+    def test_quick_defaults_to_baseline_and_final_candidate(self) -> None:
+        self.assertEqual(
+            FAMILY.DEFAULT_MODES, ("baseline", "combined_fixed")
+        )
+
+    def test_batch_payload_builds_comparison_compatible_documents(self) -> None:
+        case = {
+            "case_name": "fused_quant_qconv_op_10",
+            "operator_id": 10,
+            "kernel_id": 3,
+            "kernel_name": "fused_quant_qlinear_conv_o4i4",
+            "operator_type": "QLINEAR_CONV",
+            "weight_shape": [32, 32, 3, 3],
+            "profile_mean_ms": 10.0,
+            "profile_share_pct": 1.0,
+        }
+
+        def payload(offset: int) -> dict[str, object]:
+            return {
+                "mode": "fused_qconv_family_batch",
+                "clock": "CLOCK_MONOTONIC_RAW",
+                "configuration": {
+                    "effective_threads": 1,
+                    "repeat": 2,
+                    "graph_traversals": 1,
+                },
+                "cases": [
+                    {
+                        "operator_id": 10,
+                        "kernel_id": 3,
+                        "kernel_name": "fused_quant_qlinear_conv_o4i4",
+                        "modes": [
+                            {
+                                "name": "baseline",
+                                "samples_ns": [100 + offset, 110 + offset],
+                                "output_hash": "abc",
+                                "matches_baseline": True,
+                            },
+                            {
+                                "name": "combined_fixed",
+                                "samples_ns": [10 + offset, 11 + offset],
+                                "output_hash": "abc",
+                                "matches_baseline": True,
+                            },
+                        ],
+                    }
+                ],
+            }
+
+        modes = FAMILY.DEFAULT_MODES
+        payloads = [
+            (Path(f"input_{index}.f32"), payload(index))
+            for index in range(3)
+        ]
+        for _, item in payloads:
+            FAMILY.validate_batch_payload(item, [case], modes, 2)
+        documents = FAMILY.build_mode_documents(
+            [case], payloads, modes,
+            warmup=1, repeat=2, elapsed_seconds=1.0,
+            artifacts={},
+        )
+        self.assertEqual(documents["baseline"]["case_count"], 1)
+        self.assertEqual(
+            documents["combined_fixed"]["cases"][0]["wall"]["call_count"],
+            6,
+        )
+        self.assertTrue(
+            documents["combined_fixed"]["optimization_gate"]["ready"]
+        )
 
 
 if __name__ == "__main__":

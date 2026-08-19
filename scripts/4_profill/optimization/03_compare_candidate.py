@@ -23,6 +23,13 @@ def _path(value: str) -> Path:
     return candidate if candidate.is_absolute() else ROOT / candidate
 
 
+def _display_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError:
+        return str(path)
+
+
 def _case_map(document: dict[str, Any]) -> dict[str, dict[str, Any]]:
     cases = document.get("cases")
     if not isinstance(cases, list):
@@ -157,8 +164,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         candidate = json.loads(args.candidate.read_text(encoding="utf-8"))
         result = compare_diagnoses(baseline, candidate)
         result["artifacts"] = {
-            "baseline": str(args.baseline),
-            "candidate": str(args.candidate),
+            "baseline": _display_path(args.baseline),
+            "candidate": _display_path(args.candidate),
         }
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(

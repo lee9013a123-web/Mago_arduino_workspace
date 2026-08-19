@@ -19,6 +19,10 @@
 #include "internal/runtime_context.h"
 #include "internal/runtime_model.h"
 
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+#include "campp_profill/optimization/final_candidate_suite.h"
+#endif
+
 typedef struct ProfilerOptions {
     const char *plan_path;
     const char *weights_path;
@@ -153,6 +157,14 @@ static void print_result(
     fputs("{\"schema_version\":1,\"runtime\":\"campp-c-runtime\",", stdout);
     fputs("\"backend\":", stdout);
     print_json_string(context->registry->name);
+    fputs(",\"optimization_suite\":", stdout);
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+    print_json_string("final");
+    fputs(",\"optimization_suite_config\":", stdout);
+    print_json_string(campp_final_candidate_suite_name());
+#else
+    print_json_string("stock");
+#endif
     fputs(",\"clock\":", stdout);
     print_json_string(campp_operator_profiler_clock_name());
     printf(
@@ -222,6 +234,9 @@ int main(int argc, char **argv)
     CamppStatus status;
     int parse_result;
     int exit_code = 1;
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+    CamppFinalCandidateSuite final_candidate_suite;
+#endif
 
     if (argc == 2 && strcmp(argv[1], "--capabilities") == 0) {
         fputs(
@@ -231,6 +246,12 @@ int main(int argc, char **argv)
             "\"clock\":",
             stdout);
         print_json_string(campp_operator_profiler_clock_name());
+        fputs(",\"optimization_suite\":", stdout);
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+        print_json_string("final");
+#else
+        print_json_string("stock");
+#endif
         fputs("}\n", stdout);
         return 0;
     }
@@ -250,6 +271,17 @@ int main(int argc, char **argv)
         goto cleanup;
     }
     registry = campp_profill_registry_for_model(&model);
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+    status = campp_final_candidate_suite_create(
+        registry, &final_candidate_suite);
+    if (status != CAMPP_STATUS_OK) {
+        fprintf(
+            stderr, "final candidate suite create failed: %s\n",
+            campp_status_name(status));
+        goto cleanup;
+    }
+    registry = &final_candidate_suite.registry;
+#endif
     status = campp_runtime_context_create(&model, registry, &context);
     if (status != CAMPP_STATUS_OK) {
         fprintf(stderr, "context create failed: %s\n", campp_status_name(status));
