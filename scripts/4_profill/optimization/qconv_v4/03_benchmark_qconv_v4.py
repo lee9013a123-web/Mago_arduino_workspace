@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Benchmark baseline, mac_fixed and QConv v4 with one fixed protocol."""
+"""Benchmark baseline, mac_fixed, v4 and hybrid with one protocol."""
 
 from __future__ import annotations
 
@@ -12,7 +12,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[4]
 PROFILE = Path(__file__).with_name("02_profile_qconv_v4_stages.py")
 COMPARE = Path(__file__).with_name("04_compare_qconv_v4.py")
-MODES = ("baseline", "mac_fixed", "v4")
+MODES = ("baseline", "mac_fixed", "v4", "hybrid")
 
 
 def run(command: list[str]) -> None:
@@ -35,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.preflight_only:
         return 0
 
-    for mode in ("mac_fixed", "v4"):
+    for mode in ("mac_fixed", "v4", "hybrid"):
         command = [sys.executable, str(COMPARE), "--mode", mode]
         if args.force:
             command.append("--force")

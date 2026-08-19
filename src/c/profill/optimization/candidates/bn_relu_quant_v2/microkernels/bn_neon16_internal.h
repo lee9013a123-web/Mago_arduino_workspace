@@ -20,17 +20,39 @@ static inline int campp_bn_v2_finite4(float32x4_t value)
     return vmaxvq_u32(invalid) == 0u;
 }
 
+static inline CamppStatus campp_bn_v2_exact4_coefficients(
+    const float *input, float32x4_t multiplier, float32x4_t additive,
+    float32x4_t divisor, float32x4_t upper, int32x4_t quant_zero,
+    int32x4_t *out_value)
+{
+    float32x4_t value = vmulq_f32(vld1q_f32(input), multiplier);
+    value = vaddq_f32(value, additive);
+    value = vmaxq_f32(value, vdupq_n_f32(0.0f));
+    if (!campp_bn_v2_finite4(value)) return CAMPP_STATUS_KERNEL_FAILED;
+    value = vdivq_f32(value, divisor);
+    value = vminq_f32(value, upper);
+    *out_value = vaddq_s32(vcvtnq_s32_f32(value), quant_zero);
+    return CAMPP_STATUS_OK;
+}
+
 static inline CamppStatus campp_bn_v2_exact4(
     const float *input, const float *multiplier, const float *additive,
     float32x4_t divisor, float32x4_t upper, int32x4_t quant_zero,
     int32x4_t *out_value)
 {
-    float32x4_t value = vmulq_f32(
-        vld1q_f32(input), vld1q_f32(multiplier));
-    value = vaddq_f32(value, vld1q_f32(additive));
+    return campp_bn_v2_exact4_coefficients(
+        input, vld1q_f32(multiplier), vld1q_f32(additive), divisor,
+        upper, quant_zero, out_value);
+}
+
+static inline CamppStatus campp_bn_v2_prescaled4_coefficients(
+    const float *input, float32x4_t multiplier, float32x4_t additive,
+    float32x4_t upper, int32x4_t quant_zero, int32x4_t *out_value)
+{
+    float32x4_t value = vmulq_f32(vld1q_f32(input), multiplier);
+    value = vaddq_f32(value, additive);
     value = vmaxq_f32(value, vdupq_n_f32(0.0f));
     if (!campp_bn_v2_finite4(value)) return CAMPP_STATUS_KERNEL_FAILED;
-    value = vdivq_f32(value, divisor);
     value = vminq_f32(value, upper);
     *out_value = vaddq_s32(vcvtnq_s32_f32(value), quant_zero);
     return CAMPP_STATUS_OK;
@@ -40,14 +62,9 @@ static inline CamppStatus campp_bn_v2_prescaled4(
     const float *input, const float *multiplier, const float *additive,
     float32x4_t upper, int32x4_t quant_zero, int32x4_t *out_value)
 {
-    float32x4_t value = vmulq_f32(
-        vld1q_f32(input), vld1q_f32(multiplier));
-    value = vaddq_f32(value, vld1q_f32(additive));
-    value = vmaxq_f32(value, vdupq_n_f32(0.0f));
-    if (!campp_bn_v2_finite4(value)) return CAMPP_STATUS_KERNEL_FAILED;
-    value = vminq_f32(value, upper);
-    *out_value = vaddq_s32(vcvtnq_s32_f32(value), quant_zero);
-    return CAMPP_STATUS_OK;
+    return campp_bn_v2_prescaled4_coefficients(
+        input, vld1q_f32(multiplier), vld1q_f32(additive), upper,
+        quant_zero, out_value);
 }
 
 static inline void campp_bn_v2_pack16(

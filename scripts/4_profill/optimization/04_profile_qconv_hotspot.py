@@ -1034,6 +1034,8 @@ def select_mac_annotate_target(
     symbols = [str(sample["symbol"]).lower() for sample in samples]
 
     requested = qconv_candidate
+    if requested == "hybrid":
+        requested = "mac_fixed"
     if fused_qconv_candidate != "baseline":
         requested = {
             "mac": "mac",
@@ -1041,6 +1043,7 @@ def select_mac_annotate_target(
             "mac_fixed": "mac_fixed",
             "combined_fixed": "mac_fixed",
             "combined_v4": "mac_fixed",
+            "combined_hybrid": "mac_fixed",
             "quant_neon": "baseline",
         }.get(fused_qconv_candidate, "baseline")
 
@@ -1469,7 +1472,7 @@ def _run_one(
     )
     quantize_spill = None
     if fused_qconv_candidate in (
-        "quant_neon", "combined_fixed", "combined_v4"
+        "quant_neon", "combined_fixed", "combined_v4", "combined_hybrid"
     ):
         quantize_annotate = _run(
             [
@@ -2185,7 +2188,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--qconv-candidate",
         choices=(
             "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm",
-            "v4",
+            "v4", "hybrid",
         ),
         default="baseline",
         help="profile a candidate instead of the production kernel; "

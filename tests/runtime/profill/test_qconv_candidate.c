@@ -8,6 +8,7 @@
 #include "fused_quant_qconv_candidate.h"
 #include "internal/runtime_model.h"
 #include "qconv_candidate.h"
+#include "qconv_hybrid_dispatch.h"
 
 #define CHECK_TRUE(condition)                                           \
     do {                                                                \
@@ -212,6 +213,54 @@ static int run_fused_quantize_case(void)
     return 0;
 }
 
+static int test_hybrid_shape_selection(void)
+{
+    CamppTensorView inputs[8];
+    CamppTensorView *weight = &inputs[3];
+    memset(inputs, 0, sizeof(inputs));
+
+    weight->rank = 4u;
+    weight->dimensions[0] = 32u;
+    weight->dimensions[1] = 32u;
+    weight->dimensions[2] = 3u;
+    weight->dimensions[3] = 3u;
+    CHECK_TRUE(campp_qconv_hybrid_select_path(inputs, 8u) ==
+        CAMPP_QCONV_HYBRID_PATH_V4);
+
+    weight->dimensions[1] = 1u;
+    CHECK_TRUE(campp_qconv_hybrid_select_path(inputs, 8u) ==
+        CAMPP_QCONV_HYBRID_PATH_MAC_FIXED);
+
+    weight->rank = 3u;
+    weight->dimensions[0] = 64u;
+    weight->dimensions[1] = 128u;
+    weight->dimensions[2] = 1u;
+    CHECK_TRUE(campp_qconv_hybrid_select_path(inputs, 8u) ==
+        CAMPP_QCONV_HYBRID_PATH_V4);
+
+    weight->dimensions[0] = 192u;
+    weight->dimensions[1] = 1024u;
+    CHECK_TRUE(campp_qconv_hybrid_select_path(inputs, 8u) ==
+        CAMPP_QCONV_HYBRID_PATH_V4);
+
+    weight->dimensions[0] = 128u;
+    weight->dimensions[1] = 128u;
+    CHECK_TRUE(campp_qconv_hybrid_select_path(inputs, 8u) ==
+        CAMPP_QCONV_HYBRID_PATH_MAC_FIXED);
+
+    weight->dimensions[0] = 32u;
+    weight->dimensions[1] = 128u;
+    weight->dimensions[2] = 3u;
+    CHECK_TRUE(campp_qconv_hybrid_select_path(inputs, 8u) ==
+        CAMPP_QCONV_HYBRID_PATH_MAC_FIXED);
+    weight->dimensions[2] = 5u;
+    weight->dimensions[0] = 128u;
+    weight->dimensions[1] = 320u;
+    CHECK_TRUE(campp_qconv_hybrid_select_path(inputs, 8u) ==
+        CAMPP_QCONV_HYBRID_PATH_MAC_FIXED);
+    return 0;
+}
+
 static int run_case(uint8_t rank)
 {
     const uint32_t input_dimensions_1d[3] = {1u, 5u, 7u};
@@ -366,7 +415,7 @@ static int run_case(uint8_t rank)
     CHECK_STATUS(campp_aarch64_qlinear_conv_o4i4(
         &model, &op, inputs_view, 9u, baseline_output, 1u, NULL, 0u));
     for (mode = CAMPP_QCONV_CANDIDATE_ADDRESS;
-         mode <= CAMPP_QCONV_CANDIDATE_V4;
+         mode <= CAMPP_QCONV_CANDIDATE_HYBRID;
          mode = (CamppQconvCandidateMode)(mode + 1)) {
         const CamppKernelEntry *entry = campp_qconv_candidate_entry(mode);
         CHECK_TRUE(entry != NULL);
@@ -384,7 +433,7 @@ static int run_case(uint8_t rank)
     {
         CamppFusedQconvCandidateMode fused_mode;
         for (fused_mode = CAMPP_FUSED_QCONV_CANDIDATE_MAC;
-             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V4;
+             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_HYBRID;
              fused_mode = (CamppFusedQconvCandidateMode)(fused_mode + 1)) {
             const CamppKernelEntry *entry =
                 campp_fused_qconv_candidate_entry(fused_mode);
@@ -404,6 +453,7 @@ static int run_case(uint8_t rank)
 int main(void)
 {
     CHECK_TRUE(run_fused_quantize_case() == 0);
+    CHECK_TRUE(test_hybrid_shape_selection() == 0);
     CHECK_TRUE(run_case(3u) == 0);
     CHECK_TRUE(run_case(4u) == 0);
     CHECK_TRUE(
@@ -417,6 +467,10 @@ int main(void)
             "v4") == 0);
     CHECK_TRUE(
         strcmp(
+            campp_qconv_candidate_mode_name(CAMPP_QCONV_CANDIDATE_HYBRID),
+            "hybrid") == 0);
+    CHECK_TRUE(
+        strcmp(
             campp_fused_qconv_candidate_mode_name(
                 CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED),
             "combined_fixed") == 0);
@@ -425,6 +479,11 @@ int main(void)
             campp_fused_qconv_candidate_mode_name(
                 CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V4),
             "combined_v4") == 0);
+    CHECK_TRUE(
+        strcmp(
+            campp_fused_qconv_candidate_mode_name(
+                CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_HYBRID),
+            "combined_hybrid") == 0);
     puts("QConv and fused QConv optimization candidates: PASS");
     return 0;
 }

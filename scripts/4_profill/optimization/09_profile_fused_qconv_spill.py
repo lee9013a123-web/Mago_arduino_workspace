@@ -27,7 +27,7 @@ DEFAULT_FEATURES = (
 )
 FUSED_CANDIDATES = (
     "mac", "combined", "mac_fixed", "quant_neon", "combined_fixed",
-    "combined_v4",
+    "combined_v4", "combined_hybrid",
 )
 
 
@@ -392,6 +392,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         results = []
         quantize_expected = args.fused_qconv_candidate in (
             "quant_neon", "combined_fixed", "combined_v4",
+            "combined_hybrid",
         )
         for case in cases:
             inputs = []

@@ -18,7 +18,9 @@ RESULT_DIR = ROOT / "results" / "profiling" / "e7_98" / "optimization" / "qconv_
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--mode", choices=("mac_fixed", "v4"), default="v4")
+    parser.add_argument(
+        "--mode", choices=("mac_fixed", "v4", "hybrid"), default="v4"
+    )
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
 

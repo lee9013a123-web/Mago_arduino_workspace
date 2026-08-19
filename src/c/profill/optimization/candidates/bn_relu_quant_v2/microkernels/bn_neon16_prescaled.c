@@ -28,14 +28,17 @@ static CamppStatus campp_bn_v2_prescaled16_impl(
             uint32_t quarter;
             for (quarter = 0u; quarter < 4u; ++quarter) {
                 const uint32_t offset = channel + quarter * 4u;
-                CamppStatus status = campp_bn_v2_prescaled4(
-                    input0 + offset, multiplier + offset, additive + offset,
-                    upper, zero, &quantized0[quarter]);
+                const float32x4_t multiplier4 =
+                    vld1q_f32(multiplier + offset);
+                const float32x4_t additive4 =
+                    vld1q_f32(additive + offset);
+                CamppStatus status = campp_bn_v2_prescaled4_coefficients(
+                    input0 + offset, multiplier4, additive4, upper, zero,
+                    &quantized0[quarter]);
                 if (status != CAMPP_STATUS_OK) return status;
                 if (paired) {
-                    status = campp_bn_v2_prescaled4(
-                        input1 + offset, multiplier + offset,
-                        additive + offset, upper, zero,
+                    status = campp_bn_v2_prescaled4_coefficients(
+                        input1 + offset, multiplier4, additive4, upper, zero,
                         &quantized1[quarter]);
                     if (status != CAMPP_STATUS_OK) return status;
                 }

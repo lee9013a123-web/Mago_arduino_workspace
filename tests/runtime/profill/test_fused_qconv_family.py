@@ -29,6 +29,7 @@ class FusedQconvFamilyTests(unittest.TestCase):
                 ("quant_neon", False, 80.0),
                 ("combined_fixed", True, 8.0),
                 ("combined_v4", True, 6.0),
+                ("combined_hybrid", True, 5.0),
             ):
                 document = {
                     "candidate_microbench_gate_passed": passed,
@@ -46,13 +47,16 @@ class FusedQconvFamilyTests(unittest.TestCase):
                 )
             summary = FAMILY.build_summary(FAMILY.FULL_DIAGNOSTIC_MODES, root)
             self.assertTrue(summary["production_gate_ready"])
-            self.assertEqual(summary["winner"], "combined_v4")
-            self.assertEqual(len(summary["comparisons"]), 4)
+            self.assertEqual(summary["winner"], "combined_hybrid")
+            self.assertEqual(len(summary["comparisons"]), 5)
 
     def test_quick_defaults_to_baseline_and_final_candidate(self) -> None:
         self.assertEqual(
             FAMILY.DEFAULT_MODES,
-            ("baseline", "combined_fixed", "combined_v4"),
+            (
+                "baseline", "combined_fixed", "combined_v4",
+                "combined_hybrid",
+            ),
         )
 
     def test_batch_payload_builds_comparison_compatible_documents(self) -> None:
@@ -100,6 +104,12 @@ class FusedQconvFamilyTests(unittest.TestCase):
                                 "output_hash": "abc",
                                 "matches_baseline": True,
                             },
+                            {
+                                "name": "combined_hybrid",
+                                "samples_ns": [7 + offset, 8 + offset],
+                                "output_hash": "abc",
+                                "matches_baseline": True,
+                            },
                         ],
                     }
                 ],
@@ -127,6 +137,9 @@ class FusedQconvFamilyTests(unittest.TestCase):
         )
         self.assertTrue(
             documents["combined_v4"]["optimization_gate"]["ready"]
+        )
+        self.assertTrue(
+            documents["combined_hybrid"]["optimization_gate"]["ready"]
         )
 
 

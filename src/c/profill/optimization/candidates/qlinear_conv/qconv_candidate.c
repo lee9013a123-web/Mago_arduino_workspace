@@ -11,6 +11,7 @@
 #include "internal/runtime_model.h"
 #include "microkernels/qconv_mac_4x8.h"
 #include "qconv_address_fastpath.h"
+#include "qconv_hybrid_dispatch.h"
 #include "qconv_mac_neon.h"
 #include "qconv_v4_dispatch.h"
 
@@ -717,6 +718,17 @@ static CamppStatus campp_qconv_candidate_v4(
         scratch, scratch_size);
 }
 
+static CamppStatus campp_qconv_candidate_hybrid(
+    const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
+    const CamppTensorView *inputs, uint8_t input_count,
+    CamppTensorView *outputs, uint8_t output_count,
+    void *scratch, size_t scratch_size)
+{
+    return campp_qconv_hybrid_run(
+        model, op, inputs, input_count, outputs, output_count,
+        scratch, scratch_size);
+}
+
 static const CamppKernelEntry CAMPP_QCONV_CANDIDATE_ENTRIES[] = {
     {
         CAMPP_OP_QLINEAR_CONV,
@@ -759,6 +771,13 @@ static const CamppKernelEntry CAMPP_QCONV_CANDIDATE_ENTRIES[] = {
         campp_qconv_candidate_v4,
         NULL,
         "qlinear_conv_o4i4_v4"
+    },
+    {
+        CAMPP_OP_QLINEAR_CONV,
+        CAMPP_AARCH64_PACKED_KERNEL_ID,
+        campp_qconv_candidate_hybrid,
+        NULL,
+        "qlinear_conv_o4i4_hybrid"
     }
 };
 
@@ -766,10 +785,10 @@ const char *campp_qconv_candidate_mode_name(CamppQconvCandidateMode mode)
 {
     static const char *const names[] = {
         "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm",
-        "v4"
+        "v4", "hybrid"
     };
     return mode >= CAMPP_QCONV_CANDIDATE_BASELINE &&
-        mode <= CAMPP_QCONV_CANDIDATE_V4
+        mode <= CAMPP_QCONV_CANDIDATE_HYBRID
         ? names[mode] : "invalid";
 }
 
@@ -779,7 +798,7 @@ int campp_qconv_candidate_mode_parse(
     CamppQconvCandidateMode mode;
     if (text == NULL || out_mode == NULL) return 1;
     for (mode = CAMPP_QCONV_CANDIDATE_BASELINE;
-         mode <= CAMPP_QCONV_CANDIDATE_V4;
+         mode <= CAMPP_QCONV_CANDIDATE_HYBRID;
          mode = (CamppQconvCandidateMode)(mode + 1)) {
         if (strcmp(text, campp_qconv_candidate_mode_name(mode)) == 0) {
             *out_mode = mode;
@@ -794,7 +813,7 @@ const CamppKernelEntry *campp_qconv_candidate_entry(
 {
     if (mode == CAMPP_QCONV_CANDIDATE_BASELINE) return NULL;
     if (mode < CAMPP_QCONV_CANDIDATE_ADDRESS ||
-        mode > CAMPP_QCONV_CANDIDATE_V4) {
+        mode > CAMPP_QCONV_CANDIDATE_HYBRID) {
         return NULL;
     }
     return &CAMPP_QCONV_CANDIDATE_ENTRIES[mode - 1];

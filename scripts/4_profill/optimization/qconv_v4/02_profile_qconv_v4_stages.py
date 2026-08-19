@@ -11,7 +11,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[4]
 RUNNER = ROOT / "scripts" / "4_profill" / "optimization" / "02_diagnose_top4.py"
-MODES = ("baseline", "mac_fixed", "v4")
+MODES = ("baseline", "mac_fixed", "v4", "hybrid")
 
 
 def main(argv: list[str] | None = None) -> int:

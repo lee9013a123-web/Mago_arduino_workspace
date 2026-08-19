@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "internal/kernel_registry.h"
 #include "internal/runtime_model.h"
 
 typedef struct CamppBnV2ExecutionPlan {

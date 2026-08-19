@@ -28,13 +28,17 @@ CamppStatus campp_bn_v2_exact16_spatial2(
             uint32_t quarter;
             for (quarter = 0u; quarter < 4u; ++quarter) {
                 const uint32_t offset = channel + quarter * 4u;
-                CamppStatus status = campp_bn_v2_exact4(
-                    input0 + offset, multiplier + offset, additive + offset,
-                    divisor, upper, zero, &quantized0[quarter]);
+                const float32x4_t multiplier4 =
+                    vld1q_f32(multiplier + offset);
+                const float32x4_t additive4 =
+                    vld1q_f32(additive + offset);
+                CamppStatus status = campp_bn_v2_exact4_coefficients(
+                    input0 + offset, multiplier4, additive4, divisor,
+                    upper, zero, &quantized0[quarter]);
                 if (status != CAMPP_STATUS_OK) return status;
-                status = campp_bn_v2_exact4(
-                    input1 + offset, multiplier + offset, additive + offset,
-                    divisor, upper, zero, &quantized1[quarter]);
+                status = campp_bn_v2_exact4_coefficients(
+                    input1 + offset, multiplier4, additive4, divisor,
+                    upper, zero, &quantized1[quarter]);
                 if (status != CAMPP_STATUS_OK) return status;
             }
             campp_bn_v2_pack16(
