@@ -32,13 +32,7 @@ QCONV_V5_PARAMETERS_DIR="${QCONV_V5_DIR}/parameters"
 QCONV_V5_MICROKERNEL_DIR="${QCONV_V5_DIR}/microkernels"
 QCONV_V5_PACKING_DIR="${QCONV_V5_DIR}/packing"
 QCONV_V5_INSTRUMENTATION_DIR="${QCONV_V5_DIR}/instrumentation"
-QCONV_ADDRESS_V2_DIR="${ROOT}/src/c/profill/optimization/candidates/qlinear_conv_address_v2"
-QCONV_ADDRESS_V2_SOURCES=(
-    "${QCONV_ADDRESS_V2_DIR}/planning/qconv_address_plan.c"
-    "${QCONV_ADDRESS_V2_DIR}/kernels/one_by_one/qconv_address_1x1.c"
-    "${QCONV_ADDRESS_V2_DIR}/kernels/three_by_three/qconv_address_3x3.c"
-    "${QCONV_ADDRESS_V2_DIR}/kernels/generic/qconv_address_generic.c"
-)
+QCONV_V5_ADDRESS_DIR="${QCONV_V5_DIR}/address"
 FUSED_QCONV_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_quant_qconv"
 BN_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant"
 BN_V2_DIR="${ROOT}/src/c/profill/optimization/candidates/bn_relu_quant_v2"
@@ -66,8 +60,15 @@ CANDIDATE_SOURCES=(
     "${QCONV_V4_STORE_DIR}/qconv_store_channel_packed.c"
     "${QCONV_V4_DISPATCH_DIR}/qconv_v4_dispatch.c"
     "${QCONV_V4_DISPATCH_DIR}/qconv_hybrid_dispatch.c"
+    "${QCONV_V5_ADDRESS_DIR}/qconv_v5_address_plan.c"
+    "${QCONV_V5_ADDRESS_DIR}/qconv_v5_address_schedule.c"
+    "${QCONV_V5_ADDRESS_DIR}/qconv_v5_address_1x1.c"
+    "${QCONV_V5_ADDRESS_DIR}/qconv_v5_address_3x3.c"
+    "${QCONV_V5_ADDRESS_DIR}/qconv_v5_address_generic.c"
+    "${QCONV_V5_PLANNING_DIR}/qconv_v5_execution_plan.c"
     "${QCONV_V5_PLANNING_DIR}/qconv_v5_validated_raw_plan.c"
     "${QCONV_V5_PARAMETERS_DIR}/qconv_v5_zero_point_fastpath.c"
+    "${QCONV_V5_MICROKERNEL_DIR}/qconv_mac_v5_common.c"
     "${QCONV_V5_MICROKERNEL_DIR}/qconv_mac_1x1_8x8_real_intrinsics.c"
     "${QCONV_V5_MICROKERNEL_DIR}/qconv_mac_3x3_cin32_unroll_intrinsics.c"
     "${QCONV_V5_MICROKERNEL_DIR}/qconv_mac_3x3_sliding_8x8_intrinsics.c"
@@ -123,7 +124,7 @@ INCLUDES=(
     -I "${QCONV_V5_MICROKERNEL_DIR}"
     -I "${QCONV_V5_PACKING_DIR}"
     -I "${QCONV_V5_INSTRUMENTATION_DIR}"
-    -I "${QCONV_ADDRESS_V2_DIR}"
+    -I "${QCONV_V5_ADDRESS_DIR}"
     -I "${FUSED_QCONV_CANDIDATE_DIR}"
     -I "${BN_CANDIDATE_DIR}"
     -I "${BN_V2_DIR}"
@@ -217,15 +218,13 @@ INCLUDES=(
     "${ROOT}/tests/runtime/profill/qconv_v5/test_qconv_v5_primitives.c" \
     -lm -o "${BUILD_DIR}/test_qconv_v5_primitives"
 
-# Address-v2 stays outside CANDIDATE_SOURCES until its standalone bitwise and
-# latency gates pass. This target validates the independent provider contract.
 # shellcheck disable=SC2086
 "${CC}" ${CFLAGS} \
     "${INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
-    "${QCONV_ADDRESS_V2_SOURCES[@]}" \
-    "${ROOT}/tests/runtime/profill/qconv_address_v2/test_qconv_address_v2.c" \
-    -lm -o "${BUILD_DIR}/test_qconv_address_v2"
+    "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/qconv_v5/test_qconv_v5_address.c" \
+    -lm -o "${BUILD_DIR}/test_qconv_v5_address"
 
 # shellcheck disable=SC2086
 "${CC}" ${CFLAGS} \
@@ -288,9 +287,9 @@ echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"
 echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"
 echo "  QConv 4x8:  ${BUILD_DIR}/test_qconv_microkernel_4x8"
-echo "  QConv addr: ${BUILD_DIR}/test_qconv_address_v2"
 echo "  QConv v4:   ${BUILD_DIR}/test_qconv_v4_primitives"
 echo "  QConv v5:   ${BUILD_DIR}/test_qconv_v5_primitives"
+echo "  V5 address: ${BUILD_DIR}/test_qconv_v5_address"
 echo "  BN test:    ${BUILD_DIR}/test_bn_candidate"
 echo "  BN v2 test: ${BUILD_DIR}/test_bn_v2_candidate"
 echo "  Dequant:    ${BUILD_DIR}/test_dequant_candidate"

@@ -107,6 +107,10 @@ V4_MAC_TAIL_SOURCE = (
     / "src/c/profill/optimization/candidates/qlinear_conv_v4/microkernels"
     / "qconv_mac_tail_intrinsics.c"
 )
+V5_COMMON_SYMBOL = "campp_qconv_v5_mac_8x8_raw"
+V5_SLIDING_SYMBOL = "campp_qconv_v5_mac_3x3_sliding_raw"
+V5_TAIL_SYMBOL = "campp_qconv_v5_mac_tail"
+V5_RUN_SYMBOL = "campp_qconv_v5_run"
 FIXED_INTRINSICS_SYMBOL = "campp_qconv_mac_4x8_intrinsics_raw"
 FIXED_ASSEMBLY_SYMBOL = "campp_qconv_mac_4x8_aarch64_raw"
 V2_MAC_SYMBOL = "campp_qconv_mac_neon_tile_v2"
@@ -1604,7 +1608,22 @@ def select_mac_annotate_target(
             else "mac_fixed"
         )
     if requested == "v5":
-        requested = "v4"
+        if any(V5_SLIDING_SYMBOL in symbol for symbol in symbols):
+            return {
+                "execution_path": "v5_3x3_sliding_raw",
+                "symbol": V5_SLIDING_SYMBOL,
+            }
+        if any(V5_COMMON_SYMBOL in symbol for symbol in symbols):
+            return {
+                "execution_path": "v5_real_8x8_raw",
+                "symbol": V5_COMMON_SYMBOL,
+            }
+        if any(V5_TAIL_SYMBOL in symbol for symbol in symbols):
+            return {
+                "execution_path": "v5_tail_v4",
+                "symbol": V5_TAIL_SYMBOL,
+            }
+        return {"execution_path": "v5_dispatch", "symbol": V5_RUN_SYMBOL}
     if fused_qconv_candidate != "baseline":
         requested = {
             "mac": "mac",

@@ -7,4 +7,4 @@ v5 MAC work lands here in independent steps:
 - `qconv_mac_3x3_sliding_8x8_*`: interior sliding-window input reuse;
 - `qconv_mac_tail_v5_*`: tail paths that preserve v4 semantics.
 
-Until those kernels pass bitwise gates, the v5 dispatch delegates to v4.
+Unsupported border/tail cases still fall back to the v4 tail path.

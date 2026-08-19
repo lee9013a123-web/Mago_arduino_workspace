@@ -1,8 +1,9 @@
-# QConv v5 profiling
+# QConv v5 validation and profiling
 
-This folder runs the v5 staging candidate with the same E7 protocol used for
-v4.  The initial v5 candidate delegates to v4, so latency should match v4 until
-MAC-side kernels replace the dispatch path.
+V5 is built as a separate candidate mode from V4. Runtime dispatch reuses V4
+planning/requant/store and tries the v5 raw MAC kernel for full tiles first.
+The V5 address provider is also built and tested, but address dispatch is a
+separate gate.
 
 ```bash
 bash scripts/4_profill/optimization/qconv_v5/01_build_qconv_v5.sh

@@ -415,7 +415,7 @@ static int run_case(uint8_t rank)
     CHECK_STATUS(campp_aarch64_qlinear_conv_o4i4(
         &model, &op, inputs_view, 9u, baseline_output, 1u, NULL, 0u));
     for (mode = CAMPP_QCONV_CANDIDATE_ADDRESS;
-         mode <= CAMPP_QCONV_CANDIDATE_HYBRID;
+         mode <= CAMPP_QCONV_CANDIDATE_V5;
          mode = (CamppQconvCandidateMode)(mode + 1)) {
         const CamppKernelEntry *entry = campp_qconv_candidate_entry(mode);
         CHECK_TRUE(entry != NULL);
