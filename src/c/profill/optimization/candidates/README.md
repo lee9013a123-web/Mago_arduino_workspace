@@ -6,6 +6,7 @@
 candidates/
 ├── qlinear_conv/            # QConv address/MAC/fixed microkernel 후보
 ├── qlinear_conv_v4/         # shape별 MAC, wide requant/store 후속 후보
+├── qlinear_conv_v5/         # bitwise-safe MAC mul 후속 후보
 ├── fused_quant_qconv/       # 기존 fused quantization + QConv 후보 결합
 ├── bn_relu_quant/           # channel affine precompute/NEON 실험
 ├── bn_relu_quant_v2/        # 16-lane/2-spatial/prescaled 후속 후보
@@ -37,6 +38,8 @@ qlinear_conv/
 - `mac_asm`: 같은 고정 tile을 register 고정 assembly로 실행, 나머지는 `mac`
 - `v4`: 1x1/3x3 interior 주소 계획 + fixed MAC + 8-lane requant/store,
   spatial/channel tail은 MAC-v2
+- `v5`: v4와 bitwise 동일한 staging entry에서 시작해 validated raw,
+  zero-point fast path, real 8x8, 3x3/Cin32 unroll을 독립 측정
 
 고정 microkernel은 E7에서 확인된 UINT8 input, INT8 O4I4 weight, 4의 배수인
 input channel, 8개의 유효 output만 처리한다. padding point, spatial tail, output

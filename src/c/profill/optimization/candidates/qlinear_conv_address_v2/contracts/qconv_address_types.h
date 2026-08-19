@@ -28,6 +28,8 @@ typedef struct CamppQconvAddressGeometry {
     int64_t convolution_stride[2];
     int64_t dilation[2];
     int64_t pad_begin[2];
+    uint32_t batch_count;
+    uint32_t input_channels;
     uint32_t input_channels_per_group;
     uint8_t spatial_rank;
 } CamppQconvAddressGeometry;
@@ -56,5 +58,18 @@ typedef struct CamppQconvAddressTile {
     uint8_t kernel_elements;
     CamppQconvAddressPath path;
 } CamppQconvAddressTile;
+
+/* Compact row-wise schedule; no input pointers are cached here. */
+typedef struct CamppQconvAddressCursor {
+    uint32_t output_row;
+    uint32_t output_column;
+} CamppQconvAddressCursor;
+
+typedef struct CamppQconvAddressWorkItem {
+    uint32_t output_row;
+    uint32_t output_column;
+    uint8_t tile_count;
+    CamppQconvAddressPath path;
+} CamppQconvAddressWorkItem;
 
 #endif /* CAMPP_PROFILL_QCONV_ADDRESS_V2_TYPES_H */

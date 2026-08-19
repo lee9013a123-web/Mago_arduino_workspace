@@ -487,7 +487,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--qconv-candidate",
         choices=(
             "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm",
-            "v4", "hybrid",
+            "v4", "hybrid", "v5",
         ),
         default="baseline",
     )

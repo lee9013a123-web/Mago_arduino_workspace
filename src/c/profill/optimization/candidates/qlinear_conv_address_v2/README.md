@@ -44,3 +44,15 @@ V4 dispatch ──> V4 adapter ──> address API ──> contracts
 
 기존 V4 파일을 직접 이동하거나 복사하지 않는다. 독립 실험이 실패하면 이
 디렉터리만 제거해 기존 candidate를 그대로 보존할 수 있어야 한다.
+
+## Implemented address-only scope
+
+- plan 시점의 output/kernel byte step 및 interior 범위 계산
+- 1x1 base + 증분 pointer 생성과 tile 최초/최종 storage 검사
+- 3x3 interior base + 증분 pointer 생성과 72회 검사를 2회로 축소
+- 전체 TilePlan `memset` 없이 사용 필드만 기록
+- generic padding point의 명시적 `NULL` 기록
+- 2D row/column API로 hot path의 `/`, `%` 제거 준비
+
+아직 V4 runtime dispatch에는 연결하지 않았다. direct-stride와 sliding-window는
+MAC ABI가 안정된 뒤 별도 candidate로 추가한다.

@@ -1603,6 +1603,8 @@ def select_mac_annotate_target(
             "v4" if any(V4_RUN_SYMBOL in symbol for symbol in symbols)
             else "mac_fixed"
         )
+    if requested == "v5":
+        requested = "v4"
     if fused_qconv_candidate != "baseline":
         requested = {
             "mac": "mac",
@@ -2872,7 +2874,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--qconv-candidate",
         choices=(
             "baseline", "address", "mac", "combined", "mac_fixed", "mac_asm",
-            "v4", "hybrid",
+            "v4", "hybrid", "v5",
         ),
         default="baseline",
         help="profile a candidate instead of the production kernel; "

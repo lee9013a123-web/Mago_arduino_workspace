@@ -471,6 +471,10 @@ int main(void)
             "hybrid") == 0);
     CHECK_TRUE(
         strcmp(
+            campp_qconv_candidate_mode_name(CAMPP_QCONV_CANDIDATE_V5),
+            "v5") == 0);
+    CHECK_TRUE(
+        strcmp(
             campp_fused_qconv_candidate_mode_name(
                 CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED),
             "combined_fixed") == 0);
