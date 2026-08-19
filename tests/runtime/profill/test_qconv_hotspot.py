@@ -56,6 +56,40 @@ class QConvHotspotTests(unittest.TestCase):
         self.assertEqual([case["operator_id"] for case in cases], [2, 10, 825])
         self.assertEqual([case["shape"] for case in cases], ["3x3", "3x3", "1x1"])
 
+    def test_representative10_selects_five_hot_operators_per_shape(self) -> None:
+        def operator(operator_id: int, shape: list[int], mean_ms: float) -> dict:
+            return {
+                "operator_id": operator_id,
+                "kernel_id": 1,
+                "kernel_name": "qlinear_conv_o4i4_neon",
+                "operator_type": "QLINEAR_CONV",
+                "weight_shapes": [shape],
+                "mean_ms": mean_ms,
+                "end_to_end_share_pct": mean_ms,
+            }
+
+        operators = [
+            operator(index, [32, 32, 3, 3], float(index))
+            for index in range(1, 7)
+        ] + [
+            operator(100 + index, [64, 128, 1], float(index))
+            for index in range(1, 7)
+        ]
+        cases = HOTSPOT.select_qconv_cases(
+            operators, case_scope="representative10"
+        )
+        self.assertEqual(len(cases), 10)
+        self.assertEqual(
+            [case["operator_id"] for case in cases[:5]], [6, 5, 4, 3, 2]
+        )
+        self.assertEqual(
+            [case["operator_id"] for case in cases[5:]],
+            [106, 105, 104, 103, 102],
+        )
+        self.assertEqual(
+            [case["shape"] for case in cases], ["3x3"] * 5 + ["1x1"] * 5
+        )
+
     def test_parses_and_classifies_perf_source_lines(self) -> None:
         source_map = self.source_map
         source = "/tmp/qlinear_convolution_neon.c"
@@ -230,6 +264,58 @@ class QConvHotspotTests(unittest.TestCase):
             aggregate["decision"]["detail_winner"], "mac_accumulate"
         )
         self.assertTrue(aggregate["decision"]["detail_stable_across_inputs"])
+
+    def test_v4_sources_are_split_into_address_mac_requant_and_store(self) -> None:
+        source_map = HOTSPOT.build_v2_source_map()
+        rows = (
+            (
+                "campp_qconv_v4_plan_3x3_interior",
+                "/tmp/qconv_v4_tile_plan.c",
+                source_map["v4_3x3_padding_span"][0],
+                "address_padding_bounds",
+            ),
+            (
+                HOTSPOT.FIXED_INTRINSICS_SYMBOL,
+                "/tmp/qconv_mac_4x8_intrinsics.c",
+                source_map["fixed_accumulate_call_lines"][0],
+                "mac_accumulate",
+            ),
+            (
+                "campp_qconv_v4_requantize4",
+                "/tmp/qconv_requant_neon8.c",
+                source_map["v4_requant4_scale_span"][0],
+                "requant_scale_multiply",
+            ),
+            (
+                "campp_qconv_v4_store_channel_packed",
+                "/tmp/qconv_store_channel_packed.c",
+                source_map["v4_store_write_span"][0],
+                "requant_output_store",
+            ),
+        )
+        for symbol, source, line, expected in rows:
+            detail = HOTSPOT.classify_v2_detail_sample(
+                {"symbol": symbol, "source": source, "line": line},
+                source_map,
+            )
+            self.assertEqual(detail, expected)
+
+    def test_v4_annotate_target_reports_specialized_and_tail_paths(self) -> None:
+        fixed = HOTSPOT.select_mac_annotate_target(
+            " 100000 ffff campp_qconv_mac_4x8_intrinsics_raw "
+            "/tmp/qconv_mac_4x8_intrinsics.c:100",
+            qconv_candidate="v4",
+        )
+        self.assertEqual(fixed["execution_path"], "v4_fixed_4x8_intrinsics")
+        self.assertEqual(fixed["symbol"], HOTSPOT.FIXED_INTRINSICS_SYMBOL)
+
+        tail = HOTSPOT.select_mac_annotate_target(
+            " 100000 ffff campp_qconv_mac_neon_tile_v2 "
+            "/tmp/qconv_mac_neon.c:600",
+            qconv_candidate="v4",
+        )
+        self.assertEqual(tail["execution_path"], "v4_generic_or_tail_v2")
+        self.assertEqual(tail["symbol"], HOTSPOT.V2_MAC_SYMBOL)
 
     def test_spill_parser_separates_stack_and_tensor_loads(self) -> None:
         annotate = "\n".join(
