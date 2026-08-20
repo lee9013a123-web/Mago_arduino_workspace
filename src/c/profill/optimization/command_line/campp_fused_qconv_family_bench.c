@@ -1,8 +1,9 @@
 #define _POSIX_C_SOURCE 200809L
 
 /*
- * E7 graph를 입력당 한 번만 순회하면서 모든 fused Quant-QConv 후보를
- * 같은 중간 Tensor로 측정한다. Operator별 process/prelude 반복을 피한다.
+ * E7 graph를 입력당 한 번만 순회하면서 QConv family 후보를 같은 중간
+ * Tensor로 측정한다. CAMPP_QCONV_FAMILY_ORDINARY가 정의되면 일반 QConv,
+ * 아니면 fused Quant-QConv를 대상으로 빌드한다.
  */
 
 #include <errno.h>
@@ -20,13 +21,31 @@
 #include "campp_runtime/status_code.h"
 #include "campp_runtime/tensor_descriptor.h"
 #include "execution/graph_executor.h"
-#include "fused_quant_qconv_candidate.h"
 #include "internal/kernel_registry.h"
 #include "internal/runtime_context.h"
 #include "internal/runtime_model.h"
 #include "memory_management/memory_bounds_checker.h"
 
-#define CAMPP_FAMILY_MODE_CAPACITY 8u
+#if defined(CAMPP_QCONV_FAMILY_ORDINARY)
+#include "qconv_candidate.h"
+typedef CamppQconvCandidateMode CamppFamilyCandidateMode;
+#define CAMPP_FAMILY_BASELINE CAMPP_QCONV_CANDIDATE_BASELINE
+#define CAMPP_FAMILY_DEFAULT_CANDIDATE CAMPP_QCONV_CANDIDATE_MAC_FIXED
+#define campp_family_candidate_entry campp_qconv_candidate_entry
+#define campp_family_candidate_mode_name campp_qconv_candidate_mode_name
+#define campp_family_candidate_mode_parse campp_qconv_candidate_mode_parse
+#else
+#include "fused_quant_qconv_candidate.h"
+typedef CamppFusedQconvCandidateMode CamppFamilyCandidateMode;
+#define CAMPP_FAMILY_BASELINE CAMPP_FUSED_QCONV_CANDIDATE_BASELINE
+#define CAMPP_FAMILY_DEFAULT_CANDIDATE \
+    CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED
+#define campp_family_candidate_entry campp_fused_qconv_candidate_entry
+#define campp_family_candidate_mode_name campp_fused_qconv_candidate_mode_name
+#define campp_family_candidate_mode_parse campp_fused_qconv_candidate_mode_parse
+#endif
+
+#define CAMPP_FAMILY_MODE_CAPACITY 10u
 
 typedef struct FamilyOptions {
     const char *plan_path;
@@ -35,7 +54,7 @@ typedef struct FamilyOptions {
     uint32_t warmup;
     uint32_t repeat;
     uint32_t requested_threads;
-    CamppFusedQconvCandidateMode modes[CAMPP_FAMILY_MODE_CAPACITY];
+    CamppFamilyCandidateMode modes[CAMPP_FAMILY_MODE_CAPACITY];
     uint8_t mode_count;
 } FamilyOptions;
 
@@ -56,7 +75,7 @@ typedef struct TargetInvocation {
 } TargetInvocation;
 
 typedef struct ModeResult {
-    CamppFusedQconvCandidateMode mode;
+    CamppFamilyCandidateMode mode;
     uint64_t *samples_ns;
     uint64_t output_hash;
     int matches_baseline;
@@ -86,7 +105,7 @@ static int parse_u32(const char *text, uint32_t *out_value)
 }
 
 static int add_mode(
-    FamilyOptions *options, CamppFusedQconvCandidateMode mode)
+    FamilyOptions *options, CamppFamilyCandidateMode mode)
 {
     uint8_t index;
 
@@ -100,6 +119,14 @@ static int add_mode(
 
 static void usage(const char *program)
 {
+#if defined(CAMPP_QCONV_FAMILY_ORDINARY)
+    fprintf(
+        stderr,
+        "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
+        "[--warmup 5] [--repeat 20] [--threads 1] "
+        "[--mode baseline] [--mode mac_fixed] [--mode v4] [--mode v5]\n",
+        program);
+#else
     fprintf(
         stderr,
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
@@ -108,6 +135,7 @@ static void usage(const char *program)
         "[--mode combined_fixed] [--mode combined_v4] "
         "[--mode combined_hybrid] [--mode combined_v5]\n",
         program);
+#endif
 }
 
 static int parse_options(int argc, char **argv, FamilyOptions *options)
@@ -124,7 +152,7 @@ static int parse_options(int argc, char **argv, FamilyOptions *options)
     for (index = 1; index < argc; ++index) {
         const char *name = argv[index];
         const char *value;
-        CamppFusedQconvCandidateMode mode;
+        CamppFamilyCandidateMode mode;
 
         if (strcmp(name, "--help") == 0 || strcmp(name, "-h") == 0) {
             usage(argv[0]);
@@ -150,7 +178,7 @@ static int parse_options(int argc, char **argv, FamilyOptions *options)
             if (parse_u32(value, &options->requested_threads) != 0 ||
                 options->requested_threads != 1u) return 1;
         } else if (strcmp(name, "--mode") == 0) {
-            if (campp_fused_qconv_candidate_mode_parse(value, &mode) != 0 ||
+            if (campp_family_candidate_mode_parse(value, &mode) != 0 ||
                 add_mode(options, mode) != 0) {
                 fprintf(stderr, "invalid or excessive mode: %s\n", value);
                 return 1;
@@ -166,16 +194,14 @@ static int parse_options(int argc, char **argv, FamilyOptions *options)
         return 1;
     }
     if (options->mode_count == 0u) {
-        if (add_mode(options, CAMPP_FUSED_QCONV_CANDIDATE_BASELINE) != 0 ||
-            add_mode(options, CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED) !=
-                0) return 1;
+        if (add_mode(options, CAMPP_FAMILY_BASELINE) != 0 ||
+            add_mode(options, CAMPP_FAMILY_DEFAULT_CANDIDATE) != 0) return 1;
     }
     for (index = 0; index < options->mode_count; ++index) {
-        if (options->modes[index] ==
-            CAMPP_FUSED_QCONV_CANDIDATE_BASELINE) has_baseline = 1;
+        if (options->modes[index] == CAMPP_FAMILY_BASELINE) has_baseline = 1;
     }
     if (!has_baseline &&
-        add_mode(options, CAMPP_FUSED_QCONV_CANDIDATE_BASELINE) != 0) {
+        add_mode(options, CAMPP_FAMILY_BASELINE) != 0) {
         return 1;
     }
     return 0;
@@ -432,20 +458,27 @@ static int benchmark_mode(
         CAMPP_STATUS_OK ? 0 : 1;
 }
 
-static int is_fused_qconv_target(
+static int is_qconv_family_target(
     const CamppOperatorDescriptor *op, const CamppKernelEntry *kernel)
 {
+#if defined(CAMPP_QCONV_FAMILY_ORDINARY)
+    return op != NULL && kernel != NULL && kernel->name != NULL &&
+        op->opcode == CAMPP_OP_QLINEAR_CONV &&
+        op->kernel_id == CAMPP_AARCH64_PACKED_KERNEL_ID &&
+        strcmp(kernel->name, "qlinear_conv_o4i4_neon") == 0;
+#else
     return op != NULL && kernel != NULL && kernel->name != NULL &&
         op->opcode == CAMPP_OP_QLINEAR_CONV &&
         op->kernel_id == CAMPP_FUSION_QUANT_QCONV_KERNEL_ID &&
         strcmp(kernel->name, "fused_quant_qlinear_conv_o4i4") == 0;
+#endif
 }
 
 static const CamppKernelEntry *kernel_for_mode(
-    const CamppKernelEntry *baseline, CamppFusedQconvCandidateMode mode)
+    const CamppKernelEntry *baseline, CamppFamilyCandidateMode mode)
 {
-    return mode == CAMPP_FUSED_QCONV_CANDIDATE_BASELINE
-        ? baseline : campp_fused_qconv_candidate_entry(mode);
+    return mode == CAMPP_FAMILY_BASELINE
+        ? baseline : campp_family_candidate_entry(mode);
 }
 
 static int benchmark_operator(
@@ -480,8 +513,8 @@ static int benchmark_operator(
         for (result_index = 0u;
              result_index < options->mode_count; ++result_index) {
             ModeResult *mode_result = &result->modes[result_index];
-            const int is_baseline = mode_result->mode ==
-                CAMPP_FUSED_QCONV_CANDIDATE_BASELINE;
+            const int is_baseline =
+                mode_result->mode == CAMPP_FAMILY_BASELINE;
             const CamppKernelEntry *kernel;
 
             if ((pass == 0 && is_baseline) || (pass == 1 && !is_baseline)) {
@@ -550,9 +583,13 @@ static void print_result(
 {
     uint32_t case_index;
 
-    fputs(
-        "{\"schema_version\":1,\"mode\":\"fused_qconv_family_batch\"," 
-        "\"clock\":", stdout);
+    fputs("{\"schema_version\":1,\"mode\":", stdout);
+#if defined(CAMPP_QCONV_FAMILY_ORDINARY)
+    print_json_string("qconv_family_batch");
+#else
+    print_json_string("fused_qconv_family_batch");
+#endif
+    fputs(",\"clock\":", stdout);
     print_json_string(campp_operator_profiler_clock_name());
     printf(
         ",\"configuration\":{\"requested_threads\":%" PRIu32
@@ -577,7 +614,7 @@ static void print_result(
         for (mode_index = 0u; mode_index < result->mode_count; ++mode_index) {
             const ModeResult *mode = &result->modes[mode_index];
             printf("%s{\"name\":", mode_index == 0u ? "" : ",");
-            print_json_string(campp_fused_qconv_candidate_mode_name(mode->mode));
+            print_json_string(campp_family_candidate_mode_name(mode->mode));
             fputs(",\"samples_ns\":", stdout);
             print_u64_samples(mode->samples_ns, options->repeat);
             printf(
@@ -614,6 +651,16 @@ int main(int argc, char **argv)
     int exit_code = 1;
 
     if (argc == 2 && strcmp(argv[1], "--capabilities") == 0) {
+#if defined(CAMPP_QCONV_FAMILY_ORDINARY)
+        fputs(
+            "{\"runtime\":\"campp-qconv-family-bench\","
+            "\"effective_threads\":1,\"bucket\":98,"
+            "\"measurement_scope\":\"single_kernel_run_batch\","
+            "\"batch_graph_traversal\":true,"
+            "\"qconv_candidates\":[\"baseline\",\"mac_fixed\","
+            "\"v4\",\"v5\"]}\n",
+            stdout);
+#else
         fputs(
             "{\"runtime\":\"campp-fused-qconv-family-bench\"," 
             "\"effective_threads\":1,\"bucket\":98,"
@@ -624,6 +671,7 @@ int main(int argc, char **argv)
             "\"combined_fixed\",\"combined_v4\","
             "\"combined_hybrid\",\"combined_v5\"]}\n",
             stdout);
+#endif
         return 0;
     }
     parse_result = parse_options(argc, argv, &options);
@@ -665,14 +713,18 @@ int main(int argc, char **argv)
         goto cleanup;
     }
     for (operator_id = 0u; operator_id < model.operator_count; ++operator_id) {
-        if (is_fused_qconv_target(
+        if (is_qconv_family_target(
                 &model.operators[operator_id],
                 context.resolved_kernels[operator_id])) {
             result_capacity += 1u;
         }
     }
     if (result_capacity == 0u) {
+#if defined(CAMPP_QCONV_FAMILY_ORDINARY)
+        fprintf(stderr, "model has no ordinary QConv operators\n");
+#else
         fprintf(stderr, "model has no fused Quant-QConv operators\n");
+#endif
         goto cleanup;
     }
     results = (OperatorResult *)calloc(result_capacity, sizeof(*results));
@@ -682,7 +734,7 @@ int main(int argc, char **argv)
         const CamppOperatorDescriptor *op = &model.operators[operator_id];
         const CamppKernelEntry *kernel = context.resolved_kernels[operator_id];
 
-        if (is_fused_qconv_target(op, kernel)) {
+        if (is_qconv_family_target(op, kernel)) {
             uint8_t mode_index;
             if (benchmark_operator(
                     &options, &context, operator_id,

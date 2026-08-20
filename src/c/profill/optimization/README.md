@@ -22,10 +22,12 @@ allocation을 비교하고 `mac_asm`은 fixed intrinsics에도 spill이 남을 �
 효과를 함께 측정한다. 따라서 별도 MAC 구현 없이 같은 개선을 공유한다. 이후
 BN-ReLU-Quant, DequantizeLinear를 분리한다.
 
-전체 fused family 비교는 `campp_fused_qconv_family_bench`가 graph를 입력당
-한 번만 실행한다. 각 target에서 activation 입력을 잠시 복사해 후보들을 같은
-값으로 측정하고 baseline을 마지막에 실행해 그 출력을 graph 진행에 사용한다.
-따라서 Operator별 prelude 재실행은 측정시간에 포함되지 않는다.
+전체 일반/fused family 비교는 `campp_qconv_family_bench`와
+`campp_fused_qconv_family_bench`가 graph를 입력당 한 번만 실행한다. 두
+바이너리는 같은 batch traversal source를 사용한다. 각 target에서 activation
+입력을 잠시 복사해 후보들을 같은 값으로 측정하고 baseline을 마지막에 실행해
+그 출력을 graph 진행에 사용한다. 따라서 Operator별 process 기동, 모델 load,
+prelude 재실행은 측정시간에 포함되지 않는다.
 
 fused 후보의 register spill은 `09_profile_fused_qconv_spill.py`가 기존
 `04_profile_qconv_hotspot.py`의 perf control FIFO와 annotate parser를 재사용해

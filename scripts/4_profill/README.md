@@ -340,6 +340,26 @@ done
 `fused_input_quantize`가 새 병목으로 커지는지는 stage 비중으로 다시 확인한다.
 microbench 통과 후에도 retained tensor bitwise와 Quick E2E 검증이 필요하다.
 
+일반 `qlinear_conv_o4i4_neon` 115개를 `mac_fixed/v4/v5`로 전수 비교할 때는
+batch family runner를 사용한다. 입력당 모델을 한 번만 읽고 graph를 한 번
+순회하며, 각 QConv에서 후보를 연속 측정한 뒤 baseline 출력을 다음 Operator에
+전달한다. 기존 Operator별 runner의 1,380회 process/model-load 반복은 없다.
+
+```bash
+python3 scripts/4_profill/optimization/12_benchmark_qconv_family.py \
+  --modes baseline mac_fixed v4 v5 \
+  --preflight-only
+
+python3 scripts/4_profill/optimization/12_benchmark_qconv_family.py \
+  --modes baseline mac_fixed v4 v5 \
+  --force
+```
+
+raw batch payload는 `runs/profiling/e7_98/optimization/qconv_family/raw_batch/`,
+mode별 결과와 비교표는 `results/profiling/e7_98/optimization/qconv_family/`에
+기록된다. 세 입력의 모든 Operator output hash가 baseline과 bitwise 동일해야
+후속 layer-hybrid plan의 후보가 된다.
+
 대표 Operator가 아니라 profile의 `fused_quant_qlinear_conv_o4i4` 전체를 비교할
 때는 family runner를 사용한다. 현재 E7 profile에서는 110개 Operator가 대상이다.
 이 runner는 Operator마다 graph prelude를 다시 실행하지 않는다. 입력당 graph를

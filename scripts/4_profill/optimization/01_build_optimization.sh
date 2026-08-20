@@ -163,6 +163,18 @@ INCLUDES=(
     "${ROOT}/src/c/profill/optimization/command_line/campp_fused_qconv_family_bench.c" \
     -lm -o "${BUILD_DIR}/campp_fused_qconv_family_bench"
 
+# 일반 QConv 115개도 같은 batch runner를 사용한다. 한 입력에서 graph를 한 번만
+# 순회하고 각 target에서 baseline/mac_fixed/v4/v5를 같은 Tensor로 측정한다.
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} -DCAMPP_QCONV_FAMILY_ORDINARY=1 \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${ROOT}/src/c/profill/operator_profiler.c" \
+    "${ROOT}/src/c/profill/runtime_fixture.c" \
+    "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/src/c/profill/optimization/command_line/campp_fused_qconv_family_bench.c" \
+    -lm -o "${BUILD_DIR}/campp_qconv_family_bench"
+
 # perf annotate용 binary. Runtime kernel에는 stage clock 호출을 컴파일하지 않는다.
 # shellcheck disable=SC2086
 "${CC}" ${CFLAGS} \
@@ -285,11 +297,13 @@ INCLUDES=(
     printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
     printf 'fused_dqrq_candidate_modes=baseline,scalar,neon\n'
     printf 'remaining_candidate_modes=baseline,optimized\n'
+    printf 'qconv_family_batch_graph_traversal=enabled\n'
     printf 'fused_family_batch_graph_traversal=enabled\n'
 } > "${BUILD_DIR}/build_metadata.txt"
 
 echo "Optimization diagnostics build complete"
 echo "  microbench: ${BUILD_DIR}/campp_operator_microbench"
+echo "  QConv batch:${BUILD_DIR}/campp_qconv_family_bench"
 echo "  fused batch:${BUILD_DIR}/campp_fused_qconv_family_bench"
 echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"
