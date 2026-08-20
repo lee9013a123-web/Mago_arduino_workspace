@@ -497,6 +497,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         choices=(
             "baseline", "mac", "combined", "mac_fixed", "quant_neon",
             "combined_fixed", "combined_v4", "combined_hybrid",
+            "combined_v5",
         ),
         default="baseline",
     )

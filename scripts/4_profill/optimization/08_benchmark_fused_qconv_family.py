@@ -32,14 +32,15 @@ EXPECTED_INPUTS = (
 )
 SUPPORTED_MODES = (
     "baseline", "mac", "combined", "mac_fixed", "quant_neon",
-    "combined_fixed", "combined_v4", "combined_hybrid",
+    "combined_fixed", "combined_v4", "combined_hybrid", "combined_v5",
 )
 DEFAULT_MODES = (
     "baseline", "combined_fixed", "combined_v4", "combined_hybrid",
+    "combined_v5",
 )
 FULL_DIAGNOSTIC_MODES = (
     "baseline", "mac_fixed", "quant_neon", "combined_fixed", "combined_v4",
-    "combined_hybrid",
+    "combined_hybrid", "combined_v5",
 )
 
 
@@ -386,6 +387,31 @@ def build_summary(
         eligible, key=lambda item: float(item["candidate_mean_ms"]),
         default=None,
     )
+    by_mode = {str(item["mode"]): item for item in comparisons}
+    mac_fixed_vs_combined_v5 = None
+    if "mac_fixed" in by_mode and "combined_v5" in by_mode:
+        mac_fixed = by_mode["mac_fixed"]
+        combined_v5 = by_mode["combined_v5"]
+        fused_ms = float(combined_v5["candidate_mean_ms"])
+        mac_ms = float(mac_fixed["candidate_mean_ms"])
+        mac_fixed_vs_combined_v5 = {
+            "baseline_mode": "mac_fixed",
+            "candidate_mode": "combined_v5",
+            "mac_fixed_mean_ms": mac_ms,
+            "combined_v5_mean_ms": fused_ms,
+            "speedup_ratio": mac_ms / fused_ms if fused_ms else None,
+            "latency_reduction_pct": (
+                (1.0 - fused_ms / mac_ms) * 100.0 if mac_ms else None
+            ),
+            "both_gates_passed": (
+                bool(mac_fixed["gate_passed"]) and
+                bool(combined_v5["gate_passed"])
+            ),
+            "both_bitwise_identical": (
+                bool(mac_fixed["all_output_hashes_bitwise_identical"]) and
+                bool(combined_v5["all_output_hashes_bitwise_identical"])
+            ),
+        }
     return {
         "schema_version": 1,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
@@ -393,6 +419,7 @@ def build_summary(
         "measurement_strategy": "one graph traversal per input",
         "modes": list(modes),
         "comparisons": comparisons,
+        "mac_fixed_vs_combined_v5": mac_fixed_vs_combined_v5,
         "winner": winner["mode"] if winner is not None else None,
         "production_gate_ready": winner is not None,
         "next_gate": (
@@ -450,6 +477,7 @@ def estimate_seconds(
         "combined_fixed": 0.08,
         "combined_v4": 0.08,
         "combined_hybrid": 0.07,
+        "combined_v5": 0.07,
     }
     measured = (
         family_ms / 1000.0 * (warmup + repeat + 1) * input_count

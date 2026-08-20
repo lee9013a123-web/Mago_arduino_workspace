@@ -59,7 +59,7 @@ FUSED_DQRQ_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_de
 COMMON_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/common"
 REMAINING_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/remaining_ops"
 FINAL_SUITE_SOURCE="${ROOT}/src/c/profill/optimization/integration/final_candidate_suite.c"
-FINAL_SUITE_CONFIG="qconv_v4+fused_combined_hybrid+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
+FINAL_SUITE_CONFIG="qconv_v5+fused_combined_v5+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
 
 FINAL_INCLUDES=(
     -I "${ROOT}/src/c/profill/optimization/include"

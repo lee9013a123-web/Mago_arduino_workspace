@@ -568,7 +568,7 @@ AArch64 registry를 복사한 뒤 아래 15개 entry만 교체한다.
 | 대상 | 최종 mode |
 |---|---|
 | 일반 QConv | `v4` |
-| fused Quant-QConv | `combined_hybrid` (input quant NEON + hybrid QConv) |
+| fused Quant-QConv | `combined_v5` (input quant NEON + QConv v5) |
 | fused BN-ReLU-Quant | `v2_spatial2` |
 | DequantizeLinear | `neon_combined` |
 | fused Dequant-ReLU-Quant | `neon` |

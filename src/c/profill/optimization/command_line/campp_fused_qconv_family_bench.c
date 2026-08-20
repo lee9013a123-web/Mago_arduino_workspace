@@ -106,7 +106,7 @@ static void usage(const char *program)
         "[--warmup 5] [--repeat 20] [--threads 1] "
         "[--mode baseline] [--mode mac_fixed] [--mode quant_neon] "
         "[--mode combined_fixed] [--mode combined_v4] "
-        "[--mode combined_hybrid]\n",
+        "[--mode combined_hybrid] [--mode combined_v5]\n",
         program);
 }
 
@@ -622,7 +622,7 @@ int main(int argc, char **argv)
             "\"fused_qconv_candidates\":[\"baseline\",\"mac\"," 
             "\"combined\",\"mac_fixed\",\"quant_neon\"," 
             "\"combined_fixed\",\"combined_v4\","
-            "\"combined_hybrid\"]}\n",
+            "\"combined_hybrid\",\"combined_v5\"]}\n",
             stdout);
         return 0;
     }

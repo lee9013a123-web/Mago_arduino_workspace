@@ -280,7 +280,7 @@ INCLUDES=(
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
     printf 'hotspot_stage_probe=disabled\n'
     printf 'qconv_candidate_modes=baseline,address,mac,combined,mac_fixed,mac_asm,v4,hybrid,v5\n'
-    printf 'fused_qconv_candidate_modes=baseline,mac,combined,mac_fixed,quant_neon,combined_fixed,combined_v4,combined_hybrid\n'
+    printf 'fused_qconv_candidate_modes=baseline,mac,combined,mac_fixed,quant_neon,combined_fixed,combined_v4,combined_hybrid,combined_v5\n'
     printf 'bn_candidate_modes=baseline,address,affine,quant,combined,v2_exact16,v2_spatial2,v2_prescaled\n'
     printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
     printf 'fused_dqrq_candidate_modes=baseline,scalar,neon\n'

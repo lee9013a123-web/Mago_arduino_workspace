@@ -30,6 +30,7 @@ class FusedQconvFamilyTests(unittest.TestCase):
                 ("combined_fixed", True, 8.0),
                 ("combined_v4", True, 6.0),
                 ("combined_hybrid", True, 5.0),
+                ("combined_v5", True, 4.0),
             ):
                 document = {
                     "candidate_microbench_gate_passed": passed,
@@ -47,15 +48,22 @@ class FusedQconvFamilyTests(unittest.TestCase):
                 )
             summary = FAMILY.build_summary(FAMILY.FULL_DIAGNOSTIC_MODES, root)
             self.assertTrue(summary["production_gate_ready"])
-            self.assertEqual(summary["winner"], "combined_hybrid")
-            self.assertEqual(len(summary["comparisons"]), 5)
+            self.assertEqual(summary["winner"], "combined_v5")
+            self.assertEqual(len(summary["comparisons"]), 6)
+            direct = summary["mac_fixed_vs_combined_v5"]
+            self.assertIsNotNone(direct)
+            self.assertEqual(direct["baseline_mode"], "mac_fixed")
+            self.assertEqual(direct["candidate_mode"], "combined_v5")
+            self.assertAlmostEqual(direct["speedup_ratio"], 2.5)
+            self.assertTrue(direct["both_gates_passed"])
+            self.assertTrue(direct["both_bitwise_identical"])
 
     def test_quick_defaults_to_baseline_and_final_candidate(self) -> None:
         self.assertEqual(
             FAMILY.DEFAULT_MODES,
             (
                 "baseline", "combined_fixed", "combined_v4",
-                "combined_hybrid",
+                "combined_hybrid", "combined_v5",
             ),
         )
 
@@ -110,6 +118,12 @@ class FusedQconvFamilyTests(unittest.TestCase):
                                 "output_hash": "abc",
                                 "matches_baseline": True,
                             },
+                            {
+                                "name": "combined_v5",
+                                "samples_ns": [6 + offset, 7 + offset],
+                                "output_hash": "abc",
+                                "matches_baseline": True,
+                            },
                         ],
                     }
                 ],
@@ -140,6 +154,9 @@ class FusedQconvFamilyTests(unittest.TestCase):
         )
         self.assertTrue(
             documents["combined_hybrid"]["optimization_gate"]["ready"]
+        )
+        self.assertTrue(
+            documents["combined_v5"]["optimization_gate"]["ready"]
         )
 
 

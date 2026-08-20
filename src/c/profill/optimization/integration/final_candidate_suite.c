@@ -61,15 +61,15 @@ static const CamppKernelEntry *campp_final_selected_entry(
     if (opcode == CAMPP_OP_QLINEAR_CONV &&
         kernel_id == CAMPP_AARCH64_PACKED_KERNEL_ID) {
         *out_family = CAMPP_FINAL_FAMILY_QCONV;
-        *out_name = "qlinear_conv_o4i4_v4";
-        return campp_qconv_candidate_entry(CAMPP_QCONV_CANDIDATE_V4);
+        *out_name = "qlinear_conv_o4i4_v5";
+        return campp_qconv_candidate_entry(CAMPP_QCONV_CANDIDATE_V5);
     }
     if (opcode == CAMPP_OP_QLINEAR_CONV &&
         kernel_id == CAMPP_FUSION_QUANT_QCONV_KERNEL_ID) {
         *out_family = CAMPP_FINAL_FAMILY_FUSED_QCONV;
-        *out_name = "fused_quant_qlinear_conv_o4i4_combined_hybrid";
+        *out_name = "fused_quant_qlinear_conv_o4i4_combined_v5";
         return campp_fused_qconv_candidate_entry(
-            CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_HYBRID);
+            CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V5);
     }
     if (opcode == CAMPP_OP_BATCH_NORMALIZATION &&
         kernel_id == CAMPP_FUSION_BN_RELU_QUANT_KERNEL_ID) {
@@ -178,6 +178,6 @@ CamppStatus campp_final_candidate_suite_create(
 
 const char *campp_final_candidate_suite_name(void)
 {
-    return "qconv_v4+fused_combined_hybrid+bn_v2_spatial2+"
+    return "qconv_v5+fused_combined_v5+bn_v2_spatial2+"
         "dequant_neon_combined+fused_dqrq_neon+remaining_optimized";
 }

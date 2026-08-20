@@ -1632,6 +1632,7 @@ def select_mac_annotate_target(
             "combined_fixed": "mac_fixed",
             "combined_v4": "mac_fixed",
             "combined_hybrid": "mac_fixed",
+            "combined_v5": "v5",
             "quant_neon": "baseline",
         }.get(fused_qconv_candidate, "baseline")
 
@@ -2078,7 +2079,8 @@ def _run_one(
     )
     quantize_spill = None
     if fused_qconv_candidate in (
-        "quant_neon", "combined_fixed", "combined_v4", "combined_hybrid"
+        "quant_neon", "combined_fixed", "combined_v4", "combined_hybrid",
+        "combined_v5"
     ):
         quantize_annotate = _run(
             [
