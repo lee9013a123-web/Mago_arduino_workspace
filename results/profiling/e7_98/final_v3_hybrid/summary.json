@@ -1,0 +1,1208 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-20T06:33:10.153080+00:00",
+  "configuration": {
+    "config": "configs/benchmark/runtime_e7_98.json",
+    "protocol_mode": "official",
+    "official_protocol": true,
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 20,
+    "repeat": 100,
+    "overhead_baseline_repeat": 100,
+    "input_ids": [
+      "multi__speaker_0000",
+      "multi__speaker_0005",
+      "multi__speaker_0006"
+    ],
+    "expected_call_count_per_operator": 300,
+    "measurement_scope": "kernel_run_exclusive",
+    "optimization_suite": "final",
+    "optimization_suite_config": "qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized",
+    "estimated_minutes": 6.2679434976
+  },
+  "artifacts": {
+    "plan": {
+      "path": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+      "sha256": "1494f2fc6d2b50ea1024d3d1138eaa991a988b1aa9f86a19900345df45b9c437"
+    },
+    "weights": {
+      "path": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+      "sha256": "d342b50a3275feb09dd477e944d3cb95b0f5261ea02bc5d183a6ae3ee48358aa"
+    },
+    "fusion_plan": {
+      "path": "runs/runtime/kernel_optimization/e7/bundle/fusion_plans/fusion_98.json",
+      "sha256": "ec6790a8eac6e06e082f81acd7985e7a7d6ab088cf95371880b01f0f3b174a2c"
+    },
+    "baseline_binary": {
+      "path": "build/profill/final_v3_hybrid/campp_runtime_benchmark_final",
+      "sha256": "6b3948d2c0b323740bf0f65a46d6372369e597a436806109325a78f1b7f1e661"
+    },
+    "profiler_binary": {
+      "path": "build/profill/final_v3_hybrid/campp_e7_profiler_final",
+      "sha256": "35ef5d82abb13bcc92a2d91c9c064e9ee24146b913c5ad132527e0eede73f493"
+    }
+  },
+  "overhead": {
+    "schema_version": 1,
+    "definition": "(profiled_mean_end_to_end / baseline_mean_end_to_end - 1) * 100",
+    "preliminary": false,
+    "threshold_pct": 1.0,
+    "overhead_pct": 0.12975867635627303,
+    "passes": true,
+    "baseline_total_ns": 96743286480,
+    "baseline_sample_count": 300,
+    "baseline_mean_ns": 322477621.6,
+    "profiled_total_ns": 96868819288,
+    "profiled_sample_count": 300,
+    "profiled_mean_ns": 322896064.29333335,
+    "per_input": [
+      {
+        "input_id": "multi__speaker_0000",
+        "baseline_total_ns": 32201413840,
+        "baseline_sample_count": 100,
+        "profiled_total_ns": 32271218996,
+        "profiled_sample_count": 100,
+        "overhead_pct": 0.21677668051112153
+      },
+      {
+        "input_id": "multi__speaker_0005",
+        "baseline_total_ns": 32251673690,
+        "baseline_sample_count": 100,
+        "profiled_total_ns": 32347291496,
+        "profiled_sample_count": 100,
+        "overhead_pct": 0.2964739347144363
+      },
+      {
+        "input_id": "multi__speaker_0006",
+        "baseline_total_ns": 32290198950,
+        "baseline_sample_count": 100,
+        "profiled_total_ns": 32250308796,
+        "profiled_sample_count": 100,
+        "overhead_pct": -0.12353641444504682
+      }
+    ]
+  },
+  "timing": {
+    "threshold_pct": 80.0,
+    "complete": true,
+    "operator_ids": [
+      0,
+      10,
+      2,
+      6,
+      12,
+      25,
+      27,
+      21,
+      825,
+      582,
+      17,
+      3,
+      35,
+      31,
+      18,
+      219,
+      810,
+      567,
+      795,
+      552,
+      780,
+      537,
+      765,
+      522,
+      750,
+      507,
+      735,
+      492,
+      720,
+      477,
+      462,
+      705,
+      690,
+      447,
+      16,
+      432,
+      675,
+      660,
+      417,
+      645,
+      402,
+      387,
+      630,
+      615,
+      372,
+      600,
+      357,
+      585,
+      342,
+      204,
+      327,
+      312,
+      189,
+      1,
+      174,
+      297,
+      159,
+      282,
+      144,
+      267,
+      252,
+      129,
+      237,
+      114,
+      8,
+      14
+    ],
+    "operator_count": 66,
+    "total_end_to_end_ns": 96868819288,
+    "total_end_to_end_ms": 96868.819288,
+    "total_operator_exclusive_ns": 95833474547,
+    "total_operator_exclusive_ms": 95833.474547,
+    "kernel_accounted_end_to_end_pct": 98.93118885043718,
+    "unattributed_runtime_ns": 1035344741,
+    "unattributed_runtime_ms": 1035.344741,
+    "end_to_end": {
+      "call_count": 300,
+      "total_exclusive_ns": 96868819288,
+      "total_exclusive_ms": 96868.819288,
+      "mean_ms": 322.8960642933333,
+      "stddev_ms": 1.2458934560904908,
+      "cv_pct": 0.3858496878297857,
+      "min_ms": 320.746771,
+      "p50_ms": 322.706224,
+      "p95_ms": 324.83080185,
+      "max_ms": 331.422708
+    }
+  },
+  "analysis": {
+    "primary_bottleneck": {
+      "operator_type": {
+        "name": "QLINEAR_CONV",
+        "operator_count": 225,
+        "call_count": 67500,
+        "total_exclusive_ms": 87927.41745499996,
+        "end_to_end_share_pct": 90.7695769405257
+      },
+      "kernel": {
+        "name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "operator_count": 115,
+        "call_count": 34500,
+        "total_exclusive_ms": 44846.60860300001,
+        "end_to_end_share_pct": 46.29622713751354
+      },
+      "top_operator": {
+        "rank": 1,
+        "operator_id": 0,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 3,
+        "kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+        "fusion_family": "FUSION_CONV_BIAS_ACT",
+        "mean_ms": 79.20292513666668,
+        "p50_ms": 79.1272655,
+        "p95_ms": 79.74059374999999,
+        "end_to_end_share_pct": 24.528922428956943
+      }
+    },
+    "kernel_breakdown": [
+      {
+        "name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "operator_count": 115,
+        "call_count": 34500,
+        "total_exclusive_ms": 44846.60860300001,
+        "end_to_end_share_pct": 46.29622713751354
+      },
+      {
+        "name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+        "operator_count": 110,
+        "call_count": 33000,
+        "total_exclusive_ms": 43080.80885199999,
+        "end_to_end_share_pct": 44.4733498030122
+      },
+      {
+        "name": "fused_bn_relu_quant_v2_spatial2",
+        "operator_count": 55,
+        "call_count": 16500,
+        "total_exclusive_ms": 3488.112481999999,
+        "end_to_end_share_pct": 3.6008619777118542
+      },
+      {
+        "name": "dequantize_linear_neon_combined",
+        "operator_count": 116,
+        "call_count": 34800,
+        "total_exclusive_ms": 1023.8507449999995,
+        "end_to_end_share_pct": 1.056945622467015
+      },
+      {
+        "name": "fused_dequant_relu_quant_neon",
+        "operator_count": 57,
+        "call_count": 17100,
+        "total_exclusive_ms": 787.9704830000002,
+        "end_to_end_share_pct": 0.8134407839299566
+      },
+      {
+        "name": "add_stride_optimized",
+        "operator_count": 56,
+        "call_count": 16800,
+        "total_exclusive_ms": 691.6176999999999,
+        "end_to_end_share_pct": 0.7139735005376253
+      },
+      {
+        "name": "relu_stride_optimized",
+        "operator_count": 59,
+        "call_count": 17700,
+        "total_exclusive_ms": 592.9032469999999,
+        "end_to_end_share_pct": 0.6120682086949397
+      },
+      {
+        "name": "quantize_linear_stride_optimized",
+        "operator_count": 1,
+        "call_count": 300,
+        "total_exclusive_ms": 397.789592,
+        "end_to_end_share_pct": 0.410647714015523
+      },
+      {
+        "name": "fused_dequant_sigmoid_mul_optimized",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 266.5375829999999,
+        "end_to_end_share_pct": 0.2751531245648395
+      },
+      {
+        "name": "fused_statistics_pooling_optimized",
+        "operator_count": 1,
+        "call_count": 300,
+        "total_exclusive_ms": 154.62208,
+        "end_to_end_share_pct": 0.15962007293626054
+      },
+      {
+        "name": "reduce_mean_stride_optimized",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 129.139463,
+        "end_to_end_share_pct": 0.13331375766649575
+      },
+      {
+        "name": "expand_stride_optimized",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 119.87405300000002,
+        "end_to_end_share_pct": 0.123748853223454
+      },
+      {
+        "name": "average_pool_stride_optimized",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 94.645761,
+        "end_to_end_share_pct": 0.097705083736604
+      },
+      {
+        "name": "slice_stride_optimized",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 81.65941400000003,
+        "end_to_end_share_pct": 0.0842989669949615
+      },
+      {
+        "name": "reshape_stride_optimized",
+        "operator_count": 1,
+        "call_count": 300,
+        "total_exclusive_ms": 70.878963,
+        "end_to_end_share_pct": 0.07317004947615832
+      },
+      {
+        "name": "batch_normalization_stride",
+        "operator_count": 1,
+        "call_count": 300,
+        "total_exclusive_ms": 6.455526,
+        "end_to_end_share_pct": 0.006664193955752801
+      }
+    ],
+    "operator_type_breakdown": [
+      {
+        "name": "QLINEAR_CONV",
+        "operator_count": 225,
+        "call_count": 67500,
+        "total_exclusive_ms": 87927.41745499996,
+        "end_to_end_share_pct": 90.7695769405257
+      },
+      {
+        "name": "BATCH_NORMALIZATION",
+        "operator_count": 56,
+        "call_count": 16800,
+        "total_exclusive_ms": 3494.5680079999993,
+        "end_to_end_share_pct": 3.6075261716676077
+      },
+      {
+        "name": "DEQUANTIZE_LINEAR",
+        "operator_count": 173,
+        "call_count": 51900,
+        "total_exclusive_ms": 1811.8212279999993,
+        "end_to_end_share_pct": 1.8703864063969713
+      },
+      {
+        "name": "ADD",
+        "operator_count": 56,
+        "call_count": 16800,
+        "total_exclusive_ms": 691.6176999999999,
+        "end_to_end_share_pct": 0.7139735005376253
+      },
+      {
+        "name": "RELU",
+        "operator_count": 59,
+        "call_count": 17700,
+        "total_exclusive_ms": 592.9032469999999,
+        "end_to_end_share_pct": 0.6120682086949397
+      },
+      {
+        "name": "QUANTIZE_LINEAR",
+        "operator_count": 1,
+        "call_count": 300,
+        "total_exclusive_ms": 397.789592,
+        "end_to_end_share_pct": 0.410647714015523
+      },
+      {
+        "name": "MUL",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 266.5375829999999,
+        "end_to_end_share_pct": 0.2751531245648395
+      },
+      {
+        "name": "CONCAT",
+        "operator_count": 1,
+        "call_count": 300,
+        "total_exclusive_ms": 154.62208,
+        "end_to_end_share_pct": 0.15962007293626054
+      },
+      {
+        "name": "REDUCE_MEAN",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 129.139463,
+        "end_to_end_share_pct": 0.13331375766649575
+      },
+      {
+        "name": "EXPAND",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 119.87405300000002,
+        "end_to_end_share_pct": 0.123748853223454
+      },
+      {
+        "name": "AVERAGE_POOL",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 94.645761,
+        "end_to_end_share_pct": 0.097705083736604
+      },
+      {
+        "name": "SLICE",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 81.65941400000003,
+        "end_to_end_share_pct": 0.0842989669949615
+      },
+      {
+        "name": "RESHAPE",
+        "operator_count": 1,
+        "call_count": 300,
+        "total_exclusive_ms": 70.878963,
+        "end_to_end_share_pct": 0.07317004947615832
+      }
+    ],
+    "fusion_family_breakdown": [
+      {
+        "name": "NONE",
+        "operator_count": 557,
+        "call_count": 167100,
+        "total_exclusive_ms": 48055.42306700001,
+        "end_to_end_share_pct": 49.608763088282075
+      },
+      {
+        "name": "FUSION_CONV_BIAS_ACT",
+        "operator_count": 167,
+        "call_count": 50100,
+        "total_exclusive_ms": 43868.779335000014,
+        "end_to_end_share_pct": 45.286790586942175
+      },
+      {
+        "name": "FUSION_BN_RELU_QUANT",
+        "operator_count": 55,
+        "call_count": 16500,
+        "total_exclusive_ms": 3488.112481999999,
+        "end_to_end_share_pct": 3.6008619777118542
+      },
+      {
+        "name": "FUSION_POOL_CAM",
+        "operator_count": 52,
+        "call_count": 15600,
+        "total_exclusive_ms": 266.5375829999999,
+        "end_to_end_share_pct": 0.2751531245648395
+      },
+      {
+        "name": "FUSION_STATS_POOLING",
+        "operator_count": 1,
+        "call_count": 300,
+        "total_exclusive_ms": 154.62208,
+        "end_to_end_share_pct": 0.15962007293626054
+      }
+    ],
+    "top_10_cumulative_end_to_end_share_pct": 54.14928180971222,
+    "observations": [
+      "QLINEAR_CONV operators account for 90.770% of end-to-end latency.",
+      "The largest kernel family is qlinear_conv_o4i4_layer_hybrid_v3 at 46.296%.",
+      "Operator 0 is the largest single operator at 24.529%.",
+      "Kernel-exclusive timing accounts for 98.931% of end-to-end latency."
+    ],
+    "limitation": "Exclusive latency alone does not distinguish compute, memory-bandwidth, or cache bottlenecks; hardware counters are required for that conclusion."
+  },
+  "measurement_elapsed_seconds": 235.22546280300003,
+  "top_bottleneck_set": {
+    "threshold_pct": 80.0,
+    "complete": true,
+    "operator_ids": [
+      0,
+      10,
+      2,
+      6,
+      12,
+      25,
+      27,
+      21,
+      825,
+      582,
+      17,
+      3,
+      35,
+      31,
+      18,
+      219,
+      810,
+      567,
+      795,
+      552,
+      780,
+      537,
+      765,
+      522,
+      750,
+      507,
+      735,
+      492,
+      720,
+      477,
+      462,
+      705,
+      690,
+      447,
+      16,
+      432,
+      675,
+      660,
+      417,
+      645,
+      402,
+      387,
+      630,
+      615,
+      372,
+      600,
+      357,
+      585,
+      342,
+      204,
+      327,
+      312,
+      189,
+      1,
+      174,
+      297,
+      159,
+      282,
+      144,
+      267,
+      252,
+      129,
+      237,
+      114,
+      8,
+      14
+    ],
+    "operator_count": 66,
+    "operators": [
+      {
+        "rank": 1,
+        "operator_id": 0,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 3,
+        "kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 23760.877541,
+        "end_to_end_share_pct": 24.528922428956943,
+        "cumulative_end_to_end_share_pct": 24.528922428956943
+      },
+      {
+        "rank": 2,
+        "operator_id": 10,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 3,
+        "kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 4593.71702,
+        "end_to_end_share_pct": 4.742203996873806,
+        "cumulative_end_to_end_share_pct": 29.271126425830747
+      },
+      {
+        "rank": 3,
+        "operator_id": 2,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 4338.922022,
+        "end_to_end_share_pct": 4.479173023777632,
+        "cumulative_end_to_end_share_pct": 33.75029944960838
+      },
+      {
+        "rank": 4,
+        "operator_id": 6,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 4261.629066,
+        "end_to_end_share_pct": 4.399381655855411,
+        "cumulative_end_to_end_share_pct": 38.149681105463785
+      },
+      {
+        "rank": 5,
+        "operator_id": 12,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 4249.104637,
+        "end_to_end_share_pct": 4.386452388117808,
+        "cumulative_end_to_end_share_pct": 42.536133493581595
+      },
+      {
+        "rank": 6,
+        "operator_id": 25,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 3,
+        "kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 2392.706563,
+        "end_to_end_share_pct": 2.470048236973201,
+        "cumulative_end_to_end_share_pct": 45.00618173055479
+      },
+      {
+        "rank": 7,
+        "operator_id": 27,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 2227.442505,
+        "end_to_end_share_pct": 2.299442195509379,
+        "cumulative_end_to_end_share_pct": 47.30562392606417
+      },
+      {
+        "rank": 8,
+        "operator_id": 21,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 2226.681103,
+        "end_to_end_share_pct": 2.298656182006173,
+        "cumulative_end_to_end_share_pct": 49.60428010807034
+      },
+      {
+        "rank": 9,
+        "operator_id": 825,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 2211.482197,
+        "end_to_end_share_pct": 2.2829659876673607,
+        "cumulative_end_to_end_share_pct": 51.8872460957377
+      },
+      {
+        "rank": 10,
+        "operator_id": 582,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 2191.207288,
+        "end_to_end_share_pct": 2.2620357139745217,
+        "cumulative_end_to_end_share_pct": 54.14928180971222
+      },
+      {
+        "rank": 11,
+        "operator_id": 17,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 2169.641099,
+        "end_to_end_share_pct": 2.2397724210403096,
+        "cumulative_end_to_end_share_pct": 56.38905423075253
+      },
+      {
+        "rank": 12,
+        "operator_id": 3,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 1607.626857,
+        "end_to_end_share_pct": 1.6595916713100178,
+        "cumulative_end_to_end_share_pct": 58.048645902062546
+      },
+      {
+        "rank": 13,
+        "operator_id": 35,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 3,
+        "kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 1359.937924,
+        "end_to_end_share_pct": 1.4038964591452057,
+        "cumulative_end_to_end_share_pct": 59.452542361207755
+      },
+      {
+        "rank": 14,
+        "operator_id": 31,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 3,
+        "kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 1292.381621,
+        "end_to_end_share_pct": 1.3341564710906915,
+        "cumulative_end_to_end_share_pct": 60.78669883229845
+      },
+      {
+        "rank": 15,
+        "operator_id": 18,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 797.758029,
+        "end_to_end_share_pct": 0.8235447018593168,
+        "cumulative_end_to_end_share_pct": 61.61024353415777
+      },
+      {
+        "rank": 16,
+        "operator_id": 219,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 582.855571,
+        "end_to_end_share_pct": 0.6016957523422642,
+        "cumulative_end_to_end_share_pct": 62.211939286500034
+      },
+      {
+        "rank": 17,
+        "operator_id": 810,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 536.336831,
+        "end_to_end_share_pct": 0.5536733439533528,
+        "cumulative_end_to_end_share_pct": 62.76561263045339
+      },
+      {
+        "rank": 18,
+        "operator_id": 567,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 535.345998,
+        "end_to_end_share_pct": 0.5526504833390883,
+        "cumulative_end_to_end_share_pct": 63.318263113792476
+      },
+      {
+        "rank": 19,
+        "operator_id": 795,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 520.097596,
+        "end_to_end_share_pct": 0.5369091930951502,
+        "cumulative_end_to_end_share_pct": 63.855172306887624
+      },
+      {
+        "rank": 20,
+        "operator_id": 552,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 517.712027,
+        "end_to_end_share_pct": 0.5344465131352475,
+        "cumulative_end_to_end_share_pct": 64.38961882002287
+      },
+      {
+        "rank": 21,
+        "operator_id": 780,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 505.028077,
+        "end_to_end_share_pct": 0.5213525680523726,
+        "cumulative_end_to_end_share_pct": 64.91097138807525
+      },
+      {
+        "rank": 22,
+        "operator_id": 537,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 503.250731,
+        "end_to_end_share_pct": 0.5195177712487532,
+        "cumulative_end_to_end_share_pct": 65.43048915932401
+      },
+      {
+        "rank": 23,
+        "operator_id": 765,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 485.600729,
+        "end_to_end_share_pct": 0.5012972518600273,
+        "cumulative_end_to_end_share_pct": 65.93178641118404
+      },
+      {
+        "rank": 24,
+        "operator_id": 522,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 484.447772,
+        "end_to_end_share_pct": 0.5001070267613067,
+        "cumulative_end_to_end_share_pct": 66.43189343794535
+      },
+      {
+        "rank": 25,
+        "operator_id": 750,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 470.852599,
+        "end_to_end_share_pct": 0.4860724043720523,
+        "cumulative_end_to_end_share_pct": 66.9179658423174
+      },
+      {
+        "rank": 26,
+        "operator_id": 507,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 469.643587,
+        "end_to_end_share_pct": 0.4848243123555641,
+        "cumulative_end_to_end_share_pct": 67.40279015467297
+      },
+      {
+        "rank": 27,
+        "operator_id": 735,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 454.5263,
+        "end_to_end_share_pct": 0.4692183752634076,
+        "cumulative_end_to_end_share_pct": 67.87200852993638
+      },
+      {
+        "rank": 28,
+        "operator_id": 492,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 452.54979,
+        "end_to_end_share_pct": 0.46717797669704986,
+        "cumulative_end_to_end_share_pct": 68.33918650663342
+      },
+      {
+        "rank": 29,
+        "operator_id": 720,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 437.489472,
+        "end_to_end_share_pct": 0.45163085006673115,
+        "cumulative_end_to_end_share_pct": 68.79081735670016
+      },
+      {
+        "rank": 30,
+        "operator_id": 477,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 435.856935,
+        "end_to_end_share_pct": 0.44994554305875956,
+        "cumulative_end_to_end_share_pct": 69.24076289975892
+      },
+      {
+        "rank": 31,
+        "operator_id": 462,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 419.397094,
+        "end_to_end_share_pct": 0.43295365534816055,
+        "cumulative_end_to_end_share_pct": 69.67371655510708
+      },
+      {
+        "rank": 32,
+        "operator_id": 705,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 417.701251,
+        "end_to_end_share_pct": 0.4312029960416214,
+        "cumulative_end_to_end_share_pct": 70.1049195511487
+      },
+      {
+        "rank": 33,
+        "operator_id": 690,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 403.403695,
+        "end_to_end_share_pct": 0.4164432868750504,
+        "cumulative_end_to_end_share_pct": 70.52136283802375
+      },
+      {
+        "rank": 34,
+        "operator_id": 447,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 402.727286,
+        "end_to_end_share_pct": 0.4157450136794322,
+        "cumulative_end_to_end_share_pct": 70.93710785170317
+      },
+      {
+        "rank": 35,
+        "operator_id": 16,
+        "operator_type": "QUANTIZE_LINEAR",
+        "kernel_id": 1,
+        "kernel_name": "quantize_linear_stride_optimized",
+        "total_exclusive_ms": 397.789592,
+        "end_to_end_share_pct": 0.410647714015523,
+        "cumulative_end_to_end_share_pct": 71.3477555657187
+      },
+      {
+        "rank": 36,
+        "operator_id": 432,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 385.425105,
+        "end_to_end_share_pct": 0.39788355823156607,
+        "cumulative_end_to_end_share_pct": 71.74563912395027
+      },
+      {
+        "rank": 37,
+        "operator_id": 675,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 385.341046,
+        "end_to_end_share_pct": 0.3977967821145267,
+        "cumulative_end_to_end_share_pct": 72.1434359060648
+      },
+      {
+        "rank": 38,
+        "operator_id": 660,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 370.074281,
+        "end_to_end_share_pct": 0.38203653530630405,
+        "cumulative_end_to_end_share_pct": 72.5254724413711
+      },
+      {
+        "rank": 39,
+        "operator_id": 417,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 369.627186,
+        "end_to_end_share_pct": 0.38157498843984466,
+        "cumulative_end_to_end_share_pct": 72.90704742981094
+      },
+      {
+        "rank": 40,
+        "operator_id": 645,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 352.786883,
+        "end_to_end_share_pct": 0.36419034070306133,
+        "cumulative_end_to_end_share_pct": 73.271237770514
+      },
+      {
+        "rank": 41,
+        "operator_id": 402,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 351.430314,
+        "end_to_end_share_pct": 0.36278992206477195,
+        "cumulative_end_to_end_share_pct": 73.63402769257878
+      },
+      {
+        "rank": 42,
+        "operator_id": 387,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 336.715526,
+        "end_to_end_share_pct": 0.3475994943211948,
+        "cumulative_end_to_end_share_pct": 73.98162718689998
+      },
+      {
+        "rank": 43,
+        "operator_id": 630,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 336.038293,
+        "end_to_end_share_pct": 0.3469003704906601,
+        "cumulative_end_to_end_share_pct": 74.32852755739064
+      },
+      {
+        "rank": 44,
+        "operator_id": 615,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 322.455143,
+        "end_to_end_share_pct": 0.3328781597319886,
+        "cumulative_end_to_end_share_pct": 74.66140571712263
+      },
+      {
+        "rank": 45,
+        "operator_id": 372,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 320.273539,
+        "end_to_end_share_pct": 0.33062603772200116,
+        "cumulative_end_to_end_share_pct": 74.99203175484463
+      },
+      {
+        "rank": 46,
+        "operator_id": 600,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 305.535523,
+        "end_to_end_share_pct": 0.3154116311582311,
+        "cumulative_end_to_end_share_pct": 75.30744338600286
+      },
+      {
+        "rank": 47,
+        "operator_id": 357,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 302.913796,
+        "end_to_end_share_pct": 0.31270515964420825,
+        "cumulative_end_to_end_share_pct": 75.62014854564707
+      },
+      {
+        "rank": 48,
+        "operator_id": 585,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 292.136251,
+        "end_to_end_share_pct": 0.30157924205873904,
+        "cumulative_end_to_end_share_pct": 75.9217277877058
+      },
+      {
+        "rank": 49,
+        "operator_id": 342,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 286.43396,
+        "end_to_end_share_pct": 0.2956926306166747,
+        "cumulative_end_to_end_share_pct": 76.21742041832248
+      },
+      {
+        "rank": 50,
+        "operator_id": 204,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 272.53328,
+        "end_to_end_share_pct": 0.2813426260412375,
+        "cumulative_end_to_end_share_pct": 76.49876304436371
+      },
+      {
+        "rank": 51,
+        "operator_id": 327,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 270.969157,
+        "end_to_end_share_pct": 0.2797279444424563,
+        "cumulative_end_to_end_share_pct": 76.77849098880617
+      },
+      {
+        "rank": 52,
+        "operator_id": 312,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 254.569479,
+        "end_to_end_share_pct": 0.2627981644363201,
+        "cumulative_end_to_end_share_pct": 77.04128915324249
+      },
+      {
+        "rank": 53,
+        "operator_id": 189,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 254.52866,
+        "end_to_end_share_pct": 0.2627560260059149,
+        "cumulative_end_to_end_share_pct": 77.3040451792484
+      },
+      {
+        "rank": 54,
+        "operator_id": 1,
+        "operator_type": "DEQUANTIZE_LINEAR",
+        "kernel_id": 4,
+        "kernel_name": "fused_dequant_relu_quant_neon",
+        "total_exclusive_ms": 244.325781,
+        "end_to_end_share_pct": 0.25222334988268696,
+        "cumulative_end_to_end_share_pct": 77.55626852913109
+      },
+      {
+        "rank": 55,
+        "operator_id": 174,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 239.965257,
+        "end_to_end_share_pct": 0.2477218766201341,
+        "cumulative_end_to_end_share_pct": 77.80399040575122
+      },
+      {
+        "rank": 56,
+        "operator_id": 297,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 239.122138,
+        "end_to_end_share_pct": 0.2468515047025273,
+        "cumulative_end_to_end_share_pct": 78.05084191045376
+      },
+      {
+        "rank": 57,
+        "operator_id": 159,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 223.21177,
+        "end_to_end_share_pct": 0.23042685111745884,
+        "cumulative_end_to_end_share_pct": 78.28126876157121
+      },
+      {
+        "rank": 58,
+        "operator_id": 282,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 222.848977,
+        "end_to_end_share_pct": 0.2300523312227532,
+        "cumulative_end_to_end_share_pct": 78.51132109279396
+      },
+      {
+        "rank": 59,
+        "operator_id": 144,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 208.197071,
+        "end_to_end_share_pct": 0.21492681807239827,
+        "cumulative_end_to_end_share_pct": 78.72624791086636
+      },
+      {
+        "rank": 60,
+        "operator_id": 267,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 207.140877,
+        "end_to_end_share_pct": 0.21383648373389472,
+        "cumulative_end_to_end_share_pct": 78.94008439460026
+      },
+      {
+        "rank": 61,
+        "operator_id": 252,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 191.710147,
+        "end_to_end_share_pct": 0.19790697193286513,
+        "cumulative_end_to_end_share_pct": 79.13799136653313
+      },
+      {
+        "rank": 62,
+        "operator_id": 129,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 191.185359,
+        "end_to_end_share_pct": 0.19736522072349014,
+        "cumulative_end_to_end_share_pct": 79.33535658725661
+      },
+      {
+        "rank": 63,
+        "operator_id": 237,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 183.002029,
+        "end_to_end_share_pct": 0.1889173733561446,
+        "cumulative_end_to_end_share_pct": 79.52427396061276
+      },
+      {
+        "rank": 64,
+        "operator_id": 114,
+        "operator_type": "QLINEAR_CONV",
+        "kernel_id": 1,
+        "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+        "total_exclusive_ms": 175.868275,
+        "end_to_end_share_pct": 0.18155302840754906,
+        "cumulative_end_to_end_share_pct": 79.70582698902031
+      },
+      {
+        "rank": 65,
+        "operator_id": 8,
+        "operator_type": "ADD",
+        "kernel_id": 1,
+        "kernel_name": "add_stride_optimized",
+        "total_exclusive_ms": 175.790846,
+        "end_to_end_share_pct": 0.18147309659815042,
+        "cumulative_end_to_end_share_pct": 79.88730008561846
+      },
+      {
+        "rank": 66,
+        "operator_id": 14,
+        "operator_type": "ADD",
+        "kernel_id": 1,
+        "kernel_name": "add_stride_optimized",
+        "total_exclusive_ms": 175.451051,
+        "end_to_end_share_pct": 0.18112231808913426,
+        "cumulative_end_to_end_share_pct": 80.0684224037076
+      }
+    ]
+  },
+  "validity": {
+    "e7_bitwise_validated": true,
+    "official_protocol": true,
+    "operator_count": 832,
+    "all_call_counts_valid": true,
+    "profiling_overhead_below_1pct": true,
+    "environment_matched": true,
+    "profile_valid": true
+  }
+}
