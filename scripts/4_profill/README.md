@@ -346,6 +346,9 @@ batch family runner를 사용한다. 입력당 모델을 한 번만 읽고 graph
 전달한다. 기존 Operator별 runner의 1,380회 process/model-load 반복은 없다.
 
 ```bash
+BUILD_TARGET=qconv_family_batch \
+  bash scripts/4_profill/optimization/01_build_optimization.sh
+
 python3 scripts/4_profill/optimization/12_benchmark_qconv_family.py \
   --modes baseline mac_fixed v4 v5 \
   --preflight-only

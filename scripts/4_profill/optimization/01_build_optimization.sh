@@ -8,6 +8,17 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 BUILD_DIR="${BUILD_DIR:-${ROOT}/build/profill/optimization}"
 CC="${CC:-gcc}"
 CFLAGS="${CFLAGS:--std=c11 -O3 -g -DNDEBUG -Wall -Wextra}"
+BUILD_TARGET="${BUILD_TARGET:-all}"
+
+case "${BUILD_TARGET}" in
+    all|qconv_family_batch) ;;
+    *)
+        echo "BUILD_TARGET must be all or qconv_family_batch" >&2
+        exit 2
+        ;;
+esac
+
+BUILD_STARTED_SECONDS=${SECONDS}
 
 mkdir -p "${BUILD_DIR}"
 
@@ -44,7 +55,7 @@ DEQUANT_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/dequantize_
 FUSED_DQRQ_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_dequant_relu_quant"
 COMMON_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/common"
 REMAINING_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/remaining_ops"
-CANDIDATE_SOURCES=(
+QCONV_CANDIDATE_SOURCES=(
     "${CANDIDATE_DIR}/qconv_address_fastpath.c"
     "${CANDIDATE_DIR}/qconv_mac_neon.c"
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8.c"
@@ -77,6 +88,9 @@ CANDIDATE_SOURCES=(
     "${QCONV_V5_INSTRUMENTATION_DIR}/qconv_v5_stage_tags.c"
     "${QCONV_V5_DISPATCH_DIR}/qconv_v5_dispatch.c"
     "${CANDIDATE_DIR}/qconv_candidate.c"
+)
+CANDIDATE_SOURCES=(
+    "${QCONV_CANDIDATE_SOURCES[@]}"
     "${FUSED_QCONV_CANDIDATE_DIR}/fused_input_quant_neon.c"
     "${FUSED_QCONV_CANDIDATE_DIR}/fused_quant_qconv_candidate.c"
     "${BN_CANDIDATE_DIR}/bn_iteration_fastpath.c"
@@ -138,30 +152,34 @@ INCLUDES=(
     -I "${REMAINING_CANDIDATE_DIR}"
 )
 
-# shellcheck disable=SC2086
-"${CC}" ${CFLAGS} -DCAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1 \
-    "${INCLUDES[@]}" \
-    "${RUNTIME_SOURCES[@]}" \
-    "${ROOT}/src/c/profill/operator_profiler.c" \
-    "${ROOT}/src/c/profill/runtime_fixture.c" \
-    "${ROOT}/src/c/profill/optimization/diagnostics/stage_probe.c" \
-    "${ROOT}/src/c/profill/optimization/diagnostics/linux_pmu.c" \
-    "${ROOT}/src/c/profill/optimization/diagnostics/perf_sample_window.c" \
-    "${CANDIDATE_SOURCES[@]}" \
-    "${ROOT}/src/c/profill/optimization/command_line/campp_operator_microbench.c" \
-    -lm -o "${BUILD_DIR}/campp_operator_microbench"
+if [[ "${BUILD_TARGET}" == "all" ]]; then
+    # shellcheck disable=SC2086
+    "${CC}" ${CFLAGS} -DCAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1 \
+        "${INCLUDES[@]}" \
+        "${RUNTIME_SOURCES[@]}" \
+        "${ROOT}/src/c/profill/operator_profiler.c" \
+        "${ROOT}/src/c/profill/runtime_fixture.c" \
+        "${ROOT}/src/c/profill/optimization/diagnostics/stage_probe.c" \
+        "${ROOT}/src/c/profill/optimization/diagnostics/linux_pmu.c" \
+        "${ROOT}/src/c/profill/optimization/diagnostics/perf_sample_window.c" \
+        "${CANDIDATE_SOURCES[@]}" \
+        "${ROOT}/src/c/profill/optimization/command_line/campp_operator_microbench.c" \
+        -lm -o "${BUILD_DIR}/campp_operator_microbench"
+fi
 
 # fused family 전체를 입력당 단일 graph traversal로 측정한다. Stage probe를
 # 제외해 baseline과 candidate 모두 production에 가까운 kernel body만 잰다.
-# shellcheck disable=SC2086
-"${CC}" ${CFLAGS} \
-    "${INCLUDES[@]}" \
-    "${RUNTIME_SOURCES[@]}" \
-    "${ROOT}/src/c/profill/operator_profiler.c" \
-    "${ROOT}/src/c/profill/runtime_fixture.c" \
-    "${CANDIDATE_SOURCES[@]}" \
-    "${ROOT}/src/c/profill/optimization/command_line/campp_fused_qconv_family_bench.c" \
-    -lm -o "${BUILD_DIR}/campp_fused_qconv_family_bench"
+if [[ "${BUILD_TARGET}" == "all" ]]; then
+    # shellcheck disable=SC2086
+    "${CC}" ${CFLAGS} \
+        "${INCLUDES[@]}" \
+        "${RUNTIME_SOURCES[@]}" \
+        "${ROOT}/src/c/profill/operator_profiler.c" \
+        "${ROOT}/src/c/profill/runtime_fixture.c" \
+        "${CANDIDATE_SOURCES[@]}" \
+        "${ROOT}/src/c/profill/optimization/command_line/campp_fused_qconv_family_bench.c" \
+        -lm -o "${BUILD_DIR}/campp_fused_qconv_family_bench"
+fi
 
 # 일반 QConv 115개도 같은 batch runner를 사용한다. 한 입력에서 graph를 한 번만
 # 순회하고 각 target에서 baseline/mac_fixed/v4/v5를 같은 Tensor로 측정한다.
@@ -171,9 +189,23 @@ INCLUDES=(
     "${RUNTIME_SOURCES[@]}" \
     "${ROOT}/src/c/profill/operator_profiler.c" \
     "${ROOT}/src/c/profill/runtime_fixture.c" \
-    "${CANDIDATE_SOURCES[@]}" \
+    "${QCONV_CANDIDATE_SOURCES[@]}" \
     "${ROOT}/src/c/profill/optimization/command_line/campp_fused_qconv_family_bench.c" \
     -lm -o "${BUILD_DIR}/campp_qconv_family_bench"
+
+if [[ "${BUILD_TARGET}" == "qconv_family_batch" ]]; then
+    {
+        printf 'build_target=%s\n' "${BUILD_TARGET}"
+        printf 'cc=%s\n' "${CC}"
+        printf 'cflags=%s\n' "${CFLAGS}"
+        printf 'qconv_candidate_modes=baseline,mac_fixed,v4,v5\n'
+        printf 'qconv_family_batch_graph_traversal=enabled\n'
+    } > "${BUILD_DIR}/build_metadata_qconv_family_batch.txt"
+    echo "QConv family batch build complete"
+    echo "  binary: ${BUILD_DIR}/campp_qconv_family_bench"
+    echo "  elapsed: $((SECONDS - BUILD_STARTED_SECONDS))s"
+    exit 0
+fi
 
 # perf annotate용 binary. Runtime kernel에는 stage clock 호출을 컴파일하지 않는다.
 # shellcheck disable=SC2086
@@ -287,6 +319,7 @@ INCLUDES=(
     -lm -o "${BUILD_DIR}/test_remaining_candidates"
 
 {
+    printf 'build_target=%s\n' "${BUILD_TARGET}"
     printf 'cc=%s\n' "${CC}"
     printf 'cflags=%s\n' "${CFLAGS}"
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
@@ -318,3 +351,4 @@ echo "  BN v2 test: ${BUILD_DIR}/test_bn_v2_candidate"
 echo "  Dequant:    ${BUILD_DIR}/test_dequant_candidate"
 echo "  Fused DQRQ: ${BUILD_DIR}/test_fused_dequant_relu_quant_candidate"
 echo "  Remaining:  ${BUILD_DIR}/test_remaining_candidates"
+echo "  elapsed:    $((SECONDS - BUILD_STARTED_SECONDS))s"
