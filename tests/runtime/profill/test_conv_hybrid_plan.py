@@ -52,6 +52,10 @@ class ConvHybridPlanTests(unittest.TestCase):
                 "v4": 8.0,
                 "v5": 7.5,
             }.items():
+                (qconv / f"{mode}.json").write_text(
+                    json.dumps({"configuration": {"bucket_frames": 298}}),
+                    encoding="utf-8",
+                )
                 (qconv / f"{mode}_comparison.json").write_text(
                     json.dumps(comparison(2, [32, 32, 3, 3], mode, ms)),
                     encoding="utf-8",
@@ -61,6 +65,10 @@ class ConvHybridPlanTests(unittest.TestCase):
                 "combined_hybrid": 8.0,
                 "combined_v5": 7.96,
             }.items():
+                (fused / f"{mode}.json").write_text(
+                    json.dumps({"configuration": {"bucket_frames": 298}}),
+                    encoding="utf-8",
+                )
                 (fused / f"{mode}_comparison.json").write_text(
                     json.dumps(comparison(10, [64, 128, 1], mode, ms)),
                     encoding="utf-8",
@@ -69,7 +77,9 @@ class ConvHybridPlanTests(unittest.TestCase):
                 qconv_dir=qconv,
                 fused_dir=fused,
                 min_margin_pct=1.0,
+                bucket_frames=298,
             )
+            self.assertEqual(plan["bucket_frames"], 298)
             qconv_row = plan["families"][0]["operators"][0]
             fused_row = plan["families"][1]["operators"][0]
             self.assertEqual(qconv_row["selected"], "v5")

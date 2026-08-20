@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Benchmark canonical INT8 ONNX and the compiled C Runtime on QRB2210.
 
-This script does not repeat the numerical validation performed by scripts
-06-08.  It verifies their evidence hashes, supplies the same frozen FBank
-float32 payload to both backends, and records cold/warm latency, RTF and peak
-process RSS.  WAV decoding and FBank extraction are deliberately outside the
-measured interval.
+The runner verifies the existing retained-tensor evidence, supplies the same
+frozen FBank float32 payload to both backends, directly checks final-embedding
+cosine/finite values, and records cold/warm latency, RTF and process RSS.  WAV
+decoding and FBank extraction are deliberately outside the measured interval.
 """
 
 from __future__ import annotations
@@ -23,6 +22,7 @@ import platform
 import re
 import socket
 import statistics
+import struct
 import subprocess
 import sys
 import time
@@ -71,6 +71,7 @@ class BenchmarkConfig:
     repeat: int
     cold_runs: int
     cv_threshold_pct: float
+    embedding_cosine_min: float
     verify_source_wavs: bool
     require_all_latency_inputs: bool
     input_ids: tuple[str, ...]
@@ -93,6 +94,55 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: source.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def compare_embedding_payloads(
+    ort_path: Path, c_path: Path, cosine_min: float
+) -> dict[str, Any]:
+    ort_payload = ort_path.read_bytes()
+    c_payload = c_path.read_bytes()
+    if not ort_payload or len(ort_payload) != len(c_payload):
+        raise BenchmarkError(
+            "ORT/C embedding payload sizes differ or are empty: "
+            f"{len(ort_payload)} != {len(c_payload)}"
+        )
+    if len(ort_payload) % 4 != 0:
+        raise BenchmarkError("embedding payload is not contiguous float32")
+    count = len(ort_payload) // 4
+    ort_values = struct.unpack(f"<{count}f", ort_payload)
+    c_values = struct.unpack(f"<{count}f", c_payload)
+    finite = all(
+        math.isfinite(left) and math.isfinite(right)
+        for left, right in zip(ort_values, c_values)
+    )
+    dot = math.fsum(left * right for left, right in zip(ort_values, c_values))
+    ort_norm_sq = math.fsum(value * value for value in ort_values)
+    c_norm_sq = math.fsum(value * value for value in c_values)
+    cosine = (
+        dot / math.sqrt(ort_norm_sq * c_norm_sq)
+        if finite and ort_norm_sq > 0.0 and c_norm_sq > 0.0
+        else float("nan")
+    )
+    max_abs = (
+        max(abs(left - right) for left, right in zip(ort_values, c_values))
+        if finite
+        else float("nan")
+    )
+    cosine_finite = math.isfinite(cosine)
+    return {
+        "element_count": count,
+        "ort_path": str(ort_path),
+        "c_runtime_path": str(c_path),
+        "ort_sha256": hashlib.sha256(ort_payload).hexdigest(),
+        "c_runtime_sha256": hashlib.sha256(c_payload).hexdigest(),
+        "bitwise_identical": ort_payload == c_payload,
+        "finite": finite,
+        "cosine_finite": cosine_finite,
+        "cosine_similarity": cosine if cosine_finite else None,
+        "cosine_min": cosine_min,
+        "max_abs_error": max_abs if math.isfinite(max_abs) else None,
+        "passed": finite and cosine_finite and cosine >= cosine_min,
+    }
 
 
 def percentile(values: Sequence[float], percent: float) -> float:
@@ -179,6 +229,7 @@ def load_config(path: Path, repository_root: Path = ROOT) -> BenchmarkConfig:
         "repeat",
         "cold_runs",
         "cv_threshold_pct",
+        "embedding_cosine_min",
         "verify_source_wavs",
         "require_all_latency_inputs",
         "input_ids",
@@ -329,6 +380,12 @@ def load_config(path: Path, repository_root: Path = ROOT) -> BenchmarkConfig:
         or len(raw_input_ids) != len(set(raw_input_ids))
     ):
         raise BenchmarkError("input_ids must be a list of unique non-empty strings")
+    embedding_cosine_min = _positive_float(
+        document.get("embedding_cosine_min", 0.99),
+        "embedding_cosine_min",
+    )
+    if embedding_cosine_min > 1.0:
+        raise BenchmarkError("embedding_cosine_min must be <= 1")
     return BenchmarkConfig(
         source=path.resolve(),
         profile=profile,
@@ -342,6 +399,7 @@ def load_config(path: Path, repository_root: Path = ROOT) -> BenchmarkConfig:
         cv_threshold_pct=_positive_float(
             document.get("cv_threshold_pct"), "cv_threshold_pct"
         ),
+        embedding_cosine_min=embedding_cosine_min,
         verify_source_wavs=verify_source_wavs,
         require_all_latency_inputs=require_all,
         input_ids=tuple(raw_input_ids),
@@ -848,6 +906,19 @@ def run_c_benchmark(
         )
         payload["run"] = run
         payload["process_wall_ms"] = wall_ms
+        start_rss = (
+            payload.get("memory", {}).get("start", {}).get("current_rss_bytes")
+        )
+        peak_rss = (
+            payload.get("memory", {})
+            .get("after_measurement", {})
+            .get("peak_rss_bytes")
+        )
+        payload.setdefault("memory", {})["incremental_peak_rss_bytes"] = (
+            max(0, int(peak_rss) - int(start_rss))
+            if start_rss is not None and peak_rss is not None
+            else None
+        )
         cold_samples.append(payload)
         (output_dir / f"cold_{run:02d}.json").write_text(
             json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
@@ -893,6 +964,19 @@ def run_c_benchmark(
         }
     )
     warm["embedding"]["sha256"] = sha256_file(embedding_path)
+    warm_start_rss = (
+        warm.get("memory", {}).get("start", {}).get("current_rss_bytes")
+    )
+    warm_peak_rss = (
+        warm.get("memory", {})
+        .get("after_measurement", {})
+        .get("peak_rss_bytes")
+    )
+    warm.setdefault("memory", {})["incremental_peak_rss_bytes"] = (
+        max(0, int(warm_peak_rss) - int(warm_start_rss))
+        if warm_start_rss is not None and warm_peak_rss is not None
+        else None
+    )
 
     cold = None
     if cold_samples:
@@ -928,11 +1012,22 @@ def run_c_benchmark(
                 ),
                 default=None,
             ),
+            "max_incremental_peak_rss_bytes": max(
+                (
+                    int(item["memory"]["incremental_peak_rss_bytes"])
+                    for item in cold_samples
+                    if item["memory"].get("incremental_peak_rss_bytes") is not None
+                ),
+                default=None,
+            ),
         }
     result = {
         "schema_version": 1,
         "runtime": "campp-c-runtime",
         "backend": warm.get("backend"),
+        "optimization_suite": warm.get("optimization_suite"),
+        "optimization_suite_config": warm.get("optimization_suite_config"),
+        "optimization_bucket_policy": warm.get("optimization_bucket_policy"),
         "model": warm["model"],
         "configuration": warm["configuration"],
         "input": warm["input"],
@@ -957,6 +1052,7 @@ def run_ort_benchmark(
 ) -> dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "result.json"
+    embedding_path = output_dir / "embedding.f32"
     ir_path = config.paths.graph_dir / f"ir_{BUCKET_TAGS[feature.bucket_frames]}.json"
     command = [
         sys.executable,
@@ -983,6 +1079,8 @@ def run_ort_benchmark(
         str(ir_path),
         "--output",
         str(output_path),
+        "--embedding-output",
+        str(embedding_path),
     ]
     completed = subprocess.run(
         command,
@@ -997,6 +1095,10 @@ def run_ort_benchmark(
     result = json.loads(output_path.read_text(encoding="utf-8"))
     if int(result["configuration"]["threads"]) != config.threads:
         raise BenchmarkError("ORT thread setting does not match the experiment")
+    if not embedding_path.is_file():
+        raise BenchmarkError("ORT benchmark did not write its embedding payload")
+    if sha256_file(embedding_path) != result["warm"]["embedding"]["sha256"]:
+        raise BenchmarkError("ORT embedding payload hash mismatch")
     return result
 
 
@@ -1012,6 +1114,38 @@ def warm_peak_rss(result: dict[str, Any]) -> int | None:
     return int(value) if value is not None else None
 
 
+def warm_incremental_peak_rss(result: dict[str, Any]) -> int | None:
+    if result["runtime"] == "onnxruntime-cpu":
+        value = (
+            result.get("warm", {})
+            .get("memory", {})
+            .get("incremental_peak_rss_bytes")
+        )
+    else:
+        value = result.get("memory", {}).get("incremental_peak_rss_bytes")
+    return int(value) if value is not None else None
+
+
+def expected_bucket_policy(
+    capabilities: dict[str, Any], bucket_frames: int
+) -> str | None:
+    source = capabilities.get("optimization_bucket_policy_source")
+    plans = capabilities.get("optimization_bucket_plans")
+    if source == "compiled_bucket_plan" and isinstance(plans, list):
+        return (
+            "layer_hybrid_v3"
+            if bucket_frames in {int(value) for value in plans}
+            else "v2_fallback"
+        )
+    if source == "fixed_v2":
+        return "v2"
+    policy_map = capabilities.get("optimization_bucket_policy_map")
+    if not isinstance(policy_map, dict):
+        return None
+    value = policy_map.get(str(bucket_frames), policy_map.get("default"))
+    return value if isinstance(value, str) and value else None
+
+
 def aggregate_bucket(
     runtime: str,
     frames: int,
@@ -1022,6 +1156,9 @@ def aggregate_bucket(
     first_inference: list[float] = []
     warm_peaks: list[int] = []
     cold_peaks: list[int] = []
+    warm_incremental_peaks: list[int] = []
+    cold_incremental_peaks: list[int] = []
+    optimization_policies: set[str] = set()
     stable = True
     for result in results:
         timings.extend(float(value) for value in result["warm"]["timings_ms"])
@@ -1029,6 +1166,12 @@ def aggregate_bucket(
         peak = warm_peak_rss(result)
         if peak is not None:
             warm_peaks.append(peak)
+        incremental_peak = warm_incremental_peak_rss(result)
+        if incremental_peak is not None:
+            warm_incremental_peaks.append(incremental_peak)
+        policy = result.get("optimization_bucket_policy")
+        if isinstance(policy, str) and policy:
+            optimization_policies.add(policy)
         cold = result.get("cold")
         if cold:
             first = cold.get("first_inference_summary", {}).get("mean_ms")
@@ -1043,6 +1186,9 @@ def aggregate_bucket(
             cold_peak = cold.get("max_peak_rss_bytes")
             if cold_peak is not None:
                 cold_peaks.append(int(cold_peak))
+            cold_incremental_peak = cold.get("max_incremental_peak_rss_bytes")
+            if cold_incremental_peak is not None:
+                cold_incremental_peaks.append(int(cold_incremental_peak))
     latency = summarize(timings)
     audio_seconds = float(
         results[0].get("configuration", {}).get(
@@ -1055,6 +1201,12 @@ def aggregate_bucket(
         [value / 1000.0 / audio_seconds for value in timings], suffix="rtf"
     )
     all_peaks = warm_peaks + cold_peaks
+    all_incremental_peaks = warm_incremental_peaks + cold_incremental_peaks
+    if len(optimization_policies) > 1:
+        raise BenchmarkError(
+            f"inconsistent optimization policies for {frames}: "
+            f"{sorted(optimization_policies)}"
+        )
     return {
         "runtime": runtime,
         "bucket_frames": frames,
@@ -1065,6 +1217,14 @@ def aggregate_bucket(
         "warm_peak_rss_bytes": max(warm_peaks, default=None),
         "cold_peak_rss_bytes": max(cold_peaks, default=None),
         "peak_rss_bytes": max(all_peaks, default=None),
+        "warm_incremental_peak_rss_bytes": max(
+            warm_incremental_peaks, default=None
+        ),
+        "cold_incremental_peak_rss_bytes": max(
+            cold_incremental_peaks, default=None
+        ),
+        "incremental_peak_rss_bytes": max(all_incremental_peaks, default=None),
+        "optimization_bucket_policy": next(iter(optimization_policies), None),
         "stability_gate": {
             "threshold_cv_pct": cv_threshold_pct,
             "all_inputs_passed": stable,
@@ -1080,8 +1240,13 @@ def compare_buckets(
     c_p50 = float(c_runtime["latency"]["p50_ms"])
     ort_peak = ort.get("peak_rss_bytes")
     c_peak = c_runtime.get("peak_rss_bytes")
+    ort_incremental_peak = ort.get("incremental_peak_rss_bytes")
+    c_incremental_peak = c_runtime.get("incremental_peak_rss_bytes")
     return {
         "bucket_frames": ort["bucket_frames"],
+        "c_optimization_bucket_policy": c_runtime.get(
+            "optimization_bucket_policy"
+        ),
         "c_speedup_over_ort_p50": ort_p50 / c_p50 if c_p50 > 0.0 else None,
         "c_rtf_ratio_to_ort_p50": (
             float(c_runtime["rtf"]["p50_rtf"]) / float(ort["rtf"]["p50_rtf"])
@@ -1096,6 +1261,17 @@ def compare_buckets(
         "peak_rss_reduction_ratio": (
             1.0 - int(c_peak) / int(ort_peak)
             if ort_peak not in (None, 0) and c_peak is not None
+            else None
+        ),
+        "incremental_peak_rss_reduction_bytes": (
+            int(ort_incremental_peak) - int(c_incremental_peak)
+            if ort_incremental_peak is not None and c_incremental_peak is not None
+            else None
+        ),
+        "incremental_peak_rss_reduction_ratio": (
+            1.0 - int(c_incremental_peak) / int(ort_incremental_peak)
+            if ort_incremental_peak not in (None, 0)
+            and c_incremental_peak is not None
             else None
         ),
     }
@@ -1210,6 +1386,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             repeat=config.repeat,
             cold_runs=config.cold_runs,
             cv_threshold_pct=config.cv_threshold_pct,
+            embedding_cosine_min=config.embedding_cosine_min,
             verify_source_wavs=config.verify_source_wavs,
             require_all_latency_inputs=config.require_all_latency_inputs,
             input_ids=requested_input_ids,
@@ -1273,12 +1450,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         "measurement_scope": {
             "input": "precomputed FBank float32 [1,frames,80]",
             "output": "embedding [1,192]",
-            "excluded": ["WAV read", "FBank extraction", "accuracy evaluation"],
+            "excluded": ["WAV read", "FBank extraction"],
             "cold": "fresh process; model/context load plus first inference",
             "warm": "persistent model/context; file I/O excluded",
             "memory": (
-                "whole-process VmHWM; ORT includes its Python harness and "
-                "C Runtime is a native process"
+                "whole-process VmHWM plus peak-minus-preload-current RSS; "
+                "ORT includes its Python harness and C Runtime is native"
             ),
         },
         "configuration": {
@@ -1288,6 +1465,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "repeat": config.repeat,
             "cold_runs": config.cold_runs,
             "cv_threshold_pct": config.cv_threshold_pct,
+            "embedding_cosine_min": config.embedding_cosine_min,
             "buckets": selected_config.buckets,
             "input_ids": list(selected_config.input_ids),
         },
@@ -1332,6 +1510,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     per_input: list[dict[str, Any]] = []
     grouped: dict[tuple[str, int], list[dict[str, Any]]] = {}
+    bucket_policy_checks: list[dict[str, Any]] = []
     print("CAM++ on-device Runtime benchmark")
     print(f"  run: {run_id}")
     print(f"  inputs: {len(features)}")
@@ -1368,6 +1547,28 @@ def main(argv: Sequence[str] | None = None) -> int:
                         base_environment,
                     )
                     runtime_name = "campp-c-runtime"
+                    expected_policy = expected_bucket_policy(
+                        c_capabilities, feature.bucket_frames
+                    )
+                    actual_policy = result.get("optimization_bucket_policy")
+                    policy_passed = (
+                        expected_policy is None or actual_policy == expected_policy
+                    )
+                    bucket_policy_checks.append(
+                        {
+                            "input_id": feature.input_id,
+                            "bucket_frames": feature.bucket_frames,
+                            "expected": expected_policy,
+                            "actual": actual_policy,
+                            "passed": policy_passed,
+                        }
+                    )
+                    if not policy_passed:
+                        raise BenchmarkError(
+                            f"C Runtime bucket policy mismatch for "
+                            f"{feature.bucket_frames}: expected={expected_policy}, "
+                            f"actual={actual_policy}"
+                        )
             except (BenchmarkError, OSError, ValueError) as exc:
                 failure = {
                     "input_id": feature.input_id,
@@ -1388,6 +1589,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         ort_hash = results["ort"]["warm"]["embedding"]["sha256"]
         c_hash = results["c_runtime"]["embedding"]["sha256"]
+        embedding_comparison = compare_embedding_payloads(
+            bucket_root / "ort" / "embedding.f32",
+            bucket_root / "c_runtime" / "embedding.f32",
+            config.embedding_cosine_min,
+        )
         per_input.append(
             {
                 "input_id": feature.input_id,
@@ -1401,6 +1607,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "embedding_bitwise_identical": ort_hash == c_hash,
                 "ort_embedding_sha256": ort_hash,
                 "c_runtime_embedding_sha256": c_hash,
+                "embedding_comparison": embedding_comparison,
+                "c_optimization_bucket_policy": results["c_runtime"].get(
+                    "optimization_bucket_policy"
+                ),
             }
         )
 
@@ -1426,13 +1636,43 @@ def main(argv: Sequence[str] | None = None) -> int:
         aggregates["campp-c-runtime"][str(frames)] = c_result
         comparisons.append(compare_buckets(ort, c_result))
 
+    accuracy_buckets: dict[str, dict[str, Any]] = {}
+    for frames in sorted(selected_config.buckets):
+        samples = [
+            item["embedding_comparison"]
+            for item in per_input
+            if item["bucket_frames"] == frames
+        ]
+        finite_cosines = [
+            float(item["cosine_similarity"])
+            for item in samples
+            if item["finite"] and item["cosine_similarity"] is not None
+        ]
+        accuracy_buckets[str(frames)] = {
+            "bucket_frames": frames,
+            "sample_count": len(samples),
+            "cosine_minimum_required": config.embedding_cosine_min,
+            "minimum_cosine_similarity": min(finite_cosines, default=None),
+            "all_finite": all(item["finite"] for item in samples),
+            "all_passed": bool(samples) and all(item["passed"] for item in samples),
+            "samples": samples,
+        }
+
     environment_after = environment_snapshot()
     summary = {
         "schema_version": 1,
         "profile": config.profile,
         "run_id": run_id,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
-        "accuracy_evaluated": False,
+        "accuracy_evaluated": True,
+        "accuracy": {
+            "comparison": "same_feature_canonical_onnxruntime_vs_c_runtime",
+            "cosine_minimum_required": config.embedding_cosine_min,
+            "buckets": accuracy_buckets,
+            "all_passed": all(
+                item["all_passed"] for item in accuracy_buckets.values()
+            ),
+        },
         "existing_accuracy_evidence": evidence_result,
         "configuration": metadata["configuration"],
         "artifacts": provenance,
@@ -1442,12 +1682,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         "per_input": per_input,
         "aggregates": aggregates,
         "comparisons": comparisons,
+        "bucket_policy_checks": bucket_policy_checks,
         "validity": {
             "same_feature_payload": True,
             "same_canonical_model_provenance": True,
             "requested_threads": config.threads,
             "c_effective_threads": config.threads,
             "environment_matched": not environment_mismatches,
+            "all_bucket_policies_verified": all(
+                item["passed"] for item in bucket_policy_checks
+            ),
+            "all_accuracy_gates_passed": all(
+                item["all_passed"] for item in accuracy_buckets.values()
+            ),
             "all_stability_gates_passed": all(
                 item["stability_gate"]["all_inputs_passed"]
                 for backend in aggregates.values()
@@ -1462,7 +1709,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         encoding="utf-8",
     )
     print(f"summary: {summary_path}")
-    return 0
+    return 0 if summary["accuracy"]["all_passed"] else 1
 
 
 if __name__ == "__main__":

@@ -26,6 +26,10 @@
 #if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
 #include "campp_profill/optimization/final_candidate_suite.h"
 #endif
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE) && \
+    defined(CAMPP_FINAL_SUITE_V3)
+#include "conv_layer_hybrid_plan.h"
+#endif
 
 typedef struct BenchmarkOptions {
     const char *model_path;
@@ -440,6 +444,21 @@ int main(int argc, char **argv)
         fputs(",\"optimization_suite\":\"final\","
               "\"optimization_suite_config\":", stdout);
         print_json_string(campp_final_candidate_suite_name());
+#if defined(CAMPP_FINAL_SUITE_V3)
+        fputs(",\"optimization_bucket_policy_source\":"
+              "\"compiled_bucket_plan\"", stdout);
+        fputs(",\"optimization_bucket_plans\":[", stdout);
+        for (iteration = 0u;
+             iteration < campp_conv_layer_hybrid_bucket_plan_count();
+             ++iteration) {
+            printf(
+                "%s%" PRIu32, iteration == 0u ? "" : ",",
+                campp_conv_layer_hybrid_bucket_plan_at(iteration));
+        }
+        fputs("]", stdout);
+#else
+        fputs(",\"optimization_bucket_policy_source\":\"fixed_v2\"", stdout);
+#endif
 #else
         fputs(",\"optimization_suite\":\"stock\","
               "\"optimization_suite_config\":null", stdout);
@@ -573,6 +592,18 @@ int main(int argc, char **argv)
     print_json_string("final");
     fputs(",\"optimization_suite_config\":", stdout);
     print_json_string(campp_final_candidate_suite_name());
+#else
+    print_json_string("stock");
+#endif
+    fputs(",\"optimization_bucket_policy\":", stdout);
+#if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE) && \
+    defined(CAMPP_FINAL_SUITE_V3)
+    print_json_string(
+        campp_conv_layer_hybrid_has_bucket_plan(model.bucket_frames)
+            ? "layer_hybrid_v3"
+            : "v2_fallback");
+#elif defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
+    print_json_string("v2");
 #else
     print_json_string("stock");
 #endif

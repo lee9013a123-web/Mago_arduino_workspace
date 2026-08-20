@@ -137,6 +137,18 @@ def read_linux_memory() -> dict[str, int | None]:
     return result
 
 
+def incremental_peak_rss_bytes(
+    before: dict[str, int | None], after: dict[str, int | None]
+) -> int | None:
+    """Return process peak RSS above the pre-session resident baseline."""
+
+    baseline = before.get("current_rss_bytes")
+    peak = after.get("peak_rss_bytes")
+    if baseline is None or peak is None:
+        return None
+    return max(0, int(peak) - int(baseline))
+
+
 def read_text_if_present(path: str) -> str | None:
     candidate = Path(path)
     if not candidate.exists():
@@ -338,6 +350,7 @@ def run_cold_child(args: argparse.Namespace) -> int:
     import numpy as np
 
     model = args.model.resolve()
+    memory_before_session = read_linux_memory()
     create_start = time.perf_counter_ns()
     session, input_name, output_name = create_session(model, args.threads)
     create_end = time.perf_counter_ns()
@@ -353,6 +366,11 @@ def run_cold_child(args: argparse.Namespace) -> int:
         "first_inference_ms": (inference_end - inference_start) / 1e6,
         "child_total_ms": (inference_end - PROCESS_START_NS) / 1e6,
         "peak_rss_bytes": memory["peak_rss_bytes"],
+        "memory_before_session": memory_before_session,
+        "memory_after_inference": memory,
+        "incremental_peak_rss_bytes": incremental_peak_rss_bytes(
+            memory_before_session, memory
+        ),
         "feature_source": source,
         "feature_shape": list(feature.shape),
         "embedding_shape": list(np.asarray(embedding).shape),
@@ -434,6 +452,14 @@ def run_cold_processes(
             ),
             default=None,
         ),
+        "max_incremental_peak_rss_bytes": max(
+            (
+                sample["incremental_peak_rss_bytes"]
+                for sample in samples
+                if sample.get("incremental_peak_rss_bytes") is not None
+            ),
+            default=None,
+        ),
     }
 
 
@@ -453,6 +479,7 @@ def run_warm(
     if args.skip_warm:
         return None, {}, ort.__version__, np.__version__
 
+    memory_before_session = read_linux_memory()
     create_start = time.perf_counter_ns()
     session, input_name, output_name = create_session(args.model.resolve(), threads)
     session_create_ms = (time.perf_counter_ns() - create_start) / 1e6
@@ -479,6 +506,12 @@ def run_warm(
         timings_ms.append((time.perf_counter_ns() - started) / 1e6)
 
     assert embedding is not None
+    if args.embedding_output is not None:
+        embedding_output = args.embedding_output.resolve()
+        embedding_output.parent.mkdir(parents=True, exist_ok=True)
+        np.ascontiguousarray(embedding).tofile(embedding_output)
+    else:
+        embedding_output = None
     summary = summarize_ms(timings_ms)
     rtf = {
         name.replace("_ms", ""): float(summary[name]) / 1000.0 / audio_seconds
@@ -516,6 +549,11 @@ def run_warm(
         },
         "memory": {
             **memory,
+            "before_session": memory_before_session,
+            "after_measurement": memory,
+            "incremental_peak_rss_bytes": incremental_peak_rss_bytes(
+                memory_before_session, memory
+            ),
             "planned_static_arena_bytes": ir.get("planned_static_arena_bytes")
             if ir
             else None,
@@ -530,6 +568,7 @@ def run_warm(
             "shape": list(np.asarray(embedding).shape),
             "dtype": str(np.asarray(embedding).dtype),
             "sha256": sha256_array(np.asarray(embedding)),
+            "output_path": str(embedding_output) if embedding_output else None,
         },
     }
     input_result = {
@@ -561,6 +600,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="raw contiguous little-endian float32 feature [1,frames,80]",
     )
     parser.add_argument("--reference-npy", type=Path)
+    parser.add_argument(
+        "--embedding-output",
+        type=Path,
+        help="write the final contiguous embedding payload for cross-backend cosine",
+    )
     parser.add_argument("--ir", type=Path, help="matching results/graph/ir_*.json")
     parser.add_argument("--config", type=Path, help="JSON defaults for QRB2210")
     parser.add_argument("--output", type=Path)

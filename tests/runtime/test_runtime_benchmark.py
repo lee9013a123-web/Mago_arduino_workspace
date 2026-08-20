@@ -66,6 +66,7 @@ class RuntimeBenchmarkTests(unittest.TestCase):
         self.assertEqual(config.buckets, {98: 1.0})
         self.assertEqual(config.paths.canonical_model, root / "model.onnx")
         self.assertEqual(config.threads, 1)
+        self.assertEqual(config.embedding_cosine_min, 0.99)
 
     def test_config_can_freeze_evaluation_input_ids(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -115,6 +116,60 @@ class RuntimeBenchmarkTests(unittest.TestCase):
 
         self.assertEqual(summary["p50_ms"], 2.0)
         self.assertAlmostEqual(summary["p95_ms"], 2.9)
+
+    def test_v3_bucket_policy_uses_v2_fallback_outside_98(self) -> None:
+        capabilities = {
+            "optimization_bucket_policy_source": "compiled_bucket_plan",
+            "optimization_bucket_plans": [98],
+        }
+
+        self.assertEqual(
+            MODULE.expected_bucket_policy(capabilities, 98), "layer_hybrid_v3"
+        )
+        self.assertEqual(
+            MODULE.expected_bucket_policy(capabilities, 498), "v2_fallback"
+        )
+
+    def test_incremental_peak_is_aggregated_separately(self) -> None:
+        result = {
+            "runtime": "campp-c-runtime",
+            "optimization_bucket_policy": "v2_fallback",
+            "configuration": {"audio_seconds": 3.0},
+            "warm": {
+                "timings_ms": [30.0, 32.0],
+                "stability_gate": {"passed": True},
+            },
+            "memory": {
+                "after_measurement": {"peak_rss_bytes": 20_000},
+                "incremental_peak_rss_bytes": 5_000,
+            },
+            "cold": None,
+        }
+
+        aggregate = MODULE.aggregate_bucket(
+            "campp-c-runtime", 298, [result], 3.0
+        )
+
+        self.assertEqual(aggregate["peak_rss_bytes"], 20_000)
+        self.assertEqual(aggregate["incremental_peak_rss_bytes"], 5_000)
+        self.assertEqual(
+            aggregate["optimization_bucket_policy"], "v2_fallback"
+        )
+
+    def test_embedding_payload_cosine_is_evaluated_without_bitwise_gate(self) -> None:
+        import struct
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            ort = root / "ort.f32"
+            crt = root / "crt.f32"
+            ort.write_bytes(struct.pack("<3f", 1.0, 2.0, 3.0))
+            crt.write_bytes(struct.pack("<3f", 1.0, 2.0, 3.001))
+
+            comparison = MODULE.compare_embedding_payloads(ort, crt, 0.99)
+
+        self.assertTrue(comparison["passed"])
+        self.assertFalse(comparison["bitwise_identical"])
 
 
 if __name__ == "__main__":

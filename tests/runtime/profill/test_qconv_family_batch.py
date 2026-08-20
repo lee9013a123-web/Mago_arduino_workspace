@@ -76,9 +76,13 @@ class QconvFamilyBatchTests(unittest.TestCase):
         documents = FAMILY.build_mode_documents(
             [case], payloads, FAMILY.DEFAULT_MODES,
             warmup=1, repeat=2, elapsed_seconds=1.0, artifacts={},
+            bucket_frames=298,
         )
 
         self.assertEqual(documents["baseline"]["case_count"], 1)
+        self.assertEqual(
+            documents["baseline"]["configuration"]["bucket_frames"], 298
+        )
         self.assertEqual(
             documents["v5"]["cases"][0]["wall"]["call_count"], 6
         )

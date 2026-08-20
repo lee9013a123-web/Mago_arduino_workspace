@@ -628,7 +628,43 @@ bash scripts/4_profill/03_profile_final_e7.sh --mode official --force
 V3는 `conv_hybrid_plan.json`에서 1% 이상 빠르고 bitwise gate를 통과한
 operator만 교체한다. bucket 98에서 일반 QConv는 `v5 112 / mac_fixed 2 /
 v4 1`, fused Quant-QConv는 `combined_v5 55 / combined_hybrid 50 /
-combined_fixed 5`로 dispatch한다. 다른 bucket은 V2 경로로 안전하게 fallback한다.
+combined_fixed 5`로 dispatch한다. 측정된 V3 plan이 없는 bucket만 V2 경로로
+안전하게 fallback한다.
+
+### 298/498/998 layer-hybrid V3 선택
+
+추가 bucket은 98의 operator ID 표를 복사하지 않는다. 각 bucket의 고정 feature
+3개에서 일반 QConv(`mac_fixed/v4/v5`)와 fused Quant-QConv
+(`combined_fixed/combined_hybrid/combined_v5`)를 한 graph traversal로 측정하고,
+bitwise-valid 후보 중 incumbent보다 1% 이상 빠른 mode만 선택한다. baseline은
+output hash 확인용 1회만 실행하므로 후보 측정 시간을 지배하지 않는다.
+
+```bash
+python3 scripts/4_profill/optimization/16_select_multibucket_v3.py \
+  --buckets 298 498 998 --mode quick --preflight-only
+
+python3 scripts/4_profill/optimization/16_select_multibucket_v3.py \
+  --buckets 298 498 998 --mode official --build-final
+```
+
+family benchmark binary 2개가 이미 있으면 optimization build는 재사용한다.
+없을 때만 `01_build_optimization.sh`를 실행하며, 강제 재빌드는 `--rebuild`로
+요청한다. `--preflight-only`는 빌드하지 않고 누락을 보고한다. 측정 재실행은
+`--force`, 기존 결과에서 plan/source만 다시 만드는
+경우는 `--plan-only --force --build-final`을 사용한다.
+
+산출물은 bucket별로 아래에 생성된다.
+
+```text
+results/profiling/e7_<bucket>/optimization/qconv_family/
+results/profiling/e7_<bucket>/optimization/fused_qconv_family/
+results/profiling/e7_<bucket>/optimization/conv_hybrid_plan.json
+results/profiling/e7_<bucket>/optimization/conv_hybrid_plan.csv
+```
+
+`17_generate_multibucket_v3_source.py`는 98과 추가 bucket plan을 다시 검증한 뒤
+`conv_layer_hybrid_plan.c`의 bucket별 정렬 테이블을 생성한다. 측정되지 않은
+bucket은 계속 일반 QConv `v4`, fused Quant-QConv `combined_hybrid`로 fallback한다.
 
 V2 빌드는 기존 binary의 capability가 V2 suite와 일치하면 다시 만들 필요가 없다.
 V3만 빌드한 뒤 단일 스크립트로 retained tensor gate와 동일 세션 Quick E2E를

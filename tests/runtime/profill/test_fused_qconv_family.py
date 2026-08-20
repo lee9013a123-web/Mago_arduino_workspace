@@ -139,9 +139,12 @@ class FusedQconvFamilyTests(unittest.TestCase):
         documents = FAMILY.build_mode_documents(
             [case], payloads, modes,
             warmup=1, repeat=2, elapsed_seconds=1.0,
-            artifacts={},
+            artifacts={}, bucket_frames=498,
         )
         self.assertEqual(documents["baseline"]["case_count"], 1)
+        self.assertEqual(
+            documents["baseline"]["configuration"]["bucket_frames"], 498
+        )
         self.assertEqual(
             documents["combined_fixed"]["cases"][0]["wall"]["call_count"],
             6,

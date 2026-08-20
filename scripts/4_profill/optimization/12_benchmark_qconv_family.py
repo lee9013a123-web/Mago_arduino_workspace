@@ -228,6 +228,7 @@ def build_mode_documents(
     input_payloads: Sequence[tuple[Path, dict[str, Any]]],
     modes: Sequence[str], *, warmup: int, repeat: int,
     elapsed_seconds: float, artifacts: dict[str, str],
+    bucket_frames: int = 98,
 ) -> dict[str, dict[str, Any]]:
     """Convert batch payloads to the existing comparison-compatible schema."""
 
@@ -278,7 +279,7 @@ def build_mode_documents(
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
             "objective": "benchmark all ordinary qlinear_conv_o4i4 operators",
             "configuration": {
-                "bucket_frames": 98,
+                "bucket_frames": bucket_frames,
                 "threads": 1,
                 "cpu_affinity": [0],
                 "warmup": warmup,
@@ -396,6 +397,7 @@ def estimate_seconds(
     profile: dict[str, Any], cases: Sequence[dict[str, Any]],
     modes: Sequence[str], warmup: int, repeat: int, input_count: int,
     baseline_check_only: bool = False,
+    bucket_frames: int = 98,
 ) -> float:
     """Estimate batch time from the profiled reference family sum.
 
@@ -405,7 +407,10 @@ def estimate_seconds(
     process/model-load overhead removed by the batch runner.
     """
 
-    family_ms = sum(float(case["profile_mean_ms"]) for case in cases)
+    frame_scale = bucket_frames / 98.0
+    family_ms = (
+        sum(float(case["profile_mean_ms"]) for case in cases) * frame_scale
+    )
     factors = {
         "baseline": 1.0,
         "mac_fixed": 0.05,
@@ -427,7 +432,7 @@ def estimate_seconds(
     timing = profile.get("timing")
     end_to_end = timing.get("end_to_end") if isinstance(timing, dict) else None
     graph_ms = (
-        float(end_to_end.get("mean_ms", 0.0))
+        float(end_to_end.get("mean_ms", 0.0)) * frame_scale
         if isinstance(end_to_end, dict) else 0.0
     )
     non_target = max(0.0, graph_ms - family_ms) / 1000.0 * input_count
@@ -439,6 +444,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--profile", type=_path,
         default=ROOT / "results/profiling/e7_98/operator_profile.json",
+    )
+    parser.add_argument(
+        "--bucket-frames", type=int, default=98,
+        help="input frame bucket recorded in results and used for size checks",
     )
     parser.add_argument(
         "--binary", type=_path,
@@ -478,6 +487,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.warmup < 0 or args.repeat <= 0:
             raise QconvFamilyError("warmup must be >= 0 and repeat > 0")
+        if args.bucket_frames <= 0:
+            raise QconvFamilyError("bucket-frames must be positive")
         modes = list(dict.fromkeys(args.modes))
         if "baseline" not in modes:
             modes.insert(0, "baseline")
@@ -494,11 +505,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "required files are missing:\n  "
                 + "\n  ".join(str(path) for path in missing)
             )
-        if len(args.features) != 3 or any(
-            path.stat().st_size != 98 * 80 * 4 for path in args.features
+        expected_feature_bytes = args.bucket_frames * 80 * 4
+        if not args.features or any(
+            path.stat().st_size != expected_feature_bytes
+            for path in args.features
         ):
             raise QconvFamilyError(
-                "exactly three float32 [1,98,80] inputs are required"
+                "one or more float32 [1,"
+                f"{args.bucket_frames},80] inputs are required"
             )
         capabilities = _run_payload([str(args.binary), "--capabilities"])
         if capabilities.get("batch_graph_traversal") is not True:
@@ -509,6 +523,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.preflight_only:
             print(json.dumps({
                 "ready": True,
+                "bucket_frames": args.bucket_frames,
                 "operator_count": len(cases),
                 "modes": modes,
                 "plan": _display_path(plan),
@@ -535,6 +550,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             profile, cases, modes, args.warmup, args.repeat,
             len(args.features),
             baseline_check_only=args.baseline_check_only,
+            bucket_frames=args.bucket_frames,
         )
         print(f"예상 시간: 약 {max(1, math.ceil(estimated / 60.0))}분")
         raw_dir = args.runs_dir / "raw_batch"
@@ -579,6 +595,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             cases, input_payloads, modes,
             warmup=args.warmup, repeat=args.repeat,
             elapsed_seconds=elapsed, artifacts=artifacts,
+            bucket_frames=args.bucket_frames,
         )
         args.results_dir.mkdir(parents=True, exist_ok=True)
         for mode, document in documents.items():

@@ -33,19 +33,19 @@ class ConvLayerHybridSourceTests(unittest.TestCase):
         qconv = families["qlinear_conv"]["operators"]
         fused = families["fused_quant_qconv"]["operators"]
         self.assertEqual(
-            c_ids(source, "CAMPP_QCONV_MAC_FIXED_IDS"),
+            c_ids(source, "CAMPP_QCONV_MAC_FIXED_IDS_98"),
             {item["operator_id"] for item in qconv if item["selected"] == "mac_fixed"},
         )
         self.assertEqual(
-            c_ids(source, "CAMPP_QCONV_V5_IDS"),
+            c_ids(source, "CAMPP_QCONV_V5_IDS_98"),
             {item["operator_id"] for item in qconv if item["selected"] == "v5"},
         )
         self.assertEqual(
-            c_ids(source, "CAMPP_FUSED_QCONV_FIXED_IDS"),
+            c_ids(source, "CAMPP_FUSED_QCONV_FIXED_IDS_98"),
             {item["operator_id"] for item in fused if item["selected"] == "combined_fixed"},
         )
         self.assertEqual(
-            c_ids(source, "CAMPP_FUSED_QCONV_V5_IDS"),
+            c_ids(source, "CAMPP_FUSED_QCONV_V5_IDS_98"),
             {item["operator_id"] for item in fused if item["selected"] == "combined_v5"},
         )
 

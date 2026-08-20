@@ -33,7 +33,7 @@ static int test_qconv_plan(void)
     op.operator_id = 999u;
     CHECK_TRUE(campp_conv_layer_hybrid_select_qconv(&model, &op) ==
                CAMPP_QCONV_CANDIDATE_V4);
-    model.bucket_frames = 298u;
+    model.bucket_frames = 1234u;
     op.operator_id = 825u;
     CHECK_TRUE(campp_conv_layer_hybrid_select_qconv(&model, &op) ==
                CAMPP_QCONV_CANDIDATE_V4);

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -39,6 +40,7 @@ INTEGER_CODES = {2, 3, 4, 5, 6}
 FLOAT_ATOL = 1e-4
 FLOAT_RTOL = 1e-3
 EMBEDDING_COSINE_MIN = 0.999999
+COMPARISON_GATES = ("retained-tensors", "embedding-cosine")
 
 
 class RuntimeComparisonError(RuntimeError):
@@ -192,6 +194,61 @@ def _missing_result(operator, tensor_id: int, name: str | None, status: str) -> 
     }
 
 
+def evaluate_comparison_gate(
+    comparisons: list[dict], *, gate: str, embedding_cosine_min: float
+) -> dict:
+    if gate not in COMPARISON_GATES:
+        raise ValueError(f"unsupported comparison gate: {gate}")
+    good = {"exact", "within_tolerance"}
+    failures = [item for item in comparisons if item["status"] not in good]
+    embedding = next(
+        (item for item in comparisons if item.get("tensor_name") == "embedding"),
+        None,
+    )
+    embedding_cosine = (
+        float(embedding.get("cosine_similarity", float("nan")))
+        if embedding is not None
+        else float("nan")
+    )
+    embedding_finite = (
+        embedding is not None
+        and embedding.get("status") != "non_finite"
+        and math.isfinite(embedding_cosine)
+    )
+    embedding_cosine_passed = bool(
+        embedding_finite and embedding_cosine >= embedding_cosine_min
+    )
+    retained_tensor_gate_passed = not failures
+    gate_passed = (
+        retained_tensor_gate_passed and embedding_cosine_passed
+        if gate == "retained-tensors"
+        else embedding_cosine_passed
+    )
+    first_failure = failures[0] if gate == "retained-tensors" and failures else None
+    if first_failure is None and not embedding_cosine_passed:
+        first_failure = (
+            dict(embedding)
+            if embedding is not None
+            else {
+                "operator_id": -1,
+                "operator_name": "unknown",
+                "opcode": "UNKNOWN",
+                "tensor_id": -1,
+                "tensor_name": "embedding",
+            }
+        )
+        first_failure["status"] = "embedding_cosine_below_threshold"
+    return {
+        "failures": failures,
+        "embedding": embedding,
+        "embedding_finite": embedding_finite,
+        "embedding_cosine_passed": embedding_cosine_passed,
+        "retained_tensor_gate_passed": retained_tensor_gate_passed,
+        "gate_passed": gate_passed,
+        "first_failure": first_failure,
+    }
+
+
 def compare_bucket(
     frames: int,
     tag: str,
@@ -203,7 +260,10 @@ def compare_bucket(
     float_atol: float = FLOAT_ATOL,
     float_rtol: float = FLOAT_RTOL,
     embedding_cosine_min: float = EMBEDDING_COSINE_MIN,
+    gate: str = "retained-tensors",
 ) -> tuple[dict, list[dict]]:
+    if gate not in COMPARISON_GATES:
+        raise ValueError(f"unsupported comparison gate: {gate}")
     graph = load_runtime_graph(frames, tag, static_dir, graph_dir)
     name_by_id = {tensor.tensor_id: tensor.name for tensor in graph.tensors}
     c_index, c_tensors = load_c_dump(c_dir / f"c_{frames}")
@@ -251,34 +311,25 @@ def compare_bucket(
                 comparisons.append(metrics)
 
     comparisons.sort(key=lambda item: (item["operator_id"], item["tensor_id"]))
-    good = {"exact", "within_tolerance"}
-    failures = [item for item in comparisons if item["status"] not in good]
-    embedding = next(
-        (item for item in comparisons if item["tensor_name"] == "embedding"),
-        None,
+    gate_result = evaluate_comparison_gate(
+        comparisons, gate=gate, embedding_cosine_min=embedding_cosine_min
     )
-    embedding_cosine = (
-        float(embedding.get("cosine_similarity", float("nan")))
-        if embedding is not None
-        else float("nan")
-    )
-    embedding_cosine_passed = (
-        embedding is not None and embedding_cosine >= embedding_cosine_min
-    )
-    first_failure = failures[0] if failures else None
-    if first_failure is None and not embedding_cosine_passed:
-        first_failure = dict(embedding) if embedding is not None else {}
-        first_failure["status"] = "embedding_cosine_below_threshold"
+    failures = gate_result["failures"]
     summary = {
         "mode": c_index.get("mode", "full_graph"),
         "bucket_frames": frames,
         "compared_tensors": len(comparisons),
         "failed_tensors": len(failures),
-        "first_failure": first_failure,
-        "embedding": embedding,
+        "first_failure": gate_result["first_failure"],
+        "embedding": gate_result["embedding"],
+        "embedding_finite": gate_result["embedding_finite"],
         "embedding_cosine_min": embedding_cosine_min,
-        "embedding_cosine_passed": embedding_cosine_passed,
-        "all_match": not failures and embedding_cosine_passed,
+        "embedding_cosine_passed": gate_result["embedding_cosine_passed"],
+        "comparison_gate": gate,
+        "retained_tensor_gate_passed": gate_result["retained_tensor_gate_passed"],
+        "gate_passed": gate_result["gate_passed"],
+        # Backward-compatible alias used by the existing freezer/reporting tools.
+        "all_match": gate_result["gate_passed"],
         "float_atol": float_atol,
         "float_rtol": float_rtol,
     }
@@ -292,7 +343,8 @@ def print_bucket_report(summary: dict) -> None:
     mark = "PASS" if summary["all_match"] else "FAIL"
     print(
         f"\n[{frames} frames] {mark} mode={summary['mode']} "
-        f"compared={total} failed={failed}"
+        f"gate={summary['comparison_gate']} compared={total} "
+        f"diagnostic_failed={failed}"
     )
 
     embedding = summary["embedding"]
@@ -363,9 +415,20 @@ def main(argv: list[str] | None = None) -> int:
         "--embedding-cosine-min", type=float, default=EMBEDDING_COSINE_MIN
     )
     parser.add_argument(
+        "--gate",
+        choices=COMPARISON_GATES,
+        default="retained-tensors",
+        help=(
+            "retained-tensors는 모든 Tensor 허용오차와 embedding cosine을, "
+            "embedding-cosine은 finite embedding과 cosine만 PASS/FAIL에 사용한다"
+        ),
+    )
+    parser.add_argument(
         "--max-report", type=int, default=20, help="출력할 실패 Operator 개수"
     )
     args = parser.parse_args(argv)
+    if not 0.0 <= args.embedding_cosine_min <= 1.0:
+        parser.error("--embedding-cosine-min must be in [0, 1]")
 
     args.results_dir.mkdir(parents=True, exist_ok=True)
     summaries: list[dict] = []
@@ -397,6 +460,7 @@ def main(argv: list[str] | None = None) -> int:
                 float_atol=args.float_atol,
                 float_rtol=args.float_rtol,
                 embedding_cosine_min=args.embedding_cosine_min,
+                gate=args.gate,
             )
         except (OSError, ValueError, RuntimeComparisonError) as exc:
             print(f"[{frames} frames] comparison failed: {exc}", file=sys.stderr)
@@ -411,7 +475,10 @@ def main(argv: list[str] | None = None) -> int:
             if item["status"] not in {"exact", "within_tolerance"}
         ]
         if failures:
-            print(f"  failures (first {min(len(failures), args.max_report)}):")
+            print(
+                "  retained-tensor diagnostics "
+                f"(first {min(len(failures), args.max_report)}):"
+            )
             for item in failures[: args.max_report]:
                 print(
                     f"    #{item['operator_id']:>5} {item['opcode']:<20} "

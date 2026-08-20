@@ -168,7 +168,7 @@ def _mode_map(case: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def validate_batch_payload(
     payload: dict[str, Any], cases: Sequence[dict[str, Any]],
-    modes: Sequence[str], repeat: int,
+    modes: Sequence[str], repeat: int, baseline_check_only: bool = False,
 ) -> None:
     if payload.get("mode") != "fused_qconv_family_batch":
         raise FamilyBenchmarkError("unexpected batch benchmark mode")
@@ -179,6 +179,7 @@ def validate_batch_payload(
         configuration.get("effective_threads") != 1
         or configuration.get("repeat") != repeat
         or configuration.get("graph_traversals") != 1
+        or bool(configuration.get("baseline_check_only")) != baseline_check_only
     ):
         raise FamilyBenchmarkError("batch benchmark configuration mismatch")
     raw_cases = payload.get("cases")
@@ -209,7 +210,10 @@ def validate_batch_payload(
         for mode in modes:
             result = mode_map[mode]
             samples = result.get("samples_ns")
-            if not isinstance(samples, list) or len(samples) != repeat or any(
+            expected_count = (
+                1 if baseline_check_only and mode == "baseline" else repeat
+            )
+            if not isinstance(samples, list) or len(samples) != expected_count or any(
                 isinstance(value, bool) or not isinstance(value, int)
                 or value <= 0 for value in samples
             ):
@@ -227,12 +231,15 @@ def validate_batch_payload(
 def _batch_command(
     binary: Path, plan: Path, weights: Path, feature: Path,
     modes: Sequence[str], warmup: int, repeat: int,
+    baseline_check_only: bool = False,
 ) -> list[str]:
     command = [
         str(binary), "--plan", str(plan), "--weights", str(weights),
         "--input", str(feature), "--warmup", str(warmup),
         "--repeat", str(repeat), "--threads", "1",
     ]
+    if baseline_check_only:
+        command.append("--baseline-check-only")
     for mode in modes:
         command.extend(("--mode", mode))
     return command
@@ -247,6 +254,7 @@ def build_mode_documents(
     input_payloads: Sequence[tuple[Path, dict[str, Any]]],
     modes: Sequence[str], *, warmup: int, repeat: int,
     elapsed_seconds: float, artifacts: dict[str, str],
+    bucket_frames: int = 98,
 ) -> dict[str, dict[str, Any]]:
     """Convert batch payloads to the existing comparison-compatible schema."""
 
@@ -297,7 +305,7 @@ def build_mode_documents(
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
             "objective": "benchmark all fused_quant_qlinear_conv_o4i4 operators",
             "configuration": {
-                "bucket_frames": 98,
+                "bucket_frames": bucket_frames,
                 "threads": 1,
                 "cpu_affinity": [0],
                 "warmup": warmup,
@@ -466,8 +474,13 @@ def write_comparison_csv(
 def estimate_seconds(
     profile: dict[str, Any], cases: Sequence[dict[str, Any]],
     modes: Sequence[str], warmup: int, repeat: int, input_count: int,
+    baseline_check_only: bool = False,
+    bucket_frames: int = 98,
 ) -> float:
-    family_ms = sum(float(case["profile_mean_ms"]) for case in cases)
+    frame_scale = bucket_frames / 98.0
+    family_ms = (
+        sum(float(case["profile_mean_ms"]) for case in cases) * frame_scale
+    )
     factors = {
         "baseline": 1.0,
         "mac": 0.12,
@@ -479,14 +492,20 @@ def estimate_seconds(
         "combined_hybrid": 0.07,
         "combined_v5": 0.07,
     }
-    measured = (
-        family_ms / 1000.0 * (warmup + repeat + 1) * input_count
-        * sum(factors[mode] for mode in modes)
+    runs = {
+        mode: (
+            2 if baseline_check_only and mode == "baseline"
+            else warmup + repeat + 1
+        )
+        for mode in modes
+    }
+    measured = family_ms / 1000.0 * input_count * sum(
+        factors[mode] * runs[mode] for mode in modes
     )
     timing = profile.get("timing")
     end_to_end = timing.get("end_to_end") if isinstance(timing, dict) else None
     graph_ms = (
-        float(end_to_end.get("mean_ms", 0.0))
+        float(end_to_end.get("mean_ms", 0.0)) * frame_scale
         if isinstance(end_to_end, dict) else 0.0
     )
     non_target = max(0.0, graph_ms - family_ms) / 1000.0 * input_count
@@ -512,6 +531,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--profile", type=_path,
         default=ROOT / "results/profiling/e7_98/operator_profile.json",
     )
+    parser.add_argument(
+        "--bucket-frames", type=int, default=98,
+        help="input frame bucket recorded in results and used for size checks",
+    )
     parser.add_argument("--plan", type=_path)
     parser.add_argument("--weights", type=_path)
     parser.add_argument(
@@ -525,6 +548,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--results-dir", type=_path,
         default=ROOT / "results/profiling/e7_98/optimization/fused_qconv_family",
     )
+    parser.add_argument(
+        "--baseline-check-only", action="store_true",
+        help=(
+            "baseline은 output hash 확인용 1회만 실행하고 후보 mode만 "
+            "warmup/repeat 측정한다"
+        ),
+    )
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args(argv)
@@ -532,6 +562,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         if args.warmup < 0 or args.repeat <= 0:
             raise FamilyBenchmarkError("warmup must be >= 0 and repeat > 0")
+        if args.bucket_frames <= 0:
+            raise FamilyBenchmarkError("bucket-frames must be positive")
         modes = list(dict.fromkeys(args.modes))
         if "baseline" not in modes:
             modes.insert(0, "baseline")
@@ -548,11 +580,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "required files are missing:\n  "
                 + "\n  ".join(str(path) for path in missing)
             )
-        if len(args.features) != 3 or any(
-            path.stat().st_size != 98 * 80 * 4 for path in args.features
+        expected_feature_bytes = args.bucket_frames * 80 * 4
+        if not args.features or any(
+            path.stat().st_size != expected_feature_bytes
+            for path in args.features
         ):
             raise FamilyBenchmarkError(
-                "exactly three float32 [1,98,80] inputs are required"
+                "one or more float32 [1,"
+                f"{args.bucket_frames},80] inputs are required"
             )
         capabilities = _run_payload([str(args.binary), "--capabilities"])
         if capabilities.get("batch_graph_traversal") is not True:
@@ -565,6 +600,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 json.dumps(
                     {
                         "ready": True,
+                        "bucket_frames": args.bucket_frames,
                         "binary": _display_path(args.binary),
                         "plan": _display_path(plan),
                         "weights": _display_path(weights),
@@ -598,6 +634,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         expected = estimate_seconds(
             profile, cases, modes, args.warmup, args.repeat,
             len(args.features),
+            baseline_check_only=args.baseline_check_only,
+            bucket_frames=args.bucket_frames,
         )
         print(f"예상 시간: 약 {max(1, math.ceil(expected / 60.0))}분")
         raw_dir = args.runs_dir / "raw"
@@ -610,10 +648,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 _batch_command(
                     args.binary, plan, weights, feature, modes,
                     args.warmup, args.repeat,
+                    baseline_check_only=args.baseline_check_only,
                 ),
                 (0, 3),
             )
-            validate_batch_payload(payload, cases, modes, args.repeat)
+            validate_batch_payload(
+                payload, cases, modes, args.repeat,
+                baseline_check_only=args.baseline_check_only,
+            )
             input_payloads.append((feature, payload))
             (raw_dir / f"{feature.stem}.json").write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
@@ -630,6 +672,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             cases, input_payloads, modes,
             warmup=args.warmup, repeat=args.repeat,
             elapsed_seconds=elapsed, artifacts=artifacts,
+            bucket_frames=args.bucket_frames,
         )
         args.results_dir.mkdir(parents=True, exist_ok=True)
         for mode, document in documents.items():

@@ -38,6 +38,14 @@ class BenchmarkMathTests(unittest.TestCase):
         self.assertEqual(benchmark.infer_audio_seconds(298, None), 3.0)
         self.assertEqual(benchmark.infer_audio_seconds(998, None), 10.0)
 
+    def test_incremental_peak_uses_pre_session_resident_baseline(self) -> None:
+        value = benchmark.incremental_peak_rss_bytes(
+            {"current_rss_bytes": 100, "peak_rss_bytes": 120},
+            {"current_rss_bytes": 170, "peak_rss_bytes": 200},
+        )
+
+        self.assertEqual(value, 100)
+
     def test_config_rejects_unknown_keys(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "bad.json"

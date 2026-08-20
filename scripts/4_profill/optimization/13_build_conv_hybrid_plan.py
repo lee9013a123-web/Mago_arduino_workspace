@@ -40,11 +40,25 @@ def _load_json(path: Path) -> dict[str, Any]:
         raise HybridPlanError(f"cannot read {path}: {exc}") from exc
 
 
-def _comparison_cases(result_dir: Path, modes: Sequence[str]) -> dict[int, dict[str, Any]]:
+def _comparison_cases(
+    result_dir: Path, modes: Sequence[str], bucket_frames: int,
+) -> dict[int, dict[str, Any]]:
     by_operator: dict[int, dict[str, Any]] = {}
     for mode in modes:
         path = result_dir / f"{mode}_comparison.json"
         document = _load_json(path)
+        measurement_path = result_dir / f"{mode}.json"
+        measurement = _load_json(measurement_path)
+        configuration = measurement.get("configuration")
+        measured_bucket = (
+            configuration.get("bucket_frames")
+            if isinstance(configuration, dict) else None
+        )
+        if measured_bucket != bucket_frames:
+            raise HybridPlanError(
+                f"{measurement_path} bucket mismatch: "
+                f"expected {bucket_frames}, got {measured_bucket}"
+            )
         if not document.get("all_output_hashes_bitwise_identical", False):
             raise HybridPlanError(f"{path} is not fully bitwise-identical")
         for case in document.get("cases", []):
@@ -105,8 +119,9 @@ def _family_plan(
     modes: Sequence[str],
     incumbent: str,
     min_margin_pct: float,
+    bucket_frames: int,
 ) -> dict[str, Any]:
-    operators = _comparison_cases(result_dir, modes)
+    operators = _comparison_cases(result_dir, modes, bucket_frames)
     rows = []
     totals = {mode: 0.0 for mode in modes}
     selected_total = 0.0
@@ -188,13 +203,17 @@ def build_plan(
     qconv_dir: Path,
     fused_dir: Path,
     min_margin_pct: float,
+    bucket_frames: int = 98,
 ) -> dict[str, Any]:
+    if bucket_frames <= 0:
+        raise HybridPlanError("bucket_frames must be positive")
     qconv = _family_plan(
         family="qlinear_conv",
         result_dir=qconv_dir,
         modes=ORDINARY_MODES,
         incumbent="v4",
         min_margin_pct=min_margin_pct,
+        bucket_frames=bucket_frames,
     )
     fused = _family_plan(
         family="fused_quant_qconv",
@@ -202,6 +221,7 @@ def build_plan(
         modes=FUSED_MODES,
         incumbent="combined_hybrid",
         min_margin_pct=min_margin_pct,
+        bucket_frames=bucket_frames,
     )
     incumbent_total = (
         float(qconv["incumbent_total_mean_ms"]) +
@@ -214,6 +234,7 @@ def build_plan(
     return {
         "schema_version": 1,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
+        "bucket_frames": bucket_frames,
         "objective": "operator-level hybrid selection for ordinary and fused QConv",
         "selection_rule": {
             "metric": "mean_ms",
@@ -251,6 +272,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--qconv-dir", type=_path, default=ROOT / "results/profiling/e7_98/optimization/qconv_family")
     parser.add_argument("--fused-dir", type=_path, default=ROOT / "results/profiling/e7_98/optimization/fused_qconv_family")
+    parser.add_argument("--bucket-frames", type=int, default=98)
     parser.add_argument("--min-margin-pct", type=float, default=1.0)
     parser.add_argument("--output", type=_path, default=ROOT / "results/profiling/e7_98/optimization/conv_hybrid_plan.json")
     parser.add_argument("--csv", type=_path, default=ROOT / "results/profiling/e7_98/optimization/conv_hybrid_plan.csv")
@@ -265,6 +287,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             qconv_dir=args.qconv_dir,
             fused_dir=args.fused_dir,
             min_margin_pct=args.min_margin_pct,
+            bucket_frames=args.bucket_frames,
         )
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(
