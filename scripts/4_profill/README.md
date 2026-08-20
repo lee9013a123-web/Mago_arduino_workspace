@@ -590,8 +590,10 @@ AArch64 registry를 복사한 뒤 아래 15개 entry만 교체한다.
 
 | 대상 | 최종 mode |
 |---|---|
-| 일반 QConv | `v4` |
-| fused Quant-QConv | `combined_v5` (input quant NEON + QConv v5) |
+| 일반 QConv (V2) | `v4` |
+| fused Quant-QConv (V2) | `combined_hybrid` |
+| 일반 QConv (V3) | operator별 `mac_fixed/v4/v5` hybrid |
+| fused Quant-QConv (V3) | operator별 `combined_fixed/combined_hybrid/combined_v5` hybrid |
 | fused BN-ReLU-Quant | `v2_spatial2` |
 | DequantizeLinear | `neon_combined` |
 | fused Dequant-ReLU-Quant | `neon` |
@@ -619,6 +621,47 @@ compile/link flag로 만든다.
 
 ```bash
 bash scripts/4_profill/03_profile_final_e7.sh --mode official --force
+```
+
+### Layer-hybrid final V3와 V2 비교
+
+V3는 `conv_hybrid_plan.json`에서 1% 이상 빠르고 bitwise gate를 통과한
+operator만 교체한다. bucket 98에서 일반 QConv는 `v5 112 / mac_fixed 2 /
+v4 1`, fused Quant-QConv는 `combined_v5 55 / combined_hybrid 50 /
+combined_fixed 5`로 dispatch한다. 다른 bucket은 V2 경로로 안전하게 fallback한다.
+
+V2 빌드는 기존 binary의 capability가 V2 suite와 일치하면 다시 만들 필요가 없다.
+V3만 빌드한 뒤 단일 스크립트로 retained tensor gate와 동일 세션 Quick E2E를
+진행한다.
+
+```bash
+bash scripts/4_profill/05_build_final_v3.sh
+build/profill/final_v3_hybrid/test_final_candidate_suite
+
+bash scripts/4_profill/06_profile_final_v2_v3.sh --preflight-only
+bash scripts/4_profill/06_profile_final_v2_v3.sh --mode quick --force
+```
+
+`06_profile_final_v2_v3.sh`의 순서는 다음과 같다.
+
+1. 같은 plan/weights와 고정 feature 3개로 모든 retained tensor를 byte 단위 비교
+2. final V2 Quick E2E/profile
+3. final V3 Quick E2E/profile
+4. E2E RTF와 operator delta 자동 비교
+
+공식 프로토콜은 아래와 같다.
+
+```bash
+bash scripts/4_profill/06_profile_final_v2_v3.sh --mode official --force
+```
+
+산출물은 다음 위치에 저장한다.
+
+```text
+results/profiling/e7_98/final_v3_vs_v2_retained.json
+results/profiling/e7_98/final_v2_aggressive/
+results/profiling/e7_98/final_v3_hybrid/
+results/profiling/e7_98/final_v3_vs_v2.json
 ```
 
 ### 현재 E7 성능 baseline

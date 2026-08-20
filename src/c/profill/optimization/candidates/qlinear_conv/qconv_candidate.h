@@ -12,7 +12,8 @@ typedef enum CamppQconvCandidateMode {
     CAMPP_QCONV_CANDIDATE_MAC_ASM = 5,
     CAMPP_QCONV_CANDIDATE_V4 = 6,
     CAMPP_QCONV_CANDIDATE_HYBRID = 7,
-    CAMPP_QCONV_CANDIDATE_V5 = 8
+    CAMPP_QCONV_CANDIDATE_V5 = 8,
+    CAMPP_QCONV_CANDIDATE_LAYER_HYBRID_V3 = 9
 } CamppQconvCandidateMode;
 
 const char *campp_qconv_candidate_mode_name(CamppQconvCandidateMode mode);

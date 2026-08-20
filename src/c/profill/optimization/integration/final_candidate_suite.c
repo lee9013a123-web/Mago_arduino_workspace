@@ -11,6 +11,10 @@
 #include "qconv_candidate.h"
 #include "remaining_candidate.h"
 
+#if defined(CAMPP_FINAL_SUITE_V2) && defined(CAMPP_FINAL_SUITE_V3)
+#error "select only one final suite variant"
+#endif
+
 typedef enum CamppFinalCandidateFamily {
     CAMPP_FINAL_FAMILY_NONE = 0,
     CAMPP_FINAL_FAMILY_QCONV,
@@ -61,15 +65,27 @@ static const CamppKernelEntry *campp_final_selected_entry(
     if (opcode == CAMPP_OP_QLINEAR_CONV &&
         kernel_id == CAMPP_AARCH64_PACKED_KERNEL_ID) {
         *out_family = CAMPP_FINAL_FAMILY_QCONV;
-        *out_name = "qlinear_conv_o4i4_v5";
-        return campp_qconv_candidate_entry(CAMPP_QCONV_CANDIDATE_V5);
+#if defined(CAMPP_FINAL_SUITE_V3)
+        *out_name = "qlinear_conv_o4i4_layer_hybrid_v3";
+        return campp_qconv_candidate_entry(
+            CAMPP_QCONV_CANDIDATE_LAYER_HYBRID_V3);
+#else
+        *out_name = "qlinear_conv_o4i4_v4";
+        return campp_qconv_candidate_entry(CAMPP_QCONV_CANDIDATE_V4);
+#endif
     }
     if (opcode == CAMPP_OP_QLINEAR_CONV &&
         kernel_id == CAMPP_FUSION_QUANT_QCONV_KERNEL_ID) {
         *out_family = CAMPP_FINAL_FAMILY_FUSED_QCONV;
-        *out_name = "fused_quant_qlinear_conv_o4i4_combined_v5";
+#if defined(CAMPP_FINAL_SUITE_V3)
+        *out_name = "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3";
         return campp_fused_qconv_candidate_entry(
-            CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V5);
+            CAMPP_FUSED_QCONV_CANDIDATE_LAYER_HYBRID_V3);
+#else
+        *out_name = "fused_quant_qlinear_conv_o4i4_combined_hybrid";
+        return campp_fused_qconv_candidate_entry(
+            CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_HYBRID);
+#endif
     }
     if (opcode == CAMPP_OP_BATCH_NORMALIZATION &&
         kernel_id == CAMPP_FUSION_BN_RELU_QUANT_KERNEL_ID) {
@@ -178,6 +194,11 @@ CamppStatus campp_final_candidate_suite_create(
 
 const char *campp_final_candidate_suite_name(void)
 {
-    return "qconv_v5+fused_combined_v5+bn_v2_spatial2+"
+#if defined(CAMPP_FINAL_SUITE_V3)
+    return "qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+"
         "dequant_neon_combined+fused_dqrq_neon+remaining_optimized";
+#else
+    return "qconv_v4+fused_combined_hybrid+bn_v2_spatial2+"
+        "dequant_neon_combined+fused_dqrq_neon+remaining_optimized";
+#endif
 }

@@ -4,6 +4,7 @@
 
 #include "backends/cpu_aarch64/aarch64_kernels.h"
 #include "backends/cpu_aarch64/fused_kernels/fused_quant_qconv_internal.h"
+#include "conv_layer_hybrid_plan.h"
 #include "fused_input_quant_neon.h"
 #include "internal/runtime_model.h"
 #include "qconv_candidate.h"
@@ -71,6 +72,26 @@ CAMPP_DEFINE_FUSED_QCONV_CANDIDATE(
     campp_fused_qconv_candidate_combined_v5,
     CAMPP_QCONV_CANDIDATE_V5, 1)
 
+static CamppStatus campp_fused_qconv_candidate_layer_hybrid_v3(
+    const CamppRuntimeModel *model, const CamppOperatorDescriptor *op,
+    const CamppTensorView *inputs, uint8_t input_count,
+    CamppTensorView *outputs, uint8_t output_count,
+    void *scratch, size_t scratch_size)
+{
+    const CamppFusedQconvCandidateMode selected =
+        campp_conv_layer_hybrid_select_fused_qconv(model, op);
+    const CamppKernelEntry *entry =
+        campp_fused_qconv_candidate_entry(selected);
+
+    if (entry == NULL || entry->run == NULL ||
+        selected == CAMPP_FUSED_QCONV_CANDIDATE_LAYER_HYBRID_V3) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+    return entry->run(
+        model, op, inputs, input_count, outputs, output_count,
+        scratch, scratch_size);
+}
+
 static const CamppKernelEntry CAMPP_FUSED_QCONV_CANDIDATE_ENTRIES[] = {
     {
         CAMPP_OP_QLINEAR_CONV,
@@ -127,6 +148,13 @@ static const CamppKernelEntry CAMPP_FUSED_QCONV_CANDIDATE_ENTRIES[] = {
         campp_fused_qconv_candidate_combined_v5,
         campp_fused_quant_qlinear_conv_scratch_bytes,
         "fused_quant_qlinear_conv_o4i4"
+    },
+    {
+        CAMPP_OP_QLINEAR_CONV,
+        CAMPP_FUSION_QUANT_QCONV_KERNEL_ID,
+        campp_fused_qconv_candidate_layer_hybrid_v3,
+        campp_fused_quant_qlinear_conv_scratch_bytes,
+        "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3"
     }
 };
 
@@ -136,10 +164,10 @@ const char *campp_fused_qconv_candidate_mode_name(
     static const char *const names[] = {
         "baseline", "mac", "combined", "mac_fixed", "quant_neon",
         "combined_fixed", "combined_v4", "combined_hybrid",
-        "combined_v5"
+        "combined_v5", "layer_hybrid_v3"
     };
     return mode >= CAMPP_FUSED_QCONV_CANDIDATE_BASELINE &&
-        mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V5
+        mode <= CAMPP_FUSED_QCONV_CANDIDATE_LAYER_HYBRID_V3
         ? names[mode] : "invalid";
 }
 
@@ -149,7 +177,7 @@ int campp_fused_qconv_candidate_mode_parse(
     CamppFusedQconvCandidateMode mode;
     if (text == NULL || out_mode == NULL) return 1;
     for (mode = CAMPP_FUSED_QCONV_CANDIDATE_BASELINE;
-         mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V5;
+         mode <= CAMPP_FUSED_QCONV_CANDIDATE_LAYER_HYBRID_V3;
          mode = (CamppFusedQconvCandidateMode)(mode + 1)) {
         if (strcmp(
                 text, campp_fused_qconv_candidate_mode_name(mode)) == 0) {
@@ -165,7 +193,7 @@ const CamppKernelEntry *campp_fused_qconv_candidate_entry(
 {
     if (mode == CAMPP_FUSED_QCONV_CANDIDATE_BASELINE) return NULL;
     if (mode < CAMPP_FUSED_QCONV_CANDIDATE_MAC ||
-        mode > CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V5) {
+        mode > CAMPP_FUSED_QCONV_CANDIDATE_LAYER_HYBRID_V3) {
         return NULL;
     }
     return &CAMPP_FUSED_QCONV_CANDIDATE_ENTRIES[mode - 1];

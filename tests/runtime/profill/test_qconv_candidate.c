@@ -415,7 +415,7 @@ static int run_case(uint8_t rank)
     CHECK_STATUS(campp_aarch64_qlinear_conv_o4i4(
         &model, &op, inputs_view, 9u, baseline_output, 1u, NULL, 0u));
     for (mode = CAMPP_QCONV_CANDIDATE_ADDRESS;
-         mode <= CAMPP_QCONV_CANDIDATE_V5;
+         mode <= CAMPP_QCONV_CANDIDATE_LAYER_HYBRID_V3;
          mode = (CamppQconvCandidateMode)(mode + 1)) {
         const CamppKernelEntry *entry = campp_qconv_candidate_entry(mode);
         CHECK_TRUE(entry != NULL);
@@ -433,7 +433,7 @@ static int run_case(uint8_t rank)
     {
         CamppFusedQconvCandidateMode fused_mode;
         for (fused_mode = CAMPP_FUSED_QCONV_CANDIDATE_MAC;
-             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V5;
+             fused_mode <= CAMPP_FUSED_QCONV_CANDIDATE_LAYER_HYBRID_V3;
              fused_mode = (CamppFusedQconvCandidateMode)(fused_mode + 1)) {
             const CamppKernelEntry *entry =
                 campp_fused_qconv_candidate_entry(fused_mode);
@@ -475,6 +475,11 @@ int main(void)
             "v5") == 0);
     CHECK_TRUE(
         strcmp(
+            campp_qconv_candidate_mode_name(
+                CAMPP_QCONV_CANDIDATE_LAYER_HYBRID_V3),
+            "layer_hybrid_v3") == 0);
+    CHECK_TRUE(
+        strcmp(
             campp_fused_qconv_candidate_mode_name(
                 CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_FIXED),
             "combined_fixed") == 0);
@@ -493,6 +498,11 @@ int main(void)
             campp_fused_qconv_candidate_mode_name(
                 CAMPP_FUSED_QCONV_CANDIDATE_COMBINED_V5),
             "combined_v5") == 0);
+    CHECK_TRUE(
+        strcmp(
+            campp_fused_qconv_candidate_mode_name(
+                CAMPP_FUSED_QCONV_CANDIDATE_LAYER_HYBRID_V3),
+            "layer_hybrid_v3") == 0);
     puts("QConv and fused QConv optimization candidates: PASS");
     return 0;
 }

@@ -14,6 +14,22 @@ BUILD_VARIANT="${BUILD_VARIANT:-default}"
 BUILD_SCOPE="${BUILD_SCOPE:-all}"
 STRIP="${STRIP:-strip}"
 STRIP_FINAL="${STRIP_FINAL:-0}"
+FINAL_SUITE_VARIANT="${FINAL_SUITE_VARIANT:-v2}"
+
+case "${FINAL_SUITE_VARIANT}" in
+    v2)
+        CPPFLAGS="${CPPFLAGS} -DCAMPP_FINAL_SUITE_V2=1"
+        FINAL_SUITE_CONFIG="qconv_v4+fused_combined_hybrid+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
+        ;;
+    v3)
+        CPPFLAGS="${CPPFLAGS} -DCAMPP_FINAL_SUITE_V3=1"
+        FINAL_SUITE_CONFIG="qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
+        ;;
+    *)
+        echo "FINAL_SUITE_VARIANT must be v2 or v3" >&2
+        exit 2
+        ;;
+esac
 
 if [[ "${BUILD_SCOPE}" != "all" && \
       "${BUILD_SCOPE}" != "compiler_matrix" && \
@@ -66,11 +82,12 @@ DEQUANT_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/dequantize_
 FUSED_DQRQ_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_dequant_relu_quant"
 COMMON_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/common"
 REMAINING_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/remaining_ops"
+CONV_LAYER_HYBRID_DIR="${ROOT}/src/c/profill/optimization/candidates/conv_layer_hybrid"
 FINAL_SUITE_SOURCE="${ROOT}/src/c/profill/optimization/integration/final_candidate_suite.c"
-FINAL_SUITE_CONFIG="qconv_v5+fused_combined_v5+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
 
 FINAL_INCLUDES=(
     -I "${ROOT}/src/c/profill/optimization/include"
+    -I "${CONV_LAYER_HYBRID_DIR}"
     -I "${QCONV_CANDIDATE_DIR}"
     -I "${QCONV_MICROKERNEL_DIR}"
     -I "${QCONV_V4_DIR}"
@@ -102,6 +119,7 @@ FINAL_INCLUDES=(
 )
 
 FINAL_CANDIDATE_SOURCES=(
+    "${CONV_LAYER_HYBRID_DIR}/conv_layer_hybrid_plan.c"
     "${QCONV_CANDIDATE_DIR}/qconv_address_fastpath.c"
     "${QCONV_CANDIDATE_DIR}/qconv_mac_neon.c"
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8.c"
@@ -269,6 +287,7 @@ fi
     printf 'ldflags=%s\n' "${LDFLAGS}"
     printf 'build_variant=%s\n' "${BUILD_VARIANT}"
     printf 'build_scope=%s\n' "${BUILD_SCOPE}"
+    printf 'final_suite_variant=%s\n' "${FINAL_SUITE_VARIANT}"
     printf 'strip_final=%s\n' "${STRIP_FINAL}"
     printf 'profiling_macro=CAMPP_ENABLE_OPERATOR_PROFILING=1\n'
     printf 'final_suite_macro=CAMPP_ENABLE_FINAL_CANDIDATE_SUITE=1\n'

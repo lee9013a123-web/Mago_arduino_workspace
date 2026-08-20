@@ -55,7 +55,9 @@ DEQUANT_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/dequantize_
 FUSED_DQRQ_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/fused_dequant_relu_quant"
 COMMON_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/common"
 REMAINING_CANDIDATE_DIR="${ROOT}/src/c/profill/optimization/candidates/remaining_ops"
+CONV_LAYER_HYBRID_DIR="${ROOT}/src/c/profill/optimization/candidates/conv_layer_hybrid"
 QCONV_CANDIDATE_SOURCES=(
+    "${CONV_LAYER_HYBRID_DIR}/conv_layer_hybrid_plan.c"
     "${CANDIDATE_DIR}/qconv_address_fastpath.c"
     "${CANDIDATE_DIR}/qconv_mac_neon.c"
     "${QCONV_MICROKERNEL_DIR}/qconv_mac_4x8.c"
@@ -122,6 +124,7 @@ INCLUDES=(
     -I "${ROOT}/src/c/runtime/include"
     -I "${ROOT}/src/c/profill/include"
     -I "${ROOT}/src/c/profill/optimization/include"
+    -I "${CONV_LAYER_HYBRID_DIR}"
     -I "${CANDIDATE_DIR}"
     -I "${QCONV_MICROKERNEL_DIR}"
     -I "${QCONV_V4_DIR}"
@@ -243,6 +246,14 @@ fi
     "${INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
     "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/test_conv_layer_hybrid_plan.c" \
+    -lm -o "${BUILD_DIR}/test_conv_layer_hybrid_plan"
+
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${CANDIDATE_SOURCES[@]}" \
     "${ROOT}/tests/runtime/profill/test_qconv_microkernel_4x8.c" \
     -lm -o "${BUILD_DIR}/test_qconv_microkernel_4x8"
 
@@ -324,8 +335,8 @@ fi
     printf 'cflags=%s\n' "${CFLAGS}"
     printf 'diagnostic_macro=CAMPP_ENABLE_OPTIMIZATION_DIAGNOSTICS=1\n'
     printf 'hotspot_stage_probe=disabled\n'
-    printf 'qconv_candidate_modes=baseline,address,mac,combined,mac_fixed,mac_asm,v4,hybrid,v5\n'
-    printf 'fused_qconv_candidate_modes=baseline,mac,combined,mac_fixed,quant_neon,combined_fixed,combined_v4,combined_hybrid,combined_v5\n'
+    printf 'qconv_candidate_modes=baseline,address,mac,combined,mac_fixed,mac_asm,v4,hybrid,v5,layer_hybrid_v3\n'
+    printf 'fused_qconv_candidate_modes=baseline,mac,combined,mac_fixed,quant_neon,combined_fixed,combined_v4,combined_hybrid,combined_v5,layer_hybrid_v3\n'
     printf 'bn_candidate_modes=baseline,address,affine,quant,combined,v2_exact16,v2_spatial2,v2_prescaled\n'
     printf 'dequant_candidate_modes=baseline,address,parameter,scalar_combined,neon_combined\n'
     printf 'fused_dqrq_candidate_modes=baseline,scalar,neon\n'
@@ -341,6 +352,7 @@ echo "  fused batch:${BUILD_DIR}/campp_fused_qconv_family_bench"
 echo "  hotspot:    ${BUILD_DIR}/campp_operator_hotspot"
 echo "  C test:     ${BUILD_DIR}/test_optimization_probe"
 echo "  QConv test: ${BUILD_DIR}/test_qconv_candidate"
+echo "  V3 plan:    ${BUILD_DIR}/test_conv_layer_hybrid_plan"
 echo "  QConv 4x8:  ${BUILD_DIR}/test_qconv_microkernel_4x8"
 echo "  QConv v4:   ${BUILD_DIR}/test_qconv_v4_primitives"
 echo "  QConv v5:   ${BUILD_DIR}/test_qconv_v5_primitives"
