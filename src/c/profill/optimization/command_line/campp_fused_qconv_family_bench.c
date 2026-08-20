@@ -54,6 +54,8 @@ typedef struct FamilyOptions {
     uint32_t warmup;
     uint32_t repeat;
     uint32_t requested_threads;
+    /* baseline은 hash 기준과 graph 진행에만 필요하므로 반복 측정을 생략한다. */
+    int baseline_check_only;
     CamppFamilyCandidateMode modes[CAMPP_FAMILY_MODE_CAPACITY];
     uint8_t mode_count;
 } FamilyOptions;
@@ -77,6 +79,8 @@ typedef struct TargetInvocation {
 typedef struct ModeResult {
     CamppFamilyCandidateMode mode;
     uint64_t *samples_ns;
+    /* baseline_check_only에서 baseline만 1이 되므로 mode마다 따로 센다. */
+    uint32_t sample_count;
     uint64_t output_hash;
     int matches_baseline;
 } ModeResult;
@@ -123,14 +127,16 @@ static void usage(const char *program)
     fprintf(
         stderr,
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
-        "[--warmup 5] [--repeat 20] [--threads 1] "
+        "[--warmup 5] [--repeat 20] [--baseline-check-only] "
+        "[--threads 1] "
         "[--mode baseline] [--mode mac_fixed] [--mode v4] [--mode v5]\n",
         program);
 #else
     fprintf(
         stderr,
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
-        "[--warmup 5] [--repeat 20] [--threads 1] "
+        "[--warmup 5] [--repeat 20] [--baseline-check-only] "
+        "[--threads 1] "
         "[--mode baseline] [--mode mac_fixed] [--mode quant_neon] "
         "[--mode combined_fixed] [--mode combined_v4] "
         "[--mode combined_hybrid] [--mode combined_v5]\n",
@@ -157,6 +163,10 @@ static int parse_options(int argc, char **argv, FamilyOptions *options)
         if (strcmp(name, "--help") == 0 || strcmp(name, "-h") == 0) {
             usage(argv[0]);
             return 2;
+        }
+        if (strcmp(name, "--baseline-check-only") == 0) {
+            options->baseline_check_only = 1;
+            continue;
         }
         if (index + 1 >= argc) {
             fprintf(stderr, "missing value for %s\n", name);
@@ -421,6 +431,7 @@ static int benchmark_mode(
     invocation->kernel = kernel;
     result->samples_ns = (uint64_t *)calloc(repeat, sizeof(uint64_t));
     if (result->samples_ns == NULL) return 1;
+    result->sample_count = repeat;
 
     if (reset_target_buffers(
             context, invocation->op, snapshots, snapshot_count) != 0) return 1;
@@ -521,12 +532,23 @@ static int benchmark_operator(
                 continue;
             }
             kernel = kernel_for_mode(baseline, mode_result->mode);
-            if (kernel == NULL || kernel->opcode != op->opcode ||
-                kernel->kernel_id != op->kernel_id ||
-                benchmark_mode(
-                    context, &invocation, snapshots, snapshot_count, kernel,
-                    options->warmup, options->repeat, mode_result) != 0) {
-                goto cleanup;
+            {
+                /* baseline_check_only에서도 마지막 실행의 출력이 남아야
+                 * 다음 연산의 입력이 된다. 반복만 줄이고 실행은 유지한다. */
+                const int check_only = is_baseline &&
+                    options->baseline_check_only;
+                const uint32_t mode_warmup =
+                    check_only ? 0u : options->warmup;
+                const uint32_t mode_repeat =
+                    check_only ? 1u : options->repeat;
+                if (kernel == NULL || kernel->opcode != op->opcode ||
+                    kernel->kernel_id != op->kernel_id ||
+                    benchmark_mode(
+                        context, &invocation, snapshots, snapshot_count,
+                        kernel, mode_warmup, mode_repeat,
+                        mode_result) != 0) {
+                    goto cleanup;
+                }
             }
             if (is_baseline) {
                 baseline_hash = mode_result->output_hash;
@@ -594,11 +616,13 @@ static void print_result(
     printf(
         ",\"configuration\":{\"requested_threads\":%" PRIu32
         ",\"effective_threads\":1,\"warmup\":%" PRIu32
-        ",\"repeat\":%" PRIu32 ",\"graph_traversals\":1},"
+        ",\"repeat\":%" PRIu32 ",\"baseline_check_only\":%s"
+        ",\"graph_traversals\":1},"
         "\"model\":{\"bucket_frames\":%" PRIu32
         ",\"operator_count\":%" PRIu32 "},\"measurement_scope\":"
         "\"single_kernel_run_batch\",\"cases\":[",
         options->requested_threads, options->warmup, options->repeat,
+        options->baseline_check_only ? "true" : "false",
         model->bucket_frames, model->operator_count);
     for (case_index = 0u; case_index < result_count; ++case_index) {
         const OperatorResult *result = &results[case_index];
@@ -616,7 +640,7 @@ static void print_result(
             printf("%s{\"name\":", mode_index == 0u ? "" : ",");
             print_json_string(campp_family_candidate_mode_name(mode->mode));
             fputs(",\"samples_ns\":", stdout);
-            print_u64_samples(mode->samples_ns, options->repeat);
+            print_u64_samples(mode->samples_ns, mode->sample_count);
             printf(
                 ",\"output_hash\":\"%016" PRIx64
                 "\",\"matches_baseline\":%s}",

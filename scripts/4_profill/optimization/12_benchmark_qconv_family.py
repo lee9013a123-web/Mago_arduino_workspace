@@ -139,7 +139,7 @@ def _mode_map(case: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 def validate_batch_payload(
     payload: dict[str, Any], cases: Sequence[dict[str, Any]],
-    modes: Sequence[str], repeat: int,
+    modes: Sequence[str], repeat: int, baseline_check_only: bool = False,
 ) -> None:
     if payload.get("mode") != "qconv_family_batch":
         raise QconvFamilyError("unexpected batch benchmark mode")
@@ -150,6 +150,7 @@ def validate_batch_payload(
         configuration.get("effective_threads") != 1
         or configuration.get("repeat") != repeat
         or configuration.get("graph_traversals") != 1
+        or bool(configuration.get("baseline_check_only")) != baseline_check_only
     ):
         raise QconvFamilyError("batch benchmark configuration mismatch")
     raw_cases = payload.get("cases")
@@ -180,7 +181,13 @@ def validate_batch_payload(
         for mode in modes:
             result = mode_map[mode]
             samples = result.get("samples_ns")
-            if not isinstance(samples, list) or len(samples) != repeat or any(
+            # baseline_check_only에서 baseline은 hash 확인 겸 1회만 실행한다.
+            expected_samples = (
+                1 if baseline_check_only and mode == "baseline" else repeat
+            )
+            if not isinstance(samples, list) or (
+                len(samples) != expected_samples
+            ) or any(
                 isinstance(value, bool) or not isinstance(value, int)
                 or value <= 0 for value in samples
             ):
@@ -198,12 +205,15 @@ def validate_batch_payload(
 def _batch_command(
     binary: Path, plan: Path, weights: Path, feature: Path,
     modes: Sequence[str], warmup: int, repeat: int,
+    baseline_check_only: bool = False,
 ) -> list[str]:
     command = [
         str(binary), "--plan", str(plan), "--weights", str(weights),
         "--input", str(feature), "--warmup", str(warmup),
         "--repeat", str(repeat), "--threads", "1",
     ]
+    if baseline_check_only:
+        command.append("--baseline-check-only")
     for mode in modes:
         command.extend(("--mode", mode))
     return command
@@ -385,6 +395,7 @@ def write_comparison_csv(
 def estimate_seconds(
     profile: dict[str, Any], cases: Sequence[dict[str, Any]],
     modes: Sequence[str], warmup: int, repeat: int, input_count: int,
+    baseline_check_only: bool = False,
 ) -> float:
     """Estimate batch time from the profiled reference family sum.
 
@@ -401,9 +412,17 @@ def estimate_seconds(
         "v4": 0.04,
         "v5": 0.04,
     }
+    # baseline_check_only에서 baseline은 hash 확인 1회 + 실행 1회뿐이다.
+    runs = {
+        mode: (
+            2 if baseline_check_only and mode == "baseline"
+            else warmup + repeat + 1
+        )
+        for mode in modes
+    }
     measured = (
-        family_ms / 1000.0 * (warmup + repeat + 1) * input_count
-        * sum(factors[mode] for mode in modes)
+        family_ms / 1000.0 * input_count
+        * sum(factors[mode] * runs[mode] for mode in modes)
     )
     timing = profile.get("timing")
     end_to_end = timing.get("end_to_end") if isinstance(timing, dict) else None
@@ -444,6 +463,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument(
         "--results-dir", type=_path,
         default=ROOT / "results/profiling/e7_98/optimization/qconv_family",
+    )
+    parser.add_argument(
+        "--baseline-check-only", action="store_true",
+        help=(
+            "baseline은 op당 1회만 실행해 hash 기준과 graph 진행에만 쓰고 "
+            "반복 성능 측정은 후보 3개에만 적용한다"
+        ),
     )
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--force", action="store_true")
@@ -508,6 +534,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         estimated = estimate_seconds(
             profile, cases, modes, args.warmup, args.repeat,
             len(args.features),
+            baseline_check_only=args.baseline_check_only,
         )
         print(f"예상 시간: 약 {max(1, math.ceil(estimated / 60.0))}분")
         raw_dir = args.runs_dir / "raw_batch"
@@ -523,10 +550,14 @@ def main(argv: Sequence[str] | None = None) -> int:
                 _batch_command(
                     args.binary, plan, weights, feature, modes,
                     args.warmup, args.repeat,
+                    baseline_check_only=args.baseline_check_only,
                 ),
                 (0, 3),
             )
-            validate_batch_payload(payload, cases, modes, args.repeat)
+            validate_batch_payload(
+                payload, cases, modes, args.repeat,
+                baseline_check_only=args.baseline_check_only,
+            )
             input_payloads.append((feature, payload))
             (raw_dir / f"{feature.stem}.json").write_text(
                 json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
