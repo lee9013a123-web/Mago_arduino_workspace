@@ -1,0 +1,240 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-20T02:05:56.619371+00:00",
+  "objective": "locate internal bottlenecks before implementing E7 optimizations",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "elapsed_seconds": 25.607790710000245,
+    "qconv_candidate": "v5",
+    "fused_qconv_candidate": "baseline",
+    "bn_candidate": "baseline",
+    "dequant_candidate": "baseline"
+  },
+  "target_kernel_families": [
+    "qlinear_conv_o4i4_neon",
+    "fused_quant_qlinear_conv_o4i4",
+    "fused_bn_relu_quant",
+    "dequantize_linear_stride"
+  ],
+  "case_count": 2,
+  "cases": [
+    {
+      "case_name": "qconv_3x3",
+      "operator_id": 2,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 525.6370155,
+      "profile_share_pct": 6.203994753101456,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__98.f32": "b1d51fe74b382d6c",
+        "benchmarks/campplus/features/multi__speaker_0005__98.f32": "0dea6284322de1b7",
+        "benchmarks/campplus/features/multi__speaker_0006__98.f32": "9419da2e4164b910"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 986798385,
+        "total_exclusive_ms": 986.798385,
+        "mean_ms": 16.44663975,
+        "stddev_ms": 0.1983834501370702,
+        "cv_pct": 1.206224816452675,
+        "min_ms": 16.122187,
+        "p50_ms": 16.3822395,
+        "p95_ms": 16.8537736,
+        "max_ms": 17.064687
+      },
+      "stages": [
+        {
+          "name": "qconv_mac_address",
+          "call_count": 60,
+          "total_exclusive_ns": 893015124,
+          "total_exclusive_ms": 893.015124,
+          "mean_ms": 14.8835854,
+          "stddev_ms": 0.15673760088985242,
+          "cv_pct": 1.0530903453535627,
+          "min_ms": 14.652091,
+          "p50_ms": 14.843146999999998,
+          "p95_ms": 15.190289850000001,
+          "max_ms": 15.471655,
+          "wall_share_pct": 90.49620850362457
+        },
+        {
+          "name": "qconv_requant_write",
+          "call_count": 60,
+          "total_exclusive_ns": 69834544,
+          "total_exclusive_ms": 69.834544,
+          "mean_ms": 1.1639090666666665,
+          "stddev_ms": 0.07285323794356857,
+          "cv_pct": 6.259358229093778,
+          "min_ms": 1.091203,
+          "p50_ms": 1.1409515,
+          "p95_ms": 1.32258505,
+          "max_ms": 1.42186,
+          "wall_share_pct": 7.076880653792314
+        },
+        {
+          "name": "qconv_setup",
+          "call_count": 60,
+          "total_exclusive_ns": 611667,
+          "total_exclusive_ms": 0.611667,
+          "mean_ms": 0.010194449999999999,
+          "stddev_ms": 0.0006142344944454575,
+          "cv_pct": 6.025185217892654,
+          "min_ms": 0.00901,
+          "p50_ms": 0.010208499999999999,
+          "p95_ms": 0.011153799999999998,
+          "max_ms": 0.011615,
+          "wall_share_pct": 0.06198500213394654
+        }
+      ],
+      "dominant_stage": "qconv_mac_address",
+      "dominant_stage_wall_share_pct": 90.49620850362457,
+      "pmu": {
+        "available": true,
+        "unavailable_errno": [],
+        "totals": {
+          "cpu_cycles": 1955117738,
+          "instructions": 1764220641,
+          "cache_references": 431587657,
+          "cache_misses": 1594398,
+          "branches": 76825416,
+          "branch_misses": 3716191
+        },
+        "instructions_per_cycle": 0.9023603063438628,
+        "cache_miss_pct": 0.36942622759019267,
+        "branch_miss_pct": 4.837189557164259
+      },
+      "source_hotspot": {
+        "path": "src/c/runtime/backends/cpu_aarch64/int8_neon/qlinear_convolution_neon.c",
+        "line_start": 288,
+        "line_end": 390,
+        "question": "좌표·offset 계산과 dot4 MAC 중 어느 쪽이 cycle을 지배하는가"
+      },
+      "diagnosis_scope": "coarse stage attribution plus target-only PMU; qconv_mac_address requires perf annotate to split address from MAC"
+    },
+    {
+      "case_name": "qconv_1x1",
+      "operator_id": 825,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        512,
+        1024,
+        1
+      ],
+      "profile_mean_ms": 320.11598849999996,
+      "profile_share_pct": 3.7782687567175066,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__98.f32": "404a38f8af5e1461",
+        "benchmarks/campplus/features/multi__speaker_0005__98.f32": "9d9c98b150326d1a",
+        "benchmarks/campplus/features/multi__speaker_0006__98.f32": "10faa9184c9134bf"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 500947022,
+        "total_exclusive_ms": 500.947022,
+        "mean_ms": 8.349117033333334,
+        "stddev_ms": 0.18468274990254396,
+        "cv_pct": 2.2120033671250443,
+        "min_ms": 8.180885,
+        "p50_ms": 8.306848500000001,
+        "p95_ms": 8.6033929,
+        "max_ms": 9.410365
+      },
+      "stages": [
+        {
+          "name": "qconv_mac_address",
+          "call_count": 60,
+          "total_exclusive_ns": 414737428,
+          "total_exclusive_ms": 414.737428,
+          "mean_ms": 6.912290466666667,
+          "stddev_ms": 0.1695826073221609,
+          "cv_pct": 2.4533489751326845,
+          "min_ms": 6.745363,
+          "p50_ms": 6.8797705,
+          "p95_ms": 7.154704649999999,
+          "max_ms": 8.003596,
+          "wall_share_pct": 82.79067641607818
+        },
+        {
+          "name": "qconv_requant_write",
+          "call_count": 60,
+          "total_exclusive_ns": 13937539,
+          "total_exclusive_ms": 13.937539,
+          "mean_ms": 0.23229231666666667,
+          "stddev_ms": 0.027441690947954636,
+          "cv_pct": 11.813430311314487,
+          "min_ms": 0.217608,
+          "p50_ms": 0.224897,
+          "p95_ms": 0.27948365000000003,
+          "max_ms": 0.407286,
+          "wall_share_pct": 2.7822381185849228
+        },
+        {
+          "name": "qconv_setup",
+          "call_count": 60,
+          "total_exclusive_ns": 561406,
+          "total_exclusive_ms": 0.561406,
+          "mean_ms": 0.009356766666666665,
+          "stddev_ms": 0.0009495049125143529,
+          "cv_pct": 10.147788721684696,
+          "min_ms": 0.007969,
+          "p50_ms": 0.009167,
+          "p95_ms": 0.01067965,
+          "max_ms": 0.013593,
+          "wall_share_pct": 0.11206893650322967
+        }
+      ],
+      "dominant_stage": "qconv_mac_address",
+      "dominant_stage_wall_share_pct": 82.79067641607818,
+      "pmu": {
+        "available": true,
+        "unavailable_errno": [],
+        "totals": {
+          "cpu_cycles": 992526208,
+          "instructions": 975352600,
+          "cache_references": 254805477,
+          "cache_misses": 4306719,
+          "branches": 23060549,
+          "branch_misses": 329187
+        },
+        "instructions_per_cycle": 0.9826970735265461,
+        "cache_miss_pct": 1.6901987550291158,
+        "branch_miss_pct": 1.4274898659177628
+      },
+      "source_hotspot": {
+        "path": "src/c/runtime/backends/cpu_aarch64/int8_neon/qlinear_convolution_neon.c",
+        "line_start": 288,
+        "line_end": 390,
+        "question": "좌표·offset 계산과 dot4 MAC 중 어느 쪽이 cycle을 지배하는가"
+      },
+      "diagnosis_scope": "coarse stage attribution plus target-only PMU; qconv_mac_address requires perf annotate to split address from MAC"
+    }
+  ],
+  "optimization_gate": {
+    "ready": true,
+    "rule": "implement only after a stage dominates stably across all three inputs; retain bitwise output hashes and rerun full retained-tensor validation"
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/qconv_v5/v5/raw"
+  }
+}

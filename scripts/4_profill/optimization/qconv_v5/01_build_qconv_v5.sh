@@ -10,6 +10,7 @@ BUILD_DIR="${BUILD_DIR}" \
 
 "${BUILD_DIR}/test_qconv_v5_primitives"
 "${BUILD_DIR}/test_qconv_v5_address"
+"${BUILD_DIR}/test_qconv_v5_bitwise"
 "${BUILD_DIR}/test_qconv_candidate"
 
-echo "QConv v5 build, primitive and candidate tests complete"
+echo "QConv v5 build, primitive, bitwise and candidate tests complete"

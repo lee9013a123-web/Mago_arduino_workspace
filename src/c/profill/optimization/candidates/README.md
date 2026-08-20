@@ -38,8 +38,12 @@ qlinear_conv/
 - `mac_asm`: 같은 고정 tile을 register 고정 assembly로 실행, 나머지는 `mac`
 - `v4`: 1x1/3x3 interior 주소 계획 + fixed MAC + 8-lane requant/store,
   spatial/channel tail은 MAC-v2
-- `v5`: v4와 bitwise 동일한 staging entry에서 시작해 validated raw,
-  zero-point fast path, real 8x8, 3x3/Cin32 unroll을 독립 측정
+- `v5`: v4의 planning/requant/store를 재사용하되 full tile에서 v5 MAC을
+  먼저 시도한다. mac_dispatch_guard 제거, weight zero-point 0 fast path,
+  corrected bias, real 1x1 8x8, 3x3/Cin32 raw fallback, 3x3 sliding
+  window input reuse를 포함한다. sliding은 column stride 1에서만 admit된다.
+  Address 계층은 `qlinear_conv_v5/address/`로 통합되어 독립 검증되며,
+  dispatch의 address provider 교체는 별도 gate로 남는다
 
 고정 microkernel은 E7에서 확인된 UINT8 input, INT8 O4I4 weight, 4의 배수인
 input channel, 8개의 유효 output만 처리한다. padding point, spatial tail, output

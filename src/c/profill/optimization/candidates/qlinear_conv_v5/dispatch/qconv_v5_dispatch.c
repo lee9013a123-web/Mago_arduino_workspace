@@ -83,13 +83,15 @@ static CamppQconvMac4x8Result campp_qconv_v5_try_mac(
     const CamppQconvV4TilePlan *tile_plan,
     const uint8_t *const packed_weights[2],
     const CamppQconvV4ParameterBlock *parameters,
+    const CamppQconvV5ValidatedRawPlan *raw_plan,
     const int32_t bias[CAMPP_QCONV_CANDIDATE_OUTPUT_TILE],
     bool zero_point_fastpath,
     int32_t accumulators[CAMPP_QCONV_CANDIDATE_TILE]
         [CAMPP_QCONV_CANDIDATE_OUTPUT_TILE])
 {
     if (plan == NULL || tile_plan == NULL || packed_weights == NULL ||
-        parameters == NULL || bias == NULL || accumulators == NULL ||
+        parameters == NULL || raw_plan == NULL || bias == NULL ||
+        accumulators == NULL ||
         tile_plan->tile_count != CAMPP_QCONV_CANDIDATE_TILE ||
         packed_weights[0] == NULL || packed_weights[1] == NULL) {
         return CAMPP_QCONV_MAC_4X8_UNSUPPORTED;
@@ -104,6 +106,7 @@ static CamppQconvMac4x8Result campp_qconv_v5_try_mac(
         CamppQconvMac4x8Result result =
             campp_qconv_v5_mac_3x3_sliding_8x8(
                 tile_plan, packed_weights, plan->inputs_per_group,
+                raw_plan->sliding_3x3_eligible,
                 plan->input_zero, zero_point_fastpath,
                 parameters->weight_zero, bias, accumulators);
         if (result != CAMPP_QCONV_MAC_4X8_UNSUPPORTED ||
@@ -213,7 +216,8 @@ CamppStatus campp_qconv_v5_run(
                     if (fixed_mac_block_eligible) {
                         mac_result = campp_qconv_v5_try_mac(
                             &plan, &tile_plan, packed_weights, &parameters,
-                            mac_bias, zero_point_fastpath, accumulators);
+                            &raw_plan, mac_bias, zero_point_fastpath,
+                            accumulators);
                     }
                     if (mac_result == CAMPP_QCONV_MAC_4X8_FAILED) {
                         return CAMPP_STATUS_KERNEL_FAILED;

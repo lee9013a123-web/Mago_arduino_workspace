@@ -231,6 +231,14 @@ INCLUDES=(
     "${INCLUDES[@]}" \
     "${RUNTIME_SOURCES[@]}" \
     "${CANDIDATE_SOURCES[@]}" \
+    "${ROOT}/tests/runtime/profill/qconv_v5/test_qconv_v5_bitwise.c" \
+    -lm -o "${BUILD_DIR}/test_qconv_v5_bitwise"
+
+# shellcheck disable=SC2086
+"${CC}" ${CFLAGS} \
+    "${INCLUDES[@]}" \
+    "${RUNTIME_SOURCES[@]}" \
+    "${CANDIDATE_SOURCES[@]}" \
     "${ROOT}/tests/runtime/profill/test_bn_candidate.c" \
     -lm -o "${BUILD_DIR}/test_bn_candidate"
 
@@ -290,6 +298,7 @@ echo "  QConv 4x8:  ${BUILD_DIR}/test_qconv_microkernel_4x8"
 echo "  QConv v4:   ${BUILD_DIR}/test_qconv_v4_primitives"
 echo "  QConv v5:   ${BUILD_DIR}/test_qconv_v5_primitives"
 echo "  V5 address: ${BUILD_DIR}/test_qconv_v5_address"
+echo "  V5 bitwise: ${BUILD_DIR}/test_qconv_v5_bitwise"
 echo "  BN test:    ${BUILD_DIR}/test_bn_candidate"
 echo "  BN v2 test: ${BUILD_DIR}/test_bn_v2_candidate"
 echo "  Dequant:    ${BUILD_DIR}/test_dequant_candidate"

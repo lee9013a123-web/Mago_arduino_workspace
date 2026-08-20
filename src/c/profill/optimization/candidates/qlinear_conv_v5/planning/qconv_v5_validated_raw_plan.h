@@ -10,6 +10,8 @@
 typedef struct CamppQconvV5ValidatedRawPlan {
     bool enabled;
     bool weight_zero_is_all_zero;
+    /* 3x3 sliding reuse is only address-correct at column stride 1. */
+    bool sliding_3x3_eligible;
     uint32_t input_channels;
     uint32_t valid_outputs;
 } CamppQconvV5ValidatedRawPlan;

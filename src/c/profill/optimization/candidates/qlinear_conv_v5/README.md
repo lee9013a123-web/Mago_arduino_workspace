@@ -23,7 +23,8 @@ Implemented MAC-side paths:
 - corrected bias for `sum(x * w) + (bias - input_zero * sum(w))`;
 - real 8-spatial by 8-output raw body for 1x1;
 - 3x3/Cin32 raw fallback;
-- 3x3 sliding-window input reuse for interior tiles.
+- 3x3 sliding-window input reuse for interior tiles, admitted only at
+  column stride 1 (see `microkernels/README.md`).
 
 The v5 rule is strict: numerical transforms must compare retained tensors
 against the packed runtime reference before production registry entries are
