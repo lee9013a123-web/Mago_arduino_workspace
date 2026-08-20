@@ -28,6 +28,7 @@
 #endif
 
 typedef struct BenchmarkOptions {
+    const char *model_path;
     const char *plan_path;
     const char *weights_path;
     const char *input_path;
@@ -108,7 +109,8 @@ static void usage(const char *program)
 {
     fprintf(
         stderr,
-        "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
+        "usage: %s (--model model.camppmodel | "
+        "--plan plan.bin --weights weights.bin) --input feature.f32 "
         "--audio-seconds N --warmup N --repeat N --threads N "
         "[--embedding-output embedding.f32]\n",
         program);
@@ -138,7 +140,9 @@ static int parse_options(int argc, char **argv, BenchmarkOptions *options)
             return 1;
         }
         value = argv[++index];
-        if (strcmp(name, "--plan") == 0) {
+        if (strcmp(name, "--model") == 0) {
+            options->model_path = value;
+        } else if (strcmp(name, "--plan") == 0) {
             options->plan_path = value;
         } else if (strcmp(name, "--weights") == 0) {
             options->weights_path = value;
@@ -174,8 +178,11 @@ static int parse_options(int argc, char **argv, BenchmarkOptions *options)
         }
     }
 
-    if (options->plan_path == NULL || options->weights_path == NULL ||
-        options->input_path == NULL || !(options->audio_seconds > 0.0)) {
+    if (options->input_path == NULL || !(options->audio_seconds > 0.0) ||
+        ((options->model_path != NULL) ==
+         (options->plan_path != NULL || options->weights_path != NULL)) ||
+        (options->model_path == NULL &&
+         (options->plan_path == NULL || options->weights_path == NULL))) {
         usage(argv[0]);
         return 1;
     }
@@ -426,7 +433,8 @@ int main(int argc, char **argv)
         fputs(
             "{\"runtime\":\"campp-c-runtime\",\"effective_threads\":1,"
             "\"threading\":\"single-thread\","
-            "\"backends\":[\"cpu_reference\",\"cpu_aarch64_o4i4\"]",
+            "\"backends\":[\"cpu_reference\",\"cpu_aarch64_o4i4\"],"
+            "\"model_package_format\":\"camppmodel-v1\"",
             stdout);
 #if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
         fputs(",\"optimization_suite\":\"final\","
@@ -450,8 +458,10 @@ int main(int argc, char **argv)
     memset(&model, 0, sizeof(model));
     memset(&context, 0, sizeof(context));
     model_started = monotonic_ns();
-    status = campp_runtime_model_load(
-        options.plan_path, options.weights_path, &model);
+    status = options.model_path != NULL
+        ? campp_runtime_model_load_package(options.model_path, &model)
+        : campp_runtime_model_load(
+            options.plan_path, options.weights_path, &model);
     model_finished = monotonic_ns();
     if (status != CAMPP_STATUS_OK) {
         fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
@@ -574,10 +584,24 @@ int main(int argc, char **argv)
         ",\"repeat\":%" PRIu32 ",\"audio_seconds\":%.9g},",
         options.requested_threads, options.warmup, options.repeat,
         options.audio_seconds);
-    fputs("\"model\":{\"plan_path\":", stdout);
-    print_json_string(options.plan_path);
+    fputs("\"model\":{\"package_path\":", stdout);
+    if (options.model_path != NULL) {
+        print_json_string(options.model_path);
+    } else {
+        fputs("null", stdout);
+    }
+    fputs(",\"plan_path\":", stdout);
+    if (options.plan_path != NULL) {
+        print_json_string(options.plan_path);
+    } else {
+        fputs("null", stdout);
+    }
     fputs(",\"weights_path\":", stdout);
-    print_json_string(options.weights_path);
+    if (options.weights_path != NULL) {
+        print_json_string(options.weights_path);
+    } else {
+        fputs("null", stdout);
+    }
     printf(
         ",\"bucket_frames\":%" PRIu32
         ",\"plan_bytes\":%zu,\"weight_bytes\":%zu,"

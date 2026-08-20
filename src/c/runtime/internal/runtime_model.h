@@ -79,6 +79,10 @@ typedef struct CamppAttributeValues {
 CamppStatus campp_runtime_model_load(
     const char *plan_path, const char *weights_path, CamppRuntimeModel *model);
 
+/* Versioned .camppmodel container에서 plan과 weights를 함께 로드한다. */
+CamppStatus campp_runtime_model_load_package(
+    const char *package_path, CamppRuntimeModel *model);
+
 CamppStatus campp_runtime_model_adopt(
     uint8_t *plan_bytes, size_t plan_size, bool take_plan_ownership,
     const uint8_t *weights, size_t weights_size, bool take_weights_ownership,

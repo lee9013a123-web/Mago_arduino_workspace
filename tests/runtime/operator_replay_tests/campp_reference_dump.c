@@ -3,6 +3,7 @@
  * Arena에서 중간값이 다음 Tensor에 덮어써지기 전에 즉시 기록한다.
  *
  * usage: campp_reference_dump <plan.bin> <weights.bin> <input.f32> <out_prefix>
+ *        campp_reference_dump --model <model.camppmodel> <input.f32> <out_prefix>
  *
  * 출력:
  *   <out_prefix>.bin   각 Tensor의 payload를 C 순서로 이어 붙인 것
@@ -211,13 +212,17 @@ int main(int argc, char **argv)
 
     if (argc != 5) {
         fprintf(stderr,
-                "usage: %s <plan.bin> <weights.bin> <input.f32> <out_prefix>\n",
+                "usage: %s <plan.bin> <weights.bin> <input.f32> <out_prefix>\n"
+                "       %s --model <model.camppmodel> <input.f32> <out_prefix>\n",
+                argv[0],
                 argv[0]);
         return 2;
     }
 
     memset(&model, 0, sizeof(model));
-    status = campp_runtime_model_load(argv[1], argv[2], &model);
+    status = strcmp(argv[1], "--model") == 0
+        ? campp_runtime_model_load_package(argv[2], &model)
+        : campp_runtime_model_load(argv[1], argv[2], &model);
     if (status != CAMPP_STATUS_OK) {
         fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
         return 1;

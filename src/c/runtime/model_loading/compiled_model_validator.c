@@ -1,9 +1,9 @@
 /*
  * plan 검증 구현. 규칙과 의도는 compiled_model_validator.h를 본다.
  *
- * SHA-256은 이 파일 안에 static으로 둔다. checksum 확인이 유일한 용도이고,
- * 다른 모듈이 해시를 쓸 일이 생기기 전에 공용 모듈로 빼면 쓰이지 않는 API가
- * 하나 늘 뿐이다.
+ * SHA-256 구현은 이 파일에 두고 검증 함수만 공개한다. plan과 self-contained
+ * model package가 같은 checksum 구현을 공유해 포맷별 판정 차이가 생기지 않게
+ * 한다.
  */
 
 #include "compiled_model_validator.h"
@@ -189,6 +189,25 @@ static bool campp_digest_equal(const uint8_t *left, const uint8_t *right)
     return difference == 0u;
 }
 
+CamppStatus campp_validate_sha256(
+    const uint8_t *data, uint64_t size,
+    const uint8_t expected[CAMPP_PLAN_CHECKSUM_SIZE])
+{
+    CamppSha256 context;
+    uint8_t digest[CAMPP_PLAN_CHECKSUM_SIZE];
+
+    if ((data == NULL && size != 0u) || expected == NULL) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+    campp_sha256_init(&context);
+    if (size != 0u) {
+        campp_sha256_update(&context, data, size);
+    }
+    campp_sha256_final(&context, digest);
+    return campp_digest_equal(digest, expected)
+        ? CAMPP_STATUS_OK : CAMPP_STATUS_CHECKSUM_MISMATCH;
+}
+
 /* --------------------------------------------------------------------- */
 /* header와 구역                                                          */
 /* --------------------------------------------------------------------- */
@@ -258,8 +277,6 @@ static CamppStatus campp_read_plan_header(
 static CamppStatus campp_validate_plan_checksum(
     const CamppByteSpan *plan, const CamppPlanHeader *header)
 {
-    CamppSha256 context;
-    uint8_t digest[CAMPP_PLAN_CHECKSUM_SIZE];
     CamppStatus status;
     CamppByteSpan payload;
 
@@ -270,16 +287,8 @@ static CamppStatus campp_validate_plan_checksum(
         return status;
     }
 
-    campp_sha256_init(&context);
-    if (payload.size != 0u) {
-        campp_sha256_update(&context, payload.data, payload.size);
-    }
-    campp_sha256_final(&context, digest);
-
-    if (!campp_digest_equal(digest, header->checksum)) {
-        return CAMPP_STATUS_CHECKSUM_MISMATCH;
-    }
-    return CAMPP_STATUS_OK;
+    return campp_validate_sha256(
+        payload.data, payload.size, header->checksum);
 }
 
 CamppStatus campp_validate_plan(
