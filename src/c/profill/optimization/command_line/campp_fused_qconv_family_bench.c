@@ -56,6 +56,8 @@ typedef struct FamilyOptions {
     uint32_t requested_threads;
     /* baseline은 hash 기준과 graph 진행에만 필요하므로 반복 측정을 생략한다. */
     int baseline_check_only;
+    /* 0이면 plan의 bucket을 그대로 받고, 지정하면 그 값과 일치해야 한다. */
+    uint32_t expected_bucket;
     CamppFamilyCandidateMode modes[CAMPP_FAMILY_MODE_CAPACITY];
     uint8_t mode_count;
 } FamilyOptions;
@@ -128,6 +130,7 @@ static void usage(const char *program)
         stderr,
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
         "[--warmup 5] [--repeat 20] [--baseline-check-only] "
+        "[--bucket-frames N] "
         "[--threads 1] "
         "[--mode baseline] [--mode mac_fixed] [--mode v4] [--mode v5]\n",
         program);
@@ -136,6 +139,7 @@ static void usage(const char *program)
         stderr,
         "usage: %s --plan plan.bin --weights weights.bin --input feature.f32 "
         "[--warmup 5] [--repeat 20] [--baseline-check-only] "
+        "[--bucket-frames N] "
         "[--threads 1] "
         "[--mode baseline] [--mode mac_fixed] [--mode quant_neon] "
         "[--mode combined_fixed] [--mode combined_v4] "
@@ -184,6 +188,9 @@ static int parse_options(int argc, char **argv, FamilyOptions *options)
         } else if (strcmp(name, "--repeat") == 0) {
             if (parse_u32(value, &options->repeat) != 0 ||
                 options->repeat == 0u) return 1;
+        } else if (strcmp(name, "--bucket-frames") == 0) {
+            if (parse_u32(value, &options->expected_bucket) != 0 ||
+                options->expected_bucket == 0u) return 1;
         } else if (strcmp(name, "--threads") == 0) {
             if (parse_u32(value, &options->requested_threads) != 0 ||
                 options->requested_threads != 1u) return 1;
@@ -709,8 +716,16 @@ int main(int argc, char **argv)
         fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
         goto cleanup;
     }
-    if (model.bucket_frames != 98u || model.input_count != 1u) {
-        fprintf(stderr, "batch benchmark requires E7 bucket 98\n");
+    if (model.input_count != 1u) {
+        fprintf(stderr, "batch benchmark requires a single-input plan\n");
+        goto cleanup;
+    }
+    if (options.expected_bucket != 0u &&
+        model.bucket_frames != options.expected_bucket) {
+        fprintf(stderr,
+                "plan bucket %" PRIu32 " does not match --bucket-frames %"
+                PRIu32 "\n",
+                model.bucket_frames, options.expected_bucket);
         goto cleanup;
     }
     registry = campp_profill_registry_for_model(&model);

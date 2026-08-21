@@ -66,7 +66,34 @@ runs/runtime/c_reference/*
 runs/runtime/operator_replay/*
 !runs/runtime/operator_replay/README.md
 runs/runtime/pipelines/
-runs/runtime/tensor_arena/validation/
-runs/runtime/cache_packed/validation/
-runs/runtime/e7/validation/
 runs/model_packages/
+
+# Raw run artifacts under runs/ — regenerable by the pipeline scripts.
+# Generation-agnostic: applies to e7_98, e7_298, e7_498, e7_998 and any future bucket.
+runs/**/perf.data
+runs/**/perf_script.txt
+runs/**/perf_record.stderr.txt
+runs/**/*.bin
+runs/**/*.f32
+runs/**/raw/
+runs/**/raw_batch/
+runs/**/retained/
+runs/**/validation/
+runs/**/validation_inputs/
+runs/**/bundle/
+
+# Curated results: keep summaries and CSVs, drop the multi-MB dumps
+results/graph/ir_*.json
+results/**/operator_profile.json
+results/runtime/c_runtime_compare/compare_*.json
+results/static/*.onnx
+
+# Layer-hybrid V3 작업 산출물 (2026-08-20) — 전부 재생성 가능
+# /build/ 규칙에 이미 걸리지만, 경로를 옮겨도 새어나가지 않도록 명시해 둔다.
+**/.objcache_v3/
+**/.verify_tmp/
+campp_v3_verify/
+
+# bucket별 operator profile은 18_remap_bucket_profile.py 로 재생성한다 (1.8MB/개).
+# results/**/operator_profile.json 규칙이 이미 덮지만 의도를 남긴다.
+results/profiling/e7_*/operator_profile.json
