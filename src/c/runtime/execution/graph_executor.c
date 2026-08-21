@@ -194,12 +194,44 @@ CamppStatus campp_graph_execute(CamppRuntimeContext *context)
         return campp_graph_fail(context, status);
     }
 
+#if defined(CAMPP_ENABLE_WEIGHT_STREAMING)
+    if (!model->weight_windowing_enabled) {
+        for (operator_id = 0u;
+             operator_id < model->operator_count;
+             ++operator_id) {
+            status = campp_graph_execute_operator(context, operator_id);
+            if (status != CAMPP_STATUS_OK) {
+                return status;
+            }
+        }
+    } else {
+        for (operator_id = 0u;
+             operator_id < model->operator_count;
+             ++operator_id) {
+            status = campp_runtime_model_weight_before_operator(
+                model, operator_id);
+            if (status != CAMPP_STATUS_OK) {
+                return campp_graph_fail(context, status);
+            }
+            status = campp_graph_execute_operator(context, operator_id);
+            if (status != CAMPP_STATUS_OK) {
+                return status;
+            }
+            status = campp_runtime_model_weight_after_operator(
+                model, operator_id);
+            if (status != CAMPP_STATUS_OK) {
+                return campp_graph_fail(context, status);
+            }
+        }
+    }
+#else
     for (operator_id = 0u; operator_id < model->operator_count; ++operator_id) {
         status = campp_graph_execute_operator(context, operator_id);
         if (status != CAMPP_STATUS_OK) {
             return status;
         }
     }
+#endif
 
     context->last_status = CAMPP_STATUS_OK;
     return CAMPP_STATUS_OK;

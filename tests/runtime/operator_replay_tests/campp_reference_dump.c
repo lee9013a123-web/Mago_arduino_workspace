@@ -3,6 +3,8 @@
  * Arena에서 중간값이 다음 Tensor에 덮어써지기 전에 즉시 기록한다.
  *
  * usage: campp_reference_dump <plan.bin> <weights.bin> <input.f32> <out_prefix>
+ *        [--weight-mode malloc|mmap|windowed]
+ *        [--weight-schedule schedule.bin]
  *        campp_reference_dump --model <model.camppmodel> <input.f32> <out_prefix>
  *
  * 출력:
@@ -205,24 +207,91 @@ int main(int argc, char **argv)
     uint8_t *input_data = NULL;
     size_t input_size = 0u;
     CamppStatus status;
+    const char *plan_path = NULL;
+    const char *weights_path = NULL;
+    const char *input_path = NULL;
+    const char *output_prefix = NULL;
+    const char *weight_mode = "malloc";
+    const char *weight_schedule_path = NULL;
+    int package_mode = 0;
+    int option_index;
     char path[4096];
     FILE *payload_sink;
     FILE *index_sink;
     CamppDumpWriter writer;
 
-    if (argc != 5) {
+    if (argc < 5) {
         fprintf(stderr,
-                "usage: %s <plan.bin> <weights.bin> <input.f32> <out_prefix>\n"
+                "usage: %s <plan.bin> <weights.bin> <input.f32> <out_prefix> "
+                "[--weight-mode malloc|mmap|windowed] "
+                "[--weight-schedule schedule.bin]\n"
                 "       %s --model <model.camppmodel> <input.f32> <out_prefix>\n",
                 argv[0],
                 argv[0]);
         return 2;
     }
 
+    package_mode = strcmp(argv[1], "--model") == 0;
+    if (package_mode) {
+        if (argc != 5) {
+            fprintf(stderr, "model package mode does not accept weight options\n");
+            return 2;
+        }
+        input_path = argv[3];
+        output_prefix = argv[4];
+    } else {
+        plan_path = argv[1];
+        weights_path = argv[2];
+        input_path = argv[3];
+        output_prefix = argv[4];
+        for (option_index = 5; option_index < argc; option_index += 2) {
+            if (option_index + 1 >= argc) {
+                fprintf(stderr, "missing value for %s\n", argv[option_index]);
+                return 2;
+            }
+            if (strcmp(argv[option_index], "--weight-mode") == 0) {
+                weight_mode = argv[option_index + 1];
+            } else if (strcmp(
+                    argv[option_index], "--weight-schedule") == 0) {
+                weight_schedule_path = argv[option_index + 1];
+            } else {
+                fprintf(stderr, "unknown option: %s\n", argv[option_index]);
+                return 2;
+            }
+        }
+    }
+    if (strcmp(weight_mode, "malloc") != 0 &&
+        strcmp(weight_mode, "mmap") != 0 &&
+        strcmp(weight_mode, "windowed") != 0) {
+        fprintf(stderr, "invalid weight mode: %s\n", weight_mode);
+        return 2;
+    }
+    if ((strcmp(weight_mode, "windowed") == 0) !=
+        (weight_schedule_path != NULL)) {
+        fprintf(stderr, "windowed mode requires exactly one schedule\n");
+        return 2;
+    }
+#if !defined(CAMPP_ENABLE_WEIGHT_STREAMING)
+    if (strcmp(weight_mode, "malloc") != 0) {
+        fprintf(stderr, "binary was built without weight streaming\n");
+        return 2;
+    }
+#endif
+
     memset(&model, 0, sizeof(model));
-    status = strcmp(argv[1], "--model") == 0
-        ? campp_runtime_model_load_package(argv[2], &model)
-        : campp_runtime_model_load(argv[1], argv[2], &model);
+    if (package_mode) {
+        status = campp_runtime_model_load_package(argv[2], &model);
+    } else if (strcmp(weight_mode, "malloc") == 0) {
+        status = campp_runtime_model_load(plan_path, weights_path, &model);
+    } else {
+        status = campp_runtime_model_load_mapped(
+            plan_path, weights_path, &model);
+        if (status == CAMPP_STATUS_OK &&
+            strcmp(weight_mode, "windowed") == 0) {
+            status = campp_runtime_model_enable_weight_window(
+                &model, weight_schedule_path);
+        }
+    }
     if (status != CAMPP_STATUS_OK) {
         fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
         return 1;
@@ -262,7 +331,7 @@ int main(int argc, char **argv)
     input_tensor_id = model.input_tensor_ids[0];
     input_descriptor = &model.tensors[input_tensor_id];
 
-    if (read_entire_file(argv[3], &input_data, &input_size) != 0) {
+    if (read_entire_file(input_path, &input_data, &input_size) != 0) {
         campp_runtime_context_release(&context);
         campp_runtime_model_release(&model);
         return 1;
@@ -290,12 +359,12 @@ int main(int argc, char **argv)
         campp_runtime_model_release(&model);
         return 1;
     }
-    snprintf(path, sizeof(path), "%s.bin", argv[4]);
+    snprintf(path, sizeof(path), "%s.bin", output_prefix);
     payload_sink = fopen(path, "wb");
-    snprintf(path, sizeof(path), "%s.json", argv[4]);
+    snprintf(path, sizeof(path), "%s.json", output_prefix);
     index_sink = fopen(path, "wb");
     if (payload_sink == NULL || index_sink == NULL) {
-        fprintf(stderr, "cannot open output files for prefix %s\n", argv[4]);
+        fprintf(stderr, "cannot open output files for prefix %s\n", output_prefix);
         if (payload_sink != NULL) { fclose(payload_sink); }
         if (index_sink != NULL) { fclose(index_sink); }
         free(input_data);

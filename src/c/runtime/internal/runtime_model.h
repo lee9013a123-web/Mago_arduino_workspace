@@ -9,8 +9,8 @@
  * CamppRuntimeContext에 있다. 이 경계가 흐려지면 bucket을 바꿔 끼우거나
  * 같은 model로 context 여러 개를 돌릴 수 없게 된다.
  *
- * plan_*.bin 한 개와 weights.bin 한 개가 model 하나를 이룬다. weights.bin은
- * 모든 bucket이 공유하므로, bucket을 바꾸려면 plan만 다시 로드하면 된다.
+ * plan_*.bin 한 개와 weights.bin 한 개가 model 하나를 이룬다. 기존 bundle은
+ * weights.bin을 공유하고, mmap window 실험은 bucket 전용 pair를 사용한다.
  *
  * 디스크 바이트를 구조체로 직접 cast하지 않는다. loader가 little-endian
  * reader로 읽어 아래 배열을 채우고, model이 그 배열을 소유한다. 그래서 plan
@@ -25,6 +25,16 @@
 #include "campp_runtime/operator_descriptor.h"
 #include "campp_runtime/status_code.h"
 #include "campp_runtime/tensor_descriptor.h"
+#include "platform_linux/mapped_file.h"
+
+typedef struct CamppWeightResidencyBlock {
+    uint32_t block_id;
+    uint32_t first_operator;
+    uint32_t last_operator;
+    uint32_t prefetch_operator;
+    uint64_t file_offset;
+    uint64_t byte_size;
+} CamppWeightResidencyBlock;
 
 /* 한 bucket의 실행 계획과 그 계획이 참조하는 weight 전체. */
 typedef struct CamppRuntimeModel {
@@ -38,6 +48,17 @@ typedef struct CamppRuntimeModel {
     const uint8_t *weights;
     size_t weights_size;
     bool owns_weights;
+    CamppMappedFile weight_mapping;
+
+    /* Optional 98-bucket mmap window schedule. */
+    CamppWeightResidencyBlock *weight_blocks;
+    uint32_t weight_block_count;
+    uint32_t weight_page_size;
+    uint32_t *weight_prefetch_offsets;
+    uint32_t *weight_prefetch_indices;
+    uint32_t *weight_evict_offsets;
+    uint32_t *weight_evict_indices;
+    bool weight_windowing_enabled;
 
     /* --- header에서 읽은 값 --- */
     CamppPlanHeader header;
@@ -78,6 +99,17 @@ typedef struct CamppAttributeValues {
  */
 CamppStatus campp_runtime_model_load(
     const char *plan_path, const char *weights_path, CamppRuntimeModel *model);
+
+/* Read-only mmap candidate. The existing malloc loader remains the default. */
+CamppStatus campp_runtime_model_load_mapped(
+    const char *plan_path, const char *weights_path, CamppRuntimeModel *model);
+
+CamppStatus campp_runtime_model_enable_weight_window(
+    CamppRuntimeModel *model, const char *schedule_path);
+CamppStatus campp_runtime_model_weight_before_operator(
+    const CamppRuntimeModel *model, uint32_t operator_id);
+CamppStatus campp_runtime_model_weight_after_operator(
+    const CamppRuntimeModel *model, uint32_t operator_id);
 
 /* Versioned .camppmodel container에서 plan과 weights를 함께 로드한다. */
 CamppStatus campp_runtime_model_load_package(

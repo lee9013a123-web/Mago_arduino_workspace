@@ -4,8 +4,9 @@
  * CAM++ C Runtime의 cold/warm latency와 프로세스 RSS를 측정한다.
  *
  * 이 실행 파일은 Tensor dump callback을 설치하지 않는다. 모델과 context를 한
- * 번 만든 뒤 같은 입력을 반복 실행하므로 측정 구간에서 파일 I/O나 allocation이
- * 발생하지 않는다. JSON은 stdout, 오류와 진행 메시지는 stderr로만 출력한다.
+ * 번 만든 뒤 같은 입력을 반복 실행한다. 기본 malloc mode는 측정 구간에서 파일
+ * I/O나 allocation을 하지 않고, 실험적인 windowed mode만 page-cache advice를
+ * 실행한다. JSON은 stdout, 오류와 진행 메시지는 stderr로만 출력한다.
  */
 
 #include <errno.h>
@@ -14,6 +15,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/resource.h>
 #include <time.h>
 
 #include "campp_runtime/status_code.h"
@@ -35,6 +37,8 @@ typedef struct BenchmarkOptions {
     const char *model_path;
     const char *plan_path;
     const char *weights_path;
+    const char *weight_mode;
+    const char *weight_schedule_path;
     const char *input_path;
     const char *embedding_path;
     uint32_t warmup;
@@ -48,6 +52,26 @@ typedef struct MemorySnapshot {
     uint64_t peak_rss_bytes;
     int available;
 } MemorySnapshot;
+
+typedef struct FaultSnapshot {
+    uint64_t minor_faults;
+    uint64_t major_faults;
+    int available;
+} FaultSnapshot;
+
+static FaultSnapshot read_fault_snapshot(void)
+{
+    FaultSnapshot result;
+    struct rusage usage;
+
+    memset(&result, 0, sizeof(result));
+    if (getrusage(RUSAGE_SELF, &usage) == 0) {
+        result.minor_faults = (uint64_t)usage.ru_minflt;
+        result.major_faults = (uint64_t)usage.ru_majflt;
+        result.available = 1;
+    }
+    return result;
+}
 
 static uint64_t monotonic_ns(void)
 {
@@ -116,7 +140,9 @@ static void usage(const char *program)
         "usage: %s (--model model.camppmodel | "
         "--plan plan.bin --weights weights.bin) --input feature.f32 "
         "--audio-seconds N --warmup N --repeat N --threads N "
-        "[--embedding-output embedding.f32]\n",
+        "[--embedding-output embedding.f32] "
+        "[--weight-mode malloc|mmap|windowed] "
+        "[--weight-schedule schedule.bin]\n",
         program);
 }
 
@@ -131,6 +157,7 @@ static int parse_options(int argc, char **argv, BenchmarkOptions *options)
     options->warmup = 20u;
     options->repeat = 100u;
     options->requested_threads = 1u;
+    options->weight_mode = "malloc";
 
     for (index = 1; index < argc; ++index) {
         const char *name = argv[index];
@@ -150,6 +177,10 @@ static int parse_options(int argc, char **argv, BenchmarkOptions *options)
             options->plan_path = value;
         } else if (strcmp(name, "--weights") == 0) {
             options->weights_path = value;
+        } else if (strcmp(name, "--weight-mode") == 0) {
+            options->weight_mode = value;
+        } else if (strcmp(name, "--weight-schedule") == 0) {
+            options->weight_schedule_path = value;
         } else if (strcmp(name, "--input") == 0) {
             options->input_path = value;
         } else if (strcmp(name, "--embedding-output") == 0) {
@@ -188,6 +219,30 @@ static int parse_options(int argc, char **argv, BenchmarkOptions *options)
         (options->model_path == NULL &&
          (options->plan_path == NULL || options->weights_path == NULL))) {
         usage(argv[0]);
+        return 1;
+    }
+    if (strcmp(options->weight_mode, "malloc") != 0 &&
+        strcmp(options->weight_mode, "mmap") != 0 &&
+        strcmp(options->weight_mode, "windowed") != 0) {
+        fprintf(stderr, "invalid --weight-mode: %s\n", options->weight_mode);
+        return 1;
+    }
+#if !defined(CAMPP_ENABLE_WEIGHT_STREAMING)
+    if (strcmp(options->weight_mode, "malloc") != 0) {
+        fprintf(stderr, "binary was built without weight streaming\n");
+        return 1;
+    }
+#endif
+    if (options->model_path != NULL &&
+        strcmp(options->weight_mode, "malloc") != 0) {
+        fprintf(stderr, "mmap weight modes require --plan and --weights\n");
+        return 1;
+    }
+    if ((strcmp(options->weight_mode, "windowed") == 0) !=
+        (options->weight_schedule_path != NULL)) {
+        fprintf(
+            stderr,
+            "windowed mode requires exactly one --weight-schedule\n");
         return 1;
     }
     /* cpu_reference backend에는 아직 worker pool이 없다. */
@@ -418,6 +473,8 @@ int main(int argc, char **argv)
     MemorySnapshot memory_after_context;
     MemorySnapshot memory_after_warmup;
     MemorySnapshot memory_after_measurement;
+    FaultSnapshot faults_after_warmup;
+    FaultSnapshot faults_after_measurement;
     uint64_t process_started;
     uint64_t model_started;
     uint64_t model_finished;
@@ -440,6 +497,13 @@ int main(int argc, char **argv)
             "\"backends\":[\"cpu_reference\",\"cpu_aarch64_o4i4\"],"
             "\"model_package_format\":\"camppmodel-v1\"",
             stdout);
+#if defined(CAMPP_ENABLE_WEIGHT_STREAMING)
+        fputs(
+            ",\"weight_residency_modes\":[\"malloc\",\"mmap\",\"windowed\"]",
+            stdout);
+#else
+        fputs(",\"weight_residency_modes\":[\"malloc\"]", stdout);
+#endif
 #if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
         fputs(",\"optimization_suite\":\"final\","
               "\"optimization_suite_config\":", stdout);
@@ -477,10 +541,20 @@ int main(int argc, char **argv)
     memset(&model, 0, sizeof(model));
     memset(&context, 0, sizeof(context));
     model_started = monotonic_ns();
-    status = options.model_path != NULL
-        ? campp_runtime_model_load_package(options.model_path, &model)
-        : campp_runtime_model_load(
+    if (options.model_path != NULL) {
+        status = campp_runtime_model_load_package(options.model_path, &model);
+    } else if (strcmp(options.weight_mode, "malloc") == 0) {
+        status = campp_runtime_model_load(
             options.plan_path, options.weights_path, &model);
+    } else {
+        status = campp_runtime_model_load_mapped(
+            options.plan_path, options.weights_path, &model);
+        if (status == CAMPP_STATUS_OK &&
+            strcmp(options.weight_mode, "windowed") == 0) {
+            status = campp_runtime_model_enable_weight_window(
+                &model, options.weight_schedule_path);
+        }
+    }
     model_finished = monotonic_ns();
     if (status != CAMPP_STATUS_OK) {
         fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
@@ -557,6 +631,7 @@ int main(int argc, char **argv)
         }
     }
     memory_after_warmup = read_memory_snapshot();
+    faults_after_warmup = read_fault_snapshot();
 
     for (iteration = 0u; iteration < options.repeat; ++iteration) {
         const uint64_t started = monotonic_ns();
@@ -573,6 +648,7 @@ int main(int argc, char **argv)
         first_inference_ms = timings[0];
     }
     memory_after_measurement = read_memory_snapshot();
+    faults_after_measurement = read_fault_snapshot();
 
     status = campp_runtime_context_output(
         &context, model.output_tensor_ids[0], &output_view);
@@ -612,9 +688,18 @@ int main(int argc, char **argv)
     printf(
         "\"requested_threads\":%" PRIu32
         ",\"effective_threads\":1,\"warmup\":%" PRIu32
-        ",\"repeat\":%" PRIu32 ",\"audio_seconds\":%.9g},",
+        ",\"repeat\":%" PRIu32 ",\"audio_seconds\":%.9g,"
+        "\"weight_mode\":",
         options.requested_threads, options.warmup, options.repeat,
         options.audio_seconds);
+    print_json_string(options.weight_mode);
+    fputs(",\"weight_schedule\":", stdout);
+    if (options.weight_schedule_path == NULL) {
+        fputs("null", stdout);
+    } else {
+        print_json_string(options.weight_schedule_path);
+    }
+    fputs("},", stdout);
     fputs("\"model\":{\"package_path\":", stdout);
     if (options.model_path != NULL) {
         print_json_string(options.model_path);
@@ -669,6 +754,19 @@ int main(int argc, char **argv)
         "\"scratch_bytes\":%zu},",
         context.activations.total_bytes, context.activations.arena_size,
         context.scratch_size);
+    printf(
+        "\"faults\":{\"available\":%s,"
+        "\"after_warmup_minor\":%" PRIu64 ","
+        "\"after_warmup_major\":%" PRIu64 ","
+        "\"measurement_minor\":%" PRIu64 ","
+        "\"measurement_major\":%" PRIu64 "},",
+        faults_after_measurement.available ? "true" : "false",
+        faults_after_warmup.minor_faults,
+        faults_after_warmup.major_faults,
+        faults_after_measurement.minor_faults -
+            faults_after_warmup.minor_faults,
+        faults_after_measurement.major_faults -
+            faults_after_warmup.major_faults);
     printf(
         "\"embedding\":{\"tensor_id\":%" PRIu32
         ",\"dtype\":%u,\"shape\":[",

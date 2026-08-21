@@ -26,6 +26,7 @@
 #include "binary_section_reader.h"
 #include "compiled_model_validator.h"
 #include "internal/runtime_model.h"
+#include "platform_linux/mapped_file.h"
 
 /* Tensor descriptor 안의 필드 위치. tensor_descriptor.h의 static assert와 같다. */
 #define CAMPP_TD_TENSOR_ID 0u
@@ -392,6 +393,11 @@ void campp_runtime_model_release(CamppRuntimeModel *model)
     free(model->operators);
     free(model->input_tensor_ids);
     free(model->output_tensor_ids);
+    free(model->weight_blocks);
+    free(model->weight_prefetch_offsets);
+    free(model->weight_prefetch_indices);
+    free(model->weight_evict_offsets);
+    free(model->weight_evict_indices);
     if (model->owns_plan_bytes) {
         free(model->plan_bytes);
     }
@@ -401,6 +407,9 @@ void campp_runtime_model_release(CamppRuntimeModel *model)
 
         memcpy(&owned, &model->weights, sizeof(owned));
         free(owned);
+    }
+    if (model->weight_mapping.mapped) {
+        campp_mapped_file_close(&model->weight_mapping);
     }
     memset(model, 0, sizeof(*model));
 }
@@ -508,6 +517,40 @@ CamppStatus campp_runtime_model_load(
         free(weight_bytes);
     }
     return status;
+}
+
+CamppStatus campp_runtime_model_load_mapped(
+    const char *plan_path, const char *weights_path, CamppRuntimeModel *model)
+{
+    uint8_t *plan_bytes = NULL;
+    size_t plan_size = 0u;
+    CamppMappedFile mapping;
+    CamppStatus status;
+
+    if (plan_path == NULL || weights_path == NULL || model == NULL) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+    memset(&mapping, 0, sizeof(mapping));
+    mapping.descriptor = -1;
+    status = campp_read_whole_file(plan_path, &plan_bytes, &plan_size);
+    if (status != CAMPP_STATUS_OK) {
+        return status;
+    }
+    status = campp_mapped_file_open_readonly(weights_path, &mapping);
+    if (status != CAMPP_STATUS_OK) {
+        free(plan_bytes);
+        return status;
+    }
+    status = campp_runtime_model_adopt(
+        plan_bytes, plan_size, true,
+        mapping.data, mapping.size, false, model);
+    if (status != CAMPP_STATUS_OK) {
+        free(plan_bytes);
+        campp_mapped_file_close(&mapping);
+        return status;
+    }
+    model->weight_mapping = mapping;
+    return CAMPP_STATUS_OK;
 }
 
 CamppStatus campp_runtime_model_tensor(
