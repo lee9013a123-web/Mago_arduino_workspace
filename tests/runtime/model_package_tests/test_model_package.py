@@ -19,7 +19,10 @@ from runtime_model_package.format import (  # noqa: E402
     canonical_json_bytes,
     read_model_package,
 )
-from runtime_model_package.packager import build_final_98_package  # noqa: E402
+from runtime_model_package.packager import (  # noqa: E402
+    _source_manifest_hash,
+    build_final_98_package,
+)
 
 
 def sections() -> list[ModelPackageSection]:
@@ -42,6 +45,23 @@ def sections() -> list[ModelPackageSection]:
 
 
 class ModelPackageTests(unittest.TestCase):
+    def test_static_weight_manifest_hashes_are_bucket_scoped(self) -> None:
+        manifest = {
+            "bucket_frames": 98,
+            "strategy": "offline_first_use_static_blob",
+            "output": {
+                "plan_sha256": "plan-hash",
+                "weights_sha256": "weights-hash",
+            },
+        }
+        self.assertEqual(
+            _source_manifest_hash(manifest, "plan", 98), "plan-hash"
+        )
+        self.assertEqual(
+            _source_manifest_hash(manifest, "weights", 98), "weights-hash"
+        )
+        self.assertIsNone(_source_manifest_hash(manifest, "plan", 298))
+
     def test_round_trip_and_json_contracts(self) -> None:
         payload = build_model_package(bucket_frames=98, sections=sections())
         package = read_model_package(payload)
@@ -97,6 +117,35 @@ class ModelPackageTests(unittest.TestCase):
         self.assertEqual(metadata["output"]["shape"], [1, 192])
         self.assertIsNone(postprocess["decision_threshold"])
         self.assertFalse(report["contracts"]["threshold_calibrated"])
+
+    def test_final_98_static_weight_plan_contract(self) -> None:
+        root = (
+            ROOT
+            / "runs/models/campplus/final_v3/weight_residency/98"
+        )
+        required = (
+            root / "plan_98.bin",
+            root / "weights_98.bin",
+            root / "weight_plan_98.json",
+        )
+        if not all(path.is_file() for path in required):
+            self.skipTest("generated Final-98 static weight plan is not available")
+        payload, report = build_final_98_package(
+            plan_path=required[0],
+            weights_path=required[1],
+            source_manifest_path=required[2],
+        )
+        package = read_model_package(payload)
+        metadata = package.json_section(
+            ModelPackageSectionType.MODEL_METADATA_JSON
+        )
+        self.assertEqual(
+            metadata["source"]["source_manifest_kind"],
+            "bucket_static_weight_plan",
+        )
+        self.assertEqual(
+            report["source_manifest_kind"], "bucket_static_weight_plan"
+        )
 
 
 if __name__ == "__main__":

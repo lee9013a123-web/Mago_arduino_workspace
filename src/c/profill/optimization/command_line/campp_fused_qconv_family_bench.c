@@ -678,7 +678,7 @@ int main(int argc, char **argv)
 #if defined(CAMPP_QCONV_FAMILY_ORDINARY)
         fputs(
             "{\"runtime\":\"campp-qconv-family-bench\","
-            "\"effective_threads\":1,\"bucket\":98,"
+            "\"effective_threads\":1,\"bucket_support\":\"plan_header\","
             "\"measurement_scope\":\"single_kernel_run_batch\","
             "\"batch_graph_traversal\":true,"
             "\"qconv_candidates\":[\"baseline\",\"mac_fixed\","
@@ -686,8 +686,8 @@ int main(int argc, char **argv)
             stdout);
 #else
         fputs(
-            "{\"runtime\":\"campp-fused-qconv-family-bench\"," 
-            "\"effective_threads\":1,\"bucket\":98,"
+            "{\"runtime\":\"campp-fused-qconv-family-bench\","
+            "\"effective_threads\":1,\"bucket_support\":\"plan_header\","
             "\"measurement_scope\":\"single_kernel_run_batch\"," 
             "\"batch_graph_traversal\":true,"
             "\"fused_qconv_candidates\":[\"baseline\",\"mac\"," 
@@ -709,8 +709,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "model load failed: %s\n", campp_status_name(status));
         goto cleanup;
     }
-    if (model.bucket_frames != 98u || model.input_count != 1u) {
-        fprintf(stderr, "batch benchmark requires E7 bucket 98\n");
+    if (model.bucket_frames == 0u || model.input_count != 1u) {
+        fprintf(stderr, "batch benchmark requires one valid model input\n");
         goto cleanup;
     }
     registry = campp_profill_registry_for_model(&model);

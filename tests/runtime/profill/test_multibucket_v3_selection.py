@@ -18,6 +18,14 @@ SPEC.loader.exec_module(SELECTION)
 
 
 class MultibucketV3SelectionTests(unittest.TestCase):
+    def test_family_binary_accepts_plan_defined_buckets(self) -> None:
+        source = (
+            ROOT / "src/c/profill/optimization/command_line/"
+            "campp_fused_qconv_family_bench.c"
+        ).read_text(encoding="utf-8")
+        self.assertIn('\\"bucket_support\\":\\"plan_header\\"', source)
+        self.assertNotIn("model.bucket_frames != 98u", source)
+
     def test_feature_names_are_bucket_specific(self) -> None:
         paths = SELECTION._features(
             Path("features"), 498, ("0000", "0005", "0006")
@@ -29,6 +37,18 @@ class MultibucketV3SelectionTests(unittest.TestCase):
                 "multi__speaker_0005__498.f32",
                 "multi__speaker_0006__498.f32",
             ],
+        )
+
+    def test_bucket_outputs_live_under_model_roots(self) -> None:
+        paths = SELECTION._bucket_paths(
+            298, Path("runs/models"), Path("results/models")
+        )
+        self.assertEqual(
+            paths["profile"],
+            Path("results/models/298/operator_profile/operator_profile.json"),
+        )
+        self.assertEqual(
+            paths["qconv_runs"], Path("runs/models/298/qconv_family")
         )
 
     def test_family_command_uses_batch_and_baseline_check_only(self) -> None:

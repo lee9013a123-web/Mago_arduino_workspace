@@ -42,8 +42,9 @@ def _load_json(path: Path) -> dict[str, Any]:
 
 def _comparison_cases(
     result_dir: Path, modes: Sequence[str], bucket_frames: int,
-) -> dict[int, dict[str, Any]]:
+) -> tuple[dict[int, dict[str, Any]], str]:
     by_operator: dict[int, dict[str, Any]] = {}
+    plan_sha256: str | None = None
     for mode in modes:
         path = result_dir / f"{mode}_comparison.json"
         document = _load_json(path)
@@ -58,6 +59,26 @@ def _comparison_cases(
             raise HybridPlanError(
                 f"{measurement_path} bucket mismatch: "
                 f"expected {bucket_frames}, got {measured_bucket}"
+            )
+        artifacts = measurement.get("artifacts")
+        identity = (
+            artifacts.get("profile_plan_identity")
+            if isinstance(artifacts, dict) else None
+        )
+        measured_sha256 = (
+            identity.get("plan_sha256")
+            if isinstance(identity, dict) and identity.get("ready") is True
+            else None
+        )
+        if not isinstance(measured_sha256, str) or not measured_sha256:
+            raise HybridPlanError(
+                f"{measurement_path} has no verified profile/plan identity"
+            )
+        if plan_sha256 is None:
+            plan_sha256 = measured_sha256
+        elif plan_sha256 != measured_sha256:
+            raise HybridPlanError(
+                f"{result_dir} mixes measurements from different plans"
             )
         if not document.get("all_output_hashes_bitwise_identical", False):
             raise HybridPlanError(f"{path} is not fully bitwise-identical")
@@ -89,7 +110,9 @@ def _comparison_cases(
         missing = [mode for mode in modes if mode not in entry["modes"]]
         if missing:
             raise HybridPlanError(f"operator {operator_id} missing modes: {missing}")
-    return by_operator
+    if plan_sha256 is None:
+        raise HybridPlanError(f"{result_dir} has no plan identity")
+    return by_operator, plan_sha256
 
 
 def _choose_mode(
@@ -121,7 +144,9 @@ def _family_plan(
     min_margin_pct: float,
     bucket_frames: int,
 ) -> dict[str, Any]:
-    operators = _comparison_cases(result_dir, modes, bucket_frames)
+    operators, plan_sha256 = _comparison_cases(
+        result_dir, modes, bucket_frames
+    )
     rows = []
     totals = {mode: 0.0 for mode in modes}
     selected_total = 0.0
@@ -153,6 +178,7 @@ def _family_plan(
         })
     return {
         "family": family,
+        "plan_sha256": plan_sha256,
         "operator_count": len(rows),
         "incumbent": incumbent,
         "candidate_modes": list(modes),
@@ -223,6 +249,10 @@ def build_plan(
         min_margin_pct=min_margin_pct,
         bucket_frames=bucket_frames,
     )
+    if qconv["plan_sha256"] != fused["plan_sha256"]:
+        raise HybridPlanError(
+            "ordinary and fused measurements use different execution plans"
+        )
     incumbent_total = (
         float(qconv["incumbent_total_mean_ms"]) +
         float(fused["incumbent_total_mean_ms"])
@@ -248,6 +278,7 @@ def build_plan(
         "artifacts": {
             "qconv_dir": _display_path(qconv_dir),
             "fused_dir": _display_path(fused_dir),
+            "plan_sha256": qconv["plan_sha256"],
         },
         "families": [qconv, fused],
         "combined": {

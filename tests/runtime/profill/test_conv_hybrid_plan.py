@@ -53,7 +53,12 @@ class ConvHybridPlanTests(unittest.TestCase):
                 "v5": 7.5,
             }.items():
                 (qconv / f"{mode}.json").write_text(
-                    json.dumps({"configuration": {"bucket_frames": 298}}),
+                    json.dumps({
+                        "configuration": {"bucket_frames": 298},
+                        "artifacts": {"profile_plan_identity": {
+                            "ready": True, "plan_sha256": "plan-298",
+                        }},
+                    }),
                     encoding="utf-8",
                 )
                 (qconv / f"{mode}_comparison.json").write_text(
@@ -66,7 +71,12 @@ class ConvHybridPlanTests(unittest.TestCase):
                 "combined_v5": 7.96,
             }.items():
                 (fused / f"{mode}.json").write_text(
-                    json.dumps({"configuration": {"bucket_frames": 298}}),
+                    json.dumps({
+                        "configuration": {"bucket_frames": 298},
+                        "artifacts": {"profile_plan_identity": {
+                            "ready": True, "plan_sha256": "plan-298",
+                        }},
+                    }),
                     encoding="utf-8",
                 )
                 (fused / f"{mode}_comparison.json").write_text(

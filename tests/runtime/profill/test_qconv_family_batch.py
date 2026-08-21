@@ -19,6 +19,34 @@ SPEC.loader.exec_module(FAMILY)
 
 
 class QconvFamilyBatchTests(unittest.TestCase):
+    def test_selects_final_v3_profile_name_as_ordinary_family(self) -> None:
+        operator = {
+            "operator_id": 7,
+            "kernel_id": 4,
+            "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+            "operator_type": "QLINEAR_CONV",
+            "weight_shapes": [[32, 64, 1]],
+            "mean_ms": 1.0,
+            "end_to_end_share_pct": 1.0,
+        }
+        cases = FAMILY.select_qconv_family_cases({"operators": [operator]})
+        self.assertEqual(cases[0]["operator_id"], 7)
+        self.assertEqual(cases[0]["kernel_name"], "qlinear_conv_o4i4_neon")
+
+    def test_selects_final_v3_profile_name_as_ordinary_family(self) -> None:
+        operator = {
+            "operator_id": 7,
+            "kernel_id": 4,
+            "kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+            "operator_type": "QLINEAR_CONV",
+            "weight_shapes": [[32, 64, 1]],
+            "mean_ms": 1.0,
+            "end_to_end_share_pct": 1.0,
+        }
+        cases = FAMILY.select_qconv_family_cases({"operators": [operator]})
+        self.assertEqual(cases[0]["operator_id"], 7)
+        self.assertEqual(cases[0]["kernel_name"], "qlinear_conv_o4i4_neon")
+
     def test_batch_payload_builds_comparison_documents(self) -> None:
         case = {
             "case_name": "qconv_op_2",
@@ -55,6 +83,7 @@ class QconvFamilyBatchTests(unittest.TestCase):
                     "repeat": 2,
                     "graph_traversals": 1,
                 },
+                "model": {"bucket_frames": 98, "operator_count": 1},
                 "cases": [
                     {
                         "operator_id": 2,
@@ -104,6 +133,7 @@ class QconvFamilyBatchTests(unittest.TestCase):
                 "repeat": 1,
                 "graph_traversals": 1,
             },
+            "model": {"bucket_frames": 98, "operator_count": 1},
             "cases": [],
         }
         with self.assertRaises(FAMILY.QconvFamilyError):

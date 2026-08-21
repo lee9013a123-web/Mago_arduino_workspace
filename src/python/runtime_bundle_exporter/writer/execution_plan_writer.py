@@ -243,6 +243,47 @@ def read_execution_plan(path: Path | str) -> LoadedPlan:
     )
 
 
+def build_loaded_plan_bytes(loaded: LoadedPlan) -> bytes:
+    """Re-encode a decoded plan after an in-memory descriptor-only rewrite.
+
+    This is intentionally narrower than :func:`build_plan_bytes`: operator
+    wiring and the attribute section are preserved byte-for-byte while the
+    caller may replace decoded Tensor descriptors, for example to point at a
+    bucket-specific static weight blob.  A fresh payload checksum is always
+    generated.
+    """
+
+    if len(loaded.tensors) != loaded.header.tensor_count:
+        raise ExecutionPlanError("loaded Tensor count does not match its header")
+    if len(loaded.operators) != loaded.header.operator_count:
+        raise ExecutionPlanError("loaded Operator count does not match its header")
+
+    tensor_table_offset = PLAN_HEADER_SIZE
+    operator_table_offset = (
+        tensor_table_offset + len(loaded.tensors) * TENSOR_DESCRIPTOR_SIZE
+    )
+    attribute_section_offset = (
+        operator_table_offset + len(loaded.operators) * OPERATOR_DESCRIPTOR_SIZE
+    )
+    payload = b"".join(
+        (
+            b"".join(descriptor.pack() for descriptor in loaded.tensors),
+            b"".join(descriptor.pack() for descriptor in loaded.operators),
+            loaded.attribute_section,
+        )
+    )
+    header = PlanHeader.create(
+        bucket_frames=loaded.header.bucket_frames,
+        tensor_count=len(loaded.tensors),
+        operator_count=len(loaded.operators),
+        tensor_table_offset=tensor_table_offset,
+        operator_table_offset=operator_table_offset,
+        attribute_section_offset=attribute_section_offset,
+        payload=payload,
+    )
+    return header.pack() + payload
+
+
 def _normalized_attributes(attributes: Mapping[str, object]) -> dict[str, tuple]:
     """스칼라를 원소 1개짜리 튜플로 맞춘다. 형식이 둘을 구분하지 않는다."""
 
@@ -454,6 +495,7 @@ __all__ = [
     "ExecutionPlanResult",
     "LoadedPlan",
     "PLAN_FILE_NAME_TEMPLATE",
+    "build_loaded_plan_bytes",
     "build_plan_bytes",
     "format_operator_dump",
     "format_summary",

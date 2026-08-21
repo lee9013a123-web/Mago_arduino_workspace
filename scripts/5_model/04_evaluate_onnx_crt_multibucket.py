@@ -77,7 +77,28 @@ def _require_files(paths: Sequence[Path]) -> None:
         )
 
 
-def _verify_runtime_capabilities(binary: Path) -> dict[str, Any]:
+def require_compiled_v3_buckets(
+    capabilities: dict[str, Any], requested_buckets: Sequence[int]
+) -> set[int]:
+    plans = capabilities.get("optimization_bucket_plans")
+    if not isinstance(plans, list) or any(
+        isinstance(value, bool) or not isinstance(value, int) for value in plans
+    ):
+        raise EvaluationError("C Runtime V3 bucket plan list is invalid")
+    compiled = set(plans)
+    missing = sorted(set(requested_buckets) - compiled)
+    if missing:
+        raise EvaluationError(
+            "C Runtime is not a full multibucket V3 build; missing plans: "
+            f"{missing}. Run 16_select_multibucket_v3.py --mode official "
+            "--force --build-final first."
+        )
+    return compiled
+
+
+def _verify_runtime_capabilities(
+    binary: Path, requested_buckets: Sequence[int]
+) -> tuple[dict[str, Any], set[int]]:
     capabilities = _run_json([str(binary), "--capabilities"])
     if capabilities.get("optimization_suite_config") != FINAL_V3_SUITE:
         raise EvaluationError("C Runtime binary is not the Final V3 suite")
@@ -87,10 +108,8 @@ def _verify_runtime_capabilities(binary: Path) -> dict[str, Any]:
         raise EvaluationError(
             "C Runtime must be rebuilt: compiled bucket policy is unavailable"
         )
-    plans = capabilities.get("optimization_bucket_plans")
-    if not isinstance(plans, list) or 98 not in plans:
-        raise EvaluationError("C Runtime has no measured V3 plan for bucket 98")
-    return capabilities
+    compiled = require_compiled_v3_buckets(capabilities, requested_buckets)
+    return capabilities, compiled
 
 
 def _metric(document: dict[str, Any], *keys: str) -> Any:
@@ -205,7 +224,8 @@ def build_frame_matrix(
         rows.append(row)
     return {
         "schema_version": 1,
-        "comparison": "canonical_onnxruntime_vs_final_c_runtime",
+        "comparison": "canonical_onnxruntime_vs_multibucket_v3_c_runtime",
+        "required_c_policy": "layer_hybrid_v3",
         "accuracy_gate": {
             "kind": "embedding_cosine",
             "minimum": embedding_cosine_min,
@@ -326,8 +346,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.mode == "quick"
         else "runtime_final_v3_multibucket_official.json"
     )
-    result_dir = ROOT / "results/model_evaluation/onnx_crt_multibucket" / run_id
-    c_dump_dir = ROOT / "runs/model_evaluation/onnx_crt_multibucket/accuracy" / run_id
+    result_dir = (
+        ROOT / "results/models/campplus/final_v3/onnx_crt_evaluation" / run_id
+    )
+    c_dump_dir = (
+        ROOT / "runs/models/campplus/final_v3/onnx_crt_evaluation/accuracy"
+        / run_id
+    )
     accuracy_dir = result_dir / "accuracy"
     config_document = _load(config)
     configured_binary = _path(config_document["paths"]["c_benchmark"])
@@ -367,18 +392,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
     try:
         _require_files(required)
-        capabilities = _verify_runtime_capabilities(args.binary)
-        compiled_v3_buckets = {
-            int(value) for value in capabilities["optimization_bucket_plans"]
-        }
-        expected_policies = {
-            frames: (
-                "layer_hybrid_v3"
-                if frames in compiled_v3_buckets
-                else "v2_fallback"
-            )
-            for frames in buckets
-        }
+        capabilities, compiled_v3_buckets = _verify_runtime_capabilities(
+            args.binary, buckets
+        )
+        expected_policies = {frames: "layer_hybrid_v3" for frames in buckets}
         preflight_command = [
             sys.executable,
             str(ROOT / "scripts/3_runtime/09_benchmark_runtime.py"),

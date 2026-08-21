@@ -17,7 +17,8 @@ DEFAULT_SOURCE = (
     / "conv_layer_hybrid_plan.c"
 )
 DEFAULT_MANIFEST = (
-    ROOT / "results/profiling/conv_layer_hybrid_multibucket.json"
+    ROOT / "results/models/campplus/final_v3/layer_selection/"
+    "multibucket_manifest.json"
 )
 QCONV_MODES = {"mac_fixed", "v4", "v5"}
 FUSED_MODES = {"combined_fixed", "combined_hybrid", "combined_v5"}
@@ -129,11 +130,20 @@ def load_bucket_plan(bucket: int, path: Path) -> dict[str, Any]:
     fused = _selected_ids(
         _family(document, "fused_quant_qconv"), FUSED_MODES, bucket
     )
+    artifacts = document.get("artifacts")
+    plan_sha256 = (
+        artifacts.get("plan_sha256") if isinstance(artifacts, dict) else None
+    )
+    if not isinstance(plan_sha256, str) or not plan_sha256:
+        raise MultibucketPlanError(
+            f"bucket {bucket} plan has no verified execution-plan SHA-256"
+        )
     return {
         "bucket_frames": bucket,
         "path": path,
         "qconv": qconv,
         "fused": fused,
+        "plan_sha256": plan_sha256,
     }
 
 
@@ -334,6 +344,7 @@ def build_manifest(plans: Sequence[dict[str, Any]], source: Path) -> dict[str, A
         rows.append({
             "bucket_frames": int(plan["bucket_frames"]),
             "measured_plan": _display_path(plan["path"]),
+            "execution_plan_sha256": plan["plan_sha256"],
             "selection_counts": {
                 "qconv_mac_fixed": len(plan["qconv"]["mac_fixed"]),
                 "qconv_v4": len(plan["qconv"]["v4"]),

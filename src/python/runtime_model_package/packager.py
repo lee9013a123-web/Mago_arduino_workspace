@@ -65,6 +65,15 @@ def _tensor_contract(descriptor: Any) -> dict[str, object]:
 def _source_manifest_hash(
     manifest: Mapping[str, Any], kind: str, bucket_frames: int | None = None,
 ) -> str | None:
+    if manifest.get("strategy") == "offline_first_use_static_blob":
+        if manifest.get("bucket_frames") != bucket_frames:
+            return None
+        output = manifest.get("output")
+        if not isinstance(output, dict):
+            return None
+        key = "weights_sha256" if kind == "weights" else "plan_sha256"
+        value = output.get(key)
+        return str(value) if value is not None else None
     if kind == "weights":
         value = manifest.get("weights")
         return str(value.get("sha256")) if isinstance(value, dict) else None
@@ -75,6 +84,12 @@ def _source_manifest_hash(
                 value = item.get("sha256")
                 return str(value) if value is not None else None
     return None
+
+
+def _source_manifest_kind(manifest: Mapping[str, Any]) -> str:
+    if manifest.get("strategy") == "offline_first_use_static_blob":
+        return "bucket_static_weight_plan"
+    return "runtime_bundle"
 
 
 def build_final_98_package(
@@ -114,11 +129,24 @@ def build_final_98_package(
     plan_sha256 = sha256_file(plan_path)
     weights_sha256 = sha256_file(weights_path)
     expected_plan = _source_manifest_hash(source_manifest, "plan", 98)
-    expected_weights = _source_manifest_hash(source_manifest, "weights")
+    expected_weights = _source_manifest_hash(source_manifest, "weights", 98)
     if expected_plan != plan_sha256:
-        raise ModelPackageError("plan_98 SHA-256 differs from bundle manifest")
+        raise ModelPackageError("plan_98 SHA-256 differs from source manifest")
     if expected_weights != weights_sha256:
-        raise ModelPackageError("weights SHA-256 differs from bundle manifest")
+        raise ModelPackageError("weights SHA-256 differs from source manifest")
+
+    source_manifest_sha256 = sha256_file(source_manifest_path)
+    source_manifest_kind = _source_manifest_kind(source_manifest)
+    source_metadata = {
+        "plan_sha256": plan_sha256,
+        "weights_sha256": weights_sha256,
+        "source_manifest_sha256": source_manifest_sha256,
+        "source_manifest_kind": source_manifest_kind,
+    }
+    if source_manifest_kind == "runtime_bundle":
+        source_metadata["bundle_manifest_sha256"] = source_manifest_sha256
+    else:
+        source_metadata["weight_plan_manifest_sha256"] = source_manifest_sha256
 
     metadata = {
         "schema_version": 1,
@@ -137,11 +165,7 @@ def build_final_98_package(
         "optimization_suite": optimization_suite,
         "operator_count": len(plan.operators),
         "tensor_count": len(plan.tensors),
-        "source": {
-            "plan_sha256": plan_sha256,
-            "weights_sha256": weights_sha256,
-            "bundle_manifest_sha256": sha256_file(source_manifest_path),
-        },
+        "source": source_metadata,
     }
     frontend = {
         "schema_version": 1,
@@ -223,6 +247,8 @@ def build_final_98_package(
         "package_sha256": hashlib.sha256(package).hexdigest(),
         "plan_sha256": plan_sha256,
         "weights_sha256": weights_sha256,
+        "source_manifest_kind": source_manifest_kind,
+        "source_manifest_sha256": source_manifest_sha256,
         "optimization_suite": optimization_suite,
         "contracts": {
             "input": input_contract,

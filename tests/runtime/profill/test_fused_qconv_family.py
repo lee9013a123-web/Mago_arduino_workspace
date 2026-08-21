@@ -21,6 +21,22 @@ SPEC.loader.exec_module(FAMILY)
 
 
 class FusedQconvFamilyTests(unittest.TestCase):
+    def test_selects_final_v3_profile_name_as_fused_family(self) -> None:
+        operator = {
+            "operator_id": 10,
+            "kernel_id": 8,
+            "kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+            "operator_type": "QLINEAR_CONV",
+            "weight_shapes": [[64, 128, 1]],
+            "mean_ms": 1.0,
+            "end_to_end_share_pct": 1.0,
+        }
+        cases = FAMILY.select_family_cases({"operators": [operator]})
+        self.assertEqual(cases[0]["operator_id"], 10)
+        self.assertEqual(
+            cases[0]["kernel_name"], "fused_quant_qlinear_conv_o4i4"
+        )
+
     def test_summary_selects_fastest_candidate_that_passes_gate(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -88,6 +104,7 @@ class FusedQconvFamilyTests(unittest.TestCase):
                     "repeat": 2,
                     "graph_traversals": 1,
                 },
+                "model": {"bucket_frames": 98, "operator_count": 1},
                 "cases": [
                     {
                         "operator_id": 10,

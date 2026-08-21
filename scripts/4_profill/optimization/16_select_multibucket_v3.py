@@ -13,16 +13,40 @@ from typing import Sequence
 
 
 ROOT = Path(__file__).resolve().parents[3]
+PROFILL_DIR = ROOT / "scripts/4_profill"
+if str(PROFILL_DIR) not in sys.path:
+    sys.path.insert(0, str(PROFILL_DIR))
+
+from bucket_profile_identity import (  # noqa: E402
+    BucketProfileIdentityError,
+    validate_profile_against_plan,
+)
+
 OPTIMIZATION_DIR = ROOT / "scripts/4_profill/optimization"
+PROFILE_SCRIPT = PROFILL_DIR / "02_profile_e7.py"
 QCONV_BENCHMARK = OPTIMIZATION_DIR / "12_benchmark_qconv_family.py"
 FUSED_BENCHMARK = OPTIMIZATION_DIR / "08_benchmark_fused_qconv_family.py"
 PLAN_BUILDER = OPTIMIZATION_DIR / "13_build_conv_hybrid_plan.py"
 SOURCE_GENERATOR = OPTIMIZATION_DIR / "17_generate_multibucket_v3_source.py"
 OPTIMIZATION_BUILD = OPTIMIZATION_DIR / "01_build_optimization.sh"
 FINAL_V3_BUILD = ROOT / "scripts/4_profill/05_build_final_v3.sh"
-DEFAULT_PROFILE = ROOT / "results/profiling/e7_98/operator_profile.json"
 DEFAULT_BUNDLE = ROOT / "runs/runtime/kernel_optimization/e7/bundle"
 DEFAULT_FEATURE_DIR = ROOT / "benchmarks/campplus/features"
+DEFAULT_PROFILE_CONFIG = (
+    ROOT / "configs/benchmark/runtime_final_v3_multibucket_official.json"
+)
+DEFAULT_PROFILE_BASELINE = (
+    ROOT / "build/profill/final_v3_hybrid/campp_runtime_benchmark_final"
+)
+DEFAULT_PROFILE_BINARY = (
+    ROOT / "build/profill/final_v3_hybrid/campp_e7_profiler_final"
+)
+DEFAULT_RUNS_ROOT = ROOT / "runs/models/campplus/final_v3/layer_selection"
+DEFAULT_RESULTS_ROOT = ROOT / "results/models/campplus/final_v3/layer_selection"
+DEFAULT_FINAL_SUITE_CONFIG = (
+    "qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+"
+    "dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
+)
 DEFAULT_QCONV_BINARY = (
     ROOT / "build/profill/optimization/campp_qconv_family_bench"
 )
@@ -68,10 +92,16 @@ def _features(feature_dir: Path, bucket: int, speakers: Sequence[str]) -> list[P
     ]
 
 
-def _bucket_paths(bucket: int) -> dict[str, Path]:
-    result_root = ROOT / f"results/profiling/e7_{bucket}/optimization"
-    run_root = ROOT / f"runs/profiling/e7_{bucket}/optimization"
+def _bucket_paths(
+    bucket: int, runs_root: Path = DEFAULT_RUNS_ROOT,
+    results_root: Path = DEFAULT_RESULTS_ROOT,
+) -> dict[str, Path]:
+    result_root = results_root / str(bucket)
+    run_root = runs_root / str(bucket)
     return {
+        "profile": result_root / "operator_profile/operator_profile.json",
+        "profile_results": result_root / "operator_profile",
+        "profile_runs": run_root / "operator_profile/raw",
         "qconv_results": result_root / "qconv_family",
         "qconv_runs": run_root / "qconv_family",
         "fused_results": result_root / "fused_qconv_family",
@@ -79,6 +109,29 @@ def _bucket_paths(bucket: int) -> dict[str, Path]:
         "plan_json": result_root / "conv_hybrid_plan.json",
         "plan_csv": result_root / "conv_hybrid_plan.csv",
     }
+
+
+def _profile_command(
+    *, bucket: int, config: Path, baseline_binary: Path,
+    profiler_binary: Path, raw_dir: Path, output_dir: Path,
+    suite_config: str, force: bool,
+) -> list[str]:
+    command = [
+        sys.executable, str(PROFILE_SCRIPT),
+        "--config", str(config),
+        "--bucket-frames", str(bucket),
+        "--baseline-binary", str(baseline_binary),
+        "--profiler-binary", str(profiler_binary),
+        "--expected-suite", "final",
+        "--expected-suite-config", suite_config,
+        "--mode", "quick",
+        "--allow-unvalidated-bucket-profile",
+        "--raw-dir", str(raw_dir),
+        "--output-dir", str(output_dir),
+    ]
+    if force:
+        command.append("--force")
+    return command
 
 
 def _benchmark_command(
@@ -116,7 +169,22 @@ def _ensure_measurement_binaries(
     missing = [
         path for path in (qconv_binary, fused_binary) if not path.is_file()
     ]
-    if not rebuild and not missing:
+    stale = []
+    if not missing:
+        for path in (qconv_binary, fused_binary):
+            completed = subprocess.run(
+                [str(path), "--capabilities"], cwd=ROOT,
+                text=True, capture_output=True, check=False,
+            )
+            try:
+                capabilities = json.loads(completed.stdout)
+            except json.JSONDecodeError:
+                capabilities = {}
+            if completed.returncode != 0 or (
+                capabilities.get("bucket_support") != "plan_header"
+            ):
+                stale.append(path)
+    if not rebuild and not missing and not stale:
         print("build 재사용: family benchmark binary 2개", flush=True)
         return True
     if preflight_only:
@@ -128,7 +196,12 @@ def _ensure_measurement_binaries(
         raise MultibucketSelectionError(
             "benchmark binary build requires Linux/QRB2210"
         )
-    reason = "--rebuild" if rebuild else f"missing: {missing[0]}"
+    if rebuild:
+        reason = "--rebuild"
+    elif missing:
+        reason = f"missing: {missing[0]}"
+    else:
+        reason = f"stale bucket capability: {stale[0]}"
     print(f"optimization build 실행 ({reason})", flush=True)
     _run(["bash", str(OPTIMIZATION_BUILD)])
     return False
@@ -136,9 +209,13 @@ def _ensure_measurement_binaries(
 
 def _required_artifacts(
     buckets: Sequence[int], bundle: Path, feature_dir: Path,
-    speakers: Sequence[str], profile: Path,
+    speakers: Sequence[str], profile_config: Path,
+    profile_baseline: Path, profile_binary: Path,
+    *, include_profile_tools: bool,
 ) -> list[Path]:
-    required = [profile, bundle / "weights.bin"]
+    required = [bundle / "weights.bin"]
+    if include_profile_tools:
+        required.extend((profile_config, profile_baseline, profile_binary))
     for bucket in buckets:
         required.append(bundle / "execution_plans" / f"plan_{bucket}.bin")
         required.extend(_features(feature_dir, bucket, speakers))
@@ -147,15 +224,23 @@ def _required_artifacts(
 
 def _generate_source_command(
     buckets: Sequence[int], include_98_plan: Path, force: bool,
+    *, runs_root: Path = DEFAULT_RUNS_ROOT,
+    results_root: Path = DEFAULT_RESULTS_ROOT,
     check_only: bool = False,
 ) -> list[str]:
     command = [sys.executable, str(SOURCE_GENERATOR)]
     plan_specs = [(98, include_98_plan)] + [
-        (bucket, _bucket_paths(bucket)["plan_json"])
+        (
+            bucket,
+            _bucket_paths(bucket, runs_root, results_root)["plan_json"],
+        )
         for bucket in buckets if bucket != 98
     ]
     for bucket, path in plan_specs:
         command.extend(("--plan", f"{bucket}={path}"))
+    command.extend((
+        "--manifest", str(results_root / "multibucket_manifest.json")
+    ))
     if check_only:
         command.append("--check-only")
     elif force:
@@ -169,8 +254,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--buckets", type=int, nargs="+", default=[298, 498, 998]
     )
     parser.add_argument("--mode", choices=PROTOCOLS, default="official")
-    parser.add_argument("--profile", type=_path, default=DEFAULT_PROFILE)
     parser.add_argument("--bundle", type=_path, default=DEFAULT_BUNDLE)
+    parser.add_argument(
+        "--runs-root", type=_path, default=DEFAULT_RUNS_ROOT
+    )
+    parser.add_argument(
+        "--results-root", type=_path, default=DEFAULT_RESULTS_ROOT
+    )
+    parser.add_argument(
+        "--profile-config", type=_path, default=DEFAULT_PROFILE_CONFIG
+    )
+    parser.add_argument(
+        "--profile-baseline-binary", type=_path,
+        default=DEFAULT_PROFILE_BASELINE,
+    )
+    parser.add_argument(
+        "--profile-binary", type=_path, default=DEFAULT_PROFILE_BINARY
+    )
+    parser.add_argument(
+        "--expected-suite-config", default=DEFAULT_FINAL_SUITE_CONFIG
+    )
     parser.add_argument(
         "--feature-dir", type=_path, default=DEFAULT_FEATURE_DIR
     )
@@ -194,6 +297,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--plan-only", action="store_true",
         help="existing family results에서 plan/source만 다시 생성한다",
     )
+    parser.add_argument(
+        "--profiles-only", action="store_true",
+        help="bucket별 operator profile 생성·identity 검증 후 중지한다",
+    )
+    parser.add_argument(
+        "--reprofile", action="store_true",
+        help="기존 bucket operator profile을 다시 측정한다",
+    )
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--rebuild", action="store_true")
     parser.add_argument("--build-final", action="store_true")
@@ -210,11 +321,32 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise MultibucketSelectionError("min-margin-pct must be non-negative")
         if not args.speakers:
             raise MultibucketSelectionError("at least one speaker is required")
+        if args.plan_only and args.profiles_only:
+            raise MultibucketSelectionError(
+                "--plan-only and --profiles-only are mutually exclusive"
+            )
         protocol = PROTOCOLS[args.mode]
+        bucket_paths = {
+            bucket: _bucket_paths(
+                bucket, args.runs_root, args.results_root
+            )
+            for bucket in buckets
+        }
+        needs_profile_run = args.reprofile or any(
+            not paths["profile"].is_file()
+            for paths in bucket_paths.values()
+        )
+        required = [args.plan_98, args.bundle / "weights.bin"]
+        for bucket in buckets:
+            required.append(
+                args.bundle / "execution_plans" / f"plan_{bucket}.bin"
+            )
         if args.plan_only:
-            required = [args.plan_98]
             for bucket in buckets:
-                paths = _bucket_paths(bucket)
+                paths = _bucket_paths(
+                    bucket, args.runs_root, args.results_root
+                )
+                required.append(paths["profile"])
                 for result_dir, modes in (
                     (
                         paths["qconv_results"],
@@ -230,11 +362,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                         for mode in modes
                     )
         else:
-            required = _required_artifacts(
+            required.extend(_required_artifacts(
                 buckets, args.bundle, args.feature_dir,
-                args.speakers, args.profile
-            )
-            required.append(args.plan_98)
+                args.speakers, args.profile_config,
+                args.profile_baseline_binary, args.profile_binary,
+                include_profile_tools=needs_profile_run,
+            ))
+        required = list(dict.fromkeys(required))
         missing = [path for path in required if not path.is_file()]
         if missing:
             raise MultibucketSelectionError(
@@ -242,7 +376,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 + "\n  ".join(str(path) for path in missing)
             )
         build_reused = True
-        if not args.plan_only:
+        if not args.plan_only and not args.profiles_only:
             build_reused = _ensure_measurement_binaries(
                 args.qconv_binary, args.fused_binary, args.rebuild,
                 args.preflight_only,
@@ -257,11 +391,51 @@ def main(argv: Sequence[str] | None = None) -> int:
             "baseline_check_only": True,
             "min_margin_pct": args.min_margin_pct,
             "build_reused": build_reused,
+            "profile_source": "bucket-specific exact execution plan",
+            "runs_root": _display_path(args.runs_root),
+            "results_root": _display_path(args.results_root),
         }, ensure_ascii=False, indent=2), flush=True)
+
+        profile_identity: dict[int, dict[str, object]] = {}
+        for bucket in buckets:
+            paths = _bucket_paths(
+                bucket, args.runs_root, args.results_root
+            )
+            plan = args.bundle / "execution_plans" / f"plan_{bucket}.bin"
+            if args.reprofile or not paths["profile"].is_file():
+                if args.preflight_only or args.plan_only:
+                    raise MultibucketSelectionError(
+                        f"bucket {bucket} profile is missing or requires "
+                        "--reprofile; run --profiles-only first"
+                    )
+                _run(_profile_command(
+                    bucket=bucket,
+                    config=args.profile_config,
+                    baseline_binary=args.profile_baseline_binary,
+                    profiler_binary=args.profile_binary,
+                    raw_dir=paths["profile_runs"],
+                    output_dir=paths["profile_results"],
+                    suite_config=args.expected_suite_config,
+                    force=args.reprofile,
+                ))
+            profile_identity[bucket] = validate_profile_against_plan(
+                paths["profile"], plan, bucket
+            )
+            print(
+                f"profile identity PASS: bucket={bucket} "
+                f"operators={profile_identity[bucket]['operator_count']}",
+                flush=True,
+            )
+
+        if args.profiles_only:
+            print("multibucket operator profiles: complete")
+            return 0
 
         if not args.plan_only:
             for bucket in buckets:
-                paths = _bucket_paths(bucket)
+                paths = _bucket_paths(
+                    bucket, args.runs_root, args.results_root
+                )
                 plan = (
                     args.bundle / "execution_plans" / f"plan_{bucket}.bin"
                 )
@@ -271,7 +445,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
                 common = {
                     "bucket": bucket,
-                    "profile": args.profile,
+                    "profile": paths["profile"],
                     "plan": plan,
                     "weights": weights,
                     "features": features,
@@ -304,7 +478,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
 
         for bucket in buckets:
-            paths = _bucket_paths(bucket)
+            paths = _bucket_paths(
+                bucket, args.runs_root, args.results_root
+            )
             command = [
                 sys.executable, str(PLAN_BUILDER),
                 "--bucket-frames", str(bucket),
@@ -322,7 +498,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         # measured family gates and per-bucket plan builds succeeded, so update
         # it even on the first non-force pipeline run.
         _run(_generate_source_command(
-            buckets, args.plan_98, force=True
+            buckets, args.plan_98, force=True,
+            runs_root=args.runs_root,
+            results_root=args.results_root,
         ))
         if args.build_final:
             if os.name != "posix":
@@ -332,7 +510,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             _run(["bash", str(FINAL_V3_BUILD)])
         print("multibucket V3 layer selection: complete")
         return 0
-    except (MultibucketSelectionError, OSError, ValueError) as exc:
+    except (
+        MultibucketSelectionError, BucketProfileIdentityError,
+        OSError, ValueError,
+    ) as exc:
         print(f"multibucket V3 selection failed: {exc}", file=sys.stderr)
         return 1
 

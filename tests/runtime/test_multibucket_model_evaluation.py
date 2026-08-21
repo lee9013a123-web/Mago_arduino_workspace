@@ -34,6 +34,22 @@ def _aggregate(runtime: str, policy: str | None = None) -> dict:
 
 
 class MultibucketModelEvaluationTests(unittest.TestCase):
+    def test_full_v3_gate_rejects_missing_bucket_plan(self) -> None:
+        capabilities = {"optimization_bucket_plans": [98, 298, 498]}
+
+        with self.assertRaises(MODULE.EvaluationError):
+            MODULE.require_compiled_v3_buckets(
+                capabilities, [98, 298, 498, 998]
+            )
+
+    def test_full_v3_gate_accepts_all_bucket_plans(self) -> None:
+        compiled = MODULE.require_compiled_v3_buckets(
+            {"optimization_bucket_plans": [98, 298, 498, 998]},
+            [98, 298, 498, 998],
+        )
+
+        self.assertEqual(compiled, {98, 298, 498, 998})
+
     def test_matrix_requires_v3_policy_for_98(self) -> None:
         accuracy = [
             {

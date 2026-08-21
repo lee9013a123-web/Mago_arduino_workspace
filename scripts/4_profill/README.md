@@ -639,9 +639,16 @@ combined_fixed 5`로 dispatch한다. 측정된 V3 plan이 없는 bucket만 V2 �
 bitwise-valid 후보 중 incumbent보다 1% 이상 빠른 mode만 선택한다. baseline은
 output hash 확인용 1회만 실행하므로 후보 측정 시간을 지배하지 않는다.
 
+operator ID는 bucket마다 다르므로 먼저 각 `plan_<bucket>.bin`으로 해당 bucket의
+operator profile을 만든다. profile과 plan의 SHA-256 및 전체 operator의
+ID/opcode/kernel/Tensor/weight shape가 일치해야 family 측정을 시작한다.
+
 ```bash
 python3 scripts/4_profill/optimization/16_select_multibucket_v3.py \
-  --buckets 298 498 998 --mode quick --preflight-only
+  --buckets 298 498 998 --profiles-only
+
+python3 scripts/4_profill/optimization/16_select_multibucket_v3.py \
+  --buckets 298 498 998 --mode official --preflight-only
 
 python3 scripts/4_profill/optimization/16_select_multibucket_v3.py \
   --buckets 298 498 998 --mode official --build-final
@@ -656,10 +663,12 @@ family benchmark binary 2개가 이미 있으면 optimization build는 재사용
 산출물은 bucket별로 아래에 생성된다.
 
 ```text
-results/profiling/e7_<bucket>/optimization/qconv_family/
-results/profiling/e7_<bucket>/optimization/fused_qconv_family/
-results/profiling/e7_<bucket>/optimization/conv_hybrid_plan.json
-results/profiling/e7_<bucket>/optimization/conv_hybrid_plan.csv
+runs/models/campplus/final_v3/layer_selection/<bucket>/
+results/models/campplus/final_v3/layer_selection/<bucket>/operator_profile/
+results/models/campplus/final_v3/layer_selection/<bucket>/qconv_family/
+results/models/campplus/final_v3/layer_selection/<bucket>/fused_qconv_family/
+results/models/campplus/final_v3/layer_selection/<bucket>/conv_hybrid_plan.json
+results/models/campplus/final_v3/layer_selection/<bucket>/conv_hybrid_plan.csv
 ```
 
 `17_generate_multibucket_v3_source.py`는 98과 추가 bucket plan을 다시 검증한 뒤

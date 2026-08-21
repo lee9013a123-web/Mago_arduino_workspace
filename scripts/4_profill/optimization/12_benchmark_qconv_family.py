@@ -23,12 +23,20 @@ if str(PROFILL_SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(PROFILL_SCRIPT_DIR))
 
 from profile_statistics import summarize_ns  # noqa: E402
+from bucket_profile_identity import (  # noqa: E402
+    BucketProfileIdentityError,
+    validate_profile_against_plan,
+)
 
 
 DIAGNOSIS_PATH = Path(__file__).with_name("02_diagnose_top4.py")
 COMPARE = Path(__file__).with_name("03_compare_candidate.py")
 SUPPORTED_MODES = ("baseline", "mac_fixed", "v4", "v5")
 DEFAULT_MODES = ("baseline", "mac_fixed", "v4", "v5")
+ORDINARY_PROFILE_KERNELS = {
+    "qlinear_conv_o4i4_neon",
+    "qlinear_conv_o4i4_layer_hybrid_v3",
+}
 
 SPEC = importlib.util.spec_from_file_location("diagnose_top4", DIAGNOSIS_PATH)
 if SPEC is None or SPEC.loader is None:
@@ -64,7 +72,8 @@ def select_qconv_family_cases(profile: dict[str, Any]) -> list[dict[str, Any]]:
         raise QconvFamilyError("profile operator list is missing")
     selected = [
         operator for operator in operators
-        if operator.get("kernel_name") == "qlinear_conv_o4i4_neon"
+        if operator.get("operator_type") == "QLINEAR_CONV"
+        and operator.get("kernel_name") in ORDINARY_PROFILE_KERNELS
     ]
     if not selected:
         raise QconvFamilyError("profile is missing ordinary QLinearConv ops")
@@ -74,7 +83,8 @@ def select_qconv_family_cases(profile: dict[str, Any]) -> list[dict[str, Any]]:
             "case_name": f"qconv_op_{int(operator['operator_id'])}",
             "operator_id": int(operator["operator_id"]),
             "kernel_id": int(operator["kernel_id"]),
-            "kernel_name": str(operator["kernel_name"]),
+            "kernel_name": "qlinear_conv_o4i4_neon",
+            "profile_kernel_name": str(operator["kernel_name"]),
             "operator_type": str(operator["operator_type"]),
             "weight_shape": list(DIAGNOSIS._meaningful_weight_shape(operator)),
             "profile_mean_ms": float(operator["mean_ms"]),
@@ -140,6 +150,8 @@ def _mode_map(case: dict[str, Any]) -> dict[str, dict[str, Any]]:
 def validate_batch_payload(
     payload: dict[str, Any], cases: Sequence[dict[str, Any]],
     modes: Sequence[str], repeat: int, baseline_check_only: bool = False,
+    bucket_frames: int = 98,
+    expected_operator_count: int | None = None,
 ) -> None:
     if payload.get("mode") != "qconv_family_batch":
         raise QconvFamilyError("unexpected batch benchmark mode")
@@ -153,6 +165,15 @@ def validate_batch_payload(
         or bool(configuration.get("baseline_check_only")) != baseline_check_only
     ):
         raise QconvFamilyError("batch benchmark configuration mismatch")
+    model = payload.get("model")
+    if not isinstance(model, dict) or (
+        model.get("bucket_frames") != bucket_frames
+    ):
+        raise QconvFamilyError("batch benchmark model bucket mismatch")
+    if expected_operator_count is not None and (
+        model.get("operator_count") != expected_operator_count
+    ):
+        raise QconvFamilyError("batch benchmark model operator count mismatch")
     raw_cases = payload.get("cases")
     if not isinstance(raw_cases, list):
         raise QconvFamilyError("batch benchmark cases are missing")
@@ -227,7 +248,7 @@ def build_mode_documents(
     cases: Sequence[dict[str, Any]],
     input_payloads: Sequence[tuple[Path, dict[str, Any]]],
     modes: Sequence[str], *, warmup: int, repeat: int,
-    elapsed_seconds: float, artifacts: dict[str, str],
+    elapsed_seconds: float, artifacts: dict[str, Any],
     bucket_frames: int = 98,
 ) -> dict[str, dict[str, Any]]:
     """Convert batch payloads to the existing comparison-compatible schema."""
@@ -495,7 +516,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         if not args.profile.is_file():
             raise QconvFamilyError(f"profile not found: {args.profile}")
         profile = json.loads(args.profile.read_text(encoding="utf-8"))
-        cases = select_qconv_family_cases(profile)
         plan = args.plan or DIAGNOSIS._resolve_profile_artifact(profile, "plan")
         weights = args.weights or DIAGNOSIS._resolve_profile_artifact(profile, "weights")
         required = [args.binary, plan, weights, *args.features]
@@ -505,6 +525,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "required files are missing:\n  "
                 + "\n  ".join(str(path) for path in missing)
             )
+        identity = validate_profile_against_plan(
+            args.profile, plan, args.bucket_frames
+        )
+        cases = select_qconv_family_cases(profile)
         expected_feature_bytes = args.bucket_frames * 80 * 4
         if not args.features or any(
             path.stat().st_size != expected_feature_bytes
@@ -517,6 +541,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         capabilities = _run_payload([str(args.binary), "--capabilities"])
         if capabilities.get("batch_graph_traversal") is not True:
             raise QconvFamilyError("binary does not support batch traversal")
+        if capabilities.get("bucket_support") != "plan_header":
+            raise QconvFamilyError(
+                "family binary is stale: bucket_support is not plan_header"
+            )
         available = capabilities.get("qconv_candidates", [])
         if any(mode not in available for mode in modes):
             raise QconvFamilyError("binary does not expose requested QConv modes")
@@ -530,6 +558,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "weights": _display_path(weights),
                 "features": [_display_path(path) for path in args.features],
                 "graph_traversals": len(args.features),
+                "profile_plan_identity": identity,
             }, ensure_ascii=False, indent=2))
             return 0
         if os.name != "posix":
@@ -573,6 +602,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             validate_batch_payload(
                 payload, cases, modes, args.repeat,
                 baseline_check_only=args.baseline_check_only,
+                bucket_frames=args.bucket_frames,
+                expected_operator_count=int(identity["operator_count"]),
             )
             input_payloads.append((feature, payload))
             (raw_dir / f"{feature.stem}.json").write_text(
@@ -590,6 +621,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "plan": _display_path(plan),
             "weights": _display_path(weights),
             "raw_dir": _display_path(raw_dir),
+            "profile_plan_identity": identity,
         }
         documents = build_mode_documents(
             cases, input_payloads, modes,
@@ -619,7 +651,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             f"{_display_path(args.results_dir / 'summary.json')}"
         )
         return 0 if summary["production_gate_ready"] else 3
-    except (QconvFamilyError, OSError, ValueError, KeyError) as exc:
+    except (
+        QconvFamilyError, BucketProfileIdentityError,
+        OSError, ValueError, KeyError,
+    ) as exc:
         print(f"qconv family benchmark failed: {exc}", file=sys.stderr)
         return 1
 

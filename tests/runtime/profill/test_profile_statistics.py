@@ -73,6 +73,20 @@ class ProfileStatisticsTests(unittest.TestCase):
         self.assertEqual(protocol["baseline_repeat"], 5)
         self.assertFalse(protocol["official"])
 
+    def test_quick_profile_selects_one_bucket_from_multibucket_config(self) -> None:
+        config = SimpleNamespace(
+            buckets={98: 1.0, 298: 3.0, 498: 5.0, 998: 10.0},
+            input_ids=PROFILE.EXPECTED_INPUT_IDS,
+            threads=1,
+            warmup=20,
+            repeat=100,
+            environment=SimpleNamespace(affinity=(0,)),
+        )
+        protocol = PROFILE._resolve_protocol(config, "quick", 998)
+        self.assertEqual(protocol["repeat"], 20)
+        with self.assertRaises(PROFILE.ProfileError):
+            PROFILE._resolve_protocol(config, "quick", 198)
+
     def test_overhead_compares_means_when_repeat_counts_differ(self) -> None:
         overhead = PROFILE._overhead_document(
             [

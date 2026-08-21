@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""E7 Bucket 98의 kernel exclusive time을 측정하고 Top 80%를 산출한다."""
+"""Profile one compiled E7 frame bucket and build its operator identity map."""
 
 from __future__ import annotations
 
@@ -85,9 +85,11 @@ def _require_file(path: Path, name: str) -> None:
         raise ProfileError(f"{name} not found: {path}")
 
 
-def _resolve_protocol(config: Any, mode: str) -> dict[str, Any]:
+def _resolve_protocol(
+    config: Any, mode: str, bucket_frames: int = EXPECTED_BUCKET,
+) -> dict[str, Any]:
     mismatches: list[str] = []
-    if config.buckets != {EXPECTED_BUCKET: 1.0}:
+    if bucket_frames not in config.buckets:
         mismatches.append(f"buckets={config.buckets!r}")
     if tuple(config.input_ids) != EXPECTED_INPUT_IDS:
         mismatches.append(f"input_ids={tuple(config.input_ids)!r}")
@@ -120,11 +122,27 @@ def _resolve_protocol(config: Any, mode: str) -> dict[str, Any]:
     }
 
 
-def _load_e7_evidence(path: Path) -> dict[str, Any]:
+def _load_e7_evidence(
+    path: Path, bucket_frames: int, *, allow_unvalidated_bucket: bool,
+) -> dict[str, Any]:
     _require_file(path, "E7 validation evidence")
     document = json.loads(path.read_text(encoding="utf-8"))
-    if document.get("bucket_frames") != EXPECTED_BUCKET:
-        raise ProfileError("E7 validation evidence is not for bucket 98")
+    if document.get("bucket_frames") != bucket_frames:
+        if not allow_unvalidated_bucket:
+            raise ProfileError(
+                f"validation evidence is not for bucket {bucket_frames}"
+            )
+        return {
+            "path": _display_path(path),
+            "sha256": BENCHMARK.sha256_file(path),
+            "bucket_frames": bucket_frames,
+            "all_bitwise_identical": None,
+            "applicable": False,
+            "purpose": "operator identity profile for layer selection",
+            "next_gate": (
+                "family candidate bitwise validation, then ORT embedding cosine"
+            ),
+        }
     if document.get("all_bitwise_identical") is not True:
         raise ProfileError("E7 validation evidence is not bitwise-identical")
     return {
@@ -132,11 +150,14 @@ def _load_e7_evidence(path: Path) -> dict[str, Any]:
         "sha256": BENCHMARK.sha256_file(path),
         "bucket_frames": document["bucket_frames"],
         "all_bitwise_identical": True,
+        "applicable": True,
         "evaluation_features": document.get("evaluation_features", []),
     }
 
 
-def _selected_features(config: Any) -> tuple[list[Any], dict[str, Any]]:
+def _selected_features(
+    config: Any, bucket_frames: int,
+) -> tuple[list[Any], dict[str, Any]]:
     selected = BENCHMARK.selected_dataset_inputs(config.paths.dataset_manifest)
     requested = set(config.input_ids)
     selected = {
@@ -153,10 +174,15 @@ def _selected_features(config: Any) -> tuple[list[Any], dict[str, Any]]:
     filtered = [
         feature
         for feature in all_features
-        if feature.bucket_frames == EXPECTED_BUCKET
+        if feature.bucket_frames == bucket_frames
         and feature.input_id in requested
     ]
-    features = BENCHMARK.validate_features(config, selected, filtered)
+    bucket_config = BENCHMARK.replace(
+        config, buckets={bucket_frames: config.buckets[bucket_frames]}
+    )
+    features = BENCHMARK.validate_features(
+        bucket_config, selected, filtered
+    )
     if tuple(feature.input_id for feature in features) != EXPECTED_INPUT_IDS:
         raise ProfileError("validated feature order or membership is not fixed")
     source_wavs = (
@@ -208,6 +234,7 @@ def _profile_command(
 def _validate_profiler_payload(
     payload: dict[str, Any], plan: LoadedPlan, repeat: int,
     expected_suite: str, expected_suite_config: str | None = None,
+    expected_bucket: int = EXPECTED_BUCKET,
 ) -> None:
     if payload.get("optimization_suite") != expected_suite:
         raise ProfileError(
@@ -232,8 +259,10 @@ def _validate_profiler_payload(
     if configuration.get("repeat") != repeat:
         raise ProfileError("profiler repeat does not match the experiment")
     model = payload.get("model")
-    if not isinstance(model, dict) or model.get("bucket_frames") != EXPECTED_BUCKET:
-        raise ProfileError("profiler model bucket is not 98")
+    if not isinstance(model, dict) or model.get("bucket_frames") != expected_bucket:
+        raise ProfileError(
+            f"profiler model bucket is not {expected_bucket}"
+        )
     if model.get("operator_count") != len(plan.operators):
         raise ProfileError("profiler operator count does not match the plan")
     end_to_end = payload.get("end_to_end_ns")
@@ -299,7 +328,7 @@ def _tensor_record(descriptor: Any) -> dict[str, Any]:
 def _fusion_index(document: dict[str, Any]) -> dict[int, dict[str, Any]]:
     entries = document.get("fusions")
     if not isinstance(entries, list):
-        raise ProfileError("fusion_98.json does not contain fusions")
+        raise ProfileError("fusion plan does not contain fusions")
     result: dict[int, dict[str, Any]] = {}
     for entry in entries:
         if not isinstance(entry, dict) or not isinstance(
@@ -419,6 +448,7 @@ def _overhead_document(
 
 def _estimated_minutes(
     protocol: dict[str, Any], input_count: int, expected_suite: str = "stock",
+    bucket_frames: int = EXPECTED_BUCKET,
 ) -> float:
     """suite별 QRB2210 E7 baseline으로 Quick/Official 시간을 예측한다."""
 
@@ -431,6 +461,7 @@ def _estimated_minutes(
         if expected_suite == "final"
         else STOCK_E7_INFERENCE_SECONDS
     )
+    inference_seconds *= bucket_frames / EXPECTED_BUCKET
     return inference_count * inference_seconds / 60.0
 
 
@@ -669,6 +700,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         default=ROOT / "configs" / "benchmark" / "runtime_e7_98.json",
     )
     parser.add_argument(
+        "--bucket-frames", type=int, default=EXPECTED_BUCKET,
+        help="single execution-plan bucket to profile",
+    )
+    parser.add_argument(
         "--baseline-binary",
         type=Path,
         default=ROOT / "build" / "profill" / "campp_runtime_benchmark",
@@ -700,6 +735,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--allow-environment-mismatch", action="store_true")
     parser.add_argument(
+        "--allow-unvalidated-bucket-profile", action="store_true",
+        help=(
+            "allow an identity/timing profile before bucket accuracy evidence; "
+            "candidate bitwise and ORT cosine gates remain mandatory"
+        ),
+    )
+    parser.add_argument(
         "--mode",
         choices=("quick", "official"),
         default="quick",
@@ -710,8 +752,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     try:
+        if args.bucket_frames <= 0:
+            raise ProfileError("bucket-frames must be positive")
         config = BENCHMARK.load_config(args.config, repository_root=ROOT)
-        protocol = _resolve_protocol(config, args.mode)
+        protocol = _resolve_protocol(config, args.mode, args.bucket_frames)
         baseline_binary = BENCHMARK.executable_path(args.baseline_binary)
         profiler_binary = BENCHMARK.executable_path(args.profiler_binary)
         _require_file(baseline_binary, "baseline binary")
@@ -719,13 +763,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         plan_path = (
             config.paths.arena_bundle
             / "execution_plans"
-            / f"plan_{EXPECTED_BUCKET}.bin"
+            / f"plan_{args.bucket_frames}.bin"
         )
         weights_path = config.paths.arena_bundle / "weights.bin"
         fusion_path = (
             config.paths.arena_bundle
             / "fusion_plans"
-            / f"fusion_{EXPECTED_BUCKET}.json"
+            / f"fusion_{args.bucket_frames}.json"
         )
         for path, name in (
             (plan_path, "E7 plan"),
@@ -734,13 +778,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         ):
             _require_file(path, name)
         plan = read_execution_plan(plan_path)
-        if plan.header.bucket_frames != EXPECTED_BUCKET:
-            raise ProfileError("execution plan bucket is not 98")
+        if plan.header.bucket_frames != args.bucket_frames:
+            raise ProfileError(
+                f"execution plan bucket is not {args.bucket_frames}"
+            )
         fusion_document = json.loads(fusion_path.read_text(encoding="utf-8"))
-        if fusion_document.get("bucket_frames") != EXPECTED_BUCKET:
-            raise ProfileError("fusion plan bucket is not 98")
-        evidence = _load_e7_evidence(config.paths.verification_result)
-        features, dataset = _selected_features(config)
+        if fusion_document.get("bucket_frames") != args.bucket_frames:
+            raise ProfileError(
+                f"fusion plan bucket is not {args.bucket_frames}"
+            )
+        evidence = _load_e7_evidence(
+            config.paths.verification_result,
+            args.bucket_frames,
+            allow_unvalidated_bucket=args.allow_unvalidated_bucket_profile,
+        )
+        features, dataset = _selected_features(config, args.bucket_frames)
         environment_before, environment_mismatches = (
             BENCHMARK.apply_and_validate_environment(
                 config.environment,
@@ -797,6 +849,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     if args.preflight_only:
         print("E7 profiling preflight: PASS")
+        print(f"  bucket: {args.bucket_frames}")
         print(f"  operators: {len(plan.operators)}")
         print(f"  inputs: {len(features)}")
         print(
@@ -824,7 +877,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.raw_dir.mkdir(parents=True, exist_ok=True)
         args.output_dir.mkdir(parents=True, exist_ok=True)
         estimated_minutes = _estimated_minutes(
-            protocol, len(features), args.expected_suite
+            protocol, len(features), args.expected_suite,
+            bucket_frames=args.bucket_frames,
         )
         print(f"예상 시간: 약 {estimated_minutes:.0f}분")
         print("진행 중", flush=True)
@@ -885,6 +939,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             _validate_profiler_payload(
                 profile_payload, plan, protocol["repeat"],
                 args.expected_suite, args.expected_suite_config,
+                expected_bucket=args.bucket_frames,
             )
             if baseline_payload.get("optimization_suite") != args.expected_suite:
                 raise ProfileError(
@@ -999,7 +1054,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "config": _display_path(config.source),
             "protocol_mode": protocol["mode"],
             "official_protocol": protocol["official"],
-            "bucket_frames": EXPECTED_BUCKET,
+            "bucket_frames": args.bucket_frames,
             "threads": config.threads,
             "cpu_affinity": list(config.environment.affinity),
             "warmup": protocol["warmup"],
@@ -1064,13 +1119,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             },
             "validity": {
                 "e7_bitwise_validated": evidence["all_bitwise_identical"],
+                "operator_identity_profile": not evidence["applicable"],
                 "official_protocol": protocol["official"],
                 "operator_count": len(operators),
                 "all_call_counts_valid": all_call_counts_valid,
                 "profiling_overhead_below_1pct": overhead["passes"],
                 "environment_matched": not environment_mismatches,
+                "operator_identity_valid": (
+                    all_call_counts_valid and not environment_mismatches
+                ),
                 "profile_valid": (
-                    evidence["all_bitwise_identical"]
+                    (
+                        evidence["all_bitwise_identical"] is True
+                        or args.allow_unvalidated_bucket_profile
+                    )
                     and all_call_counts_valid
                     and overhead["passes"]
                     and not environment_mismatches
