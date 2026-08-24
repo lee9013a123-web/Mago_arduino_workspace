@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "label": "O2-reference",
+  "generated_at_utc": "2026-08-13T03:24:55.916231+00:00",
+  "measurement_scope": "추론 루프만. WAV 읽기·FBank·model load·context create 제외.",
+  "configuration": {
+    "bucket_frames": 98,
+    "audio_seconds": 1.0,
+    "inputs": 3,
+    "warmup": 1,
+    "repeat": 3,
+    "threads": 1,
+    "pinned_cpu": 0,
+    "bundle": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle",
+    "feature_manifest": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/manifests/runtime_features.json"
+  },
+  "environment": {
+    "device_tree_model": "Arduino UnoQ",
+    "kernel": "7.0.0-g122c2c22d838",
+    "machine": "aarch64",
+    "logical_cpu_count": 4,
+    "pinned_cpu": 0,
+    "cpu_governors": [
+      "schedutil"
+    ],
+    "max_thermal_zone_c": 38.4,
+    "git_commit": "56f5fc661293b2cde3aaa7a2254cf536589241bf",
+    "git_dirty": true,
+    "compiler": "14.2.0",
+    "build": {
+      "cc": "gcc",
+      "cflags": "-std=c11 -O2 -Wall -Wextra"
+    }
+  },
+  "overall": {
+    "samples": 9,
+    "latency_ms": {
+      "min": 39083.1338,
+      "mean": 39147.99211111111,
+      "p50": 39146.1387,
+      "max": 39283.9954
+    },
+    "rtf": {
+      "min": 39.083133800000006,
+      "mean": 39.14799211111111,
+      "p50": 39.1461387,
+      "max": 39.2839954
+    },
+    "spread_pct": 0.5139342229511712
+  },
+  "per_input": [
+    {
+      "input_id": "multi__speaker_0000",
+      "audio_seconds": 1.0,
+      "timings_ms": [
+        39141.5354,
+        39146.1387,
+        39149.6281
+      ],
+      "samples": 3,
+      "latency_ms": {
+        "min": 39141.5354,
+        "mean": 39145.767400000004,
+        "p50": 39146.1387,
+        "max": 39149.6281
+      },
+      "rtf": {
+        "min": 39.1415354,
+        "mean": 39.145767400000004,
+        "p50": 39.1461387,
+        "max": 39.1496281
+      },
+      "spread_pct": 0.02067547917397502,
+      "lifecycle_ms": {
+        "model_load_ms": 33.817657,
+        "context_create_ms": 12.501303,
+        "input_load_ms": 0.151615,
+        "first_inference_ms": 39180.4681,
+        "process_elapsed_ms": 156665.636
+      },
+      "peak_rss_bytes": 12218368,
+      "arena_bytes": 2007040
+    },
+    {
+      "input_id": "multi__speaker_0005",
+      "audio_seconds": 1.0,
+      "timings_ms": [
+        39105.9768,
+        39098.0834,
+        39157.1589
+      ],
+      "samples": 3,
+      "latency_ms": {
+        "min": 39098.0834,
+        "mean": 39120.40636666667,
+        "p50": 39105.9768,
+        "max": 39157.1589
+      },
+      "rtf": {
+        "min": 39.0980834,
+        "mean": 39.120406366666664,
+        "p50": 39.10597679999999,
+        "max": 39.1571589
+      },
+      "spread_pct": 0.15109564168559478,
+      "lifecycle_ms": {
+        "model_load_ms": 53.981146,
+        "context_create_ms": 14.70349,
+        "input_load_ms": 4.256927,
+        "first_inference_ms": 39138.5299,
+        "process_elapsed_ms": 156574.51
+      },
+      "peak_rss_bytes": 12226560,
+      "arena_bytes": 2007040
+    },
+    {
+      "input_id": "multi__speaker_0006",
+      "audio_seconds": 1.0,
+      "timings_ms": [
+        39283.9954,
+        39083.1338,
+        39166.2785
+      ],
+      "samples": 3,
+      "latency_ms": {
+        "min": 39083.1338,
+        "mean": 39177.80256666667,
+        "p50": 39166.2785,
+        "max": 39283.9954
+      },
+      "rtf": {
+        "min": 39.083133800000006,
+        "mean": 39.177802566666664,
+        "p50": 39.1662785,
+        "max": 39.2839954
+      },
+      "spread_pct": 0.5139342229511712,
+      "lifecycle_ms": {
+        "model_load_ms": 60.122917,
+        "context_create_ms": 16.226303,
+        "input_load_ms": 5.1025,
+        "first_inference_ms": 39144.9641,
+        "process_elapsed_ms": 156761.153
+      },
+      "peak_rss_bytes": 12226560,
+      "arena_bytes": 2007040
+    }
+  ],
+  "note": "동일 커밋을 -O2로 빌드한 참고 측정. 정식 baseline은 -O3 -DNDEBUG."
+}

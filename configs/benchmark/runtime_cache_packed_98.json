@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "profile": "qrb2210-cache-packed-98-fixed-inputs",
+  "buckets": {
+    "98": 1.0
+  },
+  "input_ids": [
+    "multi__speaker_0000",
+    "multi__speaker_0005",
+    "multi__speaker_0006"
+  ],
+  "threads": 1,
+  "warmup": 20,
+  "repeat": 100,
+  "cold_runs": 10,
+  "cv_threshold_pct": 3.0,
+  "verify_source_wavs": true,
+  "require_all_latency_inputs": true,
+  "paths": {
+    "workspace_root": "runs/runtime/benchmarks",
+    "canonical_model": "models/source/campplus_int8_static_qop.onnx",
+    "arena_bundle": "runs/runtime/kernel_optimization/cache_packed/bundle",
+    "feature_manifest": "benchmarks/campplus/manifests/runtime_features.json",
+    "dataset_manifest": "benchmarks/campplus/manifests/runtime_inputs.tsv",
+    "data_root": "/home/arduino/workspace/data",
+    "c_benchmark": "build/campp_runtime_benchmark",
+    "ort_benchmark": "scripts/1_benchmark/benchmark_onnx.py",
+    "graph_dir": "results/graph",
+    "verification_result": "results/runtime/cache_layout/cache_packed_validation.json",
+    "tensor_arena_result": "results/runtime/cache_layout/cache_packed_validation.json"
+  },
+  "environment": {
+    "affinity": [0],
+    "required_governor": "schedutil",
+    "required_device_model_substring": "Arduino UnoQ",
+    "maximum_start_temperature_c": 75.0
+  }
+}

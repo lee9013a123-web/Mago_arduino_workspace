@@ -1,0 +1,1560 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T08:12:55.322193+00:00",
+  "objective": "locate the internal bottleneck of the MAC v2 candidate",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "perf_event": "cycles:u",
+    "sample_period": 100000,
+    "stage_probe_compiled": false,
+    "qconv_candidate": "mac_fixed",
+    "elapsed_seconds": 37.501185281998914
+  },
+  "v2_source_map": {
+    "mac_source_name": "qconv_mac_neon.c",
+    "candidate_source_name": "qconv_candidate.c",
+    "fixed_mac_source_name": "qconv_mac_4x8_intrinsics.c",
+    "fixed_dispatch_source_name": "qconv_mac_4x8.c",
+    "mac_line_count": 880,
+    "candidate_line_count": 783,
+    "neon_input_span": [
+      82,
+      107
+    ],
+    "dot_input_span": [
+      224,
+      244
+    ],
+    "weight_columns_span": [
+      109,
+      157
+    ],
+    "dot_weight_span": [
+      246,
+      254
+    ],
+    "dot_weight_zero_span": [
+      256,
+      268
+    ],
+    "dot_accumulate_span": [
+      270,
+      290
+    ],
+    "smlal_accumulate_span": [
+      295,
+      309
+    ],
+    "half_tile_v2_span": [
+      312,
+      476
+    ],
+    "scalar_tile_v2_span": [
+      480,
+      556
+    ],
+    "tile_v2_span": [
+      559,
+      736
+    ],
+    "requantize_neon4_span": [
+      739,
+      773
+    ],
+    "requantize_scalar_span": [
+      777,
+      800
+    ],
+    "requantize_store_span": [
+      803,
+      880
+    ],
+    "candidate_read_span": [
+      13,
+      22
+    ],
+    "cand_spatial_span": [
+      59,
+      70
+    ],
+    "cand_write_span": [
+      72,
+      93
+    ],
+    "cand_prepare_span": [
+      95,
+      237
+    ],
+    "cand_load_parameters_span": [
+      429,
+      487
+    ],
+    "cand_run_v2_span": [
+      489,
+      666
+    ]
+  },
+  "source_map": {
+    "line_count": 396,
+    "dot_span": [
+      52,
+      68
+    ],
+    "read_span": [
+      40,
+      50
+    ],
+    "spatial_span": [
+      70,
+      81
+    ],
+    "requant_span": [
+      83,
+      103
+    ],
+    "main_span": [
+      105,
+      396
+    ],
+    "core_begin": 289,
+    "mac_loop_begin": 360,
+    "core_end": 371,
+    "requant_begin": 372,
+    "requant_end": 372,
+    "source": "src/c/runtime/backends/cpu_aarch64/int8_neon/qlinear_convolution_neon.c"
+  },
+  "cases": [
+    {
+      "case_name": "qconv_3x3",
+      "operator_id": 2,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 525.6370155,
+      "profile_share_pct": 6.203994753101456,
+      "inputs": [
+        {
+          "parsed_sample_count": 10761,
+          "fixed_microkernel_sample_count": 4150,
+          "malformed_line_count": 165,
+          "total_sample_period": 1076100000,
+          "category_sample_counts": {
+            "v2_input_address": 1572,
+            "v2_weight_transform": 126,
+            "v2_mac_smlal": 5639,
+            "v2_requant": 80,
+            "v2_output_store": 195,
+            "setup_other": 3,
+            "foreign_symbol": 0,
+            "unclassified": 3146
+          },
+          "category_periods": {
+            "v2_input_address": 157200000,
+            "v2_weight_transform": 12600000,
+            "v2_mac_smlal": 563900000,
+            "v2_requant": 8000000,
+            "v2_output_store": 19500000,
+            "setup_other": 300000,
+            "foreign_symbol": 0,
+            "unclassified": 314600000
+          },
+          "category_share_pct": {
+            "v2_input_address": 14.608307778087537,
+            "v2_weight_transform": 1.1708948982436578,
+            "v2_mac_smlal": 52.402193104730046,
+            "v2_requant": 0.7434253322181953,
+            "v2_output_store": 1.8120992472818513,
+            "setup_other": 0.027878449958182325,
+            "foreign_symbol": 0.0,
+            "unclassified": 29.23520118948053
+          },
+          "classified_core_period": 761200000,
+          "classified_core_share_pct": 70.73692036056129,
+          "top_lines": [
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 165200000,
+              "total_share_pct": 15.351733110305736
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 98800000,
+              "total_share_pct": 9.181302852894714
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_half_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 57900000,
+              "total_share_pct": 5.3805408419291885
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 1605,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 43300000,
+              "total_share_pct": 4.023789610630982
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 41900000,
+              "total_share_pct": 3.8936901774927977
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 41700000,
+              "total_share_pct": 3.875104544187343
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 98,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 39000000,
+              "total_share_pct": 3.6241984945637027
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 80,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 29400000,
+              "total_share_pct": 2.732088095901868
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4632,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 27200000,
+              "total_share_pct": 2.527646129541864
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 82,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 23300000,
+              "total_share_pct": 2.165226280085494
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 23300000,
+              "total_share_pct": 2.165226280085494
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23756,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 21700000,
+              "total_share_pct": 2.0165412136418546
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 14,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 21100000,
+              "total_share_pct": 1.9607843137254901
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4653,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 17300000,
+              "total_share_pct": 1.6076572809218475
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 12569,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16700000,
+              "total_share_pct": 1.5519003810054828
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 15800000,
+              "total_share_pct": 1.4682650311309358
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 15500000,
+              "total_share_pct": 1.4403865811727534
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 24037,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 14300000,
+              "total_share_pct": 1.328872781340024
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 83,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 14300000,
+              "total_share_pct": 1.328872781340024
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 371,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 12700000,
+              "total_share_pct": 1.180187714896385
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 100.08000000000001,
+            "stack_spill_percent": 0.09,
+            "other_memory_percent": 10.959999999999999,
+            "stack_spill_share_of_annotated_pct": 0.08992805755395682
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+          "output_hash": "b1d51fe74b382d6c",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0000__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0000__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0000__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0000__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0000__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0000__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 10757,
+          "fixed_microkernel_sample_count": 4173,
+          "malformed_line_count": 178,
+          "total_sample_period": 1075700000,
+          "category_sample_counts": {
+            "v2_input_address": 1544,
+            "v2_weight_transform": 104,
+            "v2_mac_smlal": 5691,
+            "v2_requant": 102,
+            "v2_output_store": 191,
+            "setup_other": 0,
+            "foreign_symbol": 0,
+            "unclassified": 3125
+          },
+          "category_periods": {
+            "v2_input_address": 154400000,
+            "v2_weight_transform": 10400000,
+            "v2_mac_smlal": 569100000,
+            "v2_requant": 10200000,
+            "v2_output_store": 19100000,
+            "setup_other": 0,
+            "foreign_symbol": 0,
+            "unclassified": 312500000
+          },
+          "category_share_pct": {
+            "v2_input_address": 14.353444268848193,
+            "v2_weight_transform": 0.9668123082643859,
+            "v2_mac_smlal": 52.90508506089058,
+            "v2_requant": 0.9482197638746862,
+            "v2_output_store": 1.7755879892163242,
+            "setup_other": 0.0,
+            "foreign_symbol": 0.0,
+            "unclassified": 29.050850608905826
+          },
+          "classified_core_period": 763200000,
+          "classified_core_share_pct": 70.94914939109417,
+          "top_lines": [
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 159200000,
+              "total_share_pct": 14.799665334200984
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 96600000,
+              "total_share_pct": 8.98019894022497
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_half_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 59300000,
+              "total_share_pct": 5.51268941154597
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 1605,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 46200000,
+              "total_share_pct": 4.294877754020638
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 44300000,
+              "total_share_pct": 4.11824858231849
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 98,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 39400000,
+              "total_share_pct": 3.662731244770847
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 39000000,
+              "total_share_pct": 3.6255461559914473
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4632,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 27900000,
+              "total_share_pct": 2.5936599423631126
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 80,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 26600000,
+              "total_share_pct": 2.472808403830064
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 26600000,
+              "total_share_pct": 2.472808403830064
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4653,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 22100000,
+              "total_share_pct": 2.05447615506182
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 82,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 19400000,
+              "total_share_pct": 1.8034768058008739
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 14,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 19000000,
+              "total_share_pct": 1.7662917170214745
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23756,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 18200000,
+              "total_share_pct": 1.6919215394626756
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 17400000,
+              "total_share_pct": 1.6175513619038768
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 16200000,
+              "total_share_pct": 1.5059960955656782
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 83,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 16000000,
+              "total_share_pct": 1.4874035511759784
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 24037,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15600000,
+              "total_share_pct": 1.450218462396579
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 12569,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 14800000,
+              "total_share_pct": 1.37584828483778
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 371,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 13900000,
+              "total_share_pct": 1.2921818350841312
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 100.03000000000003,
+            "stack_spill_percent": 0.13,
+            "other_memory_percent": 10.0,
+            "stack_spill_share_of_annotated_pct": 0.12996101169649102
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+          "output_hash": "0dea6284322de1b7",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0005__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0005__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0005__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0005__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0005__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0005__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 10784,
+          "fixed_microkernel_sample_count": 4167,
+          "malformed_line_count": 184,
+          "total_sample_period": 1078400000,
+          "category_sample_counts": {
+            "v2_input_address": 1541,
+            "v2_weight_transform": 130,
+            "v2_mac_smlal": 5675,
+            "v2_requant": 93,
+            "v2_output_store": 189,
+            "setup_other": 8,
+            "foreign_symbol": 0,
+            "unclassified": 3148
+          },
+          "category_periods": {
+            "v2_input_address": 154100000,
+            "v2_weight_transform": 13000000,
+            "v2_mac_smlal": 567500000,
+            "v2_requant": 9300000,
+            "v2_output_store": 18900000,
+            "setup_other": 800000,
+            "foreign_symbol": 0,
+            "unclassified": 314800000
+          },
+          "category_share_pct": {
+            "v2_input_address": 14.289688427299705,
+            "v2_weight_transform": 1.2054896142433233,
+            "v2_mac_smlal": 52.62425816023739,
+            "v2_requant": 0.8623887240356083,
+            "v2_output_store": 1.7525964391691395,
+            "setup_other": 0.0741839762611276,
+            "foreign_symbol": 0.0,
+            "unclassified": 29.191394658753712
+          },
+          "classified_core_period": 762800000,
+          "classified_core_share_pct": 70.73442136498517,
+          "top_lines": [
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 162600000,
+              "total_share_pct": 15.077893175074184
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 99800000,
+              "total_share_pct": 9.254451038575667
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_half_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 56100000,
+              "total_share_pct": 5.202151335311573
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 1605,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 43300000,
+              "total_share_pct": 4.015207715133531
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 42800000,
+              "total_share_pct": 3.968842729970327
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 98,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 41400000,
+              "total_share_pct": 3.8390207715133533
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 41000000,
+              "total_share_pct": 3.8019287833827895
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 80,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 30900000,
+              "total_share_pct": 2.8653560830860534
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4632,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 25300000,
+              "total_share_pct": 2.3460682492581606
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 82,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 22800000,
+              "total_share_pct": 2.1142433234421367
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 22000000,
+              "total_share_pct": 2.040059347181009
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23756,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 21500000,
+              "total_share_pct": 1.9936943620178043
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 14,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 19800000,
+              "total_share_pct": 1.836053412462908
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4653,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 18700000,
+              "total_share_pct": 1.7340504451038574
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 16200000,
+              "total_share_pct": 1.5022255192878338
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 116,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "v2_input_address",
+              "sample_period": 15900000,
+              "total_share_pct": 1.474406528189911
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 24037,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 14300000,
+              "total_share_pct": 1.3260385756676558
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 371,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 13700000,
+              "total_share_pct": 1.2704005934718101
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 12569,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 13600000,
+              "total_share_pct": 1.261127596439169
+            },
+            {
+              "source": "qconv_address_fastpath.c",
+              "line": 83,
+              "symbol": "campp_qconv_address_input_base",
+              "category": "unclassified",
+              "sample_period": 12400000,
+              "total_share_pct": 1.1498516320474776
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 100.07000000000001,
+            "stack_spill_percent": 0.08,
+            "other_memory_percent": 10.53,
+            "stack_spill_share_of_annotated_pct": 0.0799440391725792
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0006__98.f32",
+          "output_hash": "9419da2e4164b910",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0006__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0006__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0006__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0006__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0006__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_3x3/multi__speaker_0006__98/microbench.json"
+          }
+        }
+      ],
+      "aggregate": {
+        "total_sample_period": 3230200000,
+        "category_periods": {
+          "v2_input_address": 465700000,
+          "v2_weight_transform": 36000000,
+          "v2_mac_smlal": 1700500000,
+          "v2_requant": 27500000,
+          "v2_output_store": 57500000,
+          "setup_other": 1100000,
+          "foreign_symbol": 0,
+          "unclassified": 941900000
+        },
+        "category_share_pct": {
+          "v2_input_address": 14.417063958887994,
+          "v2_weight_transform": 1.1144820754132871,
+          "v2_mac_smlal": 52.64379914556374,
+          "v2_requant": 0.8513404742740387,
+          "v2_output_store": 1.7800755371184445,
+          "setup_other": 0.03405361897096155,
+          "foreign_symbol": 0.0,
+          "unclassified": 29.15918518977153
+        },
+        "classified_core_period": 2287200000,
+        "classified_core_share_pct": 70.80676119125751,
+        "top_bottleneck_set": [
+          "v2_mac_smlal",
+          "v2_input_address"
+        ],
+        "stack_spill_share_of_annotated_pct": 0.09994436947434233,
+        "fixed_microkernel_sample_count": 12490
+      },
+      "decision": {
+        "winner": "v2_mac_smlal",
+        "stable_across_inputs": false,
+        "input_winners": [
+          "v2_mac_smlal",
+          "v2_mac_smlal",
+          "v2_mac_smlal"
+        ],
+        "maximum_unclassified_share_pct": 29.23520118948053,
+        "maximum_foreign_symbol_share_pct": 0.0,
+        "rule": "same top v2 category on 3 inputs, unclassified <=20%, foreign_symbol <=5%"
+      }
+    },
+    {
+      "case_name": "qconv_1x1",
+      "operator_id": 825,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        512,
+        1024,
+        1
+      ],
+      "profile_mean_ms": 320.11598849999996,
+      "profile_share_pct": 3.7782687567175066,
+      "inputs": [
+        {
+          "parsed_sample_count": 3951,
+          "fixed_microkernel_sample_count": 2944,
+          "malformed_line_count": 39,
+          "total_sample_period": 395100000,
+          "category_sample_counts": {
+            "v2_input_address": 131,
+            "v2_weight_transform": 37,
+            "v2_mac_smlal": 3315,
+            "v2_requant": 22,
+            "v2_output_store": 37,
+            "setup_other": 8,
+            "foreign_symbol": 0,
+            "unclassified": 401
+          },
+          "category_periods": {
+            "v2_input_address": 13100000,
+            "v2_weight_transform": 3700000,
+            "v2_mac_smlal": 331500000,
+            "v2_requant": 2200000,
+            "v2_output_store": 3700000,
+            "setup_other": 800000,
+            "foreign_symbol": 0,
+            "unclassified": 40100000
+          },
+          "category_share_pct": {
+            "v2_input_address": 3.3156162996709697,
+            "v2_weight_transform": 0.9364717792963807,
+            "v2_mac_smlal": 83.90280941533788,
+            "v2_requant": 0.5568210579600101,
+            "v2_output_store": 0.9364717792963807,
+            "setup_other": 0.20248038471273097,
+            "foreign_symbol": 0.0,
+            "unclassified": 10.149329283725638
+          },
+          "classified_core_period": 354200000,
+          "classified_core_share_pct": 89.64819033156162,
+          "top_lines": [
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 124600000,
+              "total_share_pct": 31.536319919007845
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 1605,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 33000000,
+              "total_share_pct": 8.352315869400153
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4632,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 28800000,
+              "total_share_pct": 7.289293849658314
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 12569,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 18900000,
+              "total_share_pct": 4.783599088838269
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4653,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16100000,
+              "total_share_pct": 4.07491774234371
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 14,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15900000,
+              "total_share_pct": 4.024297646165528
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 15700000,
+              "total_share_pct": 3.973677549987345
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23756,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15500000,
+              "total_share_pct": 3.9230574538091623
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 24037,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 13000000,
+              "total_share_pct": 3.290306251581878
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 98,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 9600000,
+              "total_share_pct": 2.4297646165527715
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23767,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 8200000,
+              "total_share_pct": 2.075423943305492
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 6200000,
+              "total_share_pct": 1.5692229815236647
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5300000,
+              "total_share_pct": 1.3414325487218426
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 699,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 4400000,
+              "total_share_pct": 1.1136421159200203
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3181,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 4200000,
+              "total_share_pct": 1.0630220197418374
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 3900000,
+              "total_share_pct": 0.9870918754745633
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 371,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 3600000,
+              "total_share_pct": 0.9111617312072893
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 3400000,
+              "total_share_pct": 0.8605416350291066
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 24026,
+              "symbol": "campp_qconv_neon_weight_columns",
+              "category": "v2_mac_smlal",
+              "sample_period": 3000000,
+              "total_share_pct": 0.759301442672741
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 614,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 3000000,
+              "total_share_pct": 0.759301442672741
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 99.95000000000003,
+            "stack_spill_percent": 0.06,
+            "other_memory_percent": 12.39,
+            "stack_spill_share_of_annotated_pct": 0.060030015007503726
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+          "output_hash": "404a38f8af5e1461",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0000__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0000__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0000__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0000__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0000__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0000__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 3953,
+          "fixed_microkernel_sample_count": 2933,
+          "malformed_line_count": 37,
+          "total_sample_period": 395300000,
+          "category_sample_counts": {
+            "v2_input_address": 124,
+            "v2_weight_transform": 66,
+            "v2_mac_smlal": 3302,
+            "v2_requant": 16,
+            "v2_output_store": 33,
+            "setup_other": 6,
+            "foreign_symbol": 0,
+            "unclassified": 406
+          },
+          "category_periods": {
+            "v2_input_address": 12400000,
+            "v2_weight_transform": 6600000,
+            "v2_mac_smlal": 330200000,
+            "v2_requant": 1600000,
+            "v2_output_store": 3300000,
+            "setup_other": 600000,
+            "foreign_symbol": 0,
+            "unclassified": 40600000
+          },
+          "category_share_pct": {
+            "v2_input_address": 3.136858082469011,
+            "v2_weight_transform": 1.6696180116367316,
+            "v2_mac_smlal": 83.5314950670377,
+            "v2_requant": 0.4047558816089046,
+            "v2_output_store": 0.8348090058183658,
+            "setup_other": 0.15178345560333922,
+            "foreign_symbol": 0.0,
+            "unclassified": 10.270680495825955
+          },
+          "classified_core_period": 354100000,
+          "classified_core_share_pct": 89.5775360485707,
+          "top_lines": [
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 130400000,
+              "total_share_pct": 32.987604351125725
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 1605,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 31400000,
+              "total_share_pct": 7.943334176574754
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4632,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 28900000,
+              "total_share_pct": 7.31090311156084
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 12569,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 17800000,
+              "total_share_pct": 4.502909182899064
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23756,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16800000,
+              "total_share_pct": 4.249936756893499
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 14,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 15900000,
+              "total_share_pct": 4.02226157348849
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4653,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 13100000,
+              "total_share_pct": 3.3139387806729066
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 24037,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 12100000,
+              "total_share_pct": 3.0609663546673413
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 11900000,
+              "total_share_pct": 3.010371869466228
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 98,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 9600000,
+              "total_share_pct": 2.4285352896534276
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23767,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 8200000,
+              "total_share_pct": 2.074373893245636
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 6200000,
+              "total_share_pct": 1.5684290412345054
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 371,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 5700000,
+              "total_share_pct": 1.4419428282317226
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 699,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5500000,
+              "total_share_pct": 1.3913483430306097
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5400000,
+              "total_share_pct": 1.366051100430053
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 4700000,
+              "total_share_pct": 1.1889704022261574
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 614,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 4000000,
+              "total_share_pct": 1.0118897040222614
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3181,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 3400000,
+              "total_share_pct": 0.8601062484189224
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 3300000,
+              "total_share_pct": 0.8348090058183658
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 668,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 3100000,
+              "total_share_pct": 0.7842145206172527
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 99.96,
+            "stack_spill_percent": 0.06,
+            "other_memory_percent": 11.91,
+            "stack_spill_share_of_annotated_pct": 0.06002400960384154
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+          "output_hash": "9d9c98b150326d1a",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0005__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0005__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0005__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0005__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0005__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0005__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 3940,
+          "fixed_microkernel_sample_count": 2924,
+          "malformed_line_count": 37,
+          "total_sample_period": 394000000,
+          "category_sample_counts": {
+            "v2_input_address": 135,
+            "v2_weight_transform": 48,
+            "v2_mac_smlal": 3282,
+            "v2_requant": 22,
+            "v2_output_store": 43,
+            "setup_other": 11,
+            "foreign_symbol": 0,
+            "unclassified": 399
+          },
+          "category_periods": {
+            "v2_input_address": 13500000,
+            "v2_weight_transform": 4800000,
+            "v2_mac_smlal": 328200000,
+            "v2_requant": 2200000,
+            "v2_output_store": 4300000,
+            "setup_other": 1100000,
+            "foreign_symbol": 0,
+            "unclassified": 39900000
+          },
+          "category_share_pct": {
+            "v2_input_address": 3.4263959390862944,
+            "v2_weight_transform": 1.2182741116751268,
+            "v2_mac_smlal": 83.2994923857868,
+            "v2_requant": 0.5583756345177665,
+            "v2_output_store": 1.0913705583756346,
+            "setup_other": 0.27918781725888325,
+            "foreign_symbol": 0.0,
+            "unclassified": 10.126903553299492
+          },
+          "classified_core_period": 353000000,
+          "classified_core_share_pct": 89.59390862944161,
+          "top_lines": [
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 127000000,
+              "total_share_pct": 32.233502538071065
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4632,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 30400000,
+              "total_share_pct": 7.715736040609138
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 1605,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 29700000,
+              "total_share_pct": 7.538071065989847
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23756,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16600000,
+              "total_share_pct": 4.213197969543147
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 14,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16500000,
+              "total_share_pct": 4.187817258883249
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 12569,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 16000000,
+              "total_share_pct": 4.060913705583756
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 14900000,
+              "total_share_pct": 3.781725888324873
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 4653,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 14700000,
+              "total_share_pct": 3.730964467005076
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 24037,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 13300000,
+              "total_share_pct": 3.3756345177664975
+            },
+            {
+              "source": "qconv_mac_4x8_intrinsics.c",
+              "line": 98,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 11000000,
+              "total_share_pct": 2.7918781725888326
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "v2_input_address",
+              "sample_period": 7100000,
+              "total_share_pct": 1.802030456852792
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 23767,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 6900000,
+              "total_share_pct": 1.751269035532995
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3969,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 5300000,
+              "total_share_pct": 1.3451776649746192
+            },
+            {
+              "source": "arm_neon.h",
+              "line": 3181,
+              "symbol": "campp_qconv_mac_4x8_intrinsics_raw",
+              "category": "v2_mac_smlal",
+              "sample_period": 4300000,
+              "total_share_pct": 1.0913705583756346
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 371,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 4300000,
+              "total_share_pct": 1.0913705583756346
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 699,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 3800000,
+              "total_share_pct": 0.9644670050761422
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "unclassified",
+              "sample_period": 3500000,
+              "total_share_pct": 0.8883248730964468
+            },
+            {
+              "source": "",
+              "line": 0,
+              "symbol": "[unknown]",
+              "category": "unclassified",
+              "sample_period": 3300000,
+              "total_share_pct": 0.8375634517766498
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 614,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 3300000,
+              "total_share_pct": 0.8375634517766498
+            },
+            {
+              "source": "qconv_mac_neon.c",
+              "line": 668,
+              "symbol": "campp_qconv_mac_neon_tile_v2",
+              "category": "v2_mac_smlal",
+              "sample_period": 3100000,
+              "total_share_pct": 0.7868020304568528
+            }
+          ],
+          "spill": {
+            "annotated_percent_total": 99.96000000000002,
+            "stack_spill_percent": 0.03,
+            "other_memory_percent": 11.560000000000002,
+            "stack_spill_share_of_annotated_pct": 0.03001200480192076
+          },
+          "input": "benchmarks/campplus/features/multi__speaker_0006__98.f32",
+          "output_hash": "10faa9184c9134bf",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0006__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0006__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0006__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0006__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0006__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed/qconv_1x1/multi__speaker_0006__98/microbench.json"
+          }
+        }
+      ],
+      "aggregate": {
+        "total_sample_period": 1184400000,
+        "category_periods": {
+          "v2_input_address": 39000000,
+          "v2_weight_transform": 15100000,
+          "v2_mac_smlal": 989900000,
+          "v2_requant": 6000000,
+          "v2_output_store": 11300000,
+          "setup_other": 2500000,
+          "foreign_symbol": 0,
+          "unclassified": 120600000
+        },
+        "category_share_pct": {
+          "v2_input_address": 3.2928064842958458,
+          "v2_weight_transform": 1.274907125970956,
+          "v2_mac_smlal": 83.57818304626815,
+          "v2_requant": 0.5065856129685917,
+          "v2_output_store": 0.9540695710908477,
+          "setup_other": 0.21107733873691323,
+          "foreign_symbol": 0.0,
+          "unclassified": 10.182370820668693
+        },
+        "classified_core_period": 1061300000,
+        "classified_core_share_pct": 89.60655184059439,
+        "top_bottleneck_set": [
+          "v2_mac_smlal"
+        ],
+        "stack_spill_share_of_annotated_pct": 0.05002200980442201,
+        "fixed_microkernel_sample_count": 8801
+      },
+      "decision": {
+        "winner": "v2_mac_smlal",
+        "stable_across_inputs": true,
+        "input_winners": [
+          "v2_mac_smlal",
+          "v2_mac_smlal",
+          "v2_mac_smlal"
+        ],
+        "maximum_unclassified_share_pct": 10.270680495825955,
+        "maximum_foreign_symbol_share_pct": 0.0,
+        "rule": "same top v2 category on 3 inputs, unclassified <=20%, foreign_symbol <=5%"
+      }
+    }
+  ],
+  "decision": {
+    "ready": false,
+    "overall": "inconclusive",
+    "next_candidate": "inspect perf_annotate and reduce unclassified samples"
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/qconv_spill/gcc/mac_fixed"
+  }
+}

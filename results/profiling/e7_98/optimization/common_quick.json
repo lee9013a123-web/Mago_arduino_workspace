@@ -1,0 +1,556 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-19T01:40:29.664049+00:00",
+  "objective": "benchmark common fastpaths on remaining E7 operators",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "candidate_modes": [
+      "baseline",
+      "optimized"
+    ],
+    "elapsed_seconds": 244.28360096999995
+  },
+  "all_output_hashes_bitwise_identical": true,
+  "no_case_regressed_over_1pct": true,
+  "any_case_faster": true,
+  "candidate_gate_passed": true,
+  "cases": [
+    {
+      "case_name": "add_stride",
+      "operator_id": 14,
+      "opcode": 0,
+      "kernel_id": 1,
+      "kernel_name": "add_stride",
+      "operator_type": "ADD",
+      "profile_mean_ms": 23.949379333333336,
+      "profile_share_pct": 0.282670016271022,
+      "input_shapes": [
+        [
+          1,
+          32,
+          40,
+          98
+        ],
+        [
+          1,
+          32,
+          40,
+          98
+        ]
+      ],
+      "output_shapes": [
+        [
+          1,
+          32,
+          40,
+          98
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 23.25945138333333,
+        "p50_ms": 23.175442,
+        "p95_ms": 23.719541449999998,
+        "min_ms": 22.99526,
+        "max_ms": 24.293698
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.6922144833333332,
+        "p50_ms": 0.682943,
+        "p95_ms": 0.74098885,
+        "min_ms": 0.665885,
+        "max_ms": 0.759792
+      },
+      "speedup_ratio": 33.60150927690548,
+      "latency_reduction_pct": 97.02394320517232,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "8ce3325b3130d1ad",
+        "2b35f70b0ddece5b",
+        "339eed1f35f87d99"
+      ]
+    },
+    {
+      "case_name": "relu_stride",
+      "operator_id": 9,
+      "opcode": 0,
+      "kernel_id": 1,
+      "kernel_name": "relu_stride",
+      "operator_type": "RELU",
+      "profile_mean_ms": 12.817514749999999,
+      "profile_share_pct": 0.15128271394882487,
+      "input_shapes": [
+        [
+          1,
+          32,
+          40,
+          98
+        ]
+      ],
+      "output_shapes": [
+        [
+          1,
+          32,
+          40,
+          98
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 12.9182899,
+        "p50_ms": 12.7939585,
+        "p95_ms": 13.65776035,
+        "min_ms": 12.554427,
+        "max_ms": 14.173542
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.47721446666666667,
+        "p50_ms": 0.4361715,
+        "p95_ms": 0.7883544,
+        "min_ms": 0.426719,
+        "max_ms": 0.810521
+      },
+      "speedup_ratio": 27.070197578531076,
+      "latency_reduction_pct": 96.30590062337379,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "52e0580c65273601",
+        "22f5313217d7f12b",
+        "7a2f1ba02cbcb86b"
+      ]
+    },
+    {
+      "case_name": "expand_stride",
+      "operator_id": 622,
+      "opcode": 0,
+      "kernel_id": 1,
+      "kernel_name": "expand_stride",
+      "operator_type": "EXPAND",
+      "profile_mean_ms": 0.8059261666666667,
+      "profile_share_pct": 0.009512194845393587,
+      "input_shapes": [
+        [
+          1,
+          128,
+          1,
+          1
+        ],
+        [
+          4
+        ]
+      ],
+      "output_shapes": [
+        [
+          1,
+          128,
+          1,
+          100
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 0.7995034666666667,
+        "p50_ms": 0.793984,
+        "p95_ms": 0.82910655,
+        "min_ms": 0.79151,
+        "max_ms": 0.908854
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.007125866666666667,
+        "p50_ms": 0.006875,
+        "p95_ms": 0.00944525,
+        "min_ms": 0.006771,
+        "max_ms": 0.01026
+      },
+      "speedup_ratio": 112.19736546665669,
+      "latency_reduction_pct": 99.10871347483004,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "7bc013ef9945d063",
+        "c14ec7206417cf23",
+        "1b1b6ba036e06ee3"
+      ]
+    },
+    {
+      "case_name": "slice_stride",
+      "operator_id": 182,
+      "opcode": 0,
+      "kernel_id": 1,
+      "kernel_name": "slice_stride",
+      "operator_type": "SLICE",
+      "profile_mean_ms": 0.5107222666666666,
+      "profile_share_pct": 0.006027958780030176,
+      "input_shapes": [
+        [
+          1,
+          128,
+          100
+        ],
+        [
+          1
+        ],
+        [
+          1
+        ],
+        [
+          1
+        ],
+        [
+          1
+        ]
+      ],
+      "output_shapes": [
+        [
+          1,
+          128,
+          49
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 0.4967995333333333,
+        "p50_ms": 0.494219,
+        "p95_ms": 0.51226775,
+        "min_ms": 0.493178,
+        "max_ms": 0.518593
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.004554733333333333,
+        "p50_ms": 0.003906,
+        "p95_ms": 0.005953049999999984,
+        "min_ms": 0.003698,
+        "max_ms": 0.017605
+      },
+      "speedup_ratio": 109.07324248766851,
+      "latency_reduction_pct": 99.08318486074799,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "4fae24b927649623",
+        "71d61532675fd2d6",
+        "4c47b15d4c8bb067"
+      ]
+    },
+    {
+      "case_name": "quantize_linear_stride",
+      "operator_id": 16,
+      "opcode": 0,
+      "kernel_id": 1,
+      "kernel_name": "quantize_linear_stride",
+      "operator_type": "QUANTIZE_LINEAR",
+      "profile_mean_ms": 20.184130200000002,
+      "profile_share_pct": 0.2382294894844913,
+      "input_shapes": [
+        [
+          1,
+          32,
+          40,
+          98
+        ],
+        [],
+        []
+      ],
+      "output_shapes": [
+        [
+          1,
+          32,
+          40,
+          98
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 19.82794541666667,
+        "p50_ms": 19.7664325,
+        "p95_ms": 20.18316925,
+        "min_ms": 19.628281,
+        "max_ms": 20.54099
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 1.5028741333333333,
+        "p50_ms": 1.495469,
+        "p95_ms": 1.57190375,
+        "min_ms": 1.458489,
+        "max_ms": 1.618593
+      },
+      "speedup_ratio": 13.193350645199297,
+      "latency_reduction_pct": 92.42042429635664,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "a9c7eafca23a0974",
+        "01579f8e36938e50",
+        "50313de57d0372e0"
+      ]
+    },
+    {
+      "case_name": "reduce_mean_stride",
+      "operator_id": 43,
+      "opcode": 0,
+      "kernel_id": 1,
+      "kernel_name": "reduce_mean_stride",
+      "operator_type": "REDUCE_MEAN",
+      "profile_mean_ms": 0.3928369,
+      "profile_share_pct": 0.0046365799868686025,
+      "input_shapes": [
+        [
+          1,
+          128,
+          49
+        ]
+      ],
+      "output_shapes": [
+        [
+          1,
+          128,
+          1
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 0.36358756666666664,
+        "p50_ms": 0.3615885,
+        "p95_ms": 0.37633325,
+        "min_ms": 0.360677,
+        "max_ms": 0.377656
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.009746516666666667,
+        "p50_ms": 0.0085935,
+        "p95_ms": 0.01021864999999999,
+        "min_ms": 0.008072,
+        "max_ms": 0.053854
+      },
+      "speedup_ratio": 37.30436001922054,
+      "latency_reduction_pct": 97.31934819553328,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "dabf2d3c085ed042",
+        "637dea46d231ff8f",
+        "d799865d97d5b19c"
+      ]
+    },
+    {
+      "case_name": "fused_dequant_sigmoid_mul",
+      "operator_id": 340,
+      "opcode": 0,
+      "kernel_id": 4,
+      "kernel_name": "fused_dequant_sigmoid_mul",
+      "operator_type": "MUL",
+      "profile_mean_ms": 0.25896436666666667,
+      "profile_share_pct": 0.003056507674810511,
+      "input_shapes": [
+        [
+          1,
+          32,
+          49
+        ],
+        [],
+        [],
+        [
+          1,
+          32,
+          49
+        ]
+      ],
+      "output_shapes": [
+        [
+          1,
+          32,
+          49
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 0.250835,
+        "p50_ms": 0.2467445,
+        "p95_ms": 0.2646542,
+        "min_ms": 0.246458,
+        "max_ms": 0.365364
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.0172917,
+        "p50_ms": 0.017084,
+        "p95_ms": 0.018009749999999998,
+        "min_ms": 0.016927,
+        "max_ms": 0.020937
+      },
+      "speedup_ratio": 14.506092518375867,
+      "latency_reduction_pct": 93.10634480834014,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "56258d3317589cd8",
+        "fda8b1ebb2e00895",
+        "cd4fbc905f987182"
+      ]
+    },
+    {
+      "case_name": "average_pool_stride",
+      "operator_id": 44,
+      "opcode": 0,
+      "kernel_id": 1,
+      "kernel_name": "average_pool_stride",
+      "operator_type": "AVERAGE_POOL",
+      "profile_mean_ms": 0.18537325,
+      "profile_share_pct": 0.0021879255768762814,
+      "input_shapes": [
+        [
+          1,
+          128,
+          49
+        ]
+      ],
+      "output_shapes": [
+        [
+          1,
+          128,
+          1
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 0.1815123,
+        "p50_ms": 0.177448,
+        "p95_ms": 0.19340330000000003,
+        "min_ms": 0.173959,
+        "max_ms": 0.205261
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.01029515,
+        "p50_ms": 0.009427,
+        "p95_ms": 0.012145599999999993,
+        "min_ms": 0.008907,
+        "max_ms": 0.01651
+      },
+      "speedup_ratio": 17.630855305653633,
+      "latency_reduction_pct": 94.32812542180336,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "5d68b3b987d5c552",
+        "731d589fcfa59043",
+        "137fce264810afde"
+      ]
+    },
+    {
+      "case_name": "reshape_stride",
+      "operator_id": 34,
+      "opcode": 0,
+      "kernel_id": 1,
+      "kernel_name": "reshape_stride",
+      "operator_type": "RESHAPE",
+      "profile_mean_ms": 2.2246953166666668,
+      "profile_share_pct": 0.02625766006741468,
+      "input_shapes": [
+        [
+          1,
+          32,
+          10,
+          98
+        ],
+        [
+          3
+        ]
+      ],
+      "output_shapes": [
+        [
+          1,
+          320,
+          98
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 2.2215235,
+        "p50_ms": 2.215052,
+        "p95_ms": 2.25129435,
+        "min_ms": 2.19724,
+        "max_ms": 2.360261
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.6973438166666667,
+        "p50_ms": 0.680495,
+        "p95_ms": 0.7437897999999998,
+        "min_ms": 0.673177,
+        "max_ms": 0.90401
+      },
+      "speedup_ratio": 3.185693264792936,
+      "latency_reduction_pct": 68.60965834182413,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "11ba74638a7a0bd5",
+        "2180ca12209a5bf8",
+        "df20a809731de49e"
+      ]
+    },
+    {
+      "case_name": "fused_statistics_pooling",
+      "operator_id": 828,
+      "opcode": 0,
+      "kernel_id": 5,
+      "kernel_name": "fused_statistics_pooling",
+      "operator_type": "CONCAT",
+      "profile_mean_ms": 0.8864957,
+      "profile_share_pct": 0.010463141881694598,
+      "input_shapes": [
+        [
+          1,
+          512,
+          49
+        ],
+        [],
+        []
+      ],
+      "output_shapes": [
+        [
+          1,
+          1024
+        ]
+      ],
+      "baseline": {
+        "sample_count": 60,
+        "mean_ms": 0.8660607666666668,
+        "p50_ms": 0.867943,
+        "p95_ms": 0.8919818999999999,
+        "min_ms": 0.843854,
+        "max_ms": 0.91599
+      },
+      "optimized": {
+        "sample_count": 60,
+        "mean_ms": 0.5379505333333333,
+        "p50_ms": 0.530026,
+        "p95_ms": 0.57401555,
+        "min_ms": 0.52448,
+        "max_ms": 0.594271
+      },
+      "speedup_ratio": 1.6099264021549444,
+      "latency_reduction_pct": 37.88535931447152,
+      "bitwise_output_hashes": true,
+      "output_hashes": [
+        "6c58ad8985bf4484",
+        "688d76f5cd1e7ad7",
+        "b83df195ea9def3a"
+      ]
+    }
+  ],
+  "next_gate": "retained-tensor bitwise validation and Quick E2E profiling",
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/common_quick"
+  }
+}

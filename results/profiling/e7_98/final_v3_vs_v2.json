@@ -1,0 +1,390 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-20T06:33:11.882593+00:00",
+  "comparison": "final_v2_vs_layer_hybrid_v3",
+  "v2": {
+    "call_count": 300,
+    "total_exclusive_ns": 103653466834,
+    "total_exclusive_ms": 103653.466834,
+    "mean_ms": 345.51155611333337,
+    "stddev_ms": 1.3712991918190167,
+    "cv_pct": 0.39688953019250345,
+    "min_ms": 340.991666,
+    "p50_ms": 345.458255,
+    "p95_ms": 347.4762571,
+    "max_ms": 353.548854
+  },
+  "v3": {
+    "call_count": 300,
+    "total_exclusive_ns": 96868819288,
+    "total_exclusive_ms": 96868.819288,
+    "mean_ms": 322.8960642933333,
+    "stddev_ms": 1.2458934560904908,
+    "cv_pct": 0.3858496878297857,
+    "min_ms": 320.746771,
+    "p50_ms": 322.706224,
+    "p95_ms": 324.83080185,
+    "max_ms": 331.422708
+  },
+  "e2e": {
+    "delta_mean_ms": -22.615491820000045,
+    "speedup_ratio": 1.0700395400281346,
+    "latency_reduction_pct": 6.545509526338911,
+    "rtf_v2": 0.3455115561133334,
+    "rtf_v3": 0.32289606429333334,
+    "p50_delta_ms": -22.752030999999988,
+    "p95_delta_ms": -22.645455249999998
+  },
+  "validity": {
+    "v2": {
+      "e7_bitwise_validated": true,
+      "official_protocol": true,
+      "operator_count": 832,
+      "all_call_counts_valid": true,
+      "profiling_overhead_below_1pct": true,
+      "environment_matched": true,
+      "profile_valid": true
+    },
+    "v3": {
+      "e7_bitwise_validated": true,
+      "official_protocol": true,
+      "operator_count": 832,
+      "all_call_counts_valid": true,
+      "profiling_overhead_below_1pct": true,
+      "environment_matched": true,
+      "profile_valid": true
+    }
+  },
+  "largest_operator_deltas": [
+    {
+      "operator_id": 10,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "fused_quant_qlinear_conv_o4i4_combined_hybrid",
+      "v3_kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 16.84763836666667,
+      "v3_mean_ms": 15.312390066666667,
+      "delta_ms": -1.535248300000001,
+      "latency_reduction_pct": 9.112543055515221,
+      "v3_selected_mode": "combined_v5"
+    },
+    {
+      "operator_id": 12,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 15.680318943333331,
+      "v3_mean_ms": 14.163682123333334,
+      "delta_ms": -1.5166368199999969,
+      "latency_reduction_pct": 9.672231958297072,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 6,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 15.69388628,
+      "v3_mean_ms": 14.205430220000002,
+      "delta_ms": -1.4884560599999972,
+      "latency_reduction_pct": 9.48430512012094,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 2,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 15.816686146666667,
+      "v3_mean_ms": 14.463073406666666,
+      "delta_ms": -1.3536127400000009,
+      "latency_reduction_pct": 8.558131124611535,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 582,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 8.467579336666667,
+      "v3_mean_ms": 7.304024293333334,
+      "delta_ms": -1.163555043333333,
+      "latency_reduction_pct": 13.74129485028689,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 825,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 8.510382446666666,
+      "v3_mean_ms": 7.371607323333333,
+      "delta_ms": -1.1387751233333336,
+      "latency_reduction_pct": 13.38100996600179,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 17,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 8.012448253333334,
+      "v3_mean_ms": 7.232136996666666,
+      "delta_ms": -0.7803112566666677,
+      "latency_reduction_pct": 9.738736925284265,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 27,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 8.19787758,
+      "v3_mean_ms": 7.42480835,
+      "delta_ms": -0.7730692299999999,
+      "latency_reduction_pct": 9.430114349182562,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 25,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "fused_quant_qlinear_conv_o4i4_combined_hybrid",
+      "v3_kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 8.696996386666667,
+      "v3_mean_ms": 7.975688543333334,
+      "delta_ms": -0.7213078433333333,
+      "latency_reduction_pct": 8.2937581121589,
+      "v3_selected_mode": "combined_v5"
+    },
+    {
+      "operator_id": 21,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 8.131234509999999,
+      "v3_mean_ms": 7.422270343333333,
+      "delta_ms": -0.7089641666666662,
+      "latency_reduction_pct": 8.719022502607254,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 31,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "fused_quant_qlinear_conv_o4i4_combined_hybrid",
+      "v3_kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 4.66057831,
+      "v3_mean_ms": 4.307938736666666,
+      "delta_ms": -0.3526395733333336,
+      "latency_reduction_pct": 7.5664338173803465,
+      "v3_selected_mode": "combined_v5"
+    },
+    {
+      "operator_id": 3,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 5.65792988,
+      "v3_mean_ms": 5.35875619,
+      "delta_ms": -0.29917368999999994,
+      "latency_reduction_pct": 5.287688188882256,
+      "v3_selected_mode": "mac_fixed"
+    },
+    {
+      "operator_id": 0,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "fused_quant_qlinear_conv_o4i4_combined_hybrid",
+      "v3_kernel_name": "fused_quant_qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 79.49405793999999,
+      "v3_mean_ms": 79.20292513666668,
+      "delta_ms": -0.29113280333331204,
+      "latency_reduction_pct": 0.36623215731803604,
+      "v3_selected_mode": "combined_hybrid"
+    },
+    {
+      "operator_id": 810,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 2.0736008266666666,
+      "v3_mean_ms": 1.7877894366666665,
+      "delta_ms": -0.2858113900000001,
+      "latency_reduction_pct": 13.78333700124168,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 567,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 2.06643993,
+      "v3_mean_ms": 1.78448666,
+      "delta_ms": -0.28195327000000003,
+      "latency_reduction_pct": 13.644397105702467,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 552,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 2.0047001466666665,
+      "v3_mean_ms": 1.7257067566666668,
+      "delta_ms": -0.2789933899999997,
+      "latency_reduction_pct": 13.91696361492757,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 537,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.9485210133333333,
+      "v3_mean_ms": 1.6775024366666667,
+      "delta_ms": -0.2710185766666666,
+      "latency_reduction_pct": 13.908937846301972,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 795,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 2.0044029666666665,
+      "v3_mean_ms": 1.7336586533333331,
+      "delta_ms": -0.2707443133333334,
+      "latency_reduction_pct": 13.507479176384507,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 780,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.95219637,
+      "v3_mean_ms": 1.6834269233333332,
+      "delta_ms": -0.2687694466666668,
+      "latency_reduction_pct": 13.767541564820485,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 219,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 2.2114512,
+      "v3_mean_ms": 1.9428519033333336,
+      "delta_ms": -0.2685992966666664,
+      "latency_reduction_pct": 12.14583874456132,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 522,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.87583784,
+      "v3_mean_ms": 1.6148259066666666,
+      "delta_ms": -0.2610119333333334,
+      "latency_reduction_pct": 13.91441881422615,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 765,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.87646002,
+      "v3_mean_ms": 1.6186690966666666,
+      "delta_ms": -0.2577909233333333,
+      "latency_reduction_pct": 13.738151657147124,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 750,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.8230611166666666,
+      "v3_mean_ms": 1.5695086633333333,
+      "delta_ms": -0.2535524533333333,
+      "latency_reduction_pct": 13.908061063632104,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 507,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.8174824633333333,
+      "v3_mean_ms": 1.5654786233333333,
+      "delta_ms": -0.25200384,
+      "latency_reduction_pct": 13.865544514680773,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 492,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.7470883499999998,
+      "v3_mean_ms": 1.5084993,
+      "delta_ms": -0.23858904999999986,
+      "latency_reduction_pct": 13.656381487518932,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 477,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.6906254833333332,
+      "v3_mean_ms": 1.45285645,
+      "delta_ms": -0.2377690333333331,
+      "latency_reduction_pct": 14.063968376043533,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 720,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.69315485,
+      "v3_mean_ms": 1.45829824,
+      "delta_ms": -0.23485661000000002,
+      "latency_reduction_pct": 13.870946889470858,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 735,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.74920659,
+      "v3_mean_ms": 1.5150876666666666,
+      "delta_ms": -0.2341189233333334,
+      "latency_reduction_pct": 13.384292322688617,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 705,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.6172624899999999,
+      "v3_mean_ms": 1.3923375033333334,
+      "delta_ms": -0.2249249866666665,
+      "latency_reduction_pct": 13.907760061056418,
+      "v3_selected_mode": "v5"
+    },
+    {
+      "operator_id": 462,
+      "operator_type": "QLINEAR_CONV",
+      "v2_kernel_name": "qlinear_conv_o4i4_v4",
+      "v3_kernel_name": "qlinear_conv_o4i4_layer_hybrid_v3",
+      "v2_mean_ms": 1.6213128266666665,
+      "v3_mean_ms": 1.3979903133333333,
+      "delta_ms": -0.2233225133333332,
+      "latency_reduction_pct": 13.77417791682266,
+      "v3_selected_mode": "v5"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T07:16:23.555125+00:00",
+  "objective": "locate internal bottlenecks before implementing E7 optimizations",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "elapsed_seconds": 2.907741237002483,
+    "qconv_candidate": "baseline",
+    "fused_qconv_candidate": "baseline",
+    "bn_candidate": "baseline",
+    "dequant_candidate": "neon_combined"
+  },
+  "target_kernel_families": [
+    "qlinear_conv_o4i4_neon",
+    "fused_quant_qlinear_conv_o4i4",
+    "fused_bn_relu_quant",
+    "dequantize_linear_stride"
+  ],
+  "case_count": 1,
+  "cases": [
+    {
+      "case_name": "dequantize_linear",
+      "operator_id": 5,
+      "kernel_id": 1,
+      "kernel_name": "dequantize_linear_stride",
+      "operator_type": "DEQUANTIZE_LINEAR",
+      "weight_shape": [],
+      "profile_mean_ms": 15.7279757,
+      "profile_share_pct": 0.1856343367045603,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__98.f32": "276f38bc4e2cfa03",
+        "benchmarks/campplus/features/multi__speaker_0005__98.f32": "ddd80cee205bd964",
+        "benchmarks/campplus/features/multi__speaker_0006__98.f32": "feaaa7169ff85f7f"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16790670,
+        "total_exclusive_ms": 16.79067,
+        "mean_ms": 0.2798445,
+        "stddev_ms": 0.04373241074211055,
+        "cv_pct": 15.627396908679838,
+        "min_ms": 0.246094,
+        "p50_ms": 0.249036,
+        "p95_ms": 0.358083,
+        "max_ms": 0.401198
+      },
+      "stages": [
+        {
+          "name": "dequant_elementwise",
+          "call_count": 60,
+          "total_exclusive_ns": 16294326,
+          "total_exclusive_ms": 16.294325999999998,
+          "mean_ms": 0.2715721,
+          "stddev_ms": 0.043515915326349276,
+          "cv_pct": 16.023706163611536,
+          "min_ms": 0.238229,
+          "p50_ms": 0.2409375,
+          "p95_ms": 0.35052405,
+          "max_ms": 0.391562,
+          "wall_share_pct": 97.04392975384543
+        },
+        {
+          "name": "dequant_setup",
+          "call_count": 60,
+          "total_exclusive_ns": 326040,
+          "total_exclusive_ms": 0.32604,
+          "mean_ms": 0.005434,
+          "stddev_ms": 0.0003455304135190803,
+          "cv_pct": 6.358675257988228,
+          "min_ms": 0.004636,
+          "p50_ms": 0.005416,
+          "p95_ms": 0.00604365,
+          "max_ms": 0.006458,
+          "wall_share_pct": 1.9417926741458202
+        }
+      ],
+      "dominant_stage": "dequant_elementwise",
+      "dominant_stage_wall_share_pct": 97.04392975384543,
+      "pmu": {
+        "available": true,
+        "unavailable_errno": [],
+        "totals": {
+          "cpu_cycles": 32952735,
+          "instructions": 32783160,
+          "cache_references": 8257483,
+          "cache_misses": 13655,
+          "branches": 3771179,
+          "branch_misses": 5710
+        },
+        "instructions_per_cycle": 0.9948539931510996,
+        "cache_miss_pct": 0.1653651603036906,
+        "branch_miss_pct": 0.1514115346951179
+      },
+      "source_hotspot": {
+        "path": "src/c/runtime/backends/cpu_reference/quantization_operators.c",
+        "line_start": 197,
+        "line_end": 225,
+        "question": "generic stride helper와 element별 memcpy가 산술보다 비싼가"
+      },
+      "diagnosis_scope": "coarse stage attribution plus target-only PMU; qconv_mac_address requires perf annotate to split address from MAC"
+    }
+  ],
+  "optimization_gate": {
+    "ready": true,
+    "rule": "implement only after a stage dominates stably across all three inputs; retain bitwise output hashes and rerun full retained-tensor validation"
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/dequant_candidates/neon_combined/raw"
+  }
+}

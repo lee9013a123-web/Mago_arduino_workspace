@@ -1,0 +1,1420 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-13T05:51:01.193888+00:00",
+  "scope": "Native ORT C API RSS plus same-session run-1/run-2 allocator deltas; the Python orchestrator is excluded from RSS.",
+  "configuration": {
+    "model": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_98.onnx",
+    "model_sha256": "3fccf7b5bf6a79fa445a9006c9628ab22fdceb559d76df48bb2ea747eb4579be",
+    "frames": 98,
+    "feature_dim": 80,
+    "threads": 4,
+    "pinned_cpu": 0,
+    "runs_per_session": 2,
+    "cpu_memory_arena": true,
+    "graph_optimization_level": "all",
+    "memory_pattern_variants": [
+      "on",
+      "off"
+    ],
+    "binary": "/home/arduino/workspace/egs/accelerate_CAM/build/campp_ort_benchmark",
+    "reference_arena_manifest": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle/manifest.json",
+    "reference_arena_bytes": 2007040
+  },
+  "summary": {
+    "activation_plan_status": "confirmed",
+    "confirmed_inputs": 3,
+    "total_inputs": 3,
+    "median_native_rss_at_run2_bytes": 68059136,
+    "median_activation_plan_estimate_bytes": 0,
+    "median_non_activation_rss_estimate_bytes": 68059136,
+    "activation_share_of_native_rss": 0.0
+  },
+  "per_input": [
+    {
+      "input": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0000__98.f32",
+      "input_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+      "analysis": {
+        "activation_plan_running": true,
+        "evidence": {
+          "allocator_stats_available": true,
+          "all_outputs_match": true,
+          "pattern_on_run2_has_fewer_events_than_run1": true,
+          "pattern_on_run2_has_fewer_events_than_pattern_off": true,
+          "pattern_on_allocation_events": [
+            399,
+            239
+          ],
+          "pattern_off_allocation_events": [
+            399,
+            399
+          ]
+        },
+        "memory_decomposition": {
+          "native_rss_at_pattern_on_run2_bytes": 68059136,
+          "activation_plan_estimate_bytes": 0,
+          "non_activation_rss_estimate_bytes": 68059136,
+          "activation_share_of_native_rss": 0.0,
+          "reference_tensor_arena_bytes": 2007040,
+          "reference_tensor_arena_share_of_native_rss": 0.029489648531535868,
+          "activation_estimate_method": "pattern_on_run2_allocator_delta_minus_output"
+        },
+        "same_session_rss": {
+          "pattern_on_run1_bytes": 61722624,
+          "pattern_on_run2_bytes": 68059136,
+          "run2_minus_run1_bytes": 6336512,
+          "note": "RSS may stay flat because the CPU arena retains pages; plan operation is decided from allocator-event deltas, not VmHWM."
+        },
+        "pattern_on_runs": [
+          {
+            "session_run": 1,
+            "latency_ms": 845.580143,
+            "output_hash_fnv1a64": "073d9a949e1761a9",
+            "output_bytes": 768,
+            "rss_before_bytes": 54657024,
+            "rss_after_run_bytes": 61722624,
+            "rss_after_output_release_bytes": 61722624,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 14680064,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 3,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          },
+          {
+            "session_run": 2,
+            "latency_ms": 808.355432,
+            "output_hash_fnv1a64": "073d9a949e1761a9",
+            "output_bytes": 768,
+            "rss_before_bytes": 61722624,
+            "rss_after_run_bytes": 68059136,
+            "rss_after_output_release_bytes": 68059136,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 0,
+              "num_allocs": 239,
+              "num_reserves": 0,
+              "num_arena_extensions": 0,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 239
+          }
+        ],
+        "pattern_off_runs": [
+          {
+            "session_run": 1,
+            "latency_ms": 776.659426,
+            "output_hash_fnv1a64": "073d9a949e1761a9",
+            "output_bytes": 768,
+            "rss_before_bytes": 54685696,
+            "rss_after_run_bytes": 61812736,
+            "rss_after_output_release_bytes": 61812736,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 14680064,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 3,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          },
+          {
+            "session_run": 2,
+            "latency_ms": 730.631642,
+            "output_hash_fnv1a64": "073d9a949e1761a9",
+            "output_bytes": 768,
+            "rss_before_bytes": 61812736,
+            "rss_after_run_bytes": 61829120,
+            "rss_after_output_release_bytes": 61829120,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 0,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 0,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          }
+        ]
+      },
+      "raw": {
+        "memory_pattern_on": {
+          "schema_version": 1,
+          "runtime": "onnxruntime-c-api",
+          "ort_version": "1.27.0",
+          "configuration": {
+            "requested_threads": 4,
+            "effective_threads": 4,
+            "warmup": 0,
+            "repeat": 2,
+            "audio_seconds": 1,
+            "graph_optimization_level": "all",
+            "memory_pattern": "on",
+            "cpu_memory_arena": true,
+            "execution_mode": "ORT_SEQUENTIAL"
+          },
+          "model": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_98.onnx",
+            "input_name": "feature",
+            "output_name": "embedding",
+            "frames": 98
+          },
+          "input": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0000__98.f32",
+            "byte_size": 31360
+          },
+          "lifecycle": {
+            "model_load_ms": 3063.094003,
+            "context_create_ms": 0.0,
+            "input_load_ms": 0.131564,
+            "first_inference_ms": 845.580143,
+            "process_elapsed_ms": 4719.563046
+          },
+          "warm": {
+            "timings_ms": [
+              845.580143,
+              808.355432
+            ],
+            "p50_ms": 845.580143
+          },
+          "inferences": [
+            {
+              "session_run": 1,
+              "phase": "measurement",
+              "latency_ms": 845.580143,
+              "output_hash_fnv1a64": "073d9a949e1761a9",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 54657024,
+                "peak_rss_bytes": 54657024
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61722624,
+                "peak_rss_bytes": 61722624
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61722624,
+                "peak_rss_bytes": 61722624
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 7030200,
+                "max_in_use_bytes": 7152312,
+                "num_allocs": 1470,
+                "num_reserves": 1417,
+                "num_arena_extensions": 1,
+                "max_alloc_size_bytes": 526336
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 14680064,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 3,
+                "in_use_bytes": 6825400
+              }
+            },
+            {
+              "session_run": 2,
+              "phase": "measurement",
+              "latency_ms": 808.355432,
+              "output_hash_fnv1a64": "073d9a949e1761a9",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 61722624,
+                "peak_rss_bytes": 61722624
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 68059136,
+                "peak_rss_bytes": 68059136
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 68059136,
+                "peak_rss_bytes": 68059136
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 17311160,
+                "num_allocs": 2108,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 8388608
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 17311160,
+                "num_allocs": 2108,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 8388608
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 0,
+                "num_allocs": 239,
+                "num_reserves": 0,
+                "num_arena_extensions": 0,
+                "in_use_bytes": 6825400
+              }
+            }
+          ],
+          "memory": {
+            "start": {
+              "current_rss_bytes": 7458816,
+              "peak_rss_bytes": 7458816
+            },
+            "after_model_load": {
+              "current_rss_bytes": 54657024,
+              "peak_rss_bytes": 54657024
+            },
+            "after_context_create": {
+              "current_rss_bytes": 54657024,
+              "peak_rss_bytes": 54657024
+            },
+            "after_warmup": {
+              "current_rss_bytes": 54657024,
+              "peak_rss_bytes": 54657024
+            },
+            "after_measurement": {
+              "current_rss_bytes": 68059136,
+              "peak_rss_bytes": 68059136
+            },
+            "activation_bytes": null,
+            "arena_bytes": null,
+            "scratch_bytes": null
+          },
+          "embedding": {
+            "element_count": 192
+          }
+        },
+        "memory_pattern_off": {
+          "schema_version": 1,
+          "runtime": "onnxruntime-c-api",
+          "ort_version": "1.27.0",
+          "configuration": {
+            "requested_threads": 4,
+            "effective_threads": 4,
+            "warmup": 0,
+            "repeat": 2,
+            "audio_seconds": 1,
+            "graph_optimization_level": "all",
+            "memory_pattern": "off",
+            "cpu_memory_arena": true,
+            "execution_mode": "ORT_SEQUENTIAL"
+          },
+          "model": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_98.onnx",
+            "input_name": "feature",
+            "output_name": "embedding",
+            "frames": 98
+          },
+          "input": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0000__98.f32",
+            "byte_size": 31360
+          },
+          "lifecycle": {
+            "model_load_ms": 2938.089425,
+            "context_create_ms": 0.0,
+            "input_load_ms": 0.133647,
+            "first_inference_ms": 776.659426,
+            "process_elapsed_ms": 4447.828544
+          },
+          "warm": {
+            "timings_ms": [
+              776.659426,
+              730.631642
+            ],
+            "p50_ms": 776.659426
+          },
+          "inferences": [
+            {
+              "session_run": 1,
+              "phase": "measurement",
+              "latency_ms": 776.659426,
+              "output_hash_fnv1a64": "073d9a949e1761a9",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 54685696,
+                "peak_rss_bytes": 54685696
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61812736,
+                "peak_rss_bytes": 61812736
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61812736,
+                "peak_rss_bytes": 61812736
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 7030200,
+                "max_in_use_bytes": 7152312,
+                "num_allocs": 1470,
+                "num_reserves": 1417,
+                "num_arena_extensions": 1,
+                "max_alloc_size_bytes": 526336
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 14680064,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 3,
+                "in_use_bytes": 6825400
+              }
+            },
+            {
+              "session_run": 2,
+              "phase": "measurement",
+              "latency_ms": 730.631642,
+              "output_hash_fnv1a64": "073d9a949e1761a9",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 61812736,
+                "peak_rss_bytes": 61812736
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61829120,
+                "peak_rss_bytes": 61829120
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61829120,
+                "peak_rss_bytes": 61829120
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 2268,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 2268,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 0,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 0,
+                "in_use_bytes": 6825400
+              }
+            }
+          ],
+          "memory": {
+            "start": {
+              "current_rss_bytes": 7270400,
+              "peak_rss_bytes": 7270400
+            },
+            "after_model_load": {
+              "current_rss_bytes": 54685696,
+              "peak_rss_bytes": 54685696
+            },
+            "after_context_create": {
+              "current_rss_bytes": 54685696,
+              "peak_rss_bytes": 54685696
+            },
+            "after_warmup": {
+              "current_rss_bytes": 54685696,
+              "peak_rss_bytes": 54685696
+            },
+            "after_measurement": {
+              "current_rss_bytes": 61829120,
+              "peak_rss_bytes": 61829120
+            },
+            "activation_bytes": null,
+            "arena_bytes": null,
+            "scratch_bytes": null
+          },
+          "embedding": {
+            "element_count": 192
+          }
+        }
+      }
+    },
+    {
+      "input": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0005__98.f32",
+      "input_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+      "analysis": {
+        "activation_plan_running": true,
+        "evidence": {
+          "allocator_stats_available": true,
+          "all_outputs_match": true,
+          "pattern_on_run2_has_fewer_events_than_run1": true,
+          "pattern_on_run2_has_fewer_events_than_pattern_off": true,
+          "pattern_on_allocation_events": [
+            399,
+            239
+          ],
+          "pattern_off_allocation_events": [
+            399,
+            399
+          ]
+        },
+        "memory_decomposition": {
+          "native_rss_at_pattern_on_run2_bytes": 68087808,
+          "activation_plan_estimate_bytes": 0,
+          "non_activation_rss_estimate_bytes": 68087808,
+          "activation_share_of_native_rss": 0.0,
+          "reference_tensor_arena_bytes": 2007040,
+          "reference_tensor_arena_share_of_native_rss": 0.02947723034349997,
+          "activation_estimate_method": "pattern_on_run2_allocator_delta_minus_output"
+        },
+        "same_session_rss": {
+          "pattern_on_run1_bytes": 61755392,
+          "pattern_on_run2_bytes": 68087808,
+          "run2_minus_run1_bytes": 6332416,
+          "note": "RSS may stay flat because the CPU arena retains pages; plan operation is decided from allocator-event deltas, not VmHWM."
+        },
+        "pattern_on_runs": [
+          {
+            "session_run": 1,
+            "latency_ms": 813.899807,
+            "output_hash_fnv1a64": "a03833c700c31b05",
+            "output_bytes": 768,
+            "rss_before_bytes": 54677504,
+            "rss_after_run_bytes": 61755392,
+            "rss_after_output_release_bytes": 61755392,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 14680064,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 3,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          },
+          {
+            "session_run": 2,
+            "latency_ms": 750.623174,
+            "output_hash_fnv1a64": "a03833c700c31b05",
+            "output_bytes": 768,
+            "rss_before_bytes": 61755392,
+            "rss_after_run_bytes": 68087808,
+            "rss_after_output_release_bytes": 68087808,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 0,
+              "num_allocs": 239,
+              "num_reserves": 0,
+              "num_arena_extensions": 0,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 239
+          }
+        ],
+        "pattern_off_runs": [
+          {
+            "session_run": 1,
+            "latency_ms": 749.999204,
+            "output_hash_fnv1a64": "a03833c700c31b05",
+            "output_bytes": 768,
+            "rss_before_bytes": 54800384,
+            "rss_after_run_bytes": 61870080,
+            "rss_after_output_release_bytes": 61870080,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 14680064,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 3,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          },
+          {
+            "session_run": 2,
+            "latency_ms": 695.692052,
+            "output_hash_fnv1a64": "a03833c700c31b05",
+            "output_bytes": 768,
+            "rss_before_bytes": 61870080,
+            "rss_after_run_bytes": 61870080,
+            "rss_after_output_release_bytes": 61870080,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 0,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 0,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          }
+        ]
+      },
+      "raw": {
+        "memory_pattern_on": {
+          "schema_version": 1,
+          "runtime": "onnxruntime-c-api",
+          "ort_version": "1.27.0",
+          "configuration": {
+            "requested_threads": 4,
+            "effective_threads": 4,
+            "warmup": 0,
+            "repeat": 2,
+            "audio_seconds": 1,
+            "graph_optimization_level": "all",
+            "memory_pattern": "on",
+            "cpu_memory_arena": true,
+            "execution_mode": "ORT_SEQUENTIAL"
+          },
+          "model": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_98.onnx",
+            "input_name": "feature",
+            "output_name": "embedding",
+            "frames": 98
+          },
+          "input": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0005__98.f32",
+            "byte_size": 31360
+          },
+          "lifecycle": {
+            "model_load_ms": 2487.939715,
+            "context_create_ms": 0.0,
+            "input_load_ms": 0.118335,
+            "first_inference_ms": 813.899807,
+            "process_elapsed_ms": 4054.728869
+          },
+          "warm": {
+            "timings_ms": [
+              813.899807,
+              750.623174
+            ],
+            "p50_ms": 813.899807
+          },
+          "inferences": [
+            {
+              "session_run": 1,
+              "phase": "measurement",
+              "latency_ms": 813.899807,
+              "output_hash_fnv1a64": "a03833c700c31b05",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 54677504,
+                "peak_rss_bytes": 54677504
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61755392,
+                "peak_rss_bytes": 61755392
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61755392,
+                "peak_rss_bytes": 61755392
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 7030200,
+                "max_in_use_bytes": 7152312,
+                "num_allocs": 1470,
+                "num_reserves": 1417,
+                "num_arena_extensions": 1,
+                "max_alloc_size_bytes": 526336
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 14680064,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 3,
+                "in_use_bytes": 6825400
+              }
+            },
+            {
+              "session_run": 2,
+              "phase": "measurement",
+              "latency_ms": 750.623174,
+              "output_hash_fnv1a64": "a03833c700c31b05",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 61755392,
+                "peak_rss_bytes": 61755392
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 68087808,
+                "peak_rss_bytes": 68087808
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 68087808,
+                "peak_rss_bytes": 68087808
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 17311160,
+                "num_allocs": 2108,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 8388608
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 17311160,
+                "num_allocs": 2108,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 8388608
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 0,
+                "num_allocs": 239,
+                "num_reserves": 0,
+                "num_arena_extensions": 0,
+                "in_use_bytes": 6825400
+              }
+            }
+          ],
+          "memory": {
+            "start": {
+              "current_rss_bytes": 7446528,
+              "peak_rss_bytes": 7446528
+            },
+            "after_model_load": {
+              "current_rss_bytes": 54677504,
+              "peak_rss_bytes": 54677504
+            },
+            "after_context_create": {
+              "current_rss_bytes": 54677504,
+              "peak_rss_bytes": 54677504
+            },
+            "after_warmup": {
+              "current_rss_bytes": 54677504,
+              "peak_rss_bytes": 54677504
+            },
+            "after_measurement": {
+              "current_rss_bytes": 68087808,
+              "peak_rss_bytes": 68087808
+            },
+            "activation_bytes": null,
+            "arena_bytes": null,
+            "scratch_bytes": null
+          },
+          "embedding": {
+            "element_count": 192
+          }
+        },
+        "memory_pattern_off": {
+          "schema_version": 1,
+          "runtime": "onnxruntime-c-api",
+          "ort_version": "1.27.0",
+          "configuration": {
+            "requested_threads": 4,
+            "effective_threads": 4,
+            "warmup": 0,
+            "repeat": 2,
+            "audio_seconds": 1,
+            "graph_optimization_level": "all",
+            "memory_pattern": "off",
+            "cpu_memory_arena": true,
+            "execution_mode": "ORT_SEQUENTIAL"
+          },
+          "model": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_98.onnx",
+            "input_name": "feature",
+            "output_name": "embedding",
+            "frames": 98
+          },
+          "input": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0005__98.f32",
+            "byte_size": 31360
+          },
+          "lifecycle": {
+            "model_load_ms": 2539.206965,
+            "context_create_ms": 0.0,
+            "input_load_ms": 0.118647,
+            "first_inference_ms": 749.999204,
+            "process_elapsed_ms": 3987.338458
+          },
+          "warm": {
+            "timings_ms": [
+              749.999204,
+              695.692052
+            ],
+            "p50_ms": 749.999204
+          },
+          "inferences": [
+            {
+              "session_run": 1,
+              "phase": "measurement",
+              "latency_ms": 749.999204,
+              "output_hash_fnv1a64": "a03833c700c31b05",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 54800384,
+                "peak_rss_bytes": 54800384
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61870080,
+                "peak_rss_bytes": 61870080
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61870080,
+                "peak_rss_bytes": 61870080
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 7030200,
+                "max_in_use_bytes": 7152312,
+                "num_allocs": 1470,
+                "num_reserves": 1417,
+                "num_arena_extensions": 1,
+                "max_alloc_size_bytes": 526336
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 14680064,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 3,
+                "in_use_bytes": 6825400
+              }
+            },
+            {
+              "session_run": 2,
+              "phase": "measurement",
+              "latency_ms": 695.692052,
+              "output_hash_fnv1a64": "a03833c700c31b05",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 61870080,
+                "peak_rss_bytes": 61870080
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61870080,
+                "peak_rss_bytes": 61870080
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61870080,
+                "peak_rss_bytes": 61870080
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 2268,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 2268,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 0,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 0,
+                "in_use_bytes": 6825400
+              }
+            }
+          ],
+          "memory": {
+            "start": {
+              "current_rss_bytes": 7467008,
+              "peak_rss_bytes": 7467008
+            },
+            "after_model_load": {
+              "current_rss_bytes": 54800384,
+              "peak_rss_bytes": 54800384
+            },
+            "after_context_create": {
+              "current_rss_bytes": 54800384,
+              "peak_rss_bytes": 54800384
+            },
+            "after_warmup": {
+              "current_rss_bytes": 54800384,
+              "peak_rss_bytes": 54800384
+            },
+            "after_measurement": {
+              "current_rss_bytes": 61870080,
+              "peak_rss_bytes": 61870080
+            },
+            "activation_bytes": null,
+            "arena_bytes": null,
+            "scratch_bytes": null
+          },
+          "embedding": {
+            "element_count": 192
+          }
+        }
+      }
+    },
+    {
+      "input": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0006__98.f32",
+      "input_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+      "analysis": {
+        "activation_plan_running": true,
+        "evidence": {
+          "allocator_stats_available": true,
+          "all_outputs_match": true,
+          "pattern_on_run2_has_fewer_events_than_run1": true,
+          "pattern_on_run2_has_fewer_events_than_pattern_off": true,
+          "pattern_on_allocation_events": [
+            399,
+            239
+          ],
+          "pattern_off_allocation_events": [
+            399,
+            399
+          ]
+        },
+        "memory_decomposition": {
+          "native_rss_at_pattern_on_run2_bytes": 68059136,
+          "activation_plan_estimate_bytes": 0,
+          "non_activation_rss_estimate_bytes": 68059136,
+          "activation_share_of_native_rss": 0.0,
+          "reference_tensor_arena_bytes": 2007040,
+          "reference_tensor_arena_share_of_native_rss": 0.029489648531535868,
+          "activation_estimate_method": "pattern_on_run2_allocator_delta_minus_output"
+        },
+        "same_session_rss": {
+          "pattern_on_run1_bytes": 61726720,
+          "pattern_on_run2_bytes": 68059136,
+          "run2_minus_run1_bytes": 6332416,
+          "note": "RSS may stay flat because the CPU arena retains pages; plan operation is decided from allocator-event deltas, not VmHWM."
+        },
+        "pattern_on_runs": [
+          {
+            "session_run": 1,
+            "latency_ms": 772.876134,
+            "output_hash_fnv1a64": "f8e12b3d5ed8a4d7",
+            "output_bytes": 768,
+            "rss_before_bytes": 54648832,
+            "rss_after_run_bytes": 61726720,
+            "rss_after_output_release_bytes": 61726720,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 14680064,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 3,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          },
+          {
+            "session_run": 2,
+            "latency_ms": 739.432145,
+            "output_hash_fnv1a64": "f8e12b3d5ed8a4d7",
+            "output_bytes": 768,
+            "rss_before_bytes": 61726720,
+            "rss_after_run_bytes": 68059136,
+            "rss_after_output_release_bytes": 68059136,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 0,
+              "num_allocs": 239,
+              "num_reserves": 0,
+              "num_arena_extensions": 0,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 239
+          }
+        ],
+        "pattern_off_runs": [
+          {
+            "session_run": 1,
+            "latency_ms": 696.638199,
+            "output_hash_fnv1a64": "f8e12b3d5ed8a4d7",
+            "output_bytes": 768,
+            "rss_before_bytes": 54681600,
+            "rss_after_run_bytes": 61685760,
+            "rss_after_output_release_bytes": 61685760,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 14680064,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 3,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          },
+          {
+            "session_run": 2,
+            "latency_ms": 729.097591,
+            "output_hash_fnv1a64": "f8e12b3d5ed8a4d7",
+            "output_bytes": 768,
+            "rss_before_bytes": 61685760,
+            "rss_after_run_bytes": 61689856,
+            "rss_after_output_release_bytes": 61689856,
+            "allocator_run_delta": {
+              "total_allocated_bytes": 0,
+              "num_allocs": 399,
+              "num_reserves": 0,
+              "num_arena_extensions": 0,
+              "in_use_bytes": 6825400
+            },
+            "allocation_events": 399
+          }
+        ]
+      },
+      "raw": {
+        "memory_pattern_on": {
+          "schema_version": 1,
+          "runtime": "onnxruntime-c-api",
+          "ort_version": "1.27.0",
+          "configuration": {
+            "requested_threads": 4,
+            "effective_threads": 4,
+            "warmup": 0,
+            "repeat": 2,
+            "audio_seconds": 1,
+            "graph_optimization_level": "all",
+            "memory_pattern": "on",
+            "cpu_memory_arena": true,
+            "execution_mode": "ORT_SEQUENTIAL"
+          },
+          "model": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_98.onnx",
+            "input_name": "feature",
+            "output_name": "embedding",
+            "frames": 98
+          },
+          "input": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0006__98.f32",
+            "byte_size": 31360
+          },
+          "lifecycle": {
+            "model_load_ms": 2504.702164,
+            "context_create_ms": 0.0,
+            "input_load_ms": 0.11698,
+            "first_inference_ms": 772.876134,
+            "process_elapsed_ms": 4019.547139
+          },
+          "warm": {
+            "timings_ms": [
+              772.876134,
+              739.432145
+            ],
+            "p50_ms": 772.876134
+          },
+          "inferences": [
+            {
+              "session_run": 1,
+              "phase": "measurement",
+              "latency_ms": 772.876134,
+              "output_hash_fnv1a64": "f8e12b3d5ed8a4d7",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 54648832,
+                "peak_rss_bytes": 54648832
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61726720,
+                "peak_rss_bytes": 61726720
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61726720,
+                "peak_rss_bytes": 61726720
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 7030200,
+                "max_in_use_bytes": 7152312,
+                "num_allocs": 1470,
+                "num_reserves": 1417,
+                "num_arena_extensions": 1,
+                "max_alloc_size_bytes": 526336
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 14680064,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 3,
+                "in_use_bytes": 6825400
+              }
+            },
+            {
+              "session_run": 2,
+              "phase": "measurement",
+              "latency_ms": 739.432145,
+              "output_hash_fnv1a64": "f8e12b3d5ed8a4d7",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 61726720,
+                "peak_rss_bytes": 61726720
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 68059136,
+                "peak_rss_bytes": 68059136
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 68059136,
+                "peak_rss_bytes": 68059136
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 17311160,
+                "num_allocs": 2108,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 8388608
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 17311160,
+                "num_allocs": 2108,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 8388608
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 0,
+                "num_allocs": 239,
+                "num_reserves": 0,
+                "num_arena_extensions": 0,
+                "in_use_bytes": 6825400
+              }
+            }
+          ],
+          "memory": {
+            "start": {
+              "current_rss_bytes": 7450624,
+              "peak_rss_bytes": 7450624
+            },
+            "after_model_load": {
+              "current_rss_bytes": 54648832,
+              "peak_rss_bytes": 54648832
+            },
+            "after_context_create": {
+              "current_rss_bytes": 54648832,
+              "peak_rss_bytes": 54648832
+            },
+            "after_warmup": {
+              "current_rss_bytes": 54648832,
+              "peak_rss_bytes": 54648832
+            },
+            "after_measurement": {
+              "current_rss_bytes": 68059136,
+              "peak_rss_bytes": 68059136
+            },
+            "activation_bytes": null,
+            "arena_bytes": null,
+            "scratch_bytes": null
+          },
+          "embedding": {
+            "element_count": 192
+          }
+        },
+        "memory_pattern_off": {
+          "schema_version": 1,
+          "runtime": "onnxruntime-c-api",
+          "ort_version": "1.27.0",
+          "configuration": {
+            "requested_threads": 4,
+            "effective_threads": 4,
+            "warmup": 0,
+            "repeat": 2,
+            "audio_seconds": 1,
+            "graph_optimization_level": "all",
+            "memory_pattern": "off",
+            "cpu_memory_arena": true,
+            "execution_mode": "ORT_SEQUENTIAL"
+          },
+          "model": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/results/static/campp_static_98.onnx",
+            "input_name": "feature",
+            "output_name": "embedding",
+            "frames": 98
+          },
+          "input": {
+            "path": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/features/multi__speaker_0006__98.f32",
+            "byte_size": 31360
+          },
+          "lifecycle": {
+            "model_load_ms": 2623.376404,
+            "context_create_ms": 0.0,
+            "input_load_ms": 0.125209,
+            "first_inference_ms": 696.638199,
+            "process_elapsed_ms": 4051.332324
+          },
+          "warm": {
+            "timings_ms": [
+              696.638199,
+              729.097591
+            ],
+            "p50_ms": 729.097591
+          },
+          "inferences": [
+            {
+              "session_run": 1,
+              "phase": "measurement",
+              "latency_ms": 696.638199,
+              "output_hash_fnv1a64": "f8e12b3d5ed8a4d7",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 54681600,
+                "peak_rss_bytes": 54681600
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61685760,
+                "peak_rss_bytes": 61685760
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61685760,
+                "peak_rss_bytes": 61685760
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 7030200,
+                "max_in_use_bytes": 7152312,
+                "num_allocs": 1470,
+                "num_reserves": 1417,
+                "num_arena_extensions": 1,
+                "max_alloc_size_bytes": 526336
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 14680064,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 3,
+                "in_use_bytes": 6825400
+              }
+            },
+            {
+              "session_run": 2,
+              "phase": "measurement",
+              "latency_ms": 729.097591,
+              "output_hash_fnv1a64": "f8e12b3d5ed8a4d7",
+              "output_bytes": 768,
+              "memory_before": {
+                "current_rss_bytes": 61685760,
+                "peak_rss_bytes": 61685760
+              },
+              "memory_after_run": {
+                "current_rss_bytes": 61689856,
+                "peak_rss_bytes": 61689856
+              },
+              "memory_after_output_release": {
+                "current_rss_bytes": 61689856,
+                "peak_rss_bytes": 61689856
+              },
+              "allocator_before": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 1869,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_run": {
+                "in_use_bytes": 6826168,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 2268,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_after_output_release": {
+                "in_use_bytes": 6825400,
+                "total_allocated_bytes": 21710264,
+                "max_in_use_bytes": 13723064,
+                "num_allocs": 2268,
+                "num_reserves": 1417,
+                "num_arena_extensions": 4,
+                "max_alloc_size_bytes": 1846272
+              },
+              "allocator_run_delta": {
+                "total_allocated_bytes": 0,
+                "num_allocs": 399,
+                "num_reserves": 0,
+                "num_arena_extensions": 0,
+                "in_use_bytes": 6825400
+              }
+            }
+          ],
+          "memory": {
+            "start": {
+              "current_rss_bytes": 7335936,
+              "peak_rss_bytes": 7335936
+            },
+            "after_model_load": {
+              "current_rss_bytes": 54681600,
+              "peak_rss_bytes": 54681600
+            },
+            "after_context_create": {
+              "current_rss_bytes": 54681600,
+              "peak_rss_bytes": 54681600
+            },
+            "after_warmup": {
+              "current_rss_bytes": 54681600,
+              "peak_rss_bytes": 54681600
+            },
+            "after_measurement": {
+              "current_rss_bytes": 61689856,
+              "peak_rss_bytes": 61689856
+            },
+            "activation_bytes": null,
+            "arena_bytes": null,
+            "scratch_bytes": null
+          },
+          "embedding": {
+            "element_count": 192
+          }
+        }
+      }
+    }
+  ]
+}

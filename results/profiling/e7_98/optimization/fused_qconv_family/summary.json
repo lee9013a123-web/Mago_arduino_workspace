@@ -1,0 +1,320 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-20T05:46:43.930514+00:00",
+  "objective": "all fused_quant_qlinear_conv_o4i4 operators",
+  "measurement_strategy": "one graph traversal per input",
+  "modes": [
+    "baseline",
+    "combined_fixed",
+    "combined_hybrid",
+    "combined_v5"
+  ],
+  "comparisons": [
+    {
+      "mode": "combined_fixed",
+      "gate_passed": true,
+      "all_output_hashes_bitwise_identical": true,
+      "no_case_regressed_over_1pct": true,
+      "operator_count": 110,
+      "baseline_mean_ms": 1521.7654455833333,
+      "candidate_mean_ms": 152.35767901666665,
+      "mean_speedup_ratio": 9.98811123538358,
+      "baseline_sum_p50_ms": 1519.768853,
+      "candidate_sum_p50_ms": 151.9093455,
+      "sum_p50_speedup_ratio": 10.004446059574393,
+      "baseline_sum_p95_ms": 1533.88408985,
+      "candidate_sum_p95_ms": 154.8834194,
+      "sum_p95_speedup_ratio": 9.903475115619768,
+      "note": "p50/p95 sums are operator-level aggregate indicators, not a synchronized whole-graph percentile",
+      "shape_groups": [
+        {
+          "weight_shape": [
+            32,
+            1,
+            3,
+            3
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 73.6641815,
+          "candidate_mean_ms": 72.6844766,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 1.013478873974584
+        },
+        {
+          "weight_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "operator_count": 3,
+          "baseline_mean_ms": 743.5188026,
+          "candidate_mean_ms": 40.41133946666667,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 18.398766594047004
+        },
+        {
+          "weight_shape": [
+            32,
+            128,
+            3
+          ],
+          "operator_count": 52,
+          "baseline_mean_ms": 347.48718726666687,
+          "candidate_mean_ms": 19.992475016666663,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 17.38089891206493
+        },
+        {
+          "weight_shape": [
+            64,
+            128,
+            1
+          ],
+          "operator_count": 52,
+          "baseline_mean_ms": 249.30372315000002,
+          "candidate_mean_ms": 14.342882750000005,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 17.38170265318525
+        },
+        {
+          "weight_shape": [
+            128,
+            320,
+            5
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 104.41167091666667,
+          "candidate_mean_ms": 4.525015633333334,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 23.07432269350023
+        },
+        {
+          "weight_shape": [
+            192,
+            1024,
+            1
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 3.37988015,
+          "candidate_mean_ms": 0.40148955,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 8.418351486358736
+        }
+      ],
+      "comparison": "results/profiling/e7_98/optimization/fused_qconv_family/combined_fixed_comparison.json"
+    },
+    {
+      "mode": "combined_hybrid",
+      "gate_passed": true,
+      "all_output_hashes_bitwise_identical": true,
+      "no_case_regressed_over_1pct": true,
+      "operator_count": 110,
+      "baseline_mean_ms": 1521.7654455833333,
+      "candidate_mean_ms": 139.02837293333334,
+      "mean_speedup_ratio": 10.945718585896476,
+      "baseline_sum_p50_ms": 1519.768853,
+      "candidate_sum_p50_ms": 138.65112249999999,
+      "sum_p50_speedup_ratio": 10.961100246411638,
+      "baseline_sum_p95_ms": 1533.88408985,
+      "candidate_sum_p95_ms": 141.0419681,
+      "sum_p95_speedup_ratio": 10.87537355379544,
+      "note": "p50/p95 sums are operator-level aggregate indicators, not a synchronized whole-graph percentile",
+      "shape_groups": [
+        {
+          "weight_shape": [
+            32,
+            1,
+            3,
+            3
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 73.6641815,
+          "candidate_mean_ms": 72.65225603333333,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 1.0139283419664544
+        },
+        {
+          "weight_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "operator_count": 3,
+          "baseline_mean_ms": 743.5188026,
+          "candidate_mean_ms": 30.020676366666667,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 24.766890443066863
+        },
+        {
+          "weight_shape": [
+            32,
+            128,
+            3
+          ],
+          "operator_count": 52,
+          "baseline_mean_ms": 347.48718726666687,
+          "candidate_mean_ms": 19.98890873333333,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 17.383999892260267
+        },
+        {
+          "weight_shape": [
+            64,
+            128,
+            1
+          ],
+          "operator_count": 52,
+          "baseline_mean_ms": 249.30372315000002,
+          "candidate_mean_ms": 11.418971849999998,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 21.832414198481455
+        },
+        {
+          "weight_shape": [
+            128,
+            320,
+            5
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 104.41167091666667,
+          "candidate_mean_ms": 4.5478924166666665,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 22.95825436284049
+        },
+        {
+          "weight_shape": [
+            192,
+            1024,
+            1
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 3.37988015,
+          "candidate_mean_ms": 0.3996675333333333,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 8.456729326525231
+        }
+      ],
+      "comparison": "results/profiling/e7_98/optimization/fused_qconv_family/combined_hybrid_comparison.json"
+    },
+    {
+      "mode": "combined_v5",
+      "gate_passed": true,
+      "all_output_hashes_bitwise_identical": true,
+      "no_case_regressed_over_1pct": true,
+      "operator_count": 110,
+      "baseline_mean_ms": 1521.7654455833333,
+      "candidate_mean_ms": 153.29601453333333,
+      "mean_speedup_ratio": 9.92697331509838,
+      "baseline_sum_p50_ms": 1519.768853,
+      "candidate_sum_p50_ms": 152.825077,
+      "sum_p50_speedup_ratio": 9.944499180589322,
+      "baseline_sum_p95_ms": 1533.88408985,
+      "candidate_sum_p95_ms": 155.7634631,
+      "sum_p95_speedup_ratio": 9.847521744333893,
+      "note": "p50/p95 sums are operator-level aggregate indicators, not a synchronized whole-graph percentile",
+      "shape_groups": [
+        {
+          "weight_shape": [
+            32,
+            1,
+            3,
+            3
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 73.6641815,
+          "candidate_mean_ms": 72.71803306666668,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 1.013011193969808
+        },
+        {
+          "weight_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "operator_count": 3,
+          "baseline_mean_ms": 743.5188026,
+          "candidate_mean_ms": 27.5465165,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 26.991391183709197
+        },
+        {
+          "weight_shape": [
+            32,
+            128,
+            3
+          ],
+          "operator_count": 52,
+          "baseline_mean_ms": 347.48718726666687,
+          "candidate_mean_ms": 32.0709545,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 10.834949962797861
+        },
+        {
+          "weight_shape": [
+            64,
+            128,
+            1
+          ],
+          "operator_count": 52,
+          "baseline_mean_ms": 249.30372315000002,
+          "candidate_mean_ms": 10.833425433333334,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 23.012455726414856
+        },
+        {
+          "weight_shape": [
+            128,
+            320,
+            5
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 104.41167091666667,
+          "candidate_mean_ms": 9.424860216666668,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 11.078325674478217
+        },
+        {
+          "weight_shape": [
+            192,
+            1024,
+            1
+          ],
+          "operator_count": 1,
+          "baseline_mean_ms": 3.37988015,
+          "candidate_mean_ms": 0.7022248166666666,
+          "all_output_hashes_bitwise_identical": true,
+          "regressed_operator_ids": [],
+          "mean_speedup_ratio": 4.813102684185495
+        }
+      ],
+      "comparison": "results/profiling/e7_98/optimization/fused_qconv_family/combined_v5_comparison.json"
+    }
+  ],
+  "mac_fixed_vs_combined_v5": null,
+  "winner": "combined_hybrid",
+  "production_gate_ready": true,
+  "next_gate": "retained-tensor bitwise validation and Quick E2E profiling",
+  "elapsed_seconds": 178.24116881900045,
+  "estimated_seconds": 225.94465682962138
+}

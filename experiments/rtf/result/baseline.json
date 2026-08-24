@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "label": "baseline",
+  "generated_at_utc": "2026-08-13T03:34:26.635761+00:00",
+  "measurement_scope": "추론 루프만. WAV 읽기·FBank·model load·context create 제외.",
+  "configuration": {
+    "bucket_frames": 98,
+    "audio_seconds": 1.0,
+    "inputs": 3,
+    "warmup": 1,
+    "repeat": 3,
+    "threads": 1,
+    "pinned_cpu": 0,
+    "bundle": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle",
+    "feature_manifest": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/manifests/runtime_features.json"
+  },
+  "environment": {
+    "device_tree_model": "Arduino UnoQ",
+    "kernel": "7.0.0-g122c2c22d838",
+    "machine": "aarch64",
+    "logical_cpu_count": 4,
+    "pinned_cpu": 0,
+    "cpu_governors": [
+      "schedutil"
+    ],
+    "max_thermal_zone_c": 41.8,
+    "git_commit": "56f5fc661293b2cde3aaa7a2254cf536589241bf",
+    "git_dirty": true,
+    "compiler": "14.2.0",
+    "build": {
+      "cc": "gcc",
+      "cflags": "-std=c11 -O3 -DNDEBUG -Wall -Wextra"
+    }
+  },
+  "overall": {
+    "samples": 9,
+    "latency_ms": {
+      "min": 35432.8609,
+      "mean": 35483.33356666667,
+      "p50": 35490.324,
+      "max": 35526.023
+    },
+    "rtf": {
+      "min": 35.4328609,
+      "mean": 35.483333566666666,
+      "p50": 35.490324,
+      "max": 35.526023
+    },
+    "spread_pct": 0.2629257069106756
+  },
+  "per_input": [
+    {
+      "input_id": "multi__speaker_0000",
+      "audio_seconds": 1.0,
+      "timings_ms": [
+        35490.324,
+        35526.023,
+        35495.1646
+      ],
+      "samples": 3,
+      "latency_ms": {
+        "min": 35490.324,
+        "mean": 35503.8372,
+        "p50": 35495.1646,
+        "max": 35526.023
+      },
+      "rtf": {
+        "min": 35.490324,
+        "mean": 35.5038372,
+        "p50": 35.495164599999995,
+        "max": 35.526023
+      },
+      "spread_pct": 0.10058797998012226,
+      "lifecycle_ms": {
+        "model_load_ms": 33.137916,
+        "context_create_ms": 12.430365,
+        "input_load_ms": 0.146458,
+        "first_inference_ms": 35430.8722,
+        "process_elapsed_ms": 141989.435
+      },
+      "peak_rss_bytes": 12238848,
+      "arena_bytes": 2007040
+    },
+    {
+      "input_id": "multi__speaker_0005",
+      "audio_seconds": 1.0,
+      "timings_ms": [
+        35514.0149,
+        35469.936,
+        35468.9664
+      ],
+      "samples": 3,
+      "latency_ms": {
+        "min": 35468.9664,
+        "mean": 35484.305766666665,
+        "p50": 35469.936,
+        "max": 35514.0149
+      },
+      "rtf": {
+        "min": 35.4689664,
+        "mean": 35.484305766666665,
+        "p50": 35.469936000000004,
+        "max": 35.5140149
+      },
+      "spread_pct": 0.12700821188858896,
+      "lifecycle_ms": {
+        "model_load_ms": 35.445208,
+        "context_create_ms": 12.396615,
+        "input_load_ms": 0.141979,
+        "first_inference_ms": 35524.7837,
+        "process_elapsed_ms": 142027.172
+      },
+      "peak_rss_bytes": 12222464,
+      "arena_bytes": 2007040
+    },
+    {
+      "input_id": "multi__speaker_0006",
+      "audio_seconds": 1.0,
+      "timings_ms": [
+        35432.8609,
+        35442.0108,
+        35510.7015
+      ],
+      "samples": 3,
+      "latency_ms": {
+        "min": 35432.8609,
+        "mean": 35461.85773333333,
+        "p50": 35442.0108,
+        "max": 35510.7015
+      },
+      "rtf": {
+        "min": 35.4328609,
+        "mean": 35.46185773333334,
+        "p50": 35.4420108,
+        "max": 35.5107015
+      },
+      "spread_pct": 0.2196847728996198,
+      "lifecycle_ms": {
+        "model_load_ms": 36.569844,
+        "context_create_ms": 12.213802,
+        "input_load_ms": 0.1475,
+        "first_inference_ms": 35463.7257,
+        "process_elapsed_ms": 141899.659
+      },
+      "peak_rss_bytes": 12234752,
+      "arena_bytes": 2007040
+    }
+  ]
+}

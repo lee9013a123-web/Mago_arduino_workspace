@@ -1,0 +1,5102 @@
+{
+  "schema_version": 2,
+  "generated_at_utc": "2026-08-20T08:49:28.908943+00:00",
+  "objective": "benchmark all ordinary qlinear_conv_o4i4 operators",
+  "configuration": {
+    "bucket_frames": 498,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "elapsed_seconds": 433.5587095430001,
+    "qconv_candidate": "v4",
+    "graph_traversals_per_input": 1
+  },
+  "target_kernel_families": [
+    "qlinear_conv_o4i4_neon"
+  ],
+  "case_count": 115,
+  "cases": [
+    {
+      "case_name": "qconv_op_2",
+      "operator_id": 2,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 525.6370155,
+      "profile_share_pct": 6.203994753101456,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "faad45a520b8caf4",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "c7ad169ef7c02f1b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "8b53a6b55ccba043"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 4535763844,
+        "total_exclusive_ms": 4535.763844,
+        "mean_ms": 75.59606406666667,
+        "stddev_ms": 0.5751950789934629,
+        "cv_pct": 0.7608796649600829,
+        "min_ms": 74.13474,
+        "p50_ms": 75.50177099999999,
+        "p95_ms": 76.21375535,
+        "max_ms": 78.842448
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_3",
+      "operator_id": 3,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        1,
+        1
+      ],
+      "profile_mean_ms": 67.65934451666666,
+      "profile_share_pct": 0.7985705077873911,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "c320a04bc9f882d7",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "dd481416b7d625b1",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "8fd5ff3ff5729e1e"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 1879706253,
+        "total_exclusive_ms": 1879.706253,
+        "mean_ms": 31.32843755,
+        "stddev_ms": 0.23408859589205563,
+        "cv_pct": 0.7472080135450471,
+        "min_ms": 30.941771,
+        "p50_ms": 31.3367185,
+        "p95_ms": 31.654489849999997,
+        "max_ms": 32.064062
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_6",
+      "operator_id": 6,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 520.75311185,
+      "profile_share_pct": 6.146350957619451,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "6907fb3efde984c7",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "bba7537c48e8d06c",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "465807d39ce37c25"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 4510103071,
+        "total_exclusive_ms": 4510.103071,
+        "mean_ms": 75.16838451666668,
+        "stddev_ms": 0.8138972887133745,
+        "cv_pct": 1.082765439149372,
+        "min_ms": 74.065937,
+        "p50_ms": 75.0074475,
+        "p95_ms": 76.21056825,
+        "max_ms": 78.393385
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_12",
+      "operator_id": 12,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 520.5732966833333,
+      "profile_share_pct": 6.144228633053959,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "d3a3547beaad8dca",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "d505797631e2ad4d",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "dd1e9bc512af4285"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 4516402440,
+        "total_exclusive_ms": 4516.40244,
+        "mean_ms": 75.273374,
+        "stddev_ms": 0.9287975289248637,
+        "cv_pct": 1.233899159249675,
+        "min_ms": 74.077708,
+        "p50_ms": 75.020104,
+        "p95_ms": 76.50208585,
+        "max_ms": 79.167812
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_17",
+      "operator_id": 17,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 260.94735403333334,
+      "profile_share_pct": 3.0799125014408504,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "5af2194fc1925e7d",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "e9ffe9b861351c81",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "326fdc2d1c1d7fdd"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 2321997083,
+        "total_exclusive_ms": 2321.997083,
+        "mean_ms": 38.699951383333335,
+        "stddev_ms": 0.2487493276658982,
+        "cv_pct": 0.6427639280524406,
+        "min_ms": 37.974531,
+        "p50_ms": 38.7437245,
+        "p95_ms": 39.034679950000005,
+        "max_ms": 39.189583
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_18",
+      "operator_id": 18,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        1,
+        1
+      ],
+      "profile_mean_ms": 33.693607650000004,
+      "profile_share_pct": 0.3976793089330275,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "10ac593d1d8ca13b",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "7358d026aa91842b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "408666d7334a9719"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 942898800,
+        "total_exclusive_ms": 942.8988,
+        "mean_ms": 15.71498,
+        "stddev_ms": 0.12197064191968504,
+        "cv_pct": 0.7761425208284392,
+        "min_ms": 15.531771,
+        "p50_ms": 15.697994999999999,
+        "p95_ms": 15.9072235,
+        "max_ms": 16.166979
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_21",
+      "operator_id": 21,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 257.4935181,
+      "profile_share_pct": 3.0391475260365004,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "b7fb1f03e1e1f236",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "a84800b40cf907ee",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "79655d4d6cd2b5cc"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 2354813899,
+        "total_exclusive_ms": 2354.813899,
+        "mean_ms": 39.24689831666667,
+        "stddev_ms": 0.49663818062040843,
+        "cv_pct": 1.2654202036890771,
+        "min_ms": 38.419271,
+        "p50_ms": 39.135208000000006,
+        "p95_ms": 39.945022800000004,
+        "max_ms": 40.506354
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_27",
+      "operator_id": 27,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "profile_mean_ms": 257.29372993333334,
+      "profile_share_pct": 3.0367894639115325,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "92e54fa2810b1fd9",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "b234bcfd0d12771f",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "b0766e145fd0b1b9"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 2351409225,
+        "total_exclusive_ms": 2351.409225,
+        "mean_ms": 39.19015375,
+        "stddev_ms": 0.6257131336753721,
+        "cv_pct": 1.59660800941709,
+        "min_ms": 38.355729,
+        "p50_ms": 39.1086195,
+        "p95_ms": 40.512851049999995,
+        "max_ms": 41.281302
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_39",
+      "operator_id": 39,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        128,
+        1
+      ],
+      "profile_mean_ms": 10.375484349999999,
+      "profile_share_pct": 0.12245988880188798,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "87ad7170135daf3e",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "36b9d8e5ef0d7a26",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "753a9486726bab8e"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 97709531,
+        "total_exclusive_ms": 97.709531,
+        "mean_ms": 1.6284921833333332,
+        "stddev_ms": 0.009511550396739865,
+        "cv_pct": 0.5840709887394628,
+        "min_ms": 1.617656,
+        "p50_ms": 1.6271615000000001,
+        "p95_ms": 1.64139795,
+        "max_ms": 1.674531
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_52",
+      "operator_id": 52,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3506129166666667,
+      "profile_share_pct": 0.015941030029060145,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "14414d96e6003d9f",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "a220dda30e2f774b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "318bfd22a4075bfe"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15913387,
+        "total_exclusive_ms": 15.913387,
+        "mean_ms": 0.26522311666666665,
+        "stddev_ms": 0.0030239938221479365,
+        "cv_pct": 1.1401697786202032,
+        "min_ms": 0.26375,
+        "p50_ms": 0.26427049999999996,
+        "p95_ms": 0.27470885,
+        "max_ms": 0.27651
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_55",
+      "operator_id": 55,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        160,
+        1
+      ],
+      "profile_mean_ms": 12.810354983333333,
+      "profile_share_pct": 0.15119820857054364,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "586e6dfac797b52a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "fc86d08f72b4215c",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "b7cc96f56d66425f"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 115348956,
+        "total_exclusive_ms": 115.348956,
+        "mean_ms": 1.9224826,
+        "stddev_ms": 0.01899637907005788,
+        "cv_pct": 0.9881170872525911,
+        "min_ms": 1.904636,
+        "p50_ms": 1.9176039999999999,
+        "p95_ms": 1.96212275,
+        "max_ms": 2.008073
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_68",
+      "operator_id": 68,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3520216666666667,
+      "profile_share_pct": 0.015957657240140626,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "96e9c584ca63af84",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "cea3d2ec7a67b18d",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "0eebb70ce68a838c"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16092132,
+        "total_exclusive_ms": 16.092132,
+        "mean_ms": 0.2682022,
+        "stddev_ms": 0.0208963838425057,
+        "cv_pct": 7.791279804008208,
+        "min_ms": 0.26375,
+        "p50_ms": 0.264948,
+        "p95_ms": 0.27387495,
+        "max_ms": 0.427396
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_71",
+      "operator_id": 71,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        192,
+        1
+      ],
+      "profile_mean_ms": 15.290804683333333,
+      "profile_share_pct": 0.18047448948370184,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "ff1a82adc5e1a75e",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "ea242f0d017cbb62",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "eede6c4e2fb423db"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 132432445,
+        "total_exclusive_ms": 132.432445,
+        "mean_ms": 2.207207416666667,
+        "stddev_ms": 0.03392826378222718,
+        "cv_pct": 1.5371579275257137,
+        "min_ms": 2.179948,
+        "p50_ms": 2.194219,
+        "p95_ms": 2.2868142000000002,
+        "max_ms": 2.332864
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_84",
+      "operator_id": 84,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3505373,
+      "profile_share_pct": 0.015940137539776834,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "41431b2718367b2a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "f2bc0baee163d0b3",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "0e3440f3d59d0839"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15959066,
+        "total_exclusive_ms": 15.959066,
+        "mean_ms": 0.2659844333333333,
+        "stddev_ms": 0.004007743402326163,
+        "cv_pct": 1.5067586294810098,
+        "min_ms": 0.263333,
+        "p50_ms": 0.264479,
+        "p95_ms": 0.27575764999999997,
+        "max_ms": 0.279479
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_87",
+      "operator_id": 87,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        224,
+        1
+      ],
+      "profile_mean_ms": 17.75935851666667,
+      "profile_share_pct": 0.20961036572175662,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "d8febf7e66af8cd5",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "ed425653b05ea738",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "578daed42aa47c49"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 149818545,
+        "total_exclusive_ms": 149.818545,
+        "mean_ms": 2.49697575,
+        "stddev_ms": 0.07238423741110697,
+        "cv_pct": 2.898876267064547,
+        "min_ms": 2.46349,
+        "p50_ms": 2.4763539999999997,
+        "p95_ms": 2.5676844999999995,
+        "max_ms": 2.885052
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_100",
+      "operator_id": 100,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.35203125,
+      "profile_share_pct": 0.015957770350420085,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "4171d81a76845f12",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "fd25eeecc48b91ea",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "28e0c5db2ad9304c"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16077029,
+        "total_exclusive_ms": 16.077029,
+        "mean_ms": 0.2679504833333333,
+        "stddev_ms": 0.00973865382122818,
+        "cv_pct": 3.634497575849934,
+        "min_ms": 0.264114,
+        "p50_ms": 0.265521,
+        "p95_ms": 0.27906569999999997,
+        "max_ms": 0.318438
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_103",
+      "operator_id": 103,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        256,
+        1
+      ],
+      "profile_mean_ms": 20.221612816666667,
+      "profile_share_pct": 0.23867188975364148,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "6a7938f1c26d5eb4",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "96586b28cc861493",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "d805c271b02f38e1"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 167257084,
+        "total_exclusive_ms": 167.257084,
+        "mean_ms": 2.7876180666666666,
+        "stddev_ms": 0.0925108327386342,
+        "cv_pct": 3.318633705414864,
+        "min_ms": 2.733229,
+        "p50_ms": 2.75401,
+        "p95_ms": 3.04366365,
+        "max_ms": 3.20125
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_116",
+      "operator_id": 116,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3538237166666667,
+      "profile_share_pct": 0.015978926497090103,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "c6138d9d9babd749",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "30af0bc143799d9d",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "caa472a5bec9396d"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16506981,
+        "total_exclusive_ms": 16.506981,
+        "mean_ms": 0.27511635,
+        "stddev_ms": 0.037947576927398585,
+        "cv_pct": 13.793283070016951,
+        "min_ms": 0.263698,
+        "p50_ms": 0.2648435,
+        "p95_ms": 0.2897028999999998,
+        "max_ms": 0.476459
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_119",
+      "operator_id": 119,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        288,
+        1
+      ],
+      "profile_mean_ms": 22.663980933333335,
+      "profile_share_pct": 0.2674987009068265,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "4cc4befab40d128a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "53ee2a348c435aab",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "6c0153369c77c837"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 183782968,
+        "total_exclusive_ms": 183.782968,
+        "mean_ms": 3.063049466666667,
+        "stddev_ms": 0.056598130025784024,
+        "cv_pct": 1.847770682181518,
+        "min_ms": 3.033177,
+        "p50_ms": 3.046641,
+        "p95_ms": 3.1209425499999996,
+        "max_ms": 3.416146
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_132",
+      "operator_id": 132,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3526180666666667,
+      "profile_share_pct": 0.01596469643708004,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "e1fb61993362a3fa",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "b16f2a375f80c5f0",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "83b67ab95b623800"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15904947,
+        "total_exclusive_ms": 15.904947,
+        "mean_ms": 0.26508245,
+        "stddev_ms": 0.0007521553568467992,
+        "cv_pct": 0.2837439282935551,
+        "min_ms": 0.263802,
+        "p50_ms": 0.265,
+        "p95_ms": 0.26621884999999995,
+        "max_ms": 0.26823
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_135",
+      "operator_id": 135,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        320,
+        1
+      ],
+      "profile_mean_ms": 25.150074566666667,
+      "profile_share_pct": 0.2968415961027584,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "eeab901e576a8520",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "bb0bb9319c4d1e62",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "e373ef8eb84dadeb"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 200063908,
+        "total_exclusive_ms": 200.063908,
+        "mean_ms": 3.334398466666667,
+        "stddev_ms": 0.020093804062004353,
+        "cv_pct": 0.6026215601667949,
+        "min_ms": 3.309427,
+        "p50_ms": 3.3288545,
+        "p95_ms": 3.3750676,
+        "max_ms": 3.396146
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_148",
+      "operator_id": 148,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3507334666666668,
+      "profile_share_pct": 0.015942452858018975,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "1400b5ad97de4767",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "6fb3bc8e6a6a9d4e",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "fb4316acfba76697"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16063960,
+        "total_exclusive_ms": 16.06396,
+        "mean_ms": 0.2677326666666667,
+        "stddev_ms": 0.008354704554254981,
+        "cv_pct": 3.120539849796058,
+        "min_ms": 0.263854,
+        "p50_ms": 0.265104,
+        "p95_ms": 0.27749509999999994,
+        "max_ms": 0.31125
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_151",
+      "operator_id": 151,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        352,
+        1
+      ],
+      "profile_mean_ms": 27.61715536666667,
+      "profile_share_pct": 0.3259600864056495,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "413f695a7948c1ff",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "063471130941e91c",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "814c90fa339b674a"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 218919059,
+        "total_exclusive_ms": 218.919059,
+        "mean_ms": 3.6486509833333334,
+        "stddev_ms": 0.07545823399790808,
+        "cv_pct": 2.0681132380869975,
+        "min_ms": 3.600833,
+        "p50_ms": 3.6179425,
+        "p95_ms": 3.79621125,
+        "max_ms": 4.048906
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_164",
+      "operator_id": 164,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3526414833333333,
+      "profile_share_pct": 0.015964972819588977,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "1000174e71e97164",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "95d26e2bf3c2ef2d",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "111e617c7f11de76"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15906878,
+        "total_exclusive_ms": 15.906877999999999,
+        "mean_ms": 0.2651146333333333,
+        "stddev_ms": 0.002192862839354577,
+        "cv_pct": 0.8271376090347499,
+        "min_ms": 0.263854,
+        "p50_ms": 0.264479,
+        "p95_ms": 0.26667275,
+        "max_ms": 0.274843
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_167",
+      "operator_id": 167,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        384,
+        1
+      ],
+      "profile_mean_ms": 30.11872485,
+      "profile_share_pct": 0.3554856401461065,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "545931fd116eab72",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "c1e46d3942a3d569",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "2fa2b7be1860c19e"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 234717184,
+        "total_exclusive_ms": 234.717184,
+        "mean_ms": 3.911953066666667,
+        "stddev_ms": 0.05167038090365592,
+        "cv_pct": 1.3208333541609611,
+        "min_ms": 3.876979,
+        "p50_ms": 3.89724,
+        "p95_ms": 3.971354,
+        "max_ms": 4.166562
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_180",
+      "operator_id": 180,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3449792,
+      "profile_share_pct": 0.01587453633168,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "94d0fcba1f9f65b5",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "98ef4490f0150816",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "c486803c5b09e6af"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15920048,
+        "total_exclusive_ms": 15.920048,
+        "mean_ms": 0.26533413333333333,
+        "stddev_ms": 0.002987805072103749,
+        "cv_pct": 1.126053792841736,
+        "min_ms": 0.263541,
+        "p50_ms": 0.264297,
+        "p95_ms": 0.2736538,
+        "max_ms": 0.275782
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_183",
+      "operator_id": 183,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        416,
+        1
+      ],
+      "profile_mean_ms": 32.63784546666667,
+      "profile_share_pct": 0.38521834660964077,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "f87f0353a3496bdd",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "0b1caf9636d41ca5",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "8422bb31de2a06c9"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 252950573,
+        "total_exclusive_ms": 252.950573,
+        "mean_ms": 4.215842883333333,
+        "stddev_ms": 0.058315556099864066,
+        "cv_pct": 1.3832478513467705,
+        "min_ms": 4.174323,
+        "p50_ms": 4.191927,
+        "p95_ms": 4.340844199999999,
+        "max_ms": 4.470208
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_196",
+      "operator_id": 196,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3545677166666665,
+      "profile_share_pct": 0.015987707789046717,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "3a1a90f63044d79d",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "b028f1dbf612d765",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "31d6e97ae30e3090"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15909736,
+        "total_exclusive_ms": 15.909736,
+        "mean_ms": 0.2651622666666667,
+        "stddev_ms": 0.0026847313140962318,
+        "cv_pct": 1.0124861835908143,
+        "min_ms": 0.263698,
+        "p50_ms": 0.264218,
+        "p95_ms": 0.27344485,
+        "max_ms": 0.275312
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_199",
+      "operator_id": 199,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        448,
+        1
+      ],
+      "profile_mean_ms": 35.06908335,
+      "profile_share_pct": 0.4139137897138403,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "6bd3c5631a695155",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "81cd474edf7680f1",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "4bab9d624183f46b"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 272657346,
+        "total_exclusive_ms": 272.657346,
+        "mean_ms": 4.5442891,
+        "stddev_ms": 0.14921806287585743,
+        "cv_pct": 3.283639301818571,
+        "min_ms": 4.452865,
+        "p50_ms": 4.4786465,
+        "p95_ms": 4.917151649999999,
+        "max_ms": 5.161927
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_212",
+      "operator_id": 212,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3462813,
+      "profile_share_pct": 0.01588990477288525,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "fc3fddee922eea26",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "1ef27fc98cecd07b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "6906e05b10a82248"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15926040,
+        "total_exclusive_ms": 15.92604,
+        "mean_ms": 0.265434,
+        "stddev_ms": 0.002656035818031577,
+        "cv_pct": 1.0006388850077899,
+        "min_ms": 0.263698,
+        "p50_ms": 0.2647655,
+        "p95_ms": 0.27324725,
+        "max_ms": 0.276302
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_215",
+      "operator_id": 215,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        480,
+        1
+      ],
+      "profile_mean_ms": 37.60775868333334,
+      "profile_share_pct": 0.4438772968173999,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "4bd5bd17295c240a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "7d6c62874cce4a3b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "2b214f90be8dc439"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 289499373,
+        "total_exclusive_ms": 289.499373,
+        "mean_ms": 4.82498955,
+        "stddev_ms": 0.15191726967337899,
+        "cv_pct": 3.1485512683313273,
+        "min_ms": 4.744844,
+        "p50_ms": 4.78763,
+        "p95_ms": 4.969099000000001,
+        "max_ms": 5.637084
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_228",
+      "operator_id": 228,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3513445166666667,
+      "profile_share_pct": 0.015949664966150814,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "db5c5a37d5832588",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "848dd1f9170737ec",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "837bd07661611104"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15944324,
+        "total_exclusive_ms": 15.944324,
+        "mean_ms": 0.2657387333333333,
+        "stddev_ms": 0.004282545589820255,
+        "cv_pct": 1.6115624305503031,
+        "min_ms": 0.263073,
+        "p50_ms": 0.264375,
+        "p95_ms": 0.2740865,
+        "max_ms": 0.288698
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_231",
+      "operator_id": 231,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        256,
+        512,
+        1
+      ],
+      "profile_mean_ms": 80.0409418,
+      "profile_share_pct": 0.9447081699300512,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "8e2b3adec575e4ca",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "51f8c7ddce4e215a",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "a77d5dc829af652e"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 618344432,
+        "total_exclusive_ms": 618.344432,
+        "mean_ms": 10.305740533333333,
+        "stddev_ms": 0.44666109416997085,
+        "cv_pct": 4.334099939012348,
+        "min_ms": 10.057032,
+        "p50_ms": 10.1539325,
+        "p95_ms": 11.293729249999998,
+        "max_ms": 12.202656
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_234",
+      "operator_id": 234,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        256,
+        1
+      ],
+      "profile_mean_ms": 20.27582561666667,
+      "profile_share_pct": 0.2393117532275466,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "63998e8b97ac573a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "2df11cdd983e32fe",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "a463ad668fde2fe0"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 166209322,
+        "total_exclusive_ms": 166.209322,
+        "mean_ms": 2.7701553666666663,
+        "stddev_ms": 0.047469769131159203,
+        "cv_pct": 1.7136139619590967,
+        "min_ms": 2.740156,
+        "p50_ms": 2.7526565,
+        "p95_ms": 2.8488487,
+        "max_ms": 3.048021
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_247",
+      "operator_id": 247,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3479965500000002,
+      "profile_share_pct": 0.015910149545773123,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "49e1157cdce9aa9c",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "72dbb2bbf8ee09c1",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "d84faa5e744b92e6"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16104899,
+        "total_exclusive_ms": 16.104899,
+        "mean_ms": 0.2684149833333333,
+        "stddev_ms": 0.01769430647081302,
+        "cv_pct": 6.592145584078368,
+        "min_ms": 0.263594,
+        "p50_ms": 0.26487000000000005,
+        "p95_ms": 0.27621890000000004,
+        "max_ms": 0.396667
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_250",
+      "operator_id": 250,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        288,
+        1
+      ],
+      "profile_mean_ms": 22.71018498333333,
+      "profile_share_pct": 0.2680440386119715,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "9832103717f9d786",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "21ecf25f4dfb4562",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "3c41841f01af156f"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 185292345,
+        "total_exclusive_ms": 185.292345,
+        "mean_ms": 3.08820575,
+        "stddev_ms": 0.08136838045879678,
+        "cv_pct": 2.6348108593087356,
+        "min_ms": 3.030416,
+        "p50_ms": 3.047579,
+        "p95_ms": 3.1860314999999995,
+        "max_ms": 3.44474
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_263",
+      "operator_id": 263,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3547959833333332,
+      "profile_share_pct": 0.015990401977546666,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "a1f7cac56aeae7bf",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "67b5b3d5c04b5db7",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "683553430606c6ed"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16063229,
+        "total_exclusive_ms": 16.063229,
+        "mean_ms": 0.2677204833333333,
+        "stddev_ms": 0.010574438312099078,
+        "cv_pct": 3.9498054763830157,
+        "min_ms": 0.263646,
+        "p50_ms": 0.2647395,
+        "p95_ms": 0.27620009999999995,
+        "max_ms": 0.320416
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_266",
+      "operator_id": 266,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        320,
+        1
+      ],
+      "profile_mean_ms": 25.1477483,
+      "profile_share_pct": 0.2968141396151658,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "ee904578ed1622ca",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "2ddabae608879bcc",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "c232c8a23e5a39d0"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 199953282,
+        "total_exclusive_ms": 199.953282,
+        "mean_ms": 3.3325547,
+        "stddev_ms": 0.03195191971973931,
+        "cv_pct": 0.9587815533752322,
+        "min_ms": 3.307552,
+        "p50_ms": 3.3243235,
+        "p95_ms": 3.3909862499999996,
+        "max_ms": 3.526719
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_279",
+      "operator_id": 279,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3448663666666667,
+      "profile_share_pct": 0.015873204581085328,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "5c88a90f0a051deb",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "e90139dfc2435efc",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "83fe235747d33c49"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15924585,
+        "total_exclusive_ms": 15.924585,
+        "mean_ms": 0.26540975,
+        "stddev_ms": 0.003108949316757463,
+        "cv_pct": 1.1713772070383484,
+        "min_ms": 0.263594,
+        "p50_ms": 0.264844,
+        "p95_ms": 0.26694025,
+        "max_ms": 0.282552
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_282",
+      "operator_id": 282,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        352,
+        1
+      ],
+      "profile_mean_ms": 27.618495633333335,
+      "profile_share_pct": 0.32597590532083726,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "92d149a230bb07c1",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "397cc06b05d751f4",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "235d5c5f483c2f4a"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 219109689,
+        "total_exclusive_ms": 219.109689,
+        "mean_ms": 3.65182815,
+        "stddev_ms": 0.07669509863496819,
+        "cv_pct": 2.1001836747155855,
+        "min_ms": 3.605209,
+        "p50_ms": 3.620651,
+        "p95_ms": 3.767562,
+        "max_ms": 4.078646
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_295",
+      "operator_id": 295,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.35219355,
+      "profile_share_pct": 0.0159596859467703,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "a3fcfd0ee0839d0a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "5144db7288a7a547",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "e4dd06287834623b"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15942233,
+        "total_exclusive_ms": 15.942233,
+        "mean_ms": 0.26570388333333333,
+        "stddev_ms": 0.002985067034934985,
+        "cv_pct": 1.1234563068805925,
+        "min_ms": 0.263646,
+        "p50_ms": 0.265,
+        "p95_ms": 0.2746428,
+        "max_ms": 0.276771
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_298",
+      "operator_id": 298,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        384,
+        1
+      ],
+      "profile_mean_ms": 30.083561566666667,
+      "profile_share_pct": 0.35507061453172073,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "463898c84e978d1c",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "9a43e749c0937c73",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "479932b6fc0063b1"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 235838701,
+        "total_exclusive_ms": 235.83870100000001,
+        "mean_ms": 3.930645016666667,
+        "stddev_ms": 0.13916942302561672,
+        "cv_pct": 3.5406255827100246,
+        "min_ms": 3.877188,
+        "p50_ms": 3.8913285,
+        "p95_ms": 4.04323165,
+        "max_ms": 4.856771
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_311",
+      "operator_id": 311,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3469140666666666,
+      "profile_share_pct": 0.015897373198746016,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "f480d10bf2dd54a1",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "70dcd50bc3ede9f2",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "46cb64c28d6245c4"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15954999,
+        "total_exclusive_ms": 15.954999,
+        "mean_ms": 0.26591665000000003,
+        "stddev_ms": 0.003759846990791866,
+        "cv_pct": 1.4139193581115983,
+        "min_ms": 0.263698,
+        "p50_ms": 0.26481750000000004,
+        "p95_ms": 0.27484144999999993,
+        "max_ms": 0.283073
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_314",
+      "operator_id": 314,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        416,
+        1
+      ],
+      "profile_mean_ms": 32.580571133333336,
+      "profile_share_pct": 0.3845423484340759,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "9a6133f440881267",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "d25de225abb5a0c2",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "7721917df26d240f"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 251995102,
+        "total_exclusive_ms": 251.995102,
+        "mean_ms": 4.199918366666667,
+        "stddev_ms": 0.042605967442744704,
+        "cv_pct": 1.014447513572975,
+        "min_ms": 4.171303,
+        "p50_ms": 4.1844535,
+        "p95_ms": 4.250098649999999,
+        "max_ms": 4.398073
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_327",
+      "operator_id": 327,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3563246666666666,
+      "profile_share_pct": 0.016008444739185383,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "d5a23c430731694f",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "5a3bacd7accbe204",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "f1f1e5ac8149e27d"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16046772,
+        "total_exclusive_ms": 16.046772,
+        "mean_ms": 0.2674462,
+        "stddev_ms": 0.013904511162209194,
+        "cv_pct": 5.1989937274147815,
+        "min_ms": 0.263906,
+        "p50_ms": 0.2650785,
+        "p95_ms": 0.2748492,
+        "max_ms": 0.372292
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_330",
+      "operator_id": 330,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        448,
+        1
+      ],
+      "profile_mean_ms": 35.05960936666667,
+      "profile_share_pct": 0.41380197007184827,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "505d2820e11e23a0",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "4f9063548396c082",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "a945f684eb8304c3"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 272948234,
+        "total_exclusive_ms": 272.948234,
+        "mean_ms": 4.549137233333334,
+        "stddev_ms": 0.18705487900893034,
+        "cv_pct": 4.111875931952657,
+        "min_ms": 4.456094,
+        "p50_ms": 4.4819795,
+        "p95_ms": 5.12182855,
+        "max_ms": 5.369011
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_343",
+      "operator_id": 343,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3500624666666667,
+      "profile_share_pct": 0.015934533171321548,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "20be897393d225a4",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "5c0301664f4a909b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "868cba9a387a73ea"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15902761,
+        "total_exclusive_ms": 15.902761,
+        "mean_ms": 0.26504601666666666,
+        "stddev_ms": 0.002137612597359231,
+        "cv_pct": 0.8065062151254986,
+        "min_ms": 0.26375,
+        "p50_ms": 0.264323,
+        "p95_ms": 0.2667113,
+        "max_ms": 0.276823
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_346",
+      "operator_id": 346,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        480,
+        1
+      ],
+      "profile_mean_ms": 37.5141919,
+      "profile_share_pct": 0.44277294568582587,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "3dc3d84ec1b02115",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "640390cd42d6e076",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "b18d5e6216a4039c"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 290549898,
+        "total_exclusive_ms": 290.549898,
+        "mean_ms": 4.8424983,
+        "stddev_ms": 0.23318677704709156,
+        "cv_pct": 4.815423002773002,
+        "min_ms": 4.745416,
+        "p50_ms": 4.791927,
+        "p95_ms": 5.009188299999999,
+        "max_ms": 6.428698
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_359",
+      "operator_id": 359,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.35179685,
+      "profile_share_pct": 0.01595500377134128,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "f1de431e23d6b16b",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "d34363357813287f",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "1a5cd3d6fa458025"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15903337,
+        "total_exclusive_ms": 15.903337,
+        "mean_ms": 0.26505561666666666,
+        "stddev_ms": 0.00210044781805902,
+        "cv_pct": 0.792455502159963,
+        "min_ms": 0.263802,
+        "p50_ms": 0.264375,
+        "p95_ms": 0.26816925,
+        "max_ms": 0.276198
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_362",
+      "operator_id": 362,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        512,
+        1
+      ],
+      "profile_mean_ms": 40.0484688,
+      "profile_share_pct": 0.47268453890867085,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "b6c886bc108a3e95",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "4fb72b61f6449e5f",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "a2a7b7941c7f93ad"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 303736613,
+        "total_exclusive_ms": 303.736613,
+        "mean_ms": 5.062276883333333,
+        "stddev_ms": 0.05543313558305822,
+        "cv_pct": 1.0950237780466372,
+        "min_ms": 5.015104,
+        "p50_ms": 5.042318,
+        "p95_ms": 5.1718981,
+        "max_ms": 5.26927
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_375",
+      "operator_id": 375,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3525564833333334,
+      "profile_share_pct": 0.015963969580588558,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "dd11d53685d1a29b",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "6230e560ba0d885b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "1943e15ae3b47a00"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16062651,
+        "total_exclusive_ms": 16.062651,
+        "mean_ms": 0.26771085,
+        "stddev_ms": 0.009225585169922829,
+        "cv_pct": 3.4461005857337605,
+        "min_ms": 0.263906,
+        "p50_ms": 0.264401,
+        "p95_ms": 0.27806234999999996,
+        "max_ms": 0.313072
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_378",
+      "operator_id": 378,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        544,
+        1
+      ],
+      "profile_mean_ms": 42.47186801666667,
+      "profile_share_pct": 0.5012874637056787,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "dad8e3abf4b834a7",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "12a9d6f162f8a308",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "27652931a19b729b"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 324868180,
+        "total_exclusive_ms": 324.86818,
+        "mean_ms": 5.414469666666666,
+        "stddev_ms": 0.15100832746481974,
+        "cv_pct": 2.788977254678862,
+        "min_ms": 5.319844,
+        "p50_ms": 5.3621355,
+        "p95_ms": 5.6694483,
+        "max_ms": 6.235104
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_391",
+      "operator_id": 391,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3515044,
+      "profile_share_pct": 0.015951552039039252,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "a6078db7b18a9507",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "f702e1ee4e00c272",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "0e4fe37a975ec6a3"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16167968,
+        "total_exclusive_ms": 16.167968,
+        "mean_ms": 0.2694661333333333,
+        "stddev_ms": 0.023933908504787837,
+        "cv_pct": 8.881972739476417,
+        "min_ms": 0.263385,
+        "p50_ms": 0.264219,
+        "p95_ms": 0.27668765,
+        "max_ms": 0.444583
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_394",
+      "operator_id": 394,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        576,
+        1
+      ],
+      "profile_mean_ms": 45.03510146666667,
+      "profile_share_pct": 0.5315408256376717,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "1807a6eab28c03a5",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "4d23bf9262e34664",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "bf912cc1683622f5"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 341217189,
+        "total_exclusive_ms": 341.217189,
+        "mean_ms": 5.68695315,
+        "stddev_ms": 0.14992755269527405,
+        "cv_pct": 2.636342321463894,
+        "min_ms": 5.603021,
+        "p50_ms": 5.652787,
+        "p95_ms": 5.8004742,
+        "max_ms": 6.70776
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_407",
+      "operator_id": 407,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3455773,
+      "profile_share_pct": 0.01588159559339942,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "0b89509cbdfe4611",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "1f2627d50c980bc2",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "702b812c2a3b0423"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16093751,
+        "total_exclusive_ms": 16.093751,
+        "mean_ms": 0.26822918333333334,
+        "stddev_ms": 0.017416964801108593,
+        "cv_pct": 6.493314629178217,
+        "min_ms": 0.263646,
+        "p50_ms": 0.265052,
+        "p95_ms": 0.275795,
+        "max_ms": 0.399114
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_410",
+      "operator_id": 410,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        608,
+        1
+      ],
+      "profile_mean_ms": 47.48922915,
+      "profile_share_pct": 0.5605064327427159,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "88ea6069a8ea7e81",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "54cc351c6710a973",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "fc1d7263cb85aab1"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 364872971,
+        "total_exclusive_ms": 364.872971,
+        "mean_ms": 6.081216183333334,
+        "stddev_ms": 0.37842116736027914,
+        "cv_pct": 6.222787612737899,
+        "min_ms": 5.899792,
+        "p50_ms": 5.9415890000000005,
+        "p95_ms": 7.03008075,
+        "max_ms": 7.778854
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_423",
+      "operator_id": 423,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3479583499999999,
+      "profile_share_pct": 0.01590969867836352,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "d3421426c4c95b07",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "ebf5e33077c5f8eb",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "534f32c75729cd53"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15957755,
+        "total_exclusive_ms": 15.957755,
+        "mean_ms": 0.26596258333333334,
+        "stddev_ms": 0.0049154914141981325,
+        "cv_pct": 1.84818907704679,
+        "min_ms": 0.263594,
+        "p50_ms": 0.2648695,
+        "p95_ms": 0.27011644999999995,
+        "max_ms": 0.299271
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_426",
+      "operator_id": 426,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        640,
+        1
+      ],
+      "profile_mean_ms": 49.96812233333333,
+      "profile_share_pct": 0.5897643423826412,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "26fabd5816ab858c",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "6c2a6cdff5149426",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "e3eb9411922efa29"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 374530781,
+        "total_exclusive_ms": 374.530781,
+        "mean_ms": 6.242179683333333,
+        "stddev_ms": 0.04468258382580086,
+        "cv_pct": 0.7158170077209359,
+        "min_ms": 6.18198,
+        "p50_ms": 6.231823,
+        "p95_ms": 6.30449165,
+        "max_ms": 6.426822
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_439",
+      "operator_id": 439,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3477188,
+      "profile_share_pct": 0.015906871314804102,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "3ac7461c6e45e3c1",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "c6f3f28fc93a7909",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "a0f631017d5eafad"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15927297,
+        "total_exclusive_ms": 15.927297,
+        "mean_ms": 0.26545494999999997,
+        "stddev_ms": 0.00321253386194865,
+        "cv_pct": 1.2101992680673879,
+        "min_ms": 0.263489,
+        "p50_ms": 0.264219,
+        "p95_ms": 0.27355240000000003,
+        "max_ms": 0.275365
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_442",
+      "operator_id": 442,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        672,
+        1
+      ],
+      "profile_mean_ms": 52.53944705,
+      "profile_share_pct": 0.6201132040120788,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "5b475dfaf1a7ae0c",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "bbe0801a470e0532",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "3bb63d30f6d0511c"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 407833389,
+        "total_exclusive_ms": 407.833389,
+        "mean_ms": 6.79722315,
+        "stddev_ms": 0.6475014702992014,
+        "cv_pct": 9.52597047368088,
+        "min_ms": 6.475938,
+        "p50_ms": 6.551406500000001,
+        "p95_ms": 7.847658699999999,
+        "max_ms": 10.697136
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_455",
+      "operator_id": 455,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3504235833333333,
+      "profile_share_pct": 0.015938795363365094,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "95334048841b28d6",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "9f667c9aaf7749b0",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "d31634ea7db5db42"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16017813,
+        "total_exclusive_ms": 16.017813,
+        "mean_ms": 0.26696355,
+        "stddev_ms": 0.010881137467233532,
+        "cv_pct": 4.075888812249287,
+        "min_ms": 0.263646,
+        "p50_ms": 0.2642965,
+        "p95_ms": 0.2777428,
+        "max_ms": 0.345625
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_458",
+      "operator_id": 458,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        704,
+        1
+      ],
+      "profile_mean_ms": 54.8926675,
+      "profile_share_pct": 0.6478878220358947,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "adca94b0154f8acd",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "a1ffea5a4415d922",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "abac1a7b383ac742"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 419418437,
+        "total_exclusive_ms": 419.418437,
+        "mean_ms": 6.990307283333333,
+        "stddev_ms": 0.5057021261577178,
+        "cv_pct": 7.234333279789289,
+        "min_ms": 6.760416,
+        "p50_ms": 6.833489500000001,
+        "p95_ms": 7.563411949999997,
+        "max_ms": 9.43052
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_471",
+      "operator_id": 471,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3498367666666666,
+      "profile_share_pct": 0.015931869276705143,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "9d7af177c051a92b",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "b94a9f5d394af57d",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "901296ec08456c2b"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15910888,
+        "total_exclusive_ms": 15.910888,
+        "mean_ms": 0.26518146666666664,
+        "stddev_ms": 0.0022402082601599544,
+        "cv_pct": 0.8447831171308432,
+        "min_ms": 0.263802,
+        "p50_ms": 0.2646615,
+        "p95_ms": 0.2675156,
+        "max_ms": 0.279688
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_474",
+      "operator_id": 474,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        736,
+        1
+      ],
+      "profile_mean_ms": 57.477533916666665,
+      "profile_share_pct": 0.6783965138014733,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "8cb6ddaaac1419f0",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "fe737cea9fd8376f",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "af0555631110e89a"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 432388279,
+        "total_exclusive_ms": 432.388279,
+        "mean_ms": 7.206471316666667,
+        "stddev_ms": 0.3050459183924332,
+        "cv_pct": 4.232944321681299,
+        "min_ms": 7.058281,
+        "p50_ms": 7.101276,
+        "p95_ms": 7.689406749999999,
+        "max_ms": 8.996979
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_487",
+      "operator_id": 487,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3542439166666667,
+      "profile_share_pct": 0.015983886038595706,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "ce52961990ebf6f3",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "c2d6bddbe9ba9a14",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "f2ed7a72bbc04c0a"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15916044,
+        "total_exclusive_ms": 15.916044,
+        "mean_ms": 0.2652674,
+        "stddev_ms": 0.0021075539550230583,
+        "cv_pct": 0.7945016820849672,
+        "min_ms": 0.264011,
+        "p50_ms": 0.2648435,
+        "p95_ms": 0.2674563,
+        "max_ms": 0.274636
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_490",
+      "operator_id": 490,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        768,
+        1
+      ],
+      "profile_mean_ms": 59.9436206,
+      "profile_share_pct": 0.7075032707324705,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "cadca5eea743b387",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "994d5e3edda32aa7",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "db123d5d93273cc2"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 472727393,
+        "total_exclusive_ms": 472.727393,
+        "mean_ms": 7.878789883333334,
+        "stddev_ms": 0.9265855347777144,
+        "cv_pct": 11.76050571849617,
+        "min_ms": 7.346667,
+        "p50_ms": 7.438307,
+        "p95_ms": 10.4694684,
+        "max_ms": 10.629375
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_503",
+      "operator_id": 503,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3509687166666666,
+      "profile_share_pct": 0.015945229469487784,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "6a491b3b05aa0a80",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "650e84ffed1161ba",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "d3490f9968d4cc49"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15979949,
+        "total_exclusive_ms": 15.979949,
+        "mean_ms": 0.2663324833333333,
+        "stddev_ms": 0.004432287315791046,
+        "cv_pct": 1.6641932896498155,
+        "min_ms": 0.263802,
+        "p50_ms": 0.264271,
+        "p95_ms": 0.27416904999999997,
+        "max_ms": 0.28125
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_506",
+      "operator_id": 506,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        800,
+        1
+      ],
+      "profile_mean_ms": 62.42917181666667,
+      "profile_share_pct": 0.7368397638865851,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "8daae39031f6a92e",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "4aa2295b1cc9e2d9",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "24b7e94702934823"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 468345677,
+        "total_exclusive_ms": 468.345677,
+        "mean_ms": 7.805761283333334,
+        "stddev_ms": 0.3372811420504705,
+        "cv_pct": 4.320925657445159,
+        "min_ms": 7.648698,
+        "p50_ms": 7.7107814999999995,
+        "p95_ms": 8.061505499999999,
+        "max_ms": 9.628385
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_519",
+      "operator_id": 519,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.34715195,
+      "profile_share_pct": 0.015900180890952485,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "9a58c596e0b5526a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "5440d929beb69bc0",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "cf05db3c1ae468e3"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16098432,
+        "total_exclusive_ms": 16.098432,
+        "mean_ms": 0.26830719999999997,
+        "stddev_ms": 0.011317158839272925,
+        "cv_pct": 4.217985517821708,
+        "min_ms": 0.263906,
+        "p50_ms": 0.264531,
+        "p95_ms": 0.28889114999999993,
+        "max_ms": 0.32927
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_522",
+      "operator_id": 522,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        832,
+        1
+      ],
+      "profile_mean_ms": 64.8605,
+      "profile_share_pct": 0.7655362727846875,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "ef9965d7725fe328",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "de6a000125c92a9e",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "45c720f99f782302"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 497165054,
+        "total_exclusive_ms": 497.165054,
+        "mean_ms": 8.286084233333334,
+        "stddev_ms": 0.7917794311773401,
+        "cv_pct": 9.555532008619496,
+        "min_ms": 7.919427,
+        "p50_ms": 7.983385500000001,
+        "p95_ms": 10.32127075,
+        "max_ms": 11.318021
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_535",
+      "operator_id": 535,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3515468499999999,
+      "profile_share_pct": 0.01595205306839887,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "6f2d274a5284a14b",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "28b3a4cde5549f7f",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "dca5fdd5104e52eb"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15904479,
+        "total_exclusive_ms": 15.904479,
+        "mean_ms": 0.26507465,
+        "stddev_ms": 0.0020579659118087116,
+        "cv_pct": 0.7763722075304867,
+        "min_ms": 0.263854,
+        "p50_ms": 0.264401,
+        "p95_ms": 0.26692745,
+        "max_ms": 0.274479
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_538",
+      "operator_id": 538,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        864,
+        1
+      ],
+      "profile_mean_ms": 67.48910943333334,
+      "profile_share_pct": 0.796561255142219,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "3f6ae4e922880a93",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "93a427e0453b86fe",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "9abe213a1715aaf2"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 508703074,
+        "total_exclusive_ms": 508.703074,
+        "mean_ms": 8.478384566666668,
+        "stddev_ms": 0.4071966093221786,
+        "cv_pct": 4.80276173037844,
+        "min_ms": 8.237812,
+        "p50_ms": 8.322526,
+        "p95_ms": 9.367156599999998,
+        "max_ms": 10.102916
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_551",
+      "operator_id": 551,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3520685833333335,
+      "profile_share_pct": 0.01595821098872615,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "22205c6fca9fc315",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "bd24b853fc6f261c",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "8a14eb07d23a3d55"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15997969,
+        "total_exclusive_ms": 15.997969,
+        "mean_ms": 0.26663281666666666,
+        "stddev_ms": 0.0055941403584216795,
+        "cv_pct": 2.0980689580364906,
+        "min_ms": 0.263593,
+        "p50_ms": 0.264349,
+        "p95_ms": 0.27888009999999996,
+        "max_ms": 0.29724
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_554",
+      "operator_id": 554,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        896,
+        1
+      ],
+      "profile_mean_ms": 69.81323703333334,
+      "profile_share_pct": 0.8239924957336423,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "8142dce01a3bdc35",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "e76e1bded9c87e4b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "30b349fd1329f265"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 565518487,
+        "total_exclusive_ms": 565.518487,
+        "mean_ms": 9.425308116666667,
+        "stddev_ms": 1.0708853060977024,
+        "cv_pct": 11.361806880393308,
+        "min_ms": 8.500521,
+        "p50_ms": 8.6594535,
+        "p95_ms": 11.0484815,
+        "max_ms": 11.388802
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_567",
+      "operator_id": 567,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3492274833333333,
+      "profile_share_pct": 0.01592467802020743,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "b914c6bb8c2ee372",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "f04b181f59fa4dd1",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "3f08045511b43782"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16071146,
+        "total_exclusive_ms": 16.071146,
+        "mean_ms": 0.2678524333333333,
+        "stddev_ms": 0.011705165786048863,
+        "cv_pct": 4.370005394530868,
+        "min_ms": 0.263906,
+        "p50_ms": 0.264844,
+        "p95_ms": 0.27943229999999997,
+        "max_ms": 0.352136
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_570",
+      "operator_id": 570,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        928,
+        1
+      ],
+      "profile_mean_ms": 72.33594436666667,
+      "profile_share_pct": 0.8537675355388642,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "de0c1d5b6047eee6",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "dea39617d77f1b6d",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "820d1b22c436c209"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 611692553,
+        "total_exclusive_ms": 611.692553,
+        "mean_ms": 10.194875883333333,
+        "stddev_ms": 1.560427423377925,
+        "cv_pct": 15.305997260142465,
+        "min_ms": 8.845468,
+        "p50_ms": 9.132213499999999,
+        "p95_ms": 12.984401149999998,
+        "max_ms": 13.14276
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_583",
+      "operator_id": 583,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3494036333333335,
+      "profile_share_pct": 0.01592675708550065,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "d782c85901cfd636",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "a43e50788e171958",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "e6068d76c8b9b2c8"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15922240,
+        "total_exclusive_ms": 15.92224,
+        "mean_ms": 0.2653706666666667,
+        "stddev_ms": 0.0033512139077587324,
+        "cv_pct": 1.2628426305942124,
+        "min_ms": 0.263646,
+        "p50_ms": 0.264219,
+        "p95_ms": 0.2742841,
+        "max_ms": 0.278906
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_586",
+      "operator_id": 586,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        960,
+        1
+      ],
+      "profile_mean_ms": 74.86870491666667,
+      "profile_share_pct": 0.8836612315680823,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "7ad820f63ee3e528",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "b009ce39a242523e",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "61273e1773662b5b"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 561102606,
+        "total_exclusive_ms": 561.102606,
+        "mean_ms": 9.3517101,
+        "stddev_ms": 0.4719121979779607,
+        "cv_pct": 5.046266329170755,
+        "min_ms": 9.104635,
+        "p50_ms": 9.1896615,
+        "p95_ms": 10.080006049999996,
+        "max_ms": 11.911563
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_599",
+      "operator_id": 599,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3514852166666667,
+      "profile_share_pct": 0.015951325621766804,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "4608e0d9bbddb61e",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "50f0ea68096d632b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "3afdc273025dea83"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16587031,
+        "total_exclusive_ms": 16.587031,
+        "mean_ms": 0.27645051666666665,
+        "stddev_ms": 0.045567626064817734,
+        "cv_pct": 16.483103961697935,
+        "min_ms": 0.263646,
+        "p50_ms": 0.265547,
+        "p95_ms": 0.320271,
+        "max_ms": 0.606458
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_602",
+      "operator_id": 602,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        992,
+        1
+      ],
+      "profile_mean_ms": 77.43005465,
+      "profile_share_pct": 0.9138923603468314,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "4ef2400f7b5d4bc2",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "4f2c34cc98063109",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "837d573351a9261c"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 668058698,
+        "total_exclusive_ms": 668.058698,
+        "mean_ms": 11.134311633333335,
+        "stddev_ms": 1.470805975536746,
+        "cv_pct": 13.209671365165693,
+        "min_ms": 9.46125,
+        "p50_ms": 10.752448000000001,
+        "p95_ms": 13.05327355,
+        "max_ms": 13.591302
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_615",
+      "operator_id": 615,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3487995166666666,
+      "profile_share_pct": 0.015919626810197082,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "b10d4d5bf23b0cc9",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "a201a300ec692783",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "db78271499120863"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15899536,
+        "total_exclusive_ms": 15.899536,
+        "mean_ms": 0.26499226666666664,
+        "stddev_ms": 0.002402193919917558,
+        "cv_pct": 0.906514725933219,
+        "min_ms": 0.263593,
+        "p50_ms": 0.264297,
+        "p95_ms": 0.27289529999999995,
+        "max_ms": 0.274688
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_618",
+      "operator_id": 618,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        512,
+        1024,
+        1
+      ],
+      "profile_mean_ms": 319.50252406666664,
+      "profile_share_pct": 3.7710281514835056,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "3f677a9e5bca8c48",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "8f4087154cceba49",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "656c5e695cd44e31"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 2385341408,
+        "total_exclusive_ms": 2385.3414080000002,
+        "mean_ms": 39.75569013333334,
+        "stddev_ms": 0.9436762564546959,
+        "cv_pct": 2.373688529339518,
+        "min_ms": 38.927187,
+        "p50_ms": 39.3392185,
+        "p95_ms": 41.866979300000004,
+        "max_ms": 42.896823
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_621",
+      "operator_id": 621,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        512,
+        1
+      ],
+      "profile_mean_ms": 40.00036368333333,
+      "profile_share_pct": 0.4721167632714976,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "d37002684efeedee",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "92c7105a5b20a0ed",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "0336d07800b17f9d"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 304998019,
+        "total_exclusive_ms": 304.998019,
+        "mean_ms": 5.083300316666667,
+        "stddev_ms": 0.09750428781332157,
+        "cv_pct": 1.918129595720192,
+        "min_ms": 5.019532,
+        "p50_ms": 5.0516665,
+        "p95_ms": 5.282161799999999,
+        "max_ms": 5.604427
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_634",
+      "operator_id": 634,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3541883666666665,
+      "profile_share_pct": 0.015983230392401904,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "ed4b77e0318910be",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "29745fb8b7fc4dd1",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "8f70d2d20d991669"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16109583,
+        "total_exclusive_ms": 16.109583,
+        "mean_ms": 0.26849305,
+        "stddev_ms": 0.009875439271959838,
+        "cv_pct": 3.6780986591495894,
+        "min_ms": 0.263594,
+        "p50_ms": 0.2650785,
+        "p95_ms": 0.2887008,
+        "max_ms": 0.320417
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_637",
+      "operator_id": 637,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        544,
+        1
+      ],
+      "profile_mean_ms": 42.47669621666667,
+      "profile_share_pct": 0.5013444500414649,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "8d36ee937ecbed61",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "ca20aafbfd1980aa",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "858166db5116fae4"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 341304323,
+        "total_exclusive_ms": 341.304323,
+        "mean_ms": 5.6884053833333335,
+        "stddev_ms": 0.5658973771424783,
+        "cv_pct": 9.948260347276264,
+        "min_ms": 5.32125,
+        "p50_ms": 5.3845835,
+        "p95_ms": 7.063200500000001,
+        "max_ms": 7.939011
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_650",
+      "operator_id": 650,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3549817666666668,
+      "profile_share_pct": 0.015992594743259935,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "b9ecaf6f62811694",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "b888910df1788719",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "61ef8253b3023502"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15962864,
+        "total_exclusive_ms": 15.962864,
+        "mean_ms": 0.2660477333333333,
+        "stddev_ms": 0.003560926316127434,
+        "cv_pct": 1.3384539200963315,
+        "min_ms": 0.263906,
+        "p50_ms": 0.264948,
+        "p95_ms": 0.27407509999999996,
+        "max_ms": 0.280521
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_653",
+      "operator_id": 653,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        576,
+        1
+      ],
+      "profile_mean_ms": 45.007791649999994,
+      "profile_share_pct": 0.5312184930120917,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "fe10a8e19df56403",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "e513ae08b9b9ac8d",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "d42052b7de82dc16"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 342349219,
+        "total_exclusive_ms": 342.349219,
+        "mean_ms": 5.705820316666666,
+        "stddev_ms": 0.2191233063596455,
+        "cv_pct": 3.8403471227368944,
+        "min_ms": 5.602761,
+        "p50_ms": 5.628515500000001,
+        "p95_ms": 5.953320149999999,
+        "max_ms": 6.871823
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_666",
+      "operator_id": 666,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3571571333333334,
+      "profile_share_pct": 0.01601827018655655,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "df60bbb1902f0fbe",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "2282284bdb9251bc",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "fc191f5589141555"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16276769,
+        "total_exclusive_ms": 16.276769,
+        "mean_ms": 0.27127948333333335,
+        "stddev_ms": 0.02688700414728999,
+        "cv_pct": 9.911182304285324,
+        "min_ms": 0.263594,
+        "p50_ms": 0.2645575,
+        "p95_ms": 0.28012495000000004,
+        "max_ms": 0.465
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_669",
+      "operator_id": 669,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        608,
+        1
+      ],
+      "profile_mean_ms": 47.46493828333333,
+      "profile_share_pct": 0.5602197322157279,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "8b465fed92c37b83",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "d3b3dfe6f361efbe",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "8f8b3e905a6ae301"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 370381617,
+        "total_exclusive_ms": 370.381617,
+        "mean_ms": 6.17302695,
+        "stddev_ms": 0.6340538912904913,
+        "cv_pct": 10.271361139780725,
+        "min_ms": 5.904739,
+        "p50_ms": 5.9479165,
+        "p95_ms": 7.9818046,
+        "max_ms": 8.953907
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_682",
+      "operator_id": 682,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3509990833333334,
+      "profile_share_pct": 0.015945587881538523,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "788d99edd823b7cf",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "99f7a398cf3dacc8",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "3b9c4e0de8e1d5e3"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15976925,
+        "total_exclusive_ms": 15.976925,
+        "mean_ms": 0.2662820833333333,
+        "stddev_ms": 0.0043412944163834614,
+        "cv_pct": 1.6303366572917362,
+        "min_ms": 0.26375,
+        "p50_ms": 0.264323,
+        "p95_ms": 0.2770207,
+        "max_ms": 0.282084
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_685",
+      "operator_id": 685,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        640,
+        1
+      ],
+      "profile_mean_ms": 50.02812061666667,
+      "profile_share_pct": 0.590472490827326,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "1fa74a0bce951da3",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "d988463423f31494",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "390d0d8ce105af14"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 374098329,
+        "total_exclusive_ms": 374.098329,
+        "mean_ms": 6.23497215,
+        "stddev_ms": 0.06752994155553643,
+        "cv_pct": 1.0830832910061423,
+        "min_ms": 6.17901,
+        "p50_ms": 6.212135,
+        "p95_ms": 6.374666749999999,
+        "max_ms": 6.538854
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_698",
+      "operator_id": 698,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3479097333333334,
+      "profile_share_pct": 0.015909124864997987,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "8cbb3ce74fbfdea5",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "60a0d18054436c5f",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "3c895fc85346b1b4"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16084890,
+        "total_exclusive_ms": 16.08489,
+        "mean_ms": 0.26808150000000003,
+        "stddev_ms": 0.014360792743322586,
+        "cv_pct": 5.356875705083188,
+        "min_ms": 0.263646,
+        "p50_ms": 0.26466100000000004,
+        "p95_ms": 0.27970044999999993,
+        "max_ms": 0.371979
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_701",
+      "operator_id": 701,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        672,
+        1
+      ],
+      "profile_mean_ms": 52.52118751666667,
+      "profile_share_pct": 0.619897690177144,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "d37327e4fc1ebdaa",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "7bcba520cdb3248b",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "b1fff95cd4d664db"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 401654948,
+        "total_exclusive_ms": 401.654948,
+        "mean_ms": 6.694249133333333,
+        "stddev_ms": 0.3417031807596308,
+        "cv_pct": 5.1044288008068675,
+        "min_ms": 6.474687,
+        "p50_ms": 6.5653125,
+        "p95_ms": 7.41204985,
+        "max_ms": 8.205885
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_714",
+      "operator_id": 714,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3569184166666666,
+      "profile_share_pct": 0.016015452658673608,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "92e9ecdea031498a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "c86af177e183b35e",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "39b7db496e3b6908"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15921356,
+        "total_exclusive_ms": 15.921356,
+        "mean_ms": 0.26535593333333335,
+        "stddev_ms": 0.002672130865474636,
+        "cv_pct": 1.0069987250362227,
+        "min_ms": 0.263542,
+        "p50_ms": 0.264479,
+        "p95_ms": 0.271597,
+        "max_ms": 0.2775
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_717",
+      "operator_id": 717,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        704,
+        1
+      ],
+      "profile_mean_ms": 54.95796436666667,
+      "profile_share_pct": 0.6486585086623086,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "4f91c990b6fac06f",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "765ea5ab3f507f59",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "9000bd08134a0155"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 429641611,
+        "total_exclusive_ms": 429.641611,
+        "mean_ms": 7.160693516666667,
+        "stddev_ms": 0.6383839933990225,
+        "cv_pct": 8.915114044654615,
+        "min_ms": 6.759739,
+        "p50_ms": 6.899635,
+        "p95_ms": 8.37255225,
+        "max_ms": 10.550833
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_730",
+      "operator_id": 730,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3529505666666668,
+      "profile_share_pct": 0.015968620871993442,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "0852be7e7e310ba0",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "73ca6b9b0cc465e5",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "4f0f0138e9ffc4ce"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16368538,
+        "total_exclusive_ms": 16.368538,
+        "mean_ms": 0.2728089666666667,
+        "stddev_ms": 0.015486767354709273,
+        "cv_pct": 5.676780915207921,
+        "min_ms": 0.263854,
+        "p50_ms": 0.266745,
+        "p95_ms": 0.30097969999999996,
+        "max_ms": 0.342916
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_733",
+      "operator_id": 733,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        736,
+        1
+      ],
+      "profile_mean_ms": 57.42367706666666,
+      "profile_share_pct": 0.6777608515384176,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "2fed625a9c2df722",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "9f5be8b5478f4e54",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "7fccb98ec07af551"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 435379946,
+        "total_exclusive_ms": 435.379946,
+        "mean_ms": 7.256332433333333,
+        "stddev_ms": 0.41008721377943363,
+        "cv_pct": 5.651439174638976,
+        "min_ms": 7.053541,
+        "p50_ms": 7.126224000000001,
+        "p95_ms": 7.922218349999999,
+        "max_ms": 9.255156
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_746",
+      "operator_id": 746,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3503785666666666,
+      "profile_share_pct": 0.01593826404012193,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "35026f4c5a9d640e",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "74926ffd96faab3f",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "fbee6277ec3c4170"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15905572,
+        "total_exclusive_ms": 15.905572,
+        "mean_ms": 0.26509286666666665,
+        "stddev_ms": 0.0015599518739015284,
+        "cv_pct": 0.5884548662197858,
+        "min_ms": 0.263698,
+        "p50_ms": 0.265,
+        "p95_ms": 0.26610085,
+        "max_ms": 0.276094
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_749",
+      "operator_id": 749,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        768,
+        1
+      ],
+      "profile_mean_ms": 59.9830799,
+      "profile_share_pct": 0.7079690014229323,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "358616d4b6dd886e",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "870cbf87eeca9bd8",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "4d859f9f0f5133b9"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 449694581,
+        "total_exclusive_ms": 449.69458099999997,
+        "mean_ms": 7.494909683333333,
+        "stddev_ms": 0.30467931772075213,
+        "cv_pct": 4.065149956353405,
+        "min_ms": 7.343906,
+        "p50_ms": 7.3860155,
+        "p95_ms": 8.1243795,
+        "max_ms": 8.873906
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_762",
+      "operator_id": 762,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3440339,
+      "profile_share_pct": 0.01586337913371416,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "e8e0ada19f6069cf",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "f013a5925b8273d4",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "e1fc5d9492b81714"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15869790,
+        "total_exclusive_ms": 15.86979,
+        "mean_ms": 0.2644965,
+        "stddev_ms": 0.0006892272605365124,
+        "cv_pct": 0.2605808623314533,
+        "min_ms": 0.26375,
+        "p50_ms": 0.26424499999999995,
+        "p95_ms": 0.26555485,
+        "max_ms": 0.267709
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_765",
+      "operator_id": 765,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        800,
+        1
+      ],
+      "profile_mean_ms": 62.54269441666667,
+      "profile_share_pct": 0.7381796497659852,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "53074dcf37dfd67b",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "91f3573d4077198c",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "b51facbdbb4f6189"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 476908592,
+        "total_exclusive_ms": 476.908592,
+        "mean_ms": 7.948476533333333,
+        "stddev_ms": 0.6873619862738135,
+        "cv_pct": 8.647719891871608,
+        "min_ms": 7.672344,
+        "p50_ms": 7.734583,
+        "p95_ms": 9.594479749999998,
+        "max_ms": 11.947084
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_778",
+      "operator_id": 778,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3510417,
+      "profile_share_pct": 0.015946090878033437,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "ea16fa2f1907c562",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "88eaf8475408fd35",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "4fd73b377daf2b8c"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16535832,
+        "total_exclusive_ms": 16.535832,
+        "mean_ms": 0.2755972,
+        "stddev_ms": 0.028568272203501097,
+        "cv_pct": 10.365951542142335,
+        "min_ms": 0.263593,
+        "p50_ms": 0.2657035,
+        "p95_ms": 0.3243876,
+        "max_ms": 0.444896
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_781",
+      "operator_id": 781,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        832,
+        1
+      ],
+      "profile_mean_ms": 64.93795745,
+      "profile_share_pct": 0.7664504884871937,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "4a76b3882dcb92ae",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "463b2ced9e752974",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "def6458d931214ce"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 485236718,
+        "total_exclusive_ms": 485.236718,
+        "mean_ms": 8.087278633333334,
+        "stddev_ms": 0.28131712697831296,
+        "cv_pct": 3.4785140927234566,
+        "min_ms": 7.922813,
+        "p50_ms": 8.0086195,
+        "p95_ms": 8.377607449999998,
+        "max_ms": 9.453542
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_794",
+      "operator_id": 794,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.35398955,
+      "profile_share_pct": 0.01598088379670857,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "b64464d6b99974e3",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "545bdb2c791190d8",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "b2c129b527e40978"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15946568,
+        "total_exclusive_ms": 15.946568000000001,
+        "mean_ms": 0.26577613333333333,
+        "stddev_ms": 0.004111792340195322,
+        "cv_pct": 1.5470886300533087,
+        "min_ms": 0.263802,
+        "p50_ms": 0.26481750000000004,
+        "p95_ms": 0.2745388,
+        "max_ms": 0.290573
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_797",
+      "operator_id": 797,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        864,
+        1
+      ],
+      "profile_mean_ms": 67.48663883333333,
+      "profile_share_pct": 0.7965320951154607,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "37038398479abf05",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "bfb8658d89983fea",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "83ca80834a3a9154"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 505017760,
+        "total_exclusive_ms": 505.01776,
+        "mean_ms": 8.416962666666667,
+        "stddev_ms": 0.30966229511365373,
+        "cv_pct": 3.6790265963753876,
+        "min_ms": 8.239115,
+        "p50_ms": 8.3192965,
+        "p95_ms": 9.132296949999999,
+        "max_ms": 9.730521
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_810",
+      "operator_id": 810,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3484999333333334,
+      "profile_share_pct": 0.015916090884504425,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "e32cdc808307a2f4",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "96aee253916785a5",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "62b02c1940566083"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16006510,
+        "total_exclusive_ms": 16.00651,
+        "mean_ms": 0.2667751666666666,
+        "stddev_ms": 0.014278935148400325,
+        "cv_pct": 5.352422913577161,
+        "min_ms": 0.26375,
+        "p50_ms": 0.264349,
+        "p95_ms": 0.26984855,
+        "max_ms": 0.375469
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_813",
+      "operator_id": 813,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        896,
+        1
+      ],
+      "profile_mean_ms": 69.91246273333333,
+      "profile_share_pct": 0.8251636379934529,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "bb7341a7ca65c89f",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "36b0615ea90cfb1a",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "9ca9aaee1cd98fc9"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 557136095,
+        "total_exclusive_ms": 557.136095,
+        "mean_ms": 9.285601583333333,
+        "stddev_ms": 1.4063762585395998,
+        "cv_pct": 15.145774303561499,
+        "min_ms": 8.526875,
+        "p50_ms": 8.6394275,
+        "p95_ms": 11.03171875,
+        "max_ms": 17.769427
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_826",
+      "operator_id": 826,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3522752,
+      "profile_share_pct": 0.01596064964635129,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "cfebc53e497e2f7b",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "c4cffc0a402d142d",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "e2290e8177228aa3"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15919582,
+        "total_exclusive_ms": 15.919582,
+        "mean_ms": 0.26532636666666665,
+        "stddev_ms": 0.0035017445031806016,
+        "cv_pct": 1.319787606174811,
+        "min_ms": 0.263594,
+        "p50_ms": 0.264297,
+        "p95_ms": 0.27254449999999997,
+        "max_ms": 0.281771
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_829",
+      "operator_id": 829,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        928,
+        1
+      ],
+      "profile_mean_ms": 72.4963151,
+      "profile_share_pct": 0.8556603611177567,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "0be571a6fa36dc39",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "3b2d41acce2438a3",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "6af74a02fa976791"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 537150732,
+        "total_exclusive_ms": 537.150732,
+        "mean_ms": 8.9525122,
+        "stddev_ms": 0.13099322649305187,
+        "cv_pct": 1.463200759369553,
+        "min_ms": 8.828958,
+        "p50_ms": 8.908125,
+        "p95_ms": 9.1510996,
+        "max_ms": 9.622136
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_842",
+      "operator_id": 842,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3520485666666666,
+      "profile_share_pct": 0.01595797473577723,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "1ad8e4bf8d56c69a",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "b955525fb3d9859e",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "8a13026c72abef24"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15950100,
+        "total_exclusive_ms": 15.950099999999999,
+        "mean_ms": 0.265835,
+        "stddev_ms": 0.003310596768962758,
+        "cv_pct": 1.2453577478371012,
+        "min_ms": 0.263854,
+        "p50_ms": 0.264427,
+        "p95_ms": 0.2738463,
+        "max_ms": 0.27573
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_845",
+      "operator_id": 845,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        960,
+        1
+      ],
+      "profile_mean_ms": 74.93587238333333,
+      "profile_share_pct": 0.8844539965341924,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "0ac4c329376a549e",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "46c9456ffcddc8f1",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "ea21dd3bac05a6c3"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 560058542,
+        "total_exclusive_ms": 560.058542,
+        "mean_ms": 9.334309033333334,
+        "stddev_ms": 0.46157732322811545,
+        "cv_pct": 4.944954378302639,
+        "min_ms": 9.085781,
+        "p50_ms": 9.200728999999999,
+        "p95_ms": 10.115390699999999,
+        "max_ms": 11.496823
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_858",
+      "operator_id": 858,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3508759333333333,
+      "profile_share_pct": 0.01594413436526909,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "2ecab980ce09a453",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "a3f26fb7e5a7cd3f",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "e4f6ff3f89b75e54"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 15906258,
+        "total_exclusive_ms": 15.906258,
+        "mean_ms": 0.2651043,
+        "stddev_ms": 0.0016314849197382553,
+        "cv_pct": 0.6154124696348777,
+        "min_ms": 0.263646,
+        "p50_ms": 0.264948,
+        "p95_ms": 0.2669635,
+        "max_ms": 0.275625
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_861",
+      "operator_id": 861,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        128,
+        992,
+        1
+      ],
+      "profile_mean_ms": 77.38493486666667,
+      "profile_share_pct": 0.9133598200370611,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "2bbc0f26e59ef313",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "585287de77e0acd1",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "4ae6d4c7532ef3e3"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 578925729,
+        "total_exclusive_ms": 578.925729,
+        "mean_ms": 9.648762150000001,
+        "stddev_ms": 0.4711680689603525,
+        "cv_pct": 4.883197053005938,
+        "min_ms": 9.433438,
+        "p50_ms": 9.511875,
+        "p95_ms": 10.316549549999998,
+        "max_ms": 12.036927
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_874",
+      "operator_id": 874,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        32,
+        64,
+        1
+      ],
+      "profile_mean_ms": 1.3496805333333335,
+      "profile_share_pct": 0.015930025284079663,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "8cb55cfa9ea83e53",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "9be3438e956c5440",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "00a2376f56951965"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 16241460,
+        "total_exclusive_ms": 16.24146,
+        "mean_ms": 0.270691,
+        "stddev_ms": 0.0260251704093044,
+        "cv_pct": 9.614346398404232,
+        "min_ms": 0.264011,
+        "p50_ms": 0.2647395,
+        "p95_ms": 0.27707794999999996,
+        "max_ms": 0.458177
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    },
+    {
+      "case_name": "qconv_op_877",
+      "operator_id": 877,
+      "kernel_id": 1,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "operator_type": "QLINEAR_CONV",
+      "weight_shape": [
+        512,
+        1024,
+        1
+      ],
+      "profile_mean_ms": 320.11598849999996,
+      "profile_share_pct": 3.7782687567175066,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__498.f32": "4011e4a8d041bd04",
+        "benchmarks/campplus/features/multi__speaker_0005__498.f32": "840d3510e1be4cfd",
+        "benchmarks/campplus/features/multi__speaker_0006__498.f32": "d3745e6006e8678b"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 2404100050,
+        "total_exclusive_ms": 2404.10005,
+        "mean_ms": 40.068334166666666,
+        "stddev_ms": 1.0676752124856783,
+        "cv_pct": 2.664635889389907,
+        "min_ms": 38.875417,
+        "p50_ms": 39.7267705,
+        "p95_ms": 42.03329665,
+        "max_ms": 44.01302
+      },
+      "stages": [],
+      "dominant_stage": null,
+      "dominant_stage_wall_share_pct": 0.0,
+      "pmu": {
+        "available": false,
+        "unavailable_errno": [],
+        "totals": {},
+        "instructions_per_cycle": null,
+        "cache_miss_pct": null,
+        "branch_miss_pct": null
+      },
+      "diagnosis_scope": "target-only latency and output hash from a single graph traversal per input; PMU/stage probes disabled"
+    }
+  ],
+  "optimization_gate": {
+    "ready": true,
+    "all_output_hashes_match_batch_baseline": true
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_498/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_498.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_498/optimization/qconv_family/raw_batch"
+  }
+}

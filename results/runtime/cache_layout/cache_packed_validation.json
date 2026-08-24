@@ -1,0 +1,4469 @@
+{
+  "schema_version": 1,
+  "comparison": "dense_slab_vs_cache_layout_qconv_o4i4",
+  "bucket_frames": 98,
+  "evaluation_features": [
+    "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+    "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+    "benchmarks/campplus/features/multi__speaker_0006__98.f32"
+  ],
+  "all_bitwise_identical": true,
+  "baseline": {
+    "bundle": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/kernel_optimization/dense_slab/bundle",
+    "manifest_sha256": "ad296b724da1ca19058584820cd895088f4d5bc7827b23495855ca1abf06b13a",
+    "operator_count": 1386,
+    "arena_size_bytes": 2007040
+  },
+  "optimized": {
+    "bundle": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/kernel_optimization/cache_packed/bundle",
+    "manifest_sha256": "0e74ae8485a7849e59e16a7701ee62b41ca7bb7a7c1f0c0860f64b36d91db127",
+    "operator_count": 1278,
+    "arena_size_bytes": 2007040,
+    "activation_layout": {
+      "bucket_frames": 98,
+      "logical_layout": "NCT/NCHW",
+      "physical_layout": "NTC_padded/NHWC_padded",
+      "channel_block": 4,
+      "removed_transpose_operator_ids": [
+        0
+      ],
+      "removed_descriptor_copy_operator_ids": [
+        0,
+        1,
+        65,
+        68,
+        90,
+        93,
+        115,
+        118,
+        140,
+        143,
+        165,
+        168,
+        190,
+        193,
+        215,
+        218,
+        240,
+        243,
+        265,
+        268,
+        290,
+        293,
+        315,
+        318,
+        340,
+        343,
+        370,
+        373,
+        395,
+        398,
+        420,
+        423,
+        445,
+        448,
+        470,
+        473,
+        495,
+        498,
+        520,
+        523,
+        545,
+        548,
+        570,
+        573,
+        595,
+        598,
+        620,
+        623,
+        645,
+        648,
+        670,
+        673,
+        695,
+        698,
+        720,
+        723,
+        745,
+        748,
+        770,
+        773,
+        795,
+        798,
+        820,
+        823,
+        845,
+        848,
+        870,
+        873,
+        895,
+        898,
+        920,
+        923,
+        945,
+        948,
+        975,
+        978,
+        1000,
+        1003,
+        1025,
+        1028,
+        1050,
+        1053,
+        1075,
+        1078,
+        1100,
+        1103,
+        1125,
+        1128,
+        1150,
+        1153,
+        1175,
+        1178,
+        1200,
+        1203,
+        1225,
+        1228,
+        1250,
+        1253,
+        1275,
+        1278,
+        1300,
+        1303,
+        1325,
+        1328,
+        1350,
+        1353,
+        1380,
+        1384
+      ],
+      "removed_layout_copy_count": 108,
+      "channels_last_tensor_count": 1323,
+      "padded_tensor_count": 4,
+      "activation_storage_bytes_before": 40262304,
+      "activation_storage_bytes_after": 40285824,
+      "padding_bytes": 23520
+    },
+    "weight_packing": {
+      "bucket_frames": 98,
+      "layout": "[group][output_block][kernel][input_block][output_lane][input_lane]",
+      "output_block": 4,
+      "input_block": 4,
+      "qlinear_conv_count": 225,
+      "packed_weight_count": 225,
+      "original_weight_bytes": 6761760,
+      "packed_weight_bytes": 6762624,
+      "weight_padding_bytes": 864,
+      "runtime_packing_count": 0,
+      "weights": [
+        {
+          "tensor_id": 229,
+          "name": "onnx::Conv_3742_quantized",
+          "logical_shape": [
+            32,
+            1,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 288,
+          "packed_bytes": 1152,
+          "padding_bytes": 864
+        },
+        {
+          "tensor_id": 237,
+          "name": "onnx::Conv_3745_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 245,
+          "name": "onnx::Conv_3748_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 251,
+          "name": "onnx::Conv_3751_quantized",
+          "logical_shape": [
+            32,
+            32,
+            1,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 1024,
+          "packed_bytes": 1024,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 259,
+          "name": "onnx::Conv_3754_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 267,
+          "name": "onnx::Conv_3757_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 275,
+          "name": "onnx::Conv_3760_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 283,
+          "name": "onnx::Conv_3763_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 289,
+          "name": "onnx::Conv_3766_quantized",
+          "logical_shape": [
+            32,
+            32,
+            1,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 1024,
+          "packed_bytes": 1024,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 297,
+          "name": "onnx::Conv_3769_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 305,
+          "name": "onnx::Conv_3772_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 313,
+          "name": "onnx::Conv_3775_quantized",
+          "logical_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 9216,
+          "packed_bytes": 9216,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 321,
+          "name": "onnx::Conv_3778_quantized",
+          "logical_shape": [
+            128,
+            320,
+            5
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 204800,
+          "packed_bytes": 204800,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 329,
+          "name": "onnx::Conv_3781_quantized",
+          "logical_shape": [
+            128,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 16384,
+          "packed_bytes": 16384,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 337,
+          "name": "xvector.block1.tdnnd1.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 344,
+          "name": "xvector.block1.tdnnd1.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 352,
+          "name": "xvector.block1.tdnnd1.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 360,
+          "name": "onnx::Conv_3784_quantized",
+          "logical_shape": [
+            128,
+            160,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 20480,
+          "packed_bytes": 20480,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 368,
+          "name": "xvector.block1.tdnnd2.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 375,
+          "name": "xvector.block1.tdnnd2.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 383,
+          "name": "xvector.block1.tdnnd2.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 391,
+          "name": "onnx::Conv_3787_quantized",
+          "logical_shape": [
+            128,
+            192,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 24576,
+          "packed_bytes": 24576,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 399,
+          "name": "xvector.block1.tdnnd3.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 406,
+          "name": "xvector.block1.tdnnd3.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 414,
+          "name": "xvector.block1.tdnnd3.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 422,
+          "name": "onnx::Conv_3790_quantized",
+          "logical_shape": [
+            128,
+            224,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 28672,
+          "packed_bytes": 28672,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 430,
+          "name": "xvector.block1.tdnnd4.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 437,
+          "name": "xvector.block1.tdnnd4.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 445,
+          "name": "xvector.block1.tdnnd4.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 453,
+          "name": "onnx::Conv_3793_quantized",
+          "logical_shape": [
+            128,
+            256,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 32768,
+          "packed_bytes": 32768,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 461,
+          "name": "xvector.block1.tdnnd5.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 468,
+          "name": "xvector.block1.tdnnd5.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 476,
+          "name": "xvector.block1.tdnnd5.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 484,
+          "name": "onnx::Conv_3796_quantized",
+          "logical_shape": [
+            128,
+            288,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 36864,
+          "packed_bytes": 36864,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 492,
+          "name": "xvector.block1.tdnnd6.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 499,
+          "name": "xvector.block1.tdnnd6.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 507,
+          "name": "xvector.block1.tdnnd6.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 515,
+          "name": "onnx::Conv_3799_quantized",
+          "logical_shape": [
+            128,
+            320,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 40960,
+          "packed_bytes": 40960,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 523,
+          "name": "xvector.block1.tdnnd7.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 530,
+          "name": "xvector.block1.tdnnd7.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 538,
+          "name": "xvector.block1.tdnnd7.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 546,
+          "name": "onnx::Conv_3802_quantized",
+          "logical_shape": [
+            128,
+            352,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 45056,
+          "packed_bytes": 45056,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 554,
+          "name": "xvector.block1.tdnnd8.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 561,
+          "name": "xvector.block1.tdnnd8.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 569,
+          "name": "xvector.block1.tdnnd8.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 577,
+          "name": "onnx::Conv_3805_quantized",
+          "logical_shape": [
+            128,
+            384,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 49152,
+          "packed_bytes": 49152,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 585,
+          "name": "xvector.block1.tdnnd9.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 592,
+          "name": "xvector.block1.tdnnd9.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 600,
+          "name": "xvector.block1.tdnnd9.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 608,
+          "name": "onnx::Conv_3808_quantized",
+          "logical_shape": [
+            128,
+            416,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 53248,
+          "packed_bytes": 53248,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 616,
+          "name": "xvector.block1.tdnnd10.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 623,
+          "name": "xvector.block1.tdnnd10.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 631,
+          "name": "xvector.block1.tdnnd10.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 639,
+          "name": "onnx::Conv_3811_quantized",
+          "logical_shape": [
+            128,
+            448,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 57344,
+          "packed_bytes": 57344,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 647,
+          "name": "xvector.block1.tdnnd11.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 654,
+          "name": "xvector.block1.tdnnd11.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 662,
+          "name": "xvector.block1.tdnnd11.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 670,
+          "name": "onnx::Conv_3814_quantized",
+          "logical_shape": [
+            128,
+            480,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 61440,
+          "packed_bytes": 61440,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 678,
+          "name": "xvector.block1.tdnnd12.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 685,
+          "name": "xvector.block1.tdnnd12.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 693,
+          "name": "xvector.block1.tdnnd12.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 701,
+          "name": "xvector.transit1.linear.weight_quantized",
+          "logical_shape": [
+            256,
+            512,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 131072,
+          "packed_bytes": 131072,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 708,
+          "name": "onnx::Conv_3817_quantized",
+          "logical_shape": [
+            128,
+            256,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 32768,
+          "packed_bytes": 32768,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 716,
+          "name": "xvector.block2.tdnnd1.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 723,
+          "name": "xvector.block2.tdnnd1.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 731,
+          "name": "xvector.block2.tdnnd1.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 739,
+          "name": "onnx::Conv_3820_quantized",
+          "logical_shape": [
+            128,
+            288,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 36864,
+          "packed_bytes": 36864,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 747,
+          "name": "xvector.block2.tdnnd2.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 754,
+          "name": "xvector.block2.tdnnd2.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 762,
+          "name": "xvector.block2.tdnnd2.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 770,
+          "name": "onnx::Conv_3823_quantized",
+          "logical_shape": [
+            128,
+            320,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 40960,
+          "packed_bytes": 40960,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 778,
+          "name": "xvector.block2.tdnnd3.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 785,
+          "name": "xvector.block2.tdnnd3.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 793,
+          "name": "xvector.block2.tdnnd3.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 801,
+          "name": "onnx::Conv_3826_quantized",
+          "logical_shape": [
+            128,
+            352,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 45056,
+          "packed_bytes": 45056,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 809,
+          "name": "xvector.block2.tdnnd4.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 816,
+          "name": "xvector.block2.tdnnd4.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 824,
+          "name": "xvector.block2.tdnnd4.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 832,
+          "name": "onnx::Conv_3829_quantized",
+          "logical_shape": [
+            128,
+            384,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 49152,
+          "packed_bytes": 49152,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 840,
+          "name": "xvector.block2.tdnnd5.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 847,
+          "name": "xvector.block2.tdnnd5.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 855,
+          "name": "xvector.block2.tdnnd5.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 863,
+          "name": "onnx::Conv_3832_quantized",
+          "logical_shape": [
+            128,
+            416,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 53248,
+          "packed_bytes": 53248,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 871,
+          "name": "xvector.block2.tdnnd6.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 878,
+          "name": "xvector.block2.tdnnd6.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 886,
+          "name": "xvector.block2.tdnnd6.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 894,
+          "name": "onnx::Conv_3835_quantized",
+          "logical_shape": [
+            128,
+            448,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 57344,
+          "packed_bytes": 57344,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 902,
+          "name": "xvector.block2.tdnnd7.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 909,
+          "name": "xvector.block2.tdnnd7.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 917,
+          "name": "xvector.block2.tdnnd7.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 925,
+          "name": "onnx::Conv_3838_quantized",
+          "logical_shape": [
+            128,
+            480,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 61440,
+          "packed_bytes": 61440,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 933,
+          "name": "xvector.block2.tdnnd8.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 940,
+          "name": "xvector.block2.tdnnd8.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 948,
+          "name": "xvector.block2.tdnnd8.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 956,
+          "name": "onnx::Conv_3841_quantized",
+          "logical_shape": [
+            128,
+            512,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 65536,
+          "packed_bytes": 65536,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 964,
+          "name": "xvector.block2.tdnnd9.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 971,
+          "name": "xvector.block2.tdnnd9.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 979,
+          "name": "xvector.block2.tdnnd9.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 987,
+          "name": "onnx::Conv_3844_quantized",
+          "logical_shape": [
+            128,
+            544,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 69632,
+          "packed_bytes": 69632,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 995,
+          "name": "xvector.block2.tdnnd10.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1002,
+          "name": "xvector.block2.tdnnd10.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1010,
+          "name": "xvector.block2.tdnnd10.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1018,
+          "name": "onnx::Conv_3847_quantized",
+          "logical_shape": [
+            128,
+            576,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 73728,
+          "packed_bytes": 73728,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1026,
+          "name": "xvector.block2.tdnnd11.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1033,
+          "name": "xvector.block2.tdnnd11.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1041,
+          "name": "xvector.block2.tdnnd11.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1049,
+          "name": "onnx::Conv_3850_quantized",
+          "logical_shape": [
+            128,
+            608,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 77824,
+          "packed_bytes": 77824,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1057,
+          "name": "xvector.block2.tdnnd12.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1064,
+          "name": "xvector.block2.tdnnd12.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1072,
+          "name": "xvector.block2.tdnnd12.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1080,
+          "name": "onnx::Conv_3853_quantized",
+          "logical_shape": [
+            128,
+            640,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 81920,
+          "packed_bytes": 81920,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1088,
+          "name": "xvector.block2.tdnnd13.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1095,
+          "name": "xvector.block2.tdnnd13.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1103,
+          "name": "xvector.block2.tdnnd13.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1111,
+          "name": "onnx::Conv_3856_quantized",
+          "logical_shape": [
+            128,
+            672,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 86016,
+          "packed_bytes": 86016,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1119,
+          "name": "xvector.block2.tdnnd14.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1126,
+          "name": "xvector.block2.tdnnd14.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1134,
+          "name": "xvector.block2.tdnnd14.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1142,
+          "name": "onnx::Conv_3859_quantized",
+          "logical_shape": [
+            128,
+            704,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 90112,
+          "packed_bytes": 90112,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1150,
+          "name": "xvector.block2.tdnnd15.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1157,
+          "name": "xvector.block2.tdnnd15.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1165,
+          "name": "xvector.block2.tdnnd15.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1173,
+          "name": "onnx::Conv_3862_quantized",
+          "logical_shape": [
+            128,
+            736,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 94208,
+          "packed_bytes": 94208,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1181,
+          "name": "xvector.block2.tdnnd16.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1188,
+          "name": "xvector.block2.tdnnd16.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1196,
+          "name": "xvector.block2.tdnnd16.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1204,
+          "name": "onnx::Conv_3865_quantized",
+          "logical_shape": [
+            128,
+            768,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 98304,
+          "packed_bytes": 98304,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1212,
+          "name": "xvector.block2.tdnnd17.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1219,
+          "name": "xvector.block2.tdnnd17.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1227,
+          "name": "xvector.block2.tdnnd17.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1235,
+          "name": "onnx::Conv_3868_quantized",
+          "logical_shape": [
+            128,
+            800,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 102400,
+          "packed_bytes": 102400,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1243,
+          "name": "xvector.block2.tdnnd18.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1250,
+          "name": "xvector.block2.tdnnd18.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1258,
+          "name": "xvector.block2.tdnnd18.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1266,
+          "name": "onnx::Conv_3871_quantized",
+          "logical_shape": [
+            128,
+            832,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 106496,
+          "packed_bytes": 106496,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1274,
+          "name": "xvector.block2.tdnnd19.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1281,
+          "name": "xvector.block2.tdnnd19.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1289,
+          "name": "xvector.block2.tdnnd19.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1297,
+          "name": "onnx::Conv_3874_quantized",
+          "logical_shape": [
+            128,
+            864,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 110592,
+          "packed_bytes": 110592,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1305,
+          "name": "xvector.block2.tdnnd20.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1312,
+          "name": "xvector.block2.tdnnd20.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1320,
+          "name": "xvector.block2.tdnnd20.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1328,
+          "name": "onnx::Conv_3877_quantized",
+          "logical_shape": [
+            128,
+            896,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 114688,
+          "packed_bytes": 114688,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1336,
+          "name": "xvector.block2.tdnnd21.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1343,
+          "name": "xvector.block2.tdnnd21.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1351,
+          "name": "xvector.block2.tdnnd21.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1359,
+          "name": "onnx::Conv_3880_quantized",
+          "logical_shape": [
+            128,
+            928,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 118784,
+          "packed_bytes": 118784,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1367,
+          "name": "xvector.block2.tdnnd22.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1374,
+          "name": "xvector.block2.tdnnd22.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1382,
+          "name": "xvector.block2.tdnnd22.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1390,
+          "name": "onnx::Conv_3883_quantized",
+          "logical_shape": [
+            128,
+            960,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 122880,
+          "packed_bytes": 122880,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1398,
+          "name": "xvector.block2.tdnnd23.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1405,
+          "name": "xvector.block2.tdnnd23.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1413,
+          "name": "xvector.block2.tdnnd23.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1421,
+          "name": "onnx::Conv_3886_quantized",
+          "logical_shape": [
+            128,
+            992,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 126976,
+          "packed_bytes": 126976,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1429,
+          "name": "xvector.block2.tdnnd24.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1436,
+          "name": "xvector.block2.tdnnd24.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1444,
+          "name": "xvector.block2.tdnnd24.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1452,
+          "name": "xvector.transit2.linear.weight_quantized",
+          "logical_shape": [
+            512,
+            1024,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 524288,
+          "packed_bytes": 524288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1459,
+          "name": "onnx::Conv_3889_quantized",
+          "logical_shape": [
+            128,
+            512,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 65536,
+          "packed_bytes": 65536,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1467,
+          "name": "xvector.block3.tdnnd1.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1474,
+          "name": "xvector.block3.tdnnd1.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1482,
+          "name": "xvector.block3.tdnnd1.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1490,
+          "name": "onnx::Conv_3892_quantized",
+          "logical_shape": [
+            128,
+            544,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 69632,
+          "packed_bytes": 69632,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1498,
+          "name": "xvector.block3.tdnnd2.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1505,
+          "name": "xvector.block3.tdnnd2.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1513,
+          "name": "xvector.block3.tdnnd2.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1521,
+          "name": "onnx::Conv_3895_quantized",
+          "logical_shape": [
+            128,
+            576,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 73728,
+          "packed_bytes": 73728,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1529,
+          "name": "xvector.block3.tdnnd3.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1536,
+          "name": "xvector.block3.tdnnd3.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1544,
+          "name": "xvector.block3.tdnnd3.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1552,
+          "name": "onnx::Conv_3898_quantized",
+          "logical_shape": [
+            128,
+            608,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 77824,
+          "packed_bytes": 77824,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1560,
+          "name": "xvector.block3.tdnnd4.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1567,
+          "name": "xvector.block3.tdnnd4.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1575,
+          "name": "xvector.block3.tdnnd4.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1583,
+          "name": "onnx::Conv_3901_quantized",
+          "logical_shape": [
+            128,
+            640,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 81920,
+          "packed_bytes": 81920,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1591,
+          "name": "xvector.block3.tdnnd5.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1598,
+          "name": "xvector.block3.tdnnd5.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1606,
+          "name": "xvector.block3.tdnnd5.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1614,
+          "name": "onnx::Conv_3904_quantized",
+          "logical_shape": [
+            128,
+            672,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 86016,
+          "packed_bytes": 86016,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1622,
+          "name": "xvector.block3.tdnnd6.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1629,
+          "name": "xvector.block3.tdnnd6.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1637,
+          "name": "xvector.block3.tdnnd6.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1645,
+          "name": "onnx::Conv_3907_quantized",
+          "logical_shape": [
+            128,
+            704,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 90112,
+          "packed_bytes": 90112,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1653,
+          "name": "xvector.block3.tdnnd7.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1660,
+          "name": "xvector.block3.tdnnd7.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1668,
+          "name": "xvector.block3.tdnnd7.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1676,
+          "name": "onnx::Conv_3910_quantized",
+          "logical_shape": [
+            128,
+            736,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 94208,
+          "packed_bytes": 94208,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1684,
+          "name": "xvector.block3.tdnnd8.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1691,
+          "name": "xvector.block3.tdnnd8.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1699,
+          "name": "xvector.block3.tdnnd8.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1707,
+          "name": "onnx::Conv_3913_quantized",
+          "logical_shape": [
+            128,
+            768,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 98304,
+          "packed_bytes": 98304,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1715,
+          "name": "xvector.block3.tdnnd9.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1722,
+          "name": "xvector.block3.tdnnd9.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1730,
+          "name": "xvector.block3.tdnnd9.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1738,
+          "name": "onnx::Conv_3916_quantized",
+          "logical_shape": [
+            128,
+            800,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 102400,
+          "packed_bytes": 102400,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1746,
+          "name": "xvector.block3.tdnnd10.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1753,
+          "name": "xvector.block3.tdnnd10.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1761,
+          "name": "xvector.block3.tdnnd10.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1769,
+          "name": "onnx::Conv_3919_quantized",
+          "logical_shape": [
+            128,
+            832,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 106496,
+          "packed_bytes": 106496,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1777,
+          "name": "xvector.block3.tdnnd11.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1784,
+          "name": "xvector.block3.tdnnd11.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1792,
+          "name": "xvector.block3.tdnnd11.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1800,
+          "name": "onnx::Conv_3922_quantized",
+          "logical_shape": [
+            128,
+            864,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 110592,
+          "packed_bytes": 110592,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1808,
+          "name": "xvector.block3.tdnnd12.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1815,
+          "name": "xvector.block3.tdnnd12.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1823,
+          "name": "xvector.block3.tdnnd12.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1831,
+          "name": "onnx::Conv_3925_quantized",
+          "logical_shape": [
+            128,
+            896,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 114688,
+          "packed_bytes": 114688,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1839,
+          "name": "xvector.block3.tdnnd13.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1846,
+          "name": "xvector.block3.tdnnd13.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1854,
+          "name": "xvector.block3.tdnnd13.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1862,
+          "name": "onnx::Conv_3928_quantized",
+          "logical_shape": [
+            128,
+            928,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 118784,
+          "packed_bytes": 118784,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1870,
+          "name": "xvector.block3.tdnnd14.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1877,
+          "name": "xvector.block3.tdnnd14.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1885,
+          "name": "xvector.block3.tdnnd14.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1893,
+          "name": "onnx::Conv_3931_quantized",
+          "logical_shape": [
+            128,
+            960,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 122880,
+          "packed_bytes": 122880,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1901,
+          "name": "xvector.block3.tdnnd15.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1908,
+          "name": "xvector.block3.tdnnd15.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1916,
+          "name": "xvector.block3.tdnnd15.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1924,
+          "name": "onnx::Conv_3934_quantized",
+          "logical_shape": [
+            128,
+            992,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 126976,
+          "packed_bytes": 126976,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1932,
+          "name": "xvector.block3.tdnnd16.cam_layer.linear_local.weight_quantized",
+          "logical_shape": [
+            32,
+            128,
+            3
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 12288,
+          "packed_bytes": 12288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1939,
+          "name": "xvector.block3.tdnnd16.cam_layer.linear1.weight_quantized",
+          "logical_shape": [
+            64,
+            128,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 8192,
+          "packed_bytes": 8192,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1947,
+          "name": "xvector.block3.tdnnd16.cam_layer.linear2.weight_quantized",
+          "logical_shape": [
+            32,
+            64,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 2048,
+          "packed_bytes": 2048,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1955,
+          "name": "onnx::Conv_3937_quantized",
+          "logical_shape": [
+            512,
+            1024,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 524288,
+          "packed_bytes": 524288,
+          "padding_bytes": 0
+        },
+        {
+          "tensor_id": 1963,
+          "name": "xvector.dense.linear.weight_quantized",
+          "logical_shape": [
+            192,
+            1024,
+            1
+          ],
+          "layout": "G_O4_K_I4_OL_IL",
+          "group": 1,
+          "output_block": 4,
+          "input_block": 4,
+          "original_bytes": 196608,
+          "packed_bytes": 196608,
+          "padding_bytes": 0
+        }
+      ]
+    }
+  },
+  "inputs": [
+    {
+      "path": "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+      "byte_size": 31360,
+      "sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+      "baseline_tensor_count": 1386,
+      "optimized_tensor_count": 1278,
+      "compared_tensor_count": 1278,
+      "expected_removed_tensor_ids": [
+        2281,
+        2282,
+        2346,
+        2349,
+        2372,
+        2375,
+        2398,
+        2401,
+        2424,
+        2427,
+        2450,
+        2453,
+        2476,
+        2479,
+        2502,
+        2505,
+        2528,
+        2531,
+        2554,
+        2557,
+        2580,
+        2583,
+        2606,
+        2609,
+        2632,
+        2635,
+        2663,
+        2666,
+        2689,
+        2692,
+        2715,
+        2718,
+        2741,
+        2744,
+        2767,
+        2770,
+        2793,
+        2796,
+        2819,
+        2822,
+        2845,
+        2848,
+        2871,
+        2874,
+        2897,
+        2900,
+        2923,
+        2926,
+        2949,
+        2952,
+        2975,
+        2978,
+        3001,
+        3004,
+        3027,
+        3030,
+        3053,
+        3056,
+        3079,
+        3082,
+        3105,
+        3108,
+        3131,
+        3134,
+        3157,
+        3160,
+        3183,
+        3186,
+        3209,
+        3212,
+        3235,
+        3238,
+        3261,
+        3264,
+        3292,
+        3295,
+        3318,
+        3321,
+        3344,
+        3347,
+        3370,
+        3373,
+        3396,
+        3399,
+        3422,
+        3425,
+        3448,
+        3451,
+        3474,
+        3477,
+        3500,
+        3503,
+        3526,
+        3529,
+        3552,
+        3555,
+        3578,
+        3581,
+        3604,
+        3607,
+        3630,
+        3633,
+        3656,
+        3659,
+        3682,
+        3685,
+        3713,
+        3717
+      ],
+      "missing_tensor_ids": [
+        2281,
+        2282,
+        2346,
+        2349,
+        2372,
+        2375,
+        2398,
+        2401,
+        2424,
+        2427,
+        2450,
+        2453,
+        2476,
+        2479,
+        2502,
+        2505,
+        2528,
+        2531,
+        2554,
+        2557,
+        2580,
+        2583,
+        2606,
+        2609,
+        2632,
+        2635,
+        2663,
+        2666,
+        2689,
+        2692,
+        2715,
+        2718,
+        2741,
+        2744,
+        2767,
+        2770,
+        2793,
+        2796,
+        2819,
+        2822,
+        2845,
+        2848,
+        2871,
+        2874,
+        2897,
+        2900,
+        2923,
+        2926,
+        2949,
+        2952,
+        2975,
+        2978,
+        3001,
+        3004,
+        3027,
+        3030,
+        3053,
+        3056,
+        3079,
+        3082,
+        3105,
+        3108,
+        3131,
+        3134,
+        3157,
+        3160,
+        3183,
+        3186,
+        3209,
+        3212,
+        3235,
+        3238,
+        3261,
+        3264,
+        3292,
+        3295,
+        3318,
+        3321,
+        3344,
+        3347,
+        3370,
+        3373,
+        3396,
+        3399,
+        3422,
+        3425,
+        3448,
+        3451,
+        3474,
+        3477,
+        3500,
+        3503,
+        3526,
+        3529,
+        3552,
+        3555,
+        3578,
+        3581,
+        3604,
+        3607,
+        3630,
+        3633,
+        3656,
+        3659,
+        3682,
+        3685,
+        3713,
+        3717
+      ],
+      "extra_tensor_ids": [],
+      "mismatched_tensor_ids": [],
+      "bitwise_identical": true
+    },
+    {
+      "path": "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+      "byte_size": 31360,
+      "sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+      "baseline_tensor_count": 1386,
+      "optimized_tensor_count": 1278,
+      "compared_tensor_count": 1278,
+      "expected_removed_tensor_ids": [
+        2281,
+        2282,
+        2346,
+        2349,
+        2372,
+        2375,
+        2398,
+        2401,
+        2424,
+        2427,
+        2450,
+        2453,
+        2476,
+        2479,
+        2502,
+        2505,
+        2528,
+        2531,
+        2554,
+        2557,
+        2580,
+        2583,
+        2606,
+        2609,
+        2632,
+        2635,
+        2663,
+        2666,
+        2689,
+        2692,
+        2715,
+        2718,
+        2741,
+        2744,
+        2767,
+        2770,
+        2793,
+        2796,
+        2819,
+        2822,
+        2845,
+        2848,
+        2871,
+        2874,
+        2897,
+        2900,
+        2923,
+        2926,
+        2949,
+        2952,
+        2975,
+        2978,
+        3001,
+        3004,
+        3027,
+        3030,
+        3053,
+        3056,
+        3079,
+        3082,
+        3105,
+        3108,
+        3131,
+        3134,
+        3157,
+        3160,
+        3183,
+        3186,
+        3209,
+        3212,
+        3235,
+        3238,
+        3261,
+        3264,
+        3292,
+        3295,
+        3318,
+        3321,
+        3344,
+        3347,
+        3370,
+        3373,
+        3396,
+        3399,
+        3422,
+        3425,
+        3448,
+        3451,
+        3474,
+        3477,
+        3500,
+        3503,
+        3526,
+        3529,
+        3552,
+        3555,
+        3578,
+        3581,
+        3604,
+        3607,
+        3630,
+        3633,
+        3656,
+        3659,
+        3682,
+        3685,
+        3713,
+        3717
+      ],
+      "missing_tensor_ids": [
+        2281,
+        2282,
+        2346,
+        2349,
+        2372,
+        2375,
+        2398,
+        2401,
+        2424,
+        2427,
+        2450,
+        2453,
+        2476,
+        2479,
+        2502,
+        2505,
+        2528,
+        2531,
+        2554,
+        2557,
+        2580,
+        2583,
+        2606,
+        2609,
+        2632,
+        2635,
+        2663,
+        2666,
+        2689,
+        2692,
+        2715,
+        2718,
+        2741,
+        2744,
+        2767,
+        2770,
+        2793,
+        2796,
+        2819,
+        2822,
+        2845,
+        2848,
+        2871,
+        2874,
+        2897,
+        2900,
+        2923,
+        2926,
+        2949,
+        2952,
+        2975,
+        2978,
+        3001,
+        3004,
+        3027,
+        3030,
+        3053,
+        3056,
+        3079,
+        3082,
+        3105,
+        3108,
+        3131,
+        3134,
+        3157,
+        3160,
+        3183,
+        3186,
+        3209,
+        3212,
+        3235,
+        3238,
+        3261,
+        3264,
+        3292,
+        3295,
+        3318,
+        3321,
+        3344,
+        3347,
+        3370,
+        3373,
+        3396,
+        3399,
+        3422,
+        3425,
+        3448,
+        3451,
+        3474,
+        3477,
+        3500,
+        3503,
+        3526,
+        3529,
+        3552,
+        3555,
+        3578,
+        3581,
+        3604,
+        3607,
+        3630,
+        3633,
+        3656,
+        3659,
+        3682,
+        3685,
+        3713,
+        3717
+      ],
+      "extra_tensor_ids": [],
+      "mismatched_tensor_ids": [],
+      "bitwise_identical": true
+    },
+    {
+      "path": "benchmarks/campplus/features/multi__speaker_0006__98.f32",
+      "byte_size": 31360,
+      "sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+      "baseline_tensor_count": 1386,
+      "optimized_tensor_count": 1278,
+      "compared_tensor_count": 1278,
+      "expected_removed_tensor_ids": [
+        2281,
+        2282,
+        2346,
+        2349,
+        2372,
+        2375,
+        2398,
+        2401,
+        2424,
+        2427,
+        2450,
+        2453,
+        2476,
+        2479,
+        2502,
+        2505,
+        2528,
+        2531,
+        2554,
+        2557,
+        2580,
+        2583,
+        2606,
+        2609,
+        2632,
+        2635,
+        2663,
+        2666,
+        2689,
+        2692,
+        2715,
+        2718,
+        2741,
+        2744,
+        2767,
+        2770,
+        2793,
+        2796,
+        2819,
+        2822,
+        2845,
+        2848,
+        2871,
+        2874,
+        2897,
+        2900,
+        2923,
+        2926,
+        2949,
+        2952,
+        2975,
+        2978,
+        3001,
+        3004,
+        3027,
+        3030,
+        3053,
+        3056,
+        3079,
+        3082,
+        3105,
+        3108,
+        3131,
+        3134,
+        3157,
+        3160,
+        3183,
+        3186,
+        3209,
+        3212,
+        3235,
+        3238,
+        3261,
+        3264,
+        3292,
+        3295,
+        3318,
+        3321,
+        3344,
+        3347,
+        3370,
+        3373,
+        3396,
+        3399,
+        3422,
+        3425,
+        3448,
+        3451,
+        3474,
+        3477,
+        3500,
+        3503,
+        3526,
+        3529,
+        3552,
+        3555,
+        3578,
+        3581,
+        3604,
+        3607,
+        3630,
+        3633,
+        3656,
+        3659,
+        3682,
+        3685,
+        3713,
+        3717
+      ],
+      "missing_tensor_ids": [
+        2281,
+        2282,
+        2346,
+        2349,
+        2372,
+        2375,
+        2398,
+        2401,
+        2424,
+        2427,
+        2450,
+        2453,
+        2476,
+        2479,
+        2502,
+        2505,
+        2528,
+        2531,
+        2554,
+        2557,
+        2580,
+        2583,
+        2606,
+        2609,
+        2632,
+        2635,
+        2663,
+        2666,
+        2689,
+        2692,
+        2715,
+        2718,
+        2741,
+        2744,
+        2767,
+        2770,
+        2793,
+        2796,
+        2819,
+        2822,
+        2845,
+        2848,
+        2871,
+        2874,
+        2897,
+        2900,
+        2923,
+        2926,
+        2949,
+        2952,
+        2975,
+        2978,
+        3001,
+        3004,
+        3027,
+        3030,
+        3053,
+        3056,
+        3079,
+        3082,
+        3105,
+        3108,
+        3131,
+        3134,
+        3157,
+        3160,
+        3183,
+        3186,
+        3209,
+        3212,
+        3235,
+        3238,
+        3261,
+        3264,
+        3292,
+        3295,
+        3318,
+        3321,
+        3344,
+        3347,
+        3370,
+        3373,
+        3396,
+        3399,
+        3422,
+        3425,
+        3448,
+        3451,
+        3474,
+        3477,
+        3500,
+        3503,
+        3526,
+        3529,
+        3552,
+        3555,
+        3578,
+        3581,
+        3604,
+        3607,
+        3630,
+        3633,
+        3656,
+        3659,
+        3682,
+        3685,
+        3713,
+        3717
+      ],
+      "extra_tensor_ids": [],
+      "mismatched_tensor_ids": [],
+      "bitwise_identical": true
+    }
+  ]
+}

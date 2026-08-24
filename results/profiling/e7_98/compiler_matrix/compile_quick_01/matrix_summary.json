@@ -1,0 +1,732 @@
+{
+  "schema_version": 1,
+  "run_id": "compile_quick_01",
+  "matrix": "qrb2210-final-suite-compile-quick",
+  "expected_suite": "final",
+  "configuration": {
+    "source": "configs/runtime/compiler_qrb2210_quick.json",
+    "benchmark_config": "configs/benchmark/runtime_e7_98_compile_quick.json",
+    "cc": "gcc"
+  },
+  "validation_evidence": {
+    "path": "results/runtime/fusion/e7_validation.json",
+    "sha256": "143298ddfcb245fa8b295ab5aedfb2d010e9b5d3ac10f4b72ff60c74a9afc748",
+    "all_bitwise_identical": true
+  },
+  "reference_output_hashes": {
+    "multi__speaker_0000": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05",
+    "multi__speaker_0005": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd",
+    "multi__speaker_0006": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1"
+  },
+  "reference_retained_tensor_hashes": {
+    "multi__speaker_0000": "0776dda4cf76ead3587ca0b1b8b8d4383044a23a6bec0874fca9668649cd6275",
+    "multi__speaker_0005": "181a1c9c0b69fc8c9dc6a06ecc0863045d33261cb84fc29f7e9e2177d1163efa",
+    "multi__speaker_0006": "00db14048af8da0a2616b10138ce309644a6caefe0fc2d84f0bea7a570b10f4b"
+  },
+  "stage_decisions": [
+    {
+      "control": "01_performance__o2_generic",
+      "winner": "01_performance__o3_a53_lto",
+      "objective": "latency",
+      "reason": "best eligible p50; improvement=15.717%",
+      "evaluations": [
+        {
+          "variant": "01_performance__o2_generic",
+          "eligible": true,
+          "reasons": [],
+          "p50_ms": 598.59802,
+          "p95_ms": 600.0963796000001,
+          "cv_pct": 0.3171000990753295,
+          "peak_rss_bytes": 11874304,
+          "binary_size_bytes": 155864
+        },
+        {
+          "variant": "01_performance__o3_generic",
+          "eligible": true,
+          "reasons": [],
+          "p50_ms": 527.0275,
+          "p95_ms": 527.7225151,
+          "cv_pct": 0.4239353982072495,
+          "peak_rss_bytes": 11886592,
+          "binary_size_bytes": 220496
+        },
+        {
+          "variant": "01_performance__o3_a53",
+          "eligible": true,
+          "reasons": [],
+          "p50_ms": 530.727396,
+          "p95_ms": 531.3722082,
+          "cv_pct": 0.08126291925375317,
+          "peak_rss_bytes": 11890688,
+          "binary_size_bytes": 220496
+        },
+        {
+          "variant": "01_performance__o3_a53_lto",
+          "eligible": true,
+          "reasons": [],
+          "p50_ms": 504.516458,
+          "p95_ms": 505.194833,
+          "cv_pct": 0.0791357567555268,
+          "peak_rss_bytes": 11907072,
+          "binary_size_bytes": 210880
+        }
+      ],
+      "stage": "performance"
+    },
+    {
+      "control": "02_final_flags__compiler_default",
+      "winner": "02_final_flags__aggressive_packaged",
+      "objective": "size",
+      "reason": "smallest binary among correctness/stability candidates",
+      "evaluations": [
+        {
+          "variant": "02_final_flags__compiler_default",
+          "eligible": true,
+          "reasons": [],
+          "p50_ms": 501.612239,
+          "p95_ms": 501.6969893,
+          "cv_pct": 0.11602826517024048,
+          "peak_rss_bytes": 11907072,
+          "binary_size_bytes": 210880
+        },
+        {
+          "variant": "02_final_flags__aggressive_packaged",
+          "eligible": true,
+          "reasons": [],
+          "p50_ms": 502.370365,
+          "p95_ms": 503.9382865,
+          "cv_pct": 0.7349706507114095,
+          "peak_rss_bytes": 11935744,
+          "binary_size_bytes": 198952
+        }
+      ],
+      "stage": "final_flags"
+    }
+  ],
+  "variants": [
+    {
+      "variant": "01_performance__o2_generic",
+      "parent_variant": null,
+      "stage": "performance",
+      "candidate": "o2_generic",
+      "status": "passed",
+      "flags": {
+        "cppflags": "",
+        "cflags": "-std=c11 -DNDEBUG -Wall -Wextra -O2",
+        "ldflags": "",
+        "strip_final": false
+      },
+      "build": {
+        "directory": "build/profill/compiler_matrix/compile_quick_01/01_performance__o2_generic",
+        "scope": "compiler_quick",
+        "seconds": 61.44232344000011,
+        "metadata": "build/profill/compiler_matrix/compile_quick_01/01_performance__o2_generic/build_metadata.txt"
+      },
+      "binary": {
+        "path": "build/profill/compiler_matrix/compile_quick_01/01_performance__o2_generic/campp_runtime_benchmark_final",
+        "sha256": "32c6301c148d33adb5bd0d06a1f4e35b996d0646f7e5947b1b823f422be0f178",
+        "size_bytes": 155864
+      },
+      "benchmark_seconds": 1.9480193469998994,
+      "per_input": [
+        {
+          "input_id": "multi__speaker_0000",
+          "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+          "embedding_sha256": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o2_generic/raw/multi__speaker_0000/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "feature_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+          "embedding_sha256": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o2_generic/raw/multi__speaker_0005/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "feature_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+          "embedding_sha256": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o2_generic/raw/multi__speaker_0006/result.json"
+        }
+      ],
+      "retained_tensors": [
+        {
+          "input_id": "multi__speaker_0000",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "0776dda4cf76ead3587ca0b1b8b8d4383044a23a6bec0874fca9668649cd6275"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "181a1c9c0b69fc8c9dc6a06ecc0863045d33261cb84fc29f7e9e2177d1163efa"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "00db14048af8da0a2616b10138ce309644a6caefe0fc2d84f0bea7a570b10f4b"
+        }
+      ],
+      "aggregate": {
+        "runtime": "campp-c-runtime",
+        "bucket_frames": 98,
+        "input_count": 3,
+        "latency": {
+          "count": 3,
+          "mean_ms": 598.1782460000001,
+          "stddev_ms": 1.8968238107130684,
+          "cv_pct": 0.3171000990753295,
+          "min_ms": 595.673854,
+          "p50_ms": 598.59802,
+          "p95_ms": 600.0963796000001,
+          "p99_ms": 600.2295671200001,
+          "max_ms": 600.262864
+        },
+        "rtf": {
+          "count": 3,
+          "mean_rtf": 0.5981782460000001,
+          "stddev_rtf": 0.0018968238107130583,
+          "cv_pct": 0.31710009907532777,
+          "min_rtf": 0.5956738540000001,
+          "p50_rtf": 0.5985980200000001,
+          "p95_rtf": 0.6000963796000001,
+          "p99_rtf": 0.6002295671200001,
+          "max_rtf": 0.6002628640000001
+        },
+        "first_inference": null,
+        "warm_peak_rss_bytes": 11874304,
+        "cold_peak_rss_bytes": null,
+        "peak_rss_bytes": 11874304,
+        "stability_gate": {
+          "threshold_cv_pct": 3.0,
+          "all_inputs_passed": true,
+          "aggregate_passed": true
+        }
+      },
+      "all_output_hashes_match_reference": true,
+      "all_retained_tensor_hashes_match_reference": true,
+      "error": null
+    },
+    {
+      "variant": "01_performance__o3_generic",
+      "parent_variant": null,
+      "stage": "performance",
+      "candidate": "o3_generic",
+      "status": "passed",
+      "flags": {
+        "cppflags": "",
+        "cflags": "-std=c11 -DNDEBUG -Wall -Wextra -O3",
+        "ldflags": "",
+        "strip_final": false
+      },
+      "build": {
+        "directory": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_generic",
+        "scope": "compiler_quick",
+        "seconds": 74.31187586099986,
+        "metadata": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_generic/build_metadata.txt"
+      },
+      "binary": {
+        "path": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_generic/campp_runtime_benchmark_final",
+        "sha256": "5e06c310a1e00b3e6b30e8ba2a8cb1c81bbaafaf235cdade103252b03efd1498",
+        "size_bytes": 220496
+      },
+      "benchmark_seconds": 1.7229028420001669,
+      "per_input": [
+        {
+          "input_id": "multi__speaker_0000",
+          "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+          "embedding_sha256": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_generic/raw/multi__speaker_0000/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "feature_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+          "embedding_sha256": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_generic/raw/multi__speaker_0005/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "feature_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+          "embedding_sha256": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_generic/raw/multi__speaker_0006/result.json"
+        }
+      ],
+      "retained_tensors": [
+        {
+          "input_id": "multi__speaker_0000",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "0776dda4cf76ead3587ca0b1b8b8d4383044a23a6bec0874fca9668649cd6275"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "181a1c9c0b69fc8c9dc6a06ecc0863045d33261cb84fc29f7e9e2177d1163efa"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "00db14048af8da0a2616b10138ce309644a6caefe0fc2d84f0bea7a570b10f4b"
+        }
+      ],
+      "aggregate": {
+        "runtime": "campp-c-runtime",
+        "bucket_frames": 98,
+        "input_count": 3,
+        "latency": {
+          "count": 3,
+          "mean_ms": 525.853125,
+          "stddev_ms": 2.2292775394540154,
+          "cv_pct": 0.4239353982072495,
+          "min_ms": 522.732136,
+          "p50_ms": 527.0275,
+          "p95_ms": 527.7225151,
+          "p99_ms": 527.7842942200001,
+          "max_ms": 527.799739
+        },
+        "rtf": {
+          "count": 3,
+          "mean_rtf": 0.5258531249999999,
+          "stddev_rtf": 0.0022292775394539693,
+          "cv_pct": 0.4239353982072408,
+          "min_rtf": 0.522732136,
+          "p50_rtf": 0.5270275,
+          "p95_rtf": 0.5277225151,
+          "p99_rtf": 0.52778429422,
+          "max_rtf": 0.527799739
+        },
+        "first_inference": null,
+        "warm_peak_rss_bytes": 11886592,
+        "cold_peak_rss_bytes": null,
+        "peak_rss_bytes": 11886592,
+        "stability_gate": {
+          "threshold_cv_pct": 3.0,
+          "all_inputs_passed": true,
+          "aggregate_passed": true
+        }
+      },
+      "all_output_hashes_match_reference": true,
+      "all_retained_tensor_hashes_match_reference": true,
+      "error": null
+    },
+    {
+      "variant": "01_performance__o3_a53",
+      "parent_variant": null,
+      "stage": "performance",
+      "candidate": "o3_a53",
+      "status": "passed",
+      "flags": {
+        "cppflags": "",
+        "cflags": "-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53",
+        "ldflags": "",
+        "strip_final": false
+      },
+      "build": {
+        "directory": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_a53",
+        "scope": "compiler_quick",
+        "seconds": 74.950780871,
+        "metadata": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_a53/build_metadata.txt"
+      },
+      "binary": {
+        "path": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_a53/campp_runtime_benchmark_final",
+        "sha256": "49fa55e4d943487083c92e8136f73be3df692c248c47b2f440d046ba8e96d2df",
+        "size_bytes": 220496
+      },
+      "benchmark_seconds": 1.7376213130000906,
+      "per_input": [
+        {
+          "input_id": "multi__speaker_0000",
+          "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+          "embedding_sha256": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_a53/raw/multi__speaker_0000/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "feature_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+          "embedding_sha256": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_a53/raw/multi__speaker_0005/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "feature_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+          "embedding_sha256": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_a53/raw/multi__speaker_0006/result.json"
+        }
+      ],
+      "retained_tensors": [
+        {
+          "input_id": "multi__speaker_0000",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "0776dda4cf76ead3587ca0b1b8b8d4383044a23a6bec0874fca9668649cd6275"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "181a1c9c0b69fc8c9dc6a06ecc0863045d33261cb84fc29f7e9e2177d1163efa"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "00db14048af8da0a2616b10138ce309644a6caefe0fc2d84f0bea7a570b10f4b"
+        }
+      ],
+      "aggregate": {
+        "runtime": "campp-c-runtime",
+        "bucket_frames": 98,
+        "input_count": 3,
+        "latency": {
+          "count": 3,
+          "mean_ms": 530.861406,
+          "stddev_ms": 0.4313934757071188,
+          "cv_pct": 0.08126291925375317,
+          "min_ms": 530.412968,
+          "p50_ms": 530.727396,
+          "p95_ms": 531.3722082,
+          "p99_ms": 531.42952484,
+          "max_ms": 531.443854
+        },
+        "rtf": {
+          "count": 3,
+          "mean_rtf": 0.530861406,
+          "stddev_rtf": 0.0004313934757071171,
+          "cv_pct": 0.08126291925375285,
+          "min_rtf": 0.5304129679999999,
+          "p50_rtf": 0.530727396,
+          "p95_rtf": 0.5313722082,
+          "p99_rtf": 0.53142952484,
+          "max_rtf": 0.5314438539999999
+        },
+        "first_inference": null,
+        "warm_peak_rss_bytes": 11890688,
+        "cold_peak_rss_bytes": null,
+        "peak_rss_bytes": 11890688,
+        "stability_gate": {
+          "threshold_cv_pct": 3.0,
+          "all_inputs_passed": true,
+          "aggregate_passed": true
+        }
+      },
+      "all_output_hashes_match_reference": true,
+      "all_retained_tensor_hashes_match_reference": true,
+      "error": null
+    },
+    {
+      "variant": "01_performance__o3_a53_lto",
+      "parent_variant": null,
+      "stage": "performance",
+      "candidate": "o3_a53_lto",
+      "status": "passed",
+      "flags": {
+        "cppflags": "",
+        "cflags": "-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53 -flto",
+        "ldflags": "-flto",
+        "strip_final": false
+      },
+      "build": {
+        "directory": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_a53_lto",
+        "scope": "compiler_quick",
+        "seconds": 96.43118485600007,
+        "metadata": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_a53_lto/build_metadata.txt"
+      },
+      "binary": {
+        "path": "build/profill/compiler_matrix/compile_quick_01/01_performance__o3_a53_lto/campp_runtime_benchmark_final",
+        "sha256": "334eef423611e11248f2f83fb67c80fd6fbd2393a8ad4142dd9200b25bedabf1",
+        "size_bytes": 210880
+      },
+      "benchmark_seconds": 1.659085100000084,
+      "per_input": [
+        {
+          "input_id": "multi__speaker_0000",
+          "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+          "embedding_sha256": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_a53_lto/raw/multi__speaker_0000/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "feature_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+          "embedding_sha256": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_a53_lto/raw/multi__speaker_0005/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "feature_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+          "embedding_sha256": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/01_performance__o3_a53_lto/raw/multi__speaker_0006/result.json"
+        }
+      ],
+      "retained_tensors": [
+        {
+          "input_id": "multi__speaker_0000",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "0776dda4cf76ead3587ca0b1b8b8d4383044a23a6bec0874fca9668649cd6275"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "181a1c9c0b69fc8c9dc6a06ecc0863045d33261cb84fc29f7e9e2177d1163efa"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "00db14048af8da0a2616b10138ce309644a6caefe0fc2d84f0bea7a570b10f4b"
+        }
+      ],
+      "aggregate": {
+        "runtime": "campp-c-runtime",
+        "bucket_frames": 98,
+        "input_count": 3,
+        "latency": {
+          "count": 3,
+          "mean_ms": 504.713281,
+          "stddev_ms": 0.39940867436499844,
+          "cv_pct": 0.0791357567555268,
+          "min_ms": 504.353177,
+          "p50_ms": 504.516458,
+          "p95_ms": 505.194833,
+          "p99_ms": 505.255133,
+          "max_ms": 505.270208
+        },
+        "rtf": {
+          "count": 3,
+          "mean_rtf": 0.504713281,
+          "stddev_rtf": 0.00039940867436497843,
+          "cv_pct": 0.07913575675552283,
+          "min_rtf": 0.504353177,
+          "p50_rtf": 0.504516458,
+          "p95_rtf": 0.505194833,
+          "p99_rtf": 0.505255133,
+          "max_rtf": 0.505270208
+        },
+        "first_inference": null,
+        "warm_peak_rss_bytes": 11907072,
+        "cold_peak_rss_bytes": null,
+        "peak_rss_bytes": 11907072,
+        "stability_gate": {
+          "threshold_cv_pct": 3.0,
+          "all_inputs_passed": true,
+          "aggregate_passed": true
+        }
+      },
+      "all_output_hashes_match_reference": true,
+      "all_retained_tensor_hashes_match_reference": true,
+      "error": null
+    },
+    {
+      "variant": "02_final_flags__compiler_default",
+      "parent_variant": "01_performance__o3_a53_lto",
+      "stage": "final_flags",
+      "candidate": "compiler_default",
+      "status": "passed",
+      "flags": {
+        "cppflags": "",
+        "cflags": "-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53 -flto",
+        "ldflags": "-flto",
+        "strip_final": false
+      },
+      "build": {
+        "directory": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__compiler_default",
+        "scope": "compiler_quick",
+        "seconds": 95.82824571800029,
+        "metadata": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__compiler_default/build_metadata.txt"
+      },
+      "binary": {
+        "path": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__compiler_default/campp_runtime_benchmark_final",
+        "sha256": "58788f21e6701a39eb9e48ad802c6cfcac8850c404cd4b66585745dfbeca9ef4",
+        "size_bytes": 210880
+      },
+      "benchmark_seconds": 1.628747801999907,
+      "per_input": [
+        {
+          "input_id": "multi__speaker_0000",
+          "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+          "embedding_sha256": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__compiler_default/raw/multi__speaker_0000/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "feature_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+          "embedding_sha256": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__compiler_default/raw/multi__speaker_0005/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "feature_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+          "embedding_sha256": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__compiler_default/raw/multi__speaker_0006/result.json"
+        }
+      ],
+      "retained_tensors": [
+        {
+          "input_id": "multi__speaker_0000",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "0776dda4cf76ead3587ca0b1b8b8d4383044a23a6bec0874fca9668649cd6275"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "181a1c9c0b69fc8c9dc6a06ecc0863045d33261cb84fc29f7e9e2177d1163efa"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "00db14048af8da0a2616b10138ce309644a6caefe0fc2d84f0bea7a570b10f4b"
+        }
+      ],
+      "aggregate": {
+        "runtime": "campp-c-runtime",
+        "bucket_frames": 98,
+        "input_count": 3,
+        "latency": {
+          "count": 3,
+          "mean_ms": 501.24897533333336,
+          "stddev_ms": 0.5815904902628733,
+          "cv_pct": 0.11602826517024048,
+          "min_ms": 500.428281,
+          "p50_ms": 501.612239,
+          "p95_ms": 501.6969893,
+          "p99_ms": 501.70452266,
+          "max_ms": 501.706406
+        },
+        "rtf": {
+          "count": 3,
+          "mean_rtf": 0.5012489753333333,
+          "stddev_rtf": 0.0005815904902628747,
+          "cv_pct": 0.11602826517024074,
+          "min_rtf": 0.500428281,
+          "p50_rtf": 0.501612239,
+          "p95_rtf": 0.5016969893000001,
+          "p99_rtf": 0.5017045226600001,
+          "max_rtf": 0.501706406
+        },
+        "first_inference": null,
+        "warm_peak_rss_bytes": 11907072,
+        "cold_peak_rss_bytes": null,
+        "peak_rss_bytes": 11907072,
+        "stability_gate": {
+          "threshold_cv_pct": 3.0,
+          "all_inputs_passed": true,
+          "aggregate_passed": true
+        }
+      },
+      "all_output_hashes_match_reference": true,
+      "all_retained_tensor_hashes_match_reference": true,
+      "error": null
+    },
+    {
+      "variant": "02_final_flags__aggressive_packaged",
+      "parent_variant": "01_performance__o3_a53_lto",
+      "stage": "final_flags",
+      "candidate": "aggressive_packaged",
+      "status": "passed",
+      "flags": {
+        "cppflags": "",
+        "cflags": "-std=c11 -DNDEBUG -Wall -Wextra -O3 -mcpu=cortex-a53 -flto -finline-functions -finline-small-functions -funroll-loops -fomit-frame-pointer -ffunction-sections -fdata-sections",
+        "ldflags": "-flto -Wl,--gc-sections",
+        "strip_final": true
+      },
+      "build": {
+        "directory": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged",
+        "scope": "compiler_quick",
+        "seconds": 106.57761721199995,
+        "metadata": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/build_metadata.txt"
+      },
+      "binary": {
+        "path": "build/profill/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/campp_runtime_benchmark_final",
+        "sha256": "1b68cf69a53f924f996b2a9a6b4b8d8fcd4529c11173da22437c1d310152d9ff",
+        "size_bytes": 198952
+      },
+      "benchmark_seconds": 1.6538877000002685,
+      "per_input": [
+        {
+          "input_id": "multi__speaker_0000",
+          "feature_sha256": "b2f9baa9badbfb2bef923fd3173b0a8a514d08ea57c12be86d0b3c5fe6ffc525",
+          "embedding_sha256": "8798db74113c0bedf46b49d90817848e86be8ad16630ee94e1642b1d79a6bf05",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/raw/multi__speaker_0000/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "feature_sha256": "baeacd08ea364c6dcb421c548eaac3fb6c31d700593685042fb3f0d2d421b730",
+          "embedding_sha256": "c30036c626bfd3e4ae7d64041746d198aa21a6400b61a3e78398a86a2269c3cd",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/raw/multi__speaker_0005/result.json"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "feature_sha256": "b5762310c27ab460e4a026a9f8ac4185b570524b6ab4c431ce550f6c2aa07465",
+          "embedding_sha256": "407ea0951f8c98c9a44cce50ac40570f74ab97e28f3bc387f0065f6301a652a1",
+          "result": "runs/profiling/e7_98/compiler_matrix/compile_quick_01/02_final_flags__aggressive_packaged/raw/multi__speaker_0006/result.json"
+        }
+      ],
+      "retained_tensors": [
+        {
+          "input_id": "multi__speaker_0000",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "0776dda4cf76ead3587ca0b1b8b8d4383044a23a6bec0874fca9668649cd6275"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "181a1c9c0b69fc8c9dc6a06ecc0863045d33261cb84fc29f7e9e2177d1163efa"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "tensor_count": 832,
+          "payload_bytes": 19125888,
+          "payload_sha256": "00db14048af8da0a2616b10138ce309644a6caefe0fc2d84f0bea7a570b10f4b"
+        }
+      ],
+      "aggregate": {
+        "runtime": "campp-c-runtime",
+        "bucket_frames": 98,
+        "input_count": 3,
+        "latency": {
+          "count": 3,
+          "mean_ms": 500.68840299999994,
+          "stddev_ms": 3.679912813565664,
+          "cv_pct": 0.7349706507114095,
+          "min_ms": 495.582344,
+          "p50_ms": 502.370365,
+          "p95_ms": 503.9382865,
+          "p99_ms": 504.07765730000006,
+          "max_ms": 504.1125
+        },
+        "rtf": {
+          "count": 3,
+          "mean_rtf": 0.500688403,
+          "stddev_rtf": 0.0036799128135656597,
+          "cv_pct": 0.7349706507114087,
+          "min_rtf": 0.49558234399999995,
+          "p50_rtf": 0.502370365,
+          "p95_rtf": 0.5039382864999999,
+          "p99_rtf": 0.5040776573,
+          "max_rtf": 0.5041125
+        },
+        "first_inference": null,
+        "warm_peak_rss_bytes": 11935744,
+        "cold_peak_rss_bytes": null,
+        "peak_rss_bytes": 11935744,
+        "stability_gate": {
+          "threshold_cv_pct": 3.0,
+          "all_inputs_passed": true,
+          "aggregate_passed": true
+        }
+      },
+      "all_output_hashes_match_reference": true,
+      "all_retained_tensor_hashes_match_reference": true,
+      "error": null
+    }
+  ]
+}

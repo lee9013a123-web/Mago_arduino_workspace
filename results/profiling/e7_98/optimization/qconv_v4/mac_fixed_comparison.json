@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-19T06:47:02.311464+00:00",
+  "comparison": "e7_operator_candidate_vs_baseline",
+  "all_output_hashes_bitwise_identical": true,
+  "any_case_faster": true,
+  "no_case_regressed_over_1pct": true,
+  "candidate_microbench_gate_passed": true,
+  "family_operator_sum": {
+    "operator_count": 2,
+    "baseline_mean_ms": 773.0090093166666,
+    "candidate_mean_ms": 32.534573783333336,
+    "mean_speedup_ratio": 23.75961690675844,
+    "baseline_sum_p50_ms": 772.654401,
+    "candidate_sum_p50_ms": 32.463333500000005,
+    "sum_p50_speedup_ratio": 23.80083366977701,
+    "baseline_sum_p95_ms": 776.7640065,
+    "candidate_sum_p95_ms": 33.28101265,
+    "sum_p95_speedup_ratio": 23.33955443810692,
+    "note": "p50/p95 sums are operator-level aggregate indicators, not a synchronized whole-graph percentile"
+  },
+  "cases": [
+    {
+      "case_name": "qconv_3x3",
+      "operator_id": 2,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "weight_shape": [
+        32,
+        32,
+        3,
+        3
+      ],
+      "bitwise_output_hashes": true,
+      "baseline_mean_ms": 486.23021685,
+      "candidate_mean_ms": 23.22738885,
+      "mean_delta_ms": -463.00282799999997,
+      "speedup_ratio": 20.933485894175313,
+      "latency_reduction_pct": 95.22296475104393,
+      "baseline_p50_ms": 485.9997915,
+      "candidate_p50_ms": 23.1952345,
+      "p50_speedup_ratio": 20.952570731716463,
+      "baseline_p95_ms": 487.70623875,
+      "candidate_p95_ms": 23.766474000000002,
+      "p95_speedup_ratio": 20.520765459360945
+    },
+    {
+      "case_name": "qconv_1x1",
+      "operator_id": 825,
+      "kernel_name": "qlinear_conv_o4i4_neon",
+      "weight_shape": [
+        512,
+        1024,
+        1
+      ],
+      "bitwise_output_hashes": true,
+      "baseline_mean_ms": 286.77879246666663,
+      "candidate_mean_ms": 9.307184933333334,
+      "mean_delta_ms": -277.47160753333327,
+      "speedup_ratio": 30.812624281223762,
+      "latency_reduction_pct": 96.75457698483225,
+      "baseline_p50_ms": 286.6546095,
+      "candidate_p50_ms": 9.268099,
+      "p50_speedup_ratio": 30.929169994839288,
+      "baseline_p95_ms": 289.05776775,
+      "candidate_p95_ms": 9.51453865,
+      "p95_speedup_ratio": 30.380639396530274
+    }
+  ],
+  "next_gate": "full retained-tensor bitwise validation and Quick E2E profiling",
+  "artifacts": {
+    "baseline": "results/profiling/e7_98/optimization/qconv_v4/baseline.json",
+    "candidate": "results/profiling/e7_98/optimization/qconv_v4/mac_fixed.json"
+  }
+}

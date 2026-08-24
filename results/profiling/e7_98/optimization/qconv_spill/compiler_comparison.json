@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T08:13:34.626203+00:00",
+  "objective": "select the lowest-spill, fastest fixed QConv compiler",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "cflags": "-std=c11 -O3 -g -DNDEBUG -Wall -Wextra -mcpu=native",
+    "compiler_versions": {
+      "gcc": "gcc (Debian 14.2.0-19) 14.2.0"
+    },
+    "modes": [
+      "mac",
+      "mac_fixed",
+      "mac_asm"
+    ]
+  },
+  "measurements": [
+    {
+      "compiler": "gcc",
+      "mode": "mac",
+      "profile": "results/profiling/e7_98/optimization/qconv_spill/profiles/gcc/mac/qconv_hotspot.json",
+      "cases": [
+        {
+          "case_name": "qconv_3x3",
+          "operator_id": 2,
+          "weight_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "sample_count": 60,
+          "mean_ms": 42.784677099999996,
+          "p50_ms": 42.699974,
+          "p95_ms": 43.72459445,
+          "output_hashes": [
+            "b1d51fe74b382d6c",
+            "0dea6284322de1b7",
+            "9419da2e4164b910"
+          ],
+          "stack_spill_share_of_annotated_pct": 48.312403983678756
+        },
+        {
+          "case_name": "qconv_1x1",
+          "operator_id": 825,
+          "weight_shape": [
+            512,
+            1024,
+            1
+          ],
+          "sample_count": 60,
+          "mean_ms": 25.229861116666665,
+          "p50_ms": 25.144531,
+          "p95_ms": 25.8473956,
+          "output_hashes": [
+            "404a38f8af5e1461",
+            "9d9c98b150326d1a",
+            "10faa9184c9134bf"
+          ],
+          "stack_spill_share_of_annotated_pct": 25.3516212081098
+        }
+      ]
+    },
+    {
+      "compiler": "gcc",
+      "mode": "mac_fixed",
+      "profile": "results/profiling/e7_98/optimization/qconv_spill/profiles/gcc/mac_fixed/qconv_hotspot.json",
+      "cases": [
+        {
+          "case_name": "qconv_3x3",
+          "operator_id": 2,
+          "weight_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "sample_count": 60,
+          "mean_ms": 22.474240483333332,
+          "p50_ms": 22.3704945,
+          "p95_ms": 23.169005199999997,
+          "output_hashes": [
+            "b1d51fe74b382d6c",
+            "0dea6284322de1b7",
+            "9419da2e4164b910"
+          ],
+          "stack_spill_share_of_annotated_pct": 0.09994436947434233
+        },
+        {
+          "case_name": "qconv_1x1",
+          "operator_id": 825,
+          "weight_shape": [
+            512,
+            1024,
+            1
+          ],
+          "sample_count": 60,
+          "mean_ms": 9.512078933333333,
+          "p50_ms": 9.499531000000001,
+          "p95_ms": 9.5846199,
+          "output_hashes": [
+            "404a38f8af5e1461",
+            "9d9c98b150326d1a",
+            "10faa9184c9134bf"
+          ],
+          "stack_spill_share_of_annotated_pct": 0.05002200980442201
+        }
+      ]
+    },
+    {
+      "compiler": "gcc",
+      "mode": "mac_asm",
+      "profile": "results/profiling/e7_98/optimization/qconv_spill/profiles/gcc/mac_asm/qconv_hotspot.json",
+      "cases": [
+        {
+          "case_name": "qconv_3x3",
+          "operator_id": 2,
+          "weight_shape": [
+            32,
+            32,
+            3,
+            3
+          ],
+          "sample_count": 60,
+          "mean_ms": 25.363008633333333,
+          "p50_ms": 25.274922,
+          "p95_ms": 26.081864449999998,
+          "output_hashes": [
+            "b1d51fe74b382d6c",
+            "0dea6284322de1b7",
+            "9419da2e4164b910"
+          ],
+          "stack_spill_share_of_annotated_pct": 0.0
+        },
+        {
+          "case_name": "qconv_1x1",
+          "operator_id": 825,
+          "weight_shape": [
+            512,
+            1024,
+            1
+          ],
+          "sample_count": 60,
+          "mean_ms": 11.893726500000001,
+          "p50_ms": 11.8661985,
+          "p95_ms": 12.051541349999999,
+          "output_hashes": [
+            "404a38f8af5e1461",
+            "9d9c98b150326d1a",
+            "10faa9184c9134bf"
+          ],
+          "stack_spill_share_of_annotated_pct": 0.0
+        }
+      ]
+    }
+  ],
+  "decision": {
+    "ready": true,
+    "selected_compiler": "gcc",
+    "spill_limit_pct": 5.0,
+    "assembly_required": false,
+    "next_mode": "mac_fixed",
+    "rule": "bitwise hashes must match, no case may regress over 1%; choose the lowest total mean latency, then require assembly when maximum fixed spill exceeds the configured limit",
+    "compiler_evaluations": [
+      {
+        "compiler": "gcc",
+        "all_output_hashes_bitwise_identical": true,
+        "no_case_regressed_over_1pct": true,
+        "maximum_fixed_spill_pct": 0.09994436947434233,
+        "fixed_total_mean_ms": 31.986319416666667,
+        "cases": [
+          {
+            "case_name": "qconv_3x3",
+            "bitwise": true,
+            "mac_mean_ms": 42.784677099999996,
+            "mac_fixed_mean_ms": 22.474240483333332,
+            "speedup_ratio": 1.9037207122406952,
+            "fixed_spill_pct": 0.09994436947434233
+          },
+          {
+            "case_name": "qconv_1x1",
+            "bitwise": true,
+            "mac_mean_ms": 25.229861116666665,
+            "mac_fixed_mean_ms": 9.512078933333333,
+            "speedup_ratio": 2.6524024131310826,
+            "fixed_spill_pct": 0.05002200980442201
+          }
+        ]
+      }
+    ]
+  }
+}

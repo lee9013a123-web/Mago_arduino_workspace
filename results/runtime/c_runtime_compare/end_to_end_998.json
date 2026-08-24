@@ -1,0 +1,355 @@
+{
+  "phase": 17,
+  "bucket_frames": 998,
+  "bucket_tag": "10s",
+  "input": {
+    "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/ort_reference/feature_998.f32",
+    "dtype": "FLOAT32",
+    "shape": [
+      1,
+      998,
+      80
+    ],
+    "byte_size": 319360
+  },
+  "plan": "/home/arduino/workspace/egs/accelerate_CAM/models/compiled/reference/execution_plans/plan_998.bin",
+  "weights": "/home/arduino/workspace/egs/accelerate_CAM/models/compiled/reference/weights.bin",
+  "runtime_binary": "/home/arduino/workspace/egs/accelerate_CAM/build/campp_reference_dump",
+  "operator_count": 1438,
+  "executed_operator_count": 1438,
+  "execution_passed": true,
+  "compared_tensors": 1438,
+  "failed_tensors": 1059,
+  "float_atol": 0.0001,
+  "float_rtol": 0.001,
+  "embedding_cosine_min": 0.999999,
+  "embedding": {
+    "reference_dtype": "float32",
+    "actual_dtype": "float32",
+    "reference_shape": [
+      1,
+      192
+    ],
+    "actual_shape": [
+      1,
+      192
+    ],
+    "reference_element_count": 192,
+    "actual_element_count": 192,
+    "max_abs_error": 0.097349613904953,
+    "mean_abs_error": 0.02875113730093896,
+    "max_rel_error": 129.30466619706124,
+    "cosine_similarity": 0.9989376431038818,
+    "element_count": 192,
+    "bitwise_differing_elements": 171,
+    "bitwise_identical": false,
+    "status": "float_mismatch",
+    "operator_id": 1437,
+    "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+    "opcode": "BATCH_NORMALIZATION",
+    "tensor_id": 3718,
+    "tensor_name": "embedding"
+  },
+  "checkpoints": [
+    {
+      "checkpoint": {
+        "key": "input_transform",
+        "description": "input transpose output",
+        "operator_id": 0,
+        "opcode": "TRANSPOSE",
+        "tensor_id": 2281,
+        "tensor_name": "/Transpose_output_0"
+      },
+      "comparison": {
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          80,
+          998
+        ],
+        "actual_shape": [
+          1,
+          80,
+          998
+        ],
+        "reference_element_count": 79840,
+        "actual_element_count": 79840,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "max_rel_error": 0.0,
+        "cosine_similarity": 1.0000000000000002,
+        "element_count": 79840,
+        "bitwise_differing_elements": 0,
+        "bitwise_identical": true,
+        "status": "within_tolerance",
+        "operator_id": 0,
+        "operator_name": "/Transpose",
+        "opcode": "TRANSPOSE",
+        "tensor_id": 2281,
+        "tensor_name": "/Transpose_output_0"
+      }
+    },
+    {
+      "checkpoint": {
+        "key": "head",
+        "description": "head output",
+        "operator_id": 51,
+        "opcode": "QUANTIZE_LINEAR",
+        "tensor_id": 2332,
+        "tensor_name": "/head/Reshape_output_0_quantized"
+      },
+      "comparison": {
+        "reference_dtype": "uint8",
+        "actual_dtype": "uint8",
+        "reference_shape": [
+          1,
+          320,
+          998
+        ],
+        "actual_shape": [
+          1,
+          320,
+          998
+        ],
+        "reference_element_count": 319360,
+        "actual_element_count": 319360,
+        "max_abs_error": 0.0,
+        "mean_abs_error": 0.0,
+        "max_rel_error": 0.0,
+        "cosine_similarity": 0.9999999999999998,
+        "element_count": 319360,
+        "mismatched_elements": 0,
+        "bitwise_identical": true,
+        "status": "exact",
+        "operator_id": 51,
+        "operator_name": "/head/Reshape_output_0_QuantizeLinear",
+        "opcode": "QUANTIZE_LINEAR",
+        "tensor_id": 2332,
+        "tensor_name": "/head/Reshape_output_0_quantized"
+      }
+    },
+    {
+      "checkpoint": {
+        "key": "dense_block_1",
+        "description": "Dense block 1 final concatenation",
+        "operator_id": 366,
+        "opcode": "CONCAT",
+        "tensor_id": 2647,
+        "tensor_name": "/xvector/block1/Concat_11_output_0"
+      },
+      "comparison": {
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          512,
+          499
+        ],
+        "actual_shape": [
+          1,
+          512,
+          499
+        ],
+        "reference_element_count": 255488,
+        "actual_element_count": 255488,
+        "max_abs_error": 5.923211574554443e-07,
+        "mean_abs_error": 2.5854833671029174e-08,
+        "max_rel_error": 2.4922130511161658e-05,
+        "cosine_similarity": 0.999999999999961,
+        "element_count": 255488,
+        "bitwise_differing_elements": 83871,
+        "bitwise_identical": false,
+        "status": "within_tolerance",
+        "operator_id": 366,
+        "operator_name": "/xvector/block1/Concat_11",
+        "opcode": "CONCAT",
+        "tensor_id": 2647,
+        "tensor_name": "/xvector/block1/Concat_11_output_0"
+      }
+    },
+    {
+      "checkpoint": {
+        "key": "dense_block_2",
+        "description": "Dense block 2 final concatenation",
+        "operator_id": 995,
+        "opcode": "CONCAT",
+        "tensor_id": 3276,
+        "tensor_name": "/xvector/block2/Concat_23_output_0"
+      },
+      "comparison": {
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          1024,
+          499
+        ],
+        "actual_shape": [
+          1,
+          1024,
+          499
+        ],
+        "reference_element_count": 510976,
+        "actual_element_count": 510976,
+        "max_abs_error": 0.6184608936309814,
+        "mean_abs_error": 0.021030975418267837,
+        "max_rel_error": 431493520736.69434,
+        "cosine_similarity": 0.9999348077377848,
+        "element_count": 510976,
+        "bitwise_differing_elements": 286497,
+        "bitwise_identical": false,
+        "status": "float_mismatch",
+        "operator_id": 995,
+        "operator_name": "/xvector/block2/Concat_23",
+        "opcode": "CONCAT",
+        "tensor_id": 3276,
+        "tensor_name": "/xvector/block2/Concat_23_output_0"
+      }
+    },
+    {
+      "checkpoint": {
+        "key": "dense_block_3",
+        "description": "Dense block 3 final concatenation",
+        "operator_id": 1416,
+        "opcode": "CONCAT",
+        "tensor_id": 3697,
+        "tensor_name": "/xvector/block3/Concat_15_output_0"
+      },
+      "comparison": {
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          1024,
+          499
+        ],
+        "actual_shape": [
+          1,
+          1024,
+          499
+        ],
+        "reference_element_count": 510976,
+        "actual_element_count": 510976,
+        "max_abs_error": 1.249710202217102,
+        "mean_abs_error": 0.1045557742756519,
+        "max_rel_error": 999768078327.179,
+        "cosine_similarity": 0.9959235161343252,
+        "element_count": 510976,
+        "bitwise_differing_elements": 358301,
+        "bitwise_identical": false,
+        "status": "float_mismatch",
+        "operator_id": 1416,
+        "operator_name": "/xvector/block3/Concat_15",
+        "opcode": "CONCAT",
+        "tensor_id": 3697,
+        "tensor_name": "/xvector/block3/Concat_15_output_0"
+      }
+    },
+    {
+      "checkpoint": {
+        "key": "statistics_pooling",
+        "description": "statistics pooling concatenated mean/std",
+        "operator_id": 1431,
+        "opcode": "CONCAT",
+        "tensor_id": 3712,
+        "tensor_name": "/xvector/stats/Concat_output_0"
+      },
+      "comparison": {
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          1024
+        ],
+        "actual_shape": [
+          1,
+          1024
+        ],
+        "reference_element_count": 1024,
+        "actual_element_count": 1024,
+        "max_abs_error": 0.03228950500488281,
+        "mean_abs_error": 0.005447411867066876,
+        "max_rel_error": 1.0,
+        "cosine_similarity": 0.9996857338856805,
+        "element_count": 1024,
+        "bitwise_differing_elements": 1013,
+        "bitwise_identical": false,
+        "status": "float_mismatch",
+        "operator_id": 1431,
+        "operator_name": "/xvector/stats/Concat",
+        "opcode": "CONCAT",
+        "tensor_id": 3712,
+        "tensor_name": "/xvector/stats/Concat_output_0"
+      }
+    },
+    {
+      "checkpoint": {
+        "key": "embedding",
+        "description": "final speaker embedding",
+        "operator_id": 1437,
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding"
+      },
+      "comparison": {
+        "reference_dtype": "float32",
+        "actual_dtype": "float32",
+        "reference_shape": [
+          1,
+          192
+        ],
+        "actual_shape": [
+          1,
+          192
+        ],
+        "reference_element_count": 192,
+        "actual_element_count": 192,
+        "max_abs_error": 0.097349613904953,
+        "mean_abs_error": 0.02875113730093896,
+        "max_rel_error": 129.30466619706124,
+        "cosine_similarity": 0.9989376431038818,
+        "element_count": 192,
+        "bitwise_differing_elements": 171,
+        "bitwise_identical": false,
+        "status": "float_mismatch",
+        "operator_id": 1437,
+        "operator_name": "/xvector/dense/nonlinear/batchnorm/BatchNormalization",
+        "opcode": "BATCH_NORMALIZATION",
+        "tensor_id": 3718,
+        "tensor_name": "embedding"
+      }
+    }
+  ],
+  "first_failure": {
+    "reference_dtype": "uint8",
+    "actual_dtype": "uint8",
+    "reference_shape": [
+      1,
+      512,
+      499
+    ],
+    "actual_shape": [
+      1,
+      512,
+      499
+    ],
+    "reference_element_count": 255488,
+    "actual_element_count": 255488,
+    "max_abs_error": 1.0,
+    "mean_abs_error": 3.914078156312625e-06,
+    "max_rel_error": 0.14285714285714285,
+    "cosine_similarity": 0.9999999822650515,
+    "element_count": 255488,
+    "mismatched_elements": 1,
+    "bitwise_identical": false,
+    "status": "integer_mismatch",
+    "operator_id": 369,
+    "operator_name": "/xvector/transit1/nonlinear/relu/Relu_output_0_QuantizeLinear",
+    "opcode": "QUANTIZE_LINEAR",
+    "tensor_id": 2650,
+    "tensor_name": "/xvector/transit1/nonlinear/relu/Relu_output_0_quantized"
+  },
+  "numerical_passed": false,
+  "passed": false
+}

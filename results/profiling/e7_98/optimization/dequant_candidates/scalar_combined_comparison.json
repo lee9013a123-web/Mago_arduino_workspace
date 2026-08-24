@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T07:16:24.390178+00:00",
+  "comparison": "e7_operator_candidate_vs_baseline",
+  "all_output_hashes_bitwise_identical": true,
+  "any_case_faster": true,
+  "no_case_regressed_over_1pct": true,
+  "candidate_microbench_gate_passed": true,
+  "cases": [
+    {
+      "case_name": "dequantize_linear",
+      "operator_id": 5,
+      "kernel_name": "dequantize_linear_stride",
+      "weight_shape": [],
+      "bitwise_output_hashes": true,
+      "baseline_mean_ms": 15.889677083333334,
+      "candidate_mean_ms": 1.4764765833333333,
+      "mean_delta_ms": -14.4132005,
+      "speedup_ratio": 10.761888988080239,
+      "latency_reduction_pct": 90.70795098232671,
+      "baseline_p50_ms": 15.8208075,
+      "candidate_p50_ms": 1.470286,
+      "baseline_p95_ms": 16.3345576,
+      "candidate_p95_ms": 1.5753701999999998
+    }
+  ],
+  "next_gate": "full retained-tensor bitwise validation and Quick E2E profiling",
+  "artifacts": {
+    "baseline": "/home/arduino/workspace/egs/accelerate_CAM/results/profiling/e7_98/optimization/dequant_candidates/baseline.json",
+    "candidate": "/home/arduino/workspace/egs/accelerate_CAM/results/profiling/e7_98/optimization/dequant_candidates/scalar_combined.json"
+  }
+}

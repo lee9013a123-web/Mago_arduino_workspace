@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+BUILD_DIR="${BUILD_DIR:-${ROOT}/build/profill/optimization}"
+
+BUILD_DIR="${BUILD_DIR}" \
+    bash "${ROOT}/scripts/4_profill/optimization/01_build_optimization.sh"
+
+"${BUILD_DIR}/test_qconv_v5_primitives"
+"${BUILD_DIR}/test_qconv_v5_address"
+"${BUILD_DIR}/test_qconv_v5_bitwise"
+"${BUILD_DIR}/test_qconv_candidate"
+
+echo "QConv v5 build, primitive, bitwise and candidate tests complete"

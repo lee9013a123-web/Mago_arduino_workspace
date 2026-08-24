@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T05:28:06.915503+00:00",
+  "objective": "locate internal bottlenecks before implementing E7 optimizations",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "elapsed_seconds": 24.850328687,
+    "qconv_candidate": "baseline",
+    "bn_candidate": "affine"
+  },
+  "target_kernel_families": [
+    "qlinear_conv_o4i4_neon",
+    "fused_quant_qlinear_conv_o4i4",
+    "fused_bn_relu_quant",
+    "dequantize_linear_stride"
+  ],
+  "case_count": 1,
+  "cases": [
+    {
+      "case_name": "fused_bn_relu_quant",
+      "operator_id": 824,
+      "kernel_id": 2,
+      "kernel_name": "fused_bn_relu_quant",
+      "operator_type": "BATCH_NORMALIZATION",
+      "weight_shape": [],
+      "profile_mean_ms": 12.840260449999999,
+      "profile_share_pct": 0.15155117716449354,
+      "input_count": 3,
+      "output_hashes": {
+        "benchmarks/campplus/features/multi__speaker_0000__98.f32": "a45d6f98ea2f1bd0",
+        "benchmarks/campplus/features/multi__speaker_0005__98.f32": "3582a4717bc248b1",
+        "benchmarks/campplus/features/multi__speaker_0006__98.f32": "591e95addeb2d88e"
+      },
+      "wall": {
+        "call_count": 60,
+        "total_exclusive_ns": 455474012,
+        "total_exclusive_ms": 455.474012,
+        "mean_ms": 7.591233533333334,
+        "stddev_ms": 0.27108136593862164,
+        "cv_pct": 3.5709791399289093,
+        "min_ms": 7.260729,
+        "p50_ms": 7.485859,
+        "p95_ms": 8.04753385,
+        "max_ms": 8.16901
+      },
+      "stages": [
+        {
+          "name": "bn_elementwise",
+          "call_count": 60,
+          "total_exclusive_ns": 449369061,
+          "total_exclusive_ms": 449.369061,
+          "mean_ms": 7.48948435,
+          "stddev_ms": 0.26740499152401936,
+          "cv_pct": 3.570405905501617,
+          "min_ms": 7.163437,
+          "p50_ms": 7.3832035000000005,
+          "p95_ms": 7.9445675,
+          "max_ms": 8.065417,
+          "wall_share_pct": 98.65964888464373
+        },
+        {
+          "name": "bn_setup",
+          "call_count": 60,
+          "total_exclusive_ns": 5925989,
+          "total_exclusive_ms": 5.925989,
+          "mean_ms": 0.09876648333333334,
+          "stddev_ms": 0.007616944377486434,
+          "cv_pct": 7.712074096816346,
+          "min_ms": 0.090781,
+          "p50_ms": 0.098203,
+          "p95_ms": 0.1017736,
+          "max_ms": 0.152604,
+          "wall_share_pct": 1.3010597408134892
+        }
+      ],
+      "dominant_stage": "bn_elementwise",
+      "dominant_stage_wall_share_pct": 98.65964888464373,
+      "pmu": {
+        "available": true,
+        "unavailable_errno": [],
+        "totals": {
+          "cpu_cycles": 902660328,
+          "instructions": 812865621,
+          "cache_references": 192518806,
+          "cache_misses": 4912845,
+          "branches": 78311795,
+          "branch_misses": 590347
+        },
+        "instructions_per_cycle": 0.9005221518941066,
+        "cache_miss_pct": 2.5518779708201595,
+        "branch_miss_pct": 0.753841742485918
+      },
+      "source_hotspot": {
+        "path": "src/c/runtime/backends/cpu_aarch64/fused_kernels/bn_relu_quant_conv.c",
+        "line_start": 86,
+        "line_end": 136,
+        "question": "element마다 반복되는 unravel·parameter read·sqrtf가 지배적인가"
+      },
+      "diagnosis_scope": "coarse stage attribution plus target-only PMU; qconv_mac_address requires perf annotate to split address from MAC"
+    }
+  ],
+  "optimization_gate": {
+    "ready": true,
+    "rule": "implement only after a stage dominates stably across all three inputs; retain bitwise output hashes and rerun full retained-tensor validation"
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/bn_candidates/affine/raw"
+  }
+}

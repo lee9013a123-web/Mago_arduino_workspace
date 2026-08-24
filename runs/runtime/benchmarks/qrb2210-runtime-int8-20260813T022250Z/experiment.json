@@ -1,0 +1,301 @@
+{
+  "schema_version": 1,
+  "profile": "qrb2210-runtime-int8",
+  "run_id": "qrb2210-runtime-int8-20260813T022250Z",
+  "generated_at_utc": "2026-08-13T02:22:50.619969+00:00",
+  "measurement_scope": {
+    "input": "precomputed FBank float32 [1,frames,80]",
+    "output": "embedding [1,192]",
+    "excluded": [
+      "WAV read",
+      "FBank extraction",
+      "accuracy evaluation"
+    ],
+    "cold": "fresh process; model/context load plus first inference",
+    "warm": "persistent model/context; file I/O excluded",
+    "memory": "whole-process VmHWM; ORT includes its Python harness and C Runtime is a native process"
+  },
+  "configuration": {
+    "source": "/home/arduino/workspace/egs/accelerate_CAM/configs/benchmark/runtime_qrb2210.json",
+    "threads": 1,
+    "warmup": 20,
+    "repeat": 100,
+    "cold_runs": 10,
+    "cv_threshold_pct": 3.0,
+    "buckets": {
+      "98": 1.0,
+      "298": 3.0,
+      "498": 5.0,
+      "998": 10.0
+    }
+  },
+  "git": {
+    "sha": "4fb9e3408b8c11743c3b674f2ac07b766220efe4",
+    "status_porcelain": [
+      "M configs/benchmark/runtime_qrb2210.json",
+      "?? benchmarks/campplus/features/",
+      "?? benchmarks/campplus/manifests/runtime_features.json",
+      "?? benchmarks/campplus/manifests/runtime_inputs.tsv",
+      "?? scripts/3_runtime/10_build_runtime_features.py"
+    ]
+  },
+  "artifacts": {
+    "manifest": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle/manifest.json",
+      "sha256": "0538823613a6b33d3be45ebe63e7bc97d869b5b430c8ad2aab5cae2cc410e04c"
+    },
+    "canonical_model": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/models/source/campplus_int8_static_qop.onnx",
+      "sha256": "1ea9a4806a3c410046e7e785cfa81fb1393550b2f016b1e94581056b1c092048",
+      "size_bytes": 8520399
+    },
+    "weights": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle/weights.bin",
+      "sha256": "595d308c035eccbd338eeba72a7b3b23dd878878cf74418f0730bf60264aecb9",
+      "size_bytes": 7453696
+    },
+    "plans": {
+      "98": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle/execution_plans/plan_98.bin",
+        "sha256": "994849e25406707fc3db5b02d3a5e257997b5f628a6d0c19f1fc577e92f05ed0",
+        "size_bytes": 390800,
+        "arena_size_bytes": 2007040
+      },
+      "298": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle/execution_plans/plan_298.bin",
+        "sha256": "524e732a62fade40fa8d9482861c265ec9d9aca5b251e463fdbd80fcebda1517",
+        "size_bytes": 390800,
+        "arena_size_bytes": 6103040
+      },
+      "498": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle/execution_plans/plan_498.bin",
+        "sha256": "fdfd5c8426d957f7a1bd53e0bb7fbc0faeb613e7f0024144c46f0e6e1a585b0a",
+        "size_bytes": 390800,
+        "arena_size_bytes": 10199040
+      },
+      "998": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/runs/runtime/tensor_arena/bundle/execution_plans/plan_998.bin",
+        "sha256": "9a2d2f16a7b1db2ef5dcef6e3b8a3ea25fc970587a3003a8804f8578a64877f7",
+        "size_bytes": 390800,
+        "arena_size_bytes": 20439040
+      }
+    },
+    "tools": {
+      "c_benchmark": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/build/campp_runtime_benchmark",
+        "sha256": "1ebbc47aad21642138287f289cbfc7fe13a0f1140375a3618b61c7a2df3af0b8",
+        "build_metadata_path": "/home/arduino/workspace/egs/accelerate_CAM/build/campp_runtime_benchmark.build.txt",
+        "build_metadata_sha256": "2b836846ab45ac3c14ef233902502748779fe4a703166335e363ee9914ca6663"
+      },
+      "ort_benchmark": {
+        "path": "/home/arduino/workspace/egs/accelerate_CAM/scripts/1_benchmark/benchmark_onnx.py",
+        "sha256": "4f2b097c11149dba56eb35b22c54f78773286bd0a7cf6c4d24f307de73504270"
+      }
+    }
+  },
+  "evidence": {
+    "runtime_validation": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/results/runtime/end_to_end_validation.json",
+      "sha256": "c746d12ebeed21ebf1de0ea6fc79918208ed6dec2c8cde88b5a0c86de3a5968e",
+      "status": {
+        "baseline_id": "campp-reference-v1-c7dc2bd1ce91c061",
+        "phase4_ready": false,
+        "all_buckets_numerically_passed": false
+      }
+    },
+    "tensor_arena_validation": {
+      "path": "/home/arduino/workspace/egs/accelerate_CAM/results/runtime/tensor_arena_validation.json",
+      "sha256": "2942cd30b2540f388cbe16428eb9657b38e3374fd91108f1122a2b97511594e3",
+      "status": {
+        "all_bitwise_identical": true
+      }
+    }
+  },
+  "dataset": {
+    "manifest": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/manifests/runtime_inputs.tsv",
+    "manifest_sha256": "b6283fcf0a7ed12c4b581c486440181117f35d12149def6d9ddbdcfa2423d258",
+    "feature_manifest": "/home/arduino/workspace/egs/accelerate_CAM/benchmarks/campplus/manifests/runtime_features.json",
+    "feature_manifest_sha256": "d618db0e0b77b2bdf5c5ad0ae6195a862abcd4f73b35561ea45e659fce6c76e6",
+    "preprocessing": {
+      "implementation": "egs/pipeline_experiment/core.py::extract_fbank_torchaudio (torchaudio.compliance.kaldi.fbank)",
+      "source_dataset": "/home/arduino/workspace/data/multi_speaker",
+      "concatenation": "화자별 wav 3개를 파일명 오름차순으로 이어붙여 하나의 source WAV로 만든다. 원본이 4초 내외라 단일 클립으로는 498/998 frame을 덮지 못하기 때문이다.",
+      "crop_padding_policy": "이어붙인 waveform을 정규화한 뒤 offset 0에서 bucket 길이(1/3/5/10초)만큼 자른다. bucket은 서로의 prefix이며 zero-padding은 쓰지 않는다.",
+      "waveform_normalization": "int16 → float32 [-1,1], DC 평균 제거, peak를 0.95로 정규화, [-1,1] clip. 이어붙인 전체 파형에 한 번 적용한 뒤 자른다.",
+      "fbank": {
+        "num_mel_bins": 80,
+        "sample_frequency": 16000,
+        "frame_length_ms": 25.0,
+        "frame_shift_ms": 10.0,
+        "dither": 0.0,
+        "energy_floor": 0.0,
+        "window_type": "hamming",
+        "use_energy": false,
+        "snip_edges": true
+      },
+      "cmvn": "time축 평균 감산 (feat - feat.mean(axis=0))",
+      "payload_layout": "[1, frames, 80] little-endian float32"
+    },
+    "source_wavs": {
+      "data_root": "/home/arduino/workspace/data",
+      "verified": [
+        {
+          "input_id": "multi__speaker_0000",
+          "relative_path": "multi_speaker_concat/0000.wav",
+          "sha256": "6c018c04fd0a18e963637a0d53139c8b86f4b886bf771ec2cc4eacb36cd7fc97"
+        },
+        {
+          "input_id": "multi__speaker_0005",
+          "relative_path": "multi_speaker_concat/0005.wav",
+          "sha256": "dfd5a69391173c7faf1708ad5fdd5b973c885f09763aa08385dc9d07e43b5209"
+        },
+        {
+          "input_id": "multi__speaker_0006",
+          "relative_path": "multi_speaker_concat/0006.wav",
+          "sha256": "4750d06944bf06bcf4efec00c2d03f90d3bf22920eaf9219dd3d8f8b6c4828cf"
+        },
+        {
+          "input_id": "multi__speaker_0011",
+          "relative_path": "multi_speaker_concat/0011.wav",
+          "sha256": "c4815272995902b279aa067e0e6a37dfcdcb8cc9a20a5f8d06c74c87d8d102ab"
+        },
+        {
+          "input_id": "multi__speaker_0013",
+          "relative_path": "multi_speaker_concat/0013.wav",
+          "sha256": "78f67742ea4a8988fcc89ebf20139518a86d6e7343543ea6cad2ddb3492cd72e"
+        },
+        {
+          "input_id": "multi__speaker_0014",
+          "relative_path": "multi_speaker_concat/0014.wav",
+          "sha256": "6707afd37427c9b19482588da8d8a0ef14b84451ce71f1b9b410556c7d64ce4e"
+        },
+        {
+          "input_id": "multi__speaker_0022",
+          "relative_path": "multi_speaker_concat/0022.wav",
+          "sha256": "d4c530d20dd0e36e5597cdc82b8478e2f9b97e254f2d8d3c8ae0bc9bfc6b2303"
+        },
+        {
+          "input_id": "multi__speaker_0030",
+          "relative_path": "multi_speaker_concat/0030.wav",
+          "sha256": "dfc9c5bf8620f7ca499e890aff78e3739850fc0fedacbd3fda66b5a8ce9cc7c3"
+        },
+        {
+          "input_id": "multi__speaker_0031",
+          "relative_path": "multi_speaker_concat/0031.wav",
+          "sha256": "016aa5da9a4603ea121957b68f07b029ec092577146b35cae5278e0cb0966c9b"
+        },
+        {
+          "input_id": "multi__speaker_0033",
+          "relative_path": "multi_speaker_concat/0033.wav",
+          "sha256": "0f0a31f24db9796b001bc4de6fea173906a613ea4761eef6abd67547db90129a"
+        },
+        {
+          "input_id": "multi__speaker_0042",
+          "relative_path": "multi_speaker_concat/0042.wav",
+          "sha256": "073ba3f718d394a9d68f7ab0ecf484bdd9ef79c576829600b81620f9c7c919df"
+        },
+        {
+          "input_id": "multi__speaker_0044",
+          "relative_path": "multi_speaker_concat/0044.wav",
+          "sha256": "fd8411a77c276e6ee3756640378d5a7215b742ed2e2624fcf0454c346e9bfad6"
+        },
+        {
+          "input_id": "multi__speaker_0045",
+          "relative_path": "multi_speaker_concat/0045.wav",
+          "sha256": "a893bcf9a4e68752d13c4880cba676d9dfb2e1e729b5ad29665d5888c183aa4e"
+        },
+        {
+          "input_id": "multi__speaker_0046",
+          "relative_path": "multi_speaker_concat/0046.wav",
+          "sha256": "bd7d539d162c64658cf1dab6ad169c5ce0c6536a612e0d03a8044534f12cefab"
+        },
+        {
+          "input_id": "multi__speaker_0049",
+          "relative_path": "multi_speaker_concat/0049.wav",
+          "sha256": "3e1107d063248b72efac5c999a1537e83c66fb236a1335299fac46052c9b660c"
+        }
+      ]
+    }
+  },
+  "environment_before": {
+    "hostname": "Mago",
+    "platform": "Linux-7.0.0-g122c2c22d838-aarch64-with-glibc2.41",
+    "machine": "aarch64",
+    "python_version": "3.13.5",
+    "logical_cpu_count": 4,
+    "cpu_affinity": [
+      0
+    ],
+    "device_tree_model": "Arduino UnoQ",
+    "governors": {
+      "cpu0": "schedutil",
+      "cpu1": "schedutil",
+      "cpu2": "schedutil",
+      "cpu3": "schedutil"
+    },
+    "thermal": [
+      {
+        "zone": "thermal_zone0",
+        "type": "mapss-thermal",
+        "temperature_c": 38.7
+      },
+      {
+        "zone": "thermal_zone1",
+        "type": "video-thermal",
+        "temperature_c": 38.4
+      },
+      {
+        "zone": "thermal_zone2",
+        "type": "wlan-thermal",
+        "temperature_c": 37.8
+      },
+      {
+        "zone": "thermal_zone3",
+        "type": "cpuss0-thermal",
+        "temperature_c": 40.3
+      },
+      {
+        "zone": "thermal_zone4",
+        "type": "cpuss1-thermal",
+        "temperature_c": 41.2
+      },
+      {
+        "zone": "thermal_zone5",
+        "type": "mdm0-thermal",
+        "temperature_c": 36.8
+      },
+      {
+        "zone": "thermal_zone6",
+        "type": "mdm1-thermal",
+        "temperature_c": 37.8
+      },
+      {
+        "zone": "thermal_zone7",
+        "type": "gpu-thermal",
+        "temperature_c": 37.1
+      },
+      {
+        "zone": "thermal_zone8",
+        "type": "hm-center-thermal",
+        "temperature_c": 39.3
+      },
+      {
+        "zone": "thermal_zone9",
+        "type": "camera-thermal",
+        "temperature_c": 37.8
+      }
+    ],
+    "thread_environment": {
+      "OMP_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": null,
+      "MKL_NUM_THREADS": null,
+      "ORT_NUM_THREADS": null
+    }
+  },
+  "environment_mismatches": [],
+  "c_runtime_capabilities": {
+    "runtime": "campp-c-reference",
+    "effective_threads": 1,
+    "threading": "single-thread"
+  }
+}

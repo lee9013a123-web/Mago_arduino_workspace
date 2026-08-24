@@ -1,0 +1,763 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-18T05:48:58.929577+00:00",
+  "objective": "locate internal bottlenecks in E7 fused BN/ReLU/Quantize",
+  "configuration": {
+    "bucket_frames": 98,
+    "threads": 1,
+    "cpu_affinity": [
+      0
+    ],
+    "warmup": 5,
+    "repeat_per_input": 20,
+    "input_count": 3,
+    "perf_event": "cycles:u",
+    "sample_period": 100000,
+    "stage_probe_compiled": false,
+    "elapsed_seconds": 31.937249312999484
+  },
+  "source_map": {
+    "line_count": 137,
+    "main_span": [
+      32,
+      137
+    ],
+    "loop_begin": 87,
+    "index_span": [
+      102,
+      106
+    ],
+    "input_read": 105,
+    "parameter_span": [
+      107,
+      114
+    ],
+    "affine_span": [
+      116,
+      119
+    ],
+    "relu_quant_span": [
+      120,
+      129
+    ],
+    "output_span": [
+      130,
+      132
+    ],
+    "loop_end": 135,
+    "source": "src/c/runtime/backends/cpu_aarch64/fused_kernels/bn_relu_quant_conv.c"
+  },
+  "cases": [
+    {
+      "case_name": "fused_bn_relu_quant",
+      "operator_id": 824,
+      "kernel_id": 2,
+      "kernel_name": "fused_bn_relu_quant",
+      "operator_type": "BATCH_NORMALIZATION",
+      "weight_shape": [],
+      "profile_mean_ms": 12.840260449999999,
+      "profile_share_pct": 0.15155117716449354,
+      "inputs": [
+        {
+          "parsed_sample_count": 5916,
+          "malformed_line_count": 47,
+          "total_sample_period": 591600000,
+          "classified_core_period": 556000000,
+          "category_sample_counts": {
+            "bn_index_address": 3814,
+            "bn_parameter_load": 146,
+            "bn_sqrt_affine": 485,
+            "bn_relu_quant": 327,
+            "bn_output_write": 788,
+            "setup_other": 8,
+            "foreign_symbol": 0,
+            "unclassified": 348
+          },
+          "category_periods": {
+            "bn_index_address": 381400000,
+            "bn_parameter_load": 14600000,
+            "bn_sqrt_affine": 48500000,
+            "bn_relu_quant": 32700000,
+            "bn_output_write": 78800000,
+            "setup_other": 800000,
+            "foreign_symbol": 0,
+            "unclassified": 34800000
+          },
+          "category_share_pct": {
+            "bn_index_address": 64.46923597025017,
+            "bn_parameter_load": 2.4678837052062206,
+            "bn_sqrt_affine": 8.19810682893847,
+            "bn_relu_quant": 5.52738336713996,
+            "bn_output_write": 13.319810682893849,
+            "setup_other": 0.1352265043948614,
+            "foreign_symbol": 0.0,
+            "unclassified": 5.88235294117647
+          },
+          "classified_core_share_pct": 93.98242055442867,
+          "top_bottleneck_set": [
+            "bn_index_address",
+            "bn_output_write"
+          ],
+          "top_lines": [
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 151,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 66800000,
+              "total_share_pct": 11.291413116970926
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 65500000,
+              "total_share_pct": 11.071670047329278
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 34200000,
+              "total_share_pct": 5.780933062880324
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_unravel_index",
+              "category": "bn_index_address",
+              "sample_period": 32900000,
+              "total_share_pct": 5.561189993238675
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 27500000,
+              "total_share_pct": 4.6484110885733605
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 26900000,
+              "total_share_pct": 4.5469912102772145
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 116,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 23100000,
+              "total_share_pct": 3.904665314401623
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 141,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 22500000,
+              "total_share_pct": 3.803245436105477
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 78,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 19100000,
+              "total_share_pct": 3.228532792427316
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 339,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 15000000,
+              "total_share_pct": 2.535496957403651
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 14600000,
+              "total_share_pct": 2.4678837052062206
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 13300000,
+              "total_share_pct": 2.2481406355645706
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 117,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 13000000,
+              "total_share_pct": 2.1974306964164976
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 13000000,
+              "total_share_pct": 2.1974306964164976
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 13000000,
+              "total_share_pct": 2.1974306964164976
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 128,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_relu_quant",
+              "sample_period": 10200000,
+              "total_share_pct": 1.7241379310344827
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 9500000,
+              "total_share_pct": 1.605814739688979
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 123,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_relu_quant",
+              "sample_period": 9000000,
+              "total_share_pct": 1.5212981744421907
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 118,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 8700000,
+              "total_share_pct": 1.4705882352941175
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 7500000,
+              "total_share_pct": 1.2677484787018256
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0000__98.f32",
+          "output_hash": "a45d6f98ea2f1bd0",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0000__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 5877,
+          "malformed_line_count": 41,
+          "total_sample_period": 587700000,
+          "classified_core_period": 556600000,
+          "category_sample_counts": {
+            "bn_index_address": 3748,
+            "bn_parameter_load": 119,
+            "bn_sqrt_affine": 549,
+            "bn_relu_quant": 328,
+            "bn_output_write": 822,
+            "setup_other": 7,
+            "foreign_symbol": 0,
+            "unclassified": 304
+          },
+          "category_periods": {
+            "bn_index_address": 374800000,
+            "bn_parameter_load": 11900000,
+            "bn_sqrt_affine": 54900000,
+            "bn_relu_quant": 32800000,
+            "bn_output_write": 82200000,
+            "setup_other": 700000,
+            "foreign_symbol": 0,
+            "unclassified": 30400000
+          },
+          "category_share_pct": {
+            "bn_index_address": 63.774034371277864,
+            "bn_parameter_load": 2.0248426067721628,
+            "bn_sqrt_affine": 9.341500765696784,
+            "bn_relu_quant": 5.581078781691339,
+            "bn_output_write": 13.986727922409392,
+            "setup_other": 0.11910838863365664,
+            "foreign_symbol": 0.0,
+            "unclassified": 5.172707163518802
+          },
+          "classified_core_share_pct": 94.70818444784754,
+          "top_bottleneck_set": [
+            "bn_index_address",
+            "bn_output_write"
+          ],
+          "top_lines": [
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 63300000,
+              "total_share_pct": 10.770801429300663
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 151,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 60000000,
+              "total_share_pct": 10.209290454313425
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 35200000,
+              "total_share_pct": 5.989450399863876
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 29800000,
+              "total_share_pct": 5.0706142589756675
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 27600000,
+              "total_share_pct": 4.696273608984176
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_unravel_index",
+              "category": "bn_index_address",
+              "sample_period": 27000000,
+              "total_share_pct": 4.594180704441041
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 116,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 25800000,
+              "total_share_pct": 4.389994895354773
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 78,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 21200000,
+              "total_share_pct": 3.6072826271907434
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 141,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 18500000,
+              "total_share_pct": 3.1478645567466392
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 117,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 14400000,
+              "total_share_pct": 2.4502297090352223
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 14400000,
+              "total_share_pct": 2.4502297090352223
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 12600000,
+              "total_share_pct": 2.1439509954058193
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 12200000,
+              "total_share_pct": 2.07588905904373
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 339,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 11600000,
+              "total_share_pct": 1.9737961545005955
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 118,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 10800000,
+              "total_share_pct": 1.8376722817764166
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 128,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_relu_quant",
+              "sample_period": 10100000,
+              "total_share_pct": 1.7185638931427598
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 10100000,
+              "total_share_pct": 1.7185638931427598
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 8800000,
+              "total_share_pct": 1.497362599965969
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 123,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_relu_quant",
+              "sample_period": 8300000,
+              "total_share_pct": 1.4122851795133573
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 8200000,
+              "total_share_pct": 1.3952696954228347
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0005__98.f32",
+          "output_hash": "3582a4717bc248b1",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0005__98/microbench.json"
+          }
+        },
+        {
+          "parsed_sample_count": 5890,
+          "malformed_line_count": 32,
+          "total_sample_period": 589000000,
+          "classified_core_period": 553500000,
+          "category_sample_counts": {
+            "bn_index_address": 3730,
+            "bn_parameter_load": 109,
+            "bn_sqrt_affine": 501,
+            "bn_relu_quant": 328,
+            "bn_output_write": 867,
+            "setup_other": 8,
+            "foreign_symbol": 0,
+            "unclassified": 347
+          },
+          "category_periods": {
+            "bn_index_address": 373000000,
+            "bn_parameter_load": 10900000,
+            "bn_sqrt_affine": 50100000,
+            "bn_relu_quant": 32800000,
+            "bn_output_write": 86700000,
+            "setup_other": 800000,
+            "foreign_symbol": 0,
+            "unclassified": 34700000
+          },
+          "category_share_pct": {
+            "bn_index_address": 63.3276740237691,
+            "bn_parameter_load": 1.8505942275042444,
+            "bn_sqrt_affine": 8.505942275042445,
+            "bn_relu_quant": 5.568760611205433,
+            "bn_output_write": 14.719864176570457,
+            "setup_other": 0.13582342954159593,
+            "foreign_symbol": 0.0,
+            "unclassified": 5.891341256366723
+          },
+          "classified_core_share_pct": 93.97283531409168,
+          "top_bottleneck_set": [
+            "bn_index_address",
+            "bn_output_write"
+          ],
+          "top_lines": [
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 67600000,
+              "total_share_pct": 11.477079796264855
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 151,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 60800000,
+              "total_share_pct": 10.32258064516129
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 31100000,
+              "total_share_pct": 5.280135823429542
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_unravel_index",
+              "category": "bn_index_address",
+              "sample_period": 30500000,
+              "total_share_pct": 5.178268251273345
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 30200000,
+              "total_share_pct": 5.127334465195246
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 64,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 29000000,
+              "total_share_pct": 4.923599320882852
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 116,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 25200000,
+              "total_share_pct": 4.278438030560271
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 78,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 23800000,
+              "total_share_pct": 4.040747028862478
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 141,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 21400000,
+              "total_share_pct": 3.633276740237691
+            },
+            {
+              "source": "campp_operator_microbench.c",
+              "line": 339,
+              "symbol": "output_hash",
+              "category": "unclassified",
+              "sample_period": 14300000,
+              "total_share_pct": 2.427843803056027
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 13900000,
+              "total_share_pct": 2.359932088285229
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 117,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 13100000,
+              "total_share_pct": 2.224108658743633
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 117,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 12900000,
+              "total_share_pct": 2.1901528013582343
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 12700000,
+              "total_share_pct": 2.1561969439728355
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 128,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_relu_quant",
+              "sample_period": 11400000,
+              "total_share_pct": 1.935483870967742
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_read_f32",
+              "category": "bn_index_address",
+              "sample_period": 10500000,
+              "total_share_pct": 1.7826825127334467
+            },
+            {
+              "source": "tensor_view.h",
+              "line": 79,
+              "symbol": "campp_reference_write_quantized",
+              "category": "bn_output_write",
+              "sample_period": 9500000,
+              "total_share_pct": 1.6129032258064515
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 123,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_relu_quant",
+              "sample_period": 8600000,
+              "total_share_pct": 1.4601018675721562
+            },
+            {
+              "source": "bn_relu_quant_conv.c",
+              "line": 118,
+              "symbol": "campp_fused_bn_relu_quant",
+              "category": "bn_sqrt_affine",
+              "sample_period": 8400000,
+              "total_share_pct": 1.4261460101867571
+            },
+            {
+              "source": "reference_kernel_utils.c",
+              "line": 62,
+              "symbol": "campp_reference_offset_for_linear",
+              "category": "bn_index_address",
+              "sample_period": 7100000,
+              "total_share_pct": 1.2054329371816639
+            }
+          ],
+          "input": "benchmarks/campplus/features/multi__speaker_0006__98.f32",
+          "output_hash": "591e95addeb2d88e",
+          "artifacts": {
+            "perf_data": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf.data",
+            "perf_record_stderr": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf_record.stderr.txt",
+            "perf_script": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf_script.txt",
+            "perf_annotate": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf_annotate.txt",
+            "perf_report": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/perf_report.txt",
+            "microbench": "runs/profiling/e7_98/optimization/bn_hotspot/fused_bn_relu_quant/multi__speaker_0006__98/microbench.json"
+          }
+        }
+      ],
+      "aggregate": {
+        "total_sample_period": 1768300000,
+        "classified_core_period": 1666100000,
+        "category_periods": {
+          "bn_index_address": 1129200000,
+          "bn_parameter_load": 37400000,
+          "bn_sqrt_affine": 153500000,
+          "bn_relu_quant": 98300000,
+          "bn_output_write": 247700000,
+          "setup_other": 2300000,
+          "foreign_symbol": 0,
+          "unclassified": 99900000
+        },
+        "category_share_pct": {
+          "bn_index_address": 63.857942656789,
+          "bn_parameter_load": 2.11502573092801,
+          "bn_sqrt_affine": 8.680653735225924,
+          "bn_relu_quant": 5.559011479952497,
+          "bn_output_write": 14.007804105638183,
+          "setup_other": 0.13006842730305943,
+          "foreign_symbol": 0.0,
+          "unclassified": 5.649493864163321
+        },
+        "classified_core_share_pct": 94.22043770853362,
+        "top_bottleneck_set": [
+          "bn_index_address",
+          "bn_output_write"
+        ]
+      },
+      "decision": {
+        "ready": true,
+        "winner": "bn_index_address",
+        "input_winners": [
+          "bn_index_address",
+          "bn_index_address",
+          "bn_index_address"
+        ],
+        "maximum_unclassified_share_pct": 5.891341256366723,
+        "maximum_foreign_symbol_share_pct": 0.0,
+        "rule": "same top category on 3 inputs, unclassified <=20% and foreign_symbol <=5%; select cumulative 80% of classified BN core"
+      }
+    }
+  ],
+  "decision": {
+    "ready": true,
+    "overall": "bn_index_address",
+    "top_bottleneck_set": [
+      "bn_index_address",
+      "bn_output_write"
+    ],
+    "next_candidates": [
+      "address",
+      "address/quant"
+    ],
+    "next_step": "benchmark baseline/address/affine/quant/combined"
+  },
+  "artifacts": {
+    "profile": "results/profiling/e7_98/operator_profile.json",
+    "plan": "runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin",
+    "weights": "runs/runtime/kernel_optimization/e7/bundle/weights.bin",
+    "raw_dir": "runs/profiling/e7_98/optimization/bn_hotspot"
+  }
+}

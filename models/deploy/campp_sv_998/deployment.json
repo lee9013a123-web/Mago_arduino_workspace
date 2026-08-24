@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "model_name": "campp_sv_998",
+  "bucket_frames": 998,
+  "audio_seconds": 10.0,
+  "model_file": "campp_sv_998.camppmodel",
+  "model_sha256": "a62d6b4dcb20956730a2c6e26dbe8c3627cedf9df264cd263ad6c46eb250a35c",
+  "model_size_bytes": 15653952,
+  "runtime_file": "campp_runtime",
+  "runtime_sha256": "f091bef69c48b88bebd334efe6fc244049caafb9f2ab5331e75d524ebc8a5bf6",
+  "optimization_suite": "qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized",
+  "optimization_kernels_in_model": false,
+  "runtime_reads_model_package": false,
+  "contract": "모델과 런타임은 함께 배포한다.  모델은 커널 선택을, 런타임은 커널 구현체를 담는다.  짝이 어긋나면 다른 커널이 조용히 돈다.",
+  "optional_sections": {
+    "streaming_weights": true,
+    "weight_stream_schedule": true,
+    "kernel_dispatch_table": true
+  },
+  "kernel_dispatch_summary": {
+    "fused_combined_fixed": 6,
+    "fused_combined_v5": 55,
+    "qconv_mac_fixed": 2,
+    "qconv_v5": 111
+  },
+  "section_bytes": {
+    "execution_plan": 319384,
+    "packed_weights": 7570624,
+    "streaming_weights": 7753728,
+    "weight_stream_schedule": 5904,
+    "kernel_dispatch_table": 1416
+  },
+  "source": {
+    "manifest_kind": "runtime_bundle",
+    "manifest_sha256": "1902db69716d078b08d04d89b799247fe2e4f71a29bea3a4265678aa44c9f6a1",
+    "plan_sha256": "53e00aca23916561ef00157c4134023d7c8dc4a47cf4a09b0f0307b0d974f07b",
+    "weights_sha256": "d342b50a3275feb09dd477e944d3cb95b0f5261ea02bc5d183a6ae3ee48358aa",
+    "dispatch_source_sha256": "35190ef4fdeba7637f1a2e15a5d19391c3b732bdd4baf1f864ac38a9d430c398"
+  }
+}

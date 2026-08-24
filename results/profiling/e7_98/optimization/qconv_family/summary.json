@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "generated_at_utc": "2026-08-20T05:40:49.999799+00:00",
+  "objective": "all ordinary qlinear_conv_o4i4 operators",
+  "measurement_strategy": "one graph traversal per input",
+  "modes": [
+    "baseline",
+    "mac_fixed",
+    "v4",
+    "v5"
+  ],
+  "comparisons": [
+    {
+      "mode": "mac_fixed",
+      "gate_passed": true,
+      "all_output_hashes_bitwise_identical": true,
+      "no_case_regressed_over_1pct": true,
+      "operator_count": 115,
+      "baseline_mean_ms": 4538.992928666667,
+      "candidate_mean_ms": 202.74662316666667,
+      "mean_speedup_ratio": 22.387514316011142,
+      "baseline_sum_p50_ms": 4522.94885,
+      "candidate_sum_p50_ms": 201.9230385,
+      "sum_p50_speedup_ratio": 22.39936999561345,
+      "baseline_sum_p95_ms": 4591.3289798,
+      "candidate_sum_p95_ms": 207.2874938,
+      "sum_p95_speedup_ratio": 22.149570606656635,
+      "note": "p50/p95 sums are operator-level aggregate indicators, not a synchronized whole-graph percentile",
+      "comparison": "results/profiling/e7_98/optimization/qconv_family/mac_fixed_comparison.json"
+    },
+    {
+      "mode": "v4",
+      "gate_passed": true,
+      "all_output_hashes_bitwise_identical": true,
+      "no_case_regressed_over_1pct": true,
+      "operator_count": 115,
+      "baseline_mean_ms": 4538.992928666667,
+      "candidate_mean_ms": 167.91351035,
+      "mean_speedup_ratio": 27.03173150990388,
+      "baseline_sum_p50_ms": 4522.94885,
+      "candidate_sum_p50_ms": 167.0116355,
+      "sum_p50_speedup_ratio": 27.081639171182175,
+      "baseline_sum_p95_ms": 4591.3289798,
+      "candidate_sum_p95_ms": 172.4040289,
+      "sum_p95_speedup_ratio": 26.63121627199978,
+      "note": "p50/p95 sums are operator-level aggregate indicators, not a synchronized whole-graph percentile",
+      "comparison": "results/profiling/e7_98/optimization/qconv_family/v4_comparison.json"
+    },
+    {
+      "mode": "v5",
+      "gate_passed": true,
+      "all_output_hashes_bitwise_identical": true,
+      "no_case_regressed_over_1pct": true,
+      "operator_count": 115,
+      "baseline_mean_ms": 4538.992928666667,
+      "candidate_mean_ms": 155.04902778333334,
+      "mean_speedup_ratio": 29.274565558769506,
+      "baseline_sum_p50_ms": 4522.94885,
+      "candidate_sum_p50_ms": 154.132499,
+      "sum_p50_speedup_ratio": 29.34455017173244,
+      "baseline_sum_p95_ms": 4591.3289798,
+      "candidate_sum_p95_ms": 159.75244515,
+      "sum_p95_speedup_ratio": 28.740273586979896,
+      "note": "p50/p95 sums are operator-level aggregate indicators, not a synchronized whole-graph percentile",
+      "comparison": "results/profiling/e7_98/optimization/qconv_family/v5_comparison.json"
+    }
+  ],
+  "winner": "v5",
+  "production_gate_ready": true,
+  "next_gate": "build layer-hybrid plan, then retained-tensor and Quick E2E",
+  "elapsed_seconds": 86.41860092199931,
+  "estimated_seconds": 114.8487842095044
+}

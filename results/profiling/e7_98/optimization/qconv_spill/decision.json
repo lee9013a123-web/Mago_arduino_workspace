@@ -1,0 +1,35 @@
+{
+  "ready": true,
+  "selected_compiler": "gcc",
+  "spill_limit_pct": 5.0,
+  "assembly_required": false,
+  "next_mode": "mac_fixed",
+  "rule": "bitwise hashes must match, no case may regress over 1%; choose the lowest total mean latency, then require assembly when maximum fixed spill exceeds the configured limit",
+  "compiler_evaluations": [
+    {
+      "compiler": "gcc",
+      "all_output_hashes_bitwise_identical": true,
+      "no_case_regressed_over_1pct": true,
+      "maximum_fixed_spill_pct": 0.09994436947434233,
+      "fixed_total_mean_ms": 31.986319416666667,
+      "cases": [
+        {
+          "case_name": "qconv_3x3",
+          "bitwise": true,
+          "mac_mean_ms": 42.784677099999996,
+          "mac_fixed_mean_ms": 22.474240483333332,
+          "speedup_ratio": 1.9037207122406952,
+          "fixed_spill_pct": 0.09994436947434233
+        },
+        {
+          "case_name": "qconv_1x1",
+          "bitwise": true,
+          "mac_mean_ms": 25.229861116666665,
+          "mac_fixed_mean_ms": 9.512078933333333,
+          "speedup_ratio": 2.6524024131310826,
+          "fixed_spill_pct": 0.05002200980442201
+        }
+      ]
+    }
+  ]
+}

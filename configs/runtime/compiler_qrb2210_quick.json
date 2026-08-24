@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "name": "qrb2210-final-suite-compile-quick",
+  "benchmark_config": "configs/benchmark/runtime_e7_98_compile_quick.json",
+  "build_script": "scripts/4_profill/01_build_profiler.sh",
+  "build_scope": "compiler_quick",
+  "expected_suite": "final",
+  "base_cppflags": "",
+  "base_cflags": "-std=c11 -DNDEBUG -Wall -Wextra",
+  "base_ldflags": "",
+  "selection": {
+    "minimum_p50_improvement_pct": 2.0,
+    "maximum_p95_regression_pct": 1.0,
+    "maximum_cv_pct": 3.0,
+    "maximum_peak_rss_increase_bytes": 1048576
+  },
+  "stages": [
+    {
+      "name": "performance",
+      "objective": "latency",
+      "inherit_winner": false,
+      "candidates": [
+        {"name": "o2_generic", "cflags": "-O2"},
+        {"name": "o3_generic", "cflags": "-O3"},
+        {"name": "o3_a53", "cflags": "-O3 -mcpu=cortex-a53"},
+        {
+          "name": "o3_a53_lto",
+          "cflags": "-O3 -mcpu=cortex-a53 -flto",
+          "ldflags": "-flto"
+        }
+      ]
+    },
+    {
+      "name": "final_flags",
+      "objective": "size",
+      "inherit_winner": true,
+      "candidates": [
+        {"name": "compiler_default"},
+        {
+          "name": "aggressive_packaged",
+          "cflags": "-finline-functions -finline-small-functions -funroll-loops -fomit-frame-pointer -ffunction-sections -fdata-sections",
+          "ldflags": "-Wl,--gc-sections",
+          "strip": true
+        }
+      ]
+    }
+  ]
+}
