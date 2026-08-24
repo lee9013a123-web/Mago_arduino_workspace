@@ -115,3 +115,31 @@ score, C runtime process peak RSS, logical weight bytes, activation bytes, RTF�
 동일/상이 화자를 자동 판정하는 임계값으로 사용하면 안 된다.
 
 실제 녹음 없이 경로·버킷 선택만 확인하려면 각 명령에 `--dry-run`을 붙인다.
+
+## 가장 단순한 웹 터미널
+
+웹 서버는 Python 표준 라이브러리만 사용한다. 다음 명령을 실행하고 같은 LAN의
+브라우저에서 `http://<arduino-ip>:8080`에 접속한다.
+
+```bash
+cd egs/runtime_cam_pipeline
+python3 script/run_web.py
+```
+
+화면의 한 줄 입력칸에 기존 CLI를 그대로 넣고 실행하면 stdout과 stderr가 아래
+터미널 영역에 실시간 표시된다.
+
+```bash
+python3 script/verify_speaker.py --mic-version arduino_default --speaker-embedding lee --bucket 298
+```
+
+웹 입력은 실제 shell이 아니다. 보안을 위해 다음 세 스크립트만 허용하며 pipe,
+redirect, `&&`, command substitution은 거부한다.
+
+- `script/enroll_speaker.py`
+- `script/verify_speaker.py`
+- `script/list_microphones.py`
+
+동시에 하나의 녹음/추론 명령만 실행할 수 있다. 웹 access log는 기본적으로
+꺼져 있어 추론 중 불필요한 terminal I/O를 만들지 않는다. LAN 밖에 공개하거나
+포트 포워딩하지 않는다.

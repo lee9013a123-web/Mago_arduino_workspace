@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CAM++ Runtime Terminal</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: #0b0d10;
+      color: #e7edf3;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; }
+    main { width: min(1100px, 100%); margin: 0 auto; }
+    h1 { margin: 0 0 8px; font-size: 22px; }
+    .hint { margin: 0 0 18px; color: #91a0ad; font: 14px system-ui, sans-serif; }
+    .command-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; }
+    input, button {
+      border: 1px solid #303a43;
+      border-radius: 7px;
+      background: #12171d;
+      color: inherit;
+      min-height: 42px;
+      font: inherit;
+    }
+    input { width: 100%; padding: 9px 12px; }
+    button { padding: 8px 14px; cursor: pointer; }
+    button:hover:not(:disabled) { border-color: #5fdd9d; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    #run { background: #15482f; }
+    #stop { background: #4b2020; }
+    .examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+    .examples button { min-height: 32px; padding: 5px 10px; font-size: 12px; }
+    .status { margin: 8px 0; color: #65e0a3; font: 13px system-ui, sans-serif; }
+    pre {
+      margin: 0;
+      min-height: 60vh;
+      max-height: 72vh;
+      overflow: auto;
+      padding: 16px;
+      border: 1px solid #303a43;
+      border-radius: 8px;
+      background: #050708;
+      color: #d8f3dc;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+    }
+    @media (max-width: 760px) {
+      body { padding: 12px; }
+      .command-row { grid-template-columns: 1fr 1fr; }
+      .command-row input { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>CAM++ Runtime Terminal</h1>
+    <p class="hint">허용된 화자 등록·검증 명령의 출력만 실시간으로 표시합니다.</p>
+
+    <div class="command-row">
+      <input id="command" spellcheck="false" autocomplete="off"
+        value="python3 script/verify_speaker.py --mic-version arduino_default --speaker-embedding lee --bucket 298">
+      <button id="run">실행</button>
+      <button id="stop" disabled>중지</button>
+      <button id="clear">지우기</button>
+    </div>
+
+    <div class="examples">
+      <button data-command="python3 script/verify_speaker.py --mic-version arduino_default --speaker-embedding lee --bucket 298">유사도 측정 예시</button>
+      <button data-command="python3 script/enroll_speaker.py --mic-version arduino_default --speaker-folder lee">화자 등록 예시</button>
+      <button data-command="python3 script/list_microphones.py">마이크 목록</button>
+    </div>
+
+    <div id="status" class="status">대기</div>
+    <pre id="terminal" aria-live="polite"></pre>
+  </main>
+  <script>
+    const command = document.querySelector('#command');
+    const runButton = document.querySelector('#run');
+    const stopButton = document.querySelector('#stop');
+    const clearButton = document.querySelector('#clear');
+    const terminal = document.querySelector('#terminal');
+    const status = document.querySelector('#status');
+    let running = false;
+
+    function setRunning(value) {
+      running = value;
+      runButton.disabled = value;
+      stopButton.disabled = !value;
+      command.disabled = value;
+      status.textContent = value ? '실행 중' : '대기';
+    }
+
+    function append(text) {
+      terminal.textContent += text;
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    async function runCommand() {
+      if (running || !command.value.trim()) return;
+      setRunning(true);
+      append('\n');
+      try {
+        const response = await fetch('/api/run', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({command: command.value.trim()}),
+        });
+        if (!response.ok) {
+          const message = await response.text();
+          throw new Error(message);
+        }
+        if (!response.body) throw new Error('streaming response is unavailable');
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder('utf-8');
+        while (true) {
+          const {value, done} = await reader.read();
+          if (done) break;
+          append(decoder.decode(value, {stream: true}));
+        }
+        append(decoder.decode());
+      } catch (error) {
+        append(`\n[web error] ${error.message}\n`);
+      } finally {
+        setRunning(false);
+      }
+    }
+
+    runButton.addEventListener('click', runCommand);
+    command.addEventListener('keydown', event => {
+      if (event.key === 'Enter') runCommand();
+    });
+    stopButton.addEventListener('click', async () => {
+      await fetch('/api/stop', {method: 'POST'});
+      status.textContent = '중지 요청됨';
+    });
+    clearButton.addEventListener('click', () => { terminal.textContent = ''; });
+    document.querySelectorAll('[data-command]').forEach(button => {
+      button.addEventListener('click', () => { command.value = button.dataset.command; });
+    });
+  </script>
+</body>
+</html>

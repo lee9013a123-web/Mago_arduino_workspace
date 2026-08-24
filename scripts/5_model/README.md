@@ -80,6 +80,65 @@ whole-process Peak RSS와 모델/세션 로드 전 대비 incremental Peak RSS�
 results/models/campplus/final_v3/onnx_crt_evaluation/<run-id>/frame_matrix.*
 ```
 
+## Speaker-verification EER and MinDCF
+
+EER 계산은 backend 실행과 분리된 공통 평가기를 사용한다. ORT와 C Runtime이
+각 accuracy 입력의 embedding을 생성한 뒤 backend별 manifest에 기록하고, 두
+manifest를 동일한 `trials.tsv`로 평가한다. 같은 코드를 98/298/498/998에
+재사용하며 bucket별 결과를 따로 저장한다.
+
+```bash
+python3 scripts/5_model/14_collect_eer_embeddings.py \
+  --feature-manifest benchmarks/campplus/manifests/eer_features.json \
+  --backends ort crt --buckets 98 298 498 998 \
+  --preflight-only
+
+python3 scripts/5_model/14_collect_eer_embeddings.py \
+  --feature-manifest benchmarks/campplus/manifests/eer_features.json \
+  --backends ort crt --buckets 98 298 498 998 --force
+
+python3 scripts/5_model/14_evaluate_eer.py \
+  --embeddings ort=runs/models/campplus/eer/ort_embeddings.json \
+  --embeddings crt=runs/models/campplus/eer/crt_embeddings.json \
+  --buckets 98 298 498 998 \
+  --reference-backend ort \
+  --preflight-only
+
+python3 scripts/5_model/14_evaluate_eer.py \
+  --embeddings ort=runs/models/campplus/eer/ort_embeddings.json \
+  --embeddings crt=runs/models/campplus/eer/crt_embeddings.json \
+  --buckets 98 298 498 998 \
+  --reference-backend ort --force
+```
+
+Embedding manifest는 JSON의 `embeddings` 배열에 `input_id`, `bucket_frames`,
+manifest 기준 상대 `path`를 기록한다. `.npy` 또는 little-endian float32 raw
+파일을 지원한다. `trials.tsv`가 참조하는 모든 enrollment/test ID가 각 bucket에
+있어야 preflight를 통과한다. 현재 latency용 `runtime_features.json`은 화자마다
+독립 enrollment/test가 아니라 한 개의 이어붙인 입력만 있으므로 EER 입력으로
+대체하지 않는다. 수집기의 `eer_features.json`은 기존 runtime feature manifest와
+같은 `features` 배열 형식이며, 77개 accuracy input 각각에 대해 `input_id`,
+`bucket_frames`, 저장소 기준 상대 `path`, `sha256`을 기록한다.
+
+```json
+{
+  "schema_version": 1,
+  "backend": "ort",
+  "embeddings": [
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_0",
+      "bucket_frames": 98,
+      "path": "embeddings/98/enroll_jonah_0.npy"
+    }
+  ]
+}
+```
+
+산출물은 `results/models/campplus/final_v3/eer/` 아래의 backend/bucket별 score
+TSV와 metrics JSON, 전체 `summary.json`, `summary.csv`, `summary.md`다. EER은
+동점 score를 한 threshold로 묶은 뒤 인접 ROC operating point를 선형 보간한다.
+MinDCF 기본 조건은 `Ptarget=0.01`, `Cmiss=Cfa=1`이며 CLI에서 변경할 수 있다.
+
 ## Bucket-specific static weight plans
 
 98/298/498/998은 각 execution plan의 Operator input Tensor ID를 따라가며 서로

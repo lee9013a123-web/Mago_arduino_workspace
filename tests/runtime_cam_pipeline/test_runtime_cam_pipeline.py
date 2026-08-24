@@ -5,8 +5,10 @@ import hashlib
 from pathlib import Path
 import sys
 import tempfile
+import threading
 import unittest
 from unittest.mock import patch
+from urllib.request import Request, urlopen
 
 import numpy as np
 
@@ -23,6 +25,11 @@ from similarity_detect.scoring import (  # noqa: E402
     cosine_similarity,
     load_embedding,
     resolve_speaker_embedding,
+)
+from similarity_detect.web_terminal import (  # noqa: E402
+    PipelineWebServer,
+    WebTerminalError,
+    parse_pipeline_command,
 )
 from voice_embedding.audio import fixed_length_pcm  # noqa: E402
 from voice_embedding.enrollment import (  # noqa: E402
@@ -321,6 +328,71 @@ class ReportTest(unittest.TestCase):
         self.assertIn("weight 점유율:", text)
         self.assertIn("activation 점유율:", text)
         self.assertIn("RTF: 0.500000", text)
+
+
+class WebTerminalTest(unittest.TestCase):
+    def test_allows_pipeline_verification_command(self) -> None:
+        parsed = parse_pipeline_command(
+            "python3 script/verify_speaker.py --mic-version "
+            "arduino_default --speaker-embedding lee --bucket 298",
+            pipeline_root=PIPELINE,
+            python_executable="/usr/bin/python3",
+        )
+        self.assertEqual(parsed.argv[0:2], ["/usr/bin/python3", "-u"])
+        self.assertEqual(Path(parsed.argv[2]).name, "verify_speaker.py")
+        self.assertIn("298", parsed.argv)
+
+    def test_rejects_arbitrary_shell_command(self) -> None:
+        with self.assertRaises(WebTerminalError):
+            parse_pipeline_command(
+                "rm -rf /",
+                pipeline_root=PIPELINE,
+            )
+
+    def test_rejects_shell_chaining(self) -> None:
+        with self.assertRaises(WebTerminalError):
+            parse_pipeline_command(
+                "python3 script/list_microphones.py && python3 evil.py",
+                pipeline_root=PIPELINE,
+            )
+
+    def test_rejects_unlisted_python_script(self) -> None:
+        with self.assertRaises(WebTerminalError):
+            parse_pipeline_command(
+                "python3 script/prepare_runtime.py --force",
+                pipeline_root=PIPELINE,
+            )
+
+    def test_http_server_streams_existing_cli_output(self) -> None:
+        server = PipelineWebServer(
+            ("127.0.0.1", 0),
+            pipeline_root=PIPELINE,
+            index_html=b"<!doctype html><title>test</title>",
+            access_log=False,
+        )
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        host, port = server.server_address
+        try:
+            with urlopen(f"http://{host}:{port}/api/health", timeout=5) as response:
+                health = json.loads(response.read())
+            self.assertTrue(health["ready"])
+            request = Request(
+                f"http://{host}:{port}/api/run",
+                data=json.dumps({
+                    "command": "python3 script/list_microphones.py",
+                }).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urlopen(request, timeout=10) as response:
+                terminal = response.read().decode("utf-8")
+            self.assertIn("$ python3 script/list_microphones.py", terminal)
+            self.assertIn("[process exited with code", terminal)
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
 
 
 if __name__ == "__main__":
