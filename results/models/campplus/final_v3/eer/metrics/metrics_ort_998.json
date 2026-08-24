@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "backend": "ort",
+  "bucket_frames": 998,
+  "trial_manifest": "benchmarks/campplus/manifests/trials.tsv",
+  "trial_manifest_sha256": "aa8b18b89a533470252df29121bf0c255a188c5144cb12a3e6b8b17bf0305691",
+  "embedding_manifest": "runs/models/campplus/eer/ort_embeddings.json",
+  "embedding_manifest_sha256": "1566abaa37ab2d49c43850e59fc91f77f06a2141d70ffd3abe5c3845cb8110fd",
+  "score_file": "results/models/campplus/final_v3/eer/scores/scores_ort_998.tsv",
+  "metrics": {
+    "trial_count": 780,
+    "target_count": 60,
+    "non_target_count": 720,
+    "eer": {
+      "rate": 0.2763888888888889,
+      "percent": 27.63888888888889,
+      "threshold": 0.24173512923743806,
+      "threshold_rule": "accept_if_score_greater_than_or_equal",
+      "interpolation": "linear_between_adjacent_tie_grouped_points",
+      "nearest_measured_operating_point": {
+        "threshold": 0.24186583685911323,
+        "threshold_position": "score",
+        "false_accept_rate": 0.2763888888888889,
+        "false_reject_rate": 0.2833333333333333,
+        "false_accept_count": 199,
+        "false_reject_count": 17
+      }
+    },
+    "min_dcf": {
+      "value": 0.01,
+      "normalized": 1.0,
+      "p_target": 0.01,
+      "c_miss": 1.0,
+      "c_false_alarm": 1.0,
+      "operating_point": {
+        "threshold": null,
+        "threshold_position": "above_maximum_score",
+        "false_accept_rate": 0.0,
+        "false_reject_rate": 1.0,
+        "false_accept_count": 0,
+        "false_reject_count": 60
+      }
+    }
+  }
+}
