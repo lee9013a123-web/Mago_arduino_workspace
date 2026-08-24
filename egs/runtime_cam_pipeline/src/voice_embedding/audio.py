@@ -7,6 +7,9 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
+import time
+from typing import Callable
 import wave
 
 import numpy as np
@@ -80,6 +83,19 @@ def list_alsa_devices() -> str:
     return completed.stdout
 
 
+def countdown_before_recording(
+    seconds: int, output: Callable[[str], None] = print,
+) -> None:
+    for remaining in range(seconds, 0, -1):
+        output(f"  recording starts in {remaining}...")
+        time.sleep(1)
+
+
+def _report_recording_progress(elapsed: int, seconds: int) -> None:
+    sys.stdout.write(f"\rrecording! {elapsed}/{seconds}s")
+    sys.stdout.flush()
+
+
 def record_wav(
     *, profile: MicrophoneProfile, output_path: Path, seconds: int,
 ) -> None:
@@ -101,12 +117,22 @@ def record_wav(
         "-d", str(seconds),
         str(temporary),
     ]
-    completed = subprocess.run(command, text=True, capture_output=True, check=False)
-    if completed.returncode != 0:
+    process = subprocess.Popen(
+        command, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
+    )
+    start = time.monotonic()
+    for elapsed in range(1, seconds + 1):
+        sleep_for = (start + elapsed) - time.monotonic()
+        if sleep_for > 0:
+            time.sleep(sleep_for)
+        _report_recording_progress(elapsed, seconds)
+    _, stderr = process.communicate()
+    sys.stdout.write("\n")
+    sys.stdout.flush()
+    if process.returncode != 0:
         temporary.unlink(missing_ok=True)
         raise AudioCaptureError(
-            f"microphone capture failed ({completed.returncode}): "
-            f"{completed.stderr.strip()}"
+            f"microphone capture failed ({process.returncode}): {stderr.strip()}"
         )
     read_pcm16_mono(temporary)
     temporary.replace(output_path)

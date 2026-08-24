@@ -50,6 +50,7 @@ def main() -> int:
     parser.add_argument(
         "--bucket", type=int, choices=tuple(AUDIO_SECONDS_BY_BUCKET), required=True,
     )
+    parser.add_argument("--countdown", type=int, default=3)
     parser.add_argument("--warmup", type=int, default=0)
     parser.add_argument("--repeat", type=int, default=1)
     parser.add_argument("--threads", type=int, default=1)
@@ -122,6 +123,7 @@ def main() -> int:
             warmup=args.warmup,
             repeat=args.repeat,
             threads=args.threads,
+            countdown_seconds=args.countdown,
         )
         return 0
     except (

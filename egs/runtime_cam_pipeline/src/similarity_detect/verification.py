@@ -8,7 +8,11 @@ import json
 from pathlib import Path
 from typing import Callable
 
-from voice_embedding.audio import MicrophoneProfile, record_wav
+from voice_embedding.audio import (
+    MicrophoneProfile,
+    countdown_before_recording,
+    record_wav,
+)
 from voice_embedding.frontend import wav_to_fixed_fbank, write_feature
 from voice_embedding.runtime import (
     AUDIO_SECONDS_BY_BUCKET,
@@ -29,7 +33,8 @@ def verify_speaker(
     *, repo_root: Path, pipeline_root: Path, profile: MicrophoneProfile,
     speaker_embedding: str, bucket_frames: int, runtime_binary: Path,
     asset_manifest: Path, warmup: int = 0, repeat: int = 1,
-    threads: int = 1, output: Callable[[str], None] = print,
+    threads: int = 1, countdown_seconds: int = 3,
+    output: Callable[[str], None] = print,
 ) -> dict:
     if bucket_frames not in AUDIO_SECONDS_BY_BUCKET:
         raise RuntimePipelineError(f"unsupported bucket: {bucket_frames}")
@@ -45,6 +50,7 @@ def verify_speaker(
     run_root.mkdir(parents=True, exist_ok=False)
 
     output(f"Recording {seconds} seconds with microphone {profile.version!r}...")
+    countdown_before_recording(countdown_seconds, output)
     record_wav(profile=profile, output_path=wav_path, seconds=seconds)
     feature = wav_to_fixed_fbank(
         wav_path=wav_path,

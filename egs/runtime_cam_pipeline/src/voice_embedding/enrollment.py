@@ -7,12 +7,11 @@ from datetime import datetime, timezone
 import hashlib
 import json
 from pathlib import Path
-import time
 from typing import Callable
 
 import numpy as np
 
-from .audio import MicrophoneProfile, record_wav
+from .audio import MicrophoneProfile, countdown_before_recording, record_wav
 from .frontend import wav_to_fixed_fbank, write_feature
 from .runtime import RuntimePipelineError, describe_assets, run_embedding
 
@@ -58,12 +57,6 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
-def _countdown(seconds: int, output: Callable[[str], None]) -> None:
-    for remaining in range(seconds, 0, -1):
-        output(f"  recording starts in {remaining}...")
-        time.sleep(1)
-
-
 def enroll_speaker(
     *, repo_root: Path, pipeline_root: Path, profile: MicrophoneProfile,
     speaker_folder: str, runtime_binary: Path, asset_manifest: Path,
@@ -100,7 +93,7 @@ def enroll_speaker(
             f"[{index}/{recording_count}] Speak naturally for "
             f"{ENROLLMENT_SECONDS} seconds."
         )
-        _countdown(countdown_seconds, output)
+        countdown_before_recording(countdown_seconds, output)
         record_wav(
             profile=profile,
             output_path=wav_path,
