@@ -1,12 +1,15 @@
-"""Exact waveform-to-FBank contract used by the exported CAM++ models."""
+"""Torch-free native waveform-to-FBank contract for CAM++ deployment."""
 
 from __future__ import annotations
 
 from pathlib import Path
+from functools import lru_cache
+import json
+import os
+import subprocess
+import tempfile
 
 import numpy as np
-
-from .audio import AudioCaptureError, fixed_length_pcm, read_pcm16_mono
 
 
 FBANK_BINS = 80
@@ -32,30 +35,93 @@ def normalize_waveform(samples: np.ndarray) -> np.ndarray:
     return np.clip(waveform, -1.0, 1.0).astype(np.float32)
 
 
-def _extract_fbank_torchaudio(waveform: np.ndarray) -> np.ndarray | None:
+@lru_cache(maxsize=4)
+def validate_native_fbank(binary: Path) -> dict[str, object]:
+    """Verify that the pipeline-local frontend has the expected fixed ABI."""
+
+    if not binary.is_file():
+        raise FrontendError(
+            f"native FBank binary is missing: {binary}; run "
+            "script/build_native_fbank.sh and script/prepare_runtime.py"
+        )
+    completed = subprocess.run(
+        [str(binary), "--version"],
+        cwd=binary.parent,
+        env={**os.environ, "OMP_NUM_THREADS": "1"},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise FrontendError(
+            f"native FBank capability check failed: {completed.stderr.strip()}"
+        )
     try:
-        import torch
-        import torchaudio
-    except (ImportError, OSError):
-        return None
-    try:
-        tensor = torch.from_numpy(
-            np.asarray(waveform, dtype=np.float32)
-        ).unsqueeze(0)
-        feature = torchaudio.compliance.kaldi.fbank(
-            tensor,
-            num_mel_bins=FBANK_BINS,
-            sample_frequency=SAMPLE_RATE,
-            frame_length=FRAME_LENGTH_MS,
-            frame_shift=FRAME_SHIFT_MS,
-            dither=0.0,
-            energy_floor=0.0,
-            window_type="hamming",
-            use_energy=False,
-        ).numpy().astype(np.float32)
-    except Exception:
-        return None
-    feature -= feature.mean(axis=0, keepdims=True)
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError as exc:
+        raise FrontendError("native FBank --version output is not JSON") from exc
+    expected = {
+        "frontend": "campp-kaldi-native-fbank",
+        "api_version": 1,
+        "sample_rate": SAMPLE_RATE,
+        "mel_bins": FBANK_BINS,
+    }
+    if not isinstance(payload, dict) or any(
+        payload.get(key) != value for key, value in expected.items()
+    ):
+        raise FrontendError("native FBank binary has an incompatible ABI")
+    return payload
+
+
+def _extract_fbank_native(
+    *, wav_path: Path, native_binary: Path, bucket_frames: int,
+    audio_seconds: int,
+) -> np.ndarray:
+    validate_native_fbank(native_binary)
+    if not wav_path.is_file():
+        raise FrontendError(f"input WAV is missing: {wav_path}")
+    with tempfile.TemporaryDirectory(
+        prefix="campp_fbank_", dir=wav_path.parent,
+    ) as temporary:
+        feature_path = Path(temporary) / "feature.f32"
+        completed = subprocess.run(
+            [
+                str(native_binary),
+                "--input", str(wav_path),
+                "--output", str(feature_path),
+                "--expected-frames", str(bucket_frames),
+                "--audio-seconds", str(audio_seconds),
+            ],
+            cwd=native_binary.parent,
+            env={**os.environ, "OMP_NUM_THREADS": "1"},
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise FrontendError(
+                f"native FBank failed ({completed.returncode}): "
+                f"{completed.stderr.strip()}"
+            )
+        try:
+            metadata = json.loads(completed.stdout)
+        except json.JSONDecodeError as exc:
+            raise FrontendError("native FBank output is not JSON") from exc
+        if not isinstance(metadata, dict) or (
+            metadata.get("backend") != "kaldi-native-fbank"
+            or metadata.get("frames") != bucket_frames
+            or metadata.get("bins") != FBANK_BINS
+            or metadata.get("torch_required") is not False
+        ):
+            raise FrontendError("native FBank returned incompatible metadata")
+        expected_bytes = bucket_frames * FBANK_BINS * 4
+        if not feature_path.is_file() or feature_path.stat().st_size != expected_bytes:
+            raise FrontendError("native FBank returned an invalid feature file")
+        feature = np.fromfile(feature_path, dtype="<f4").reshape(
+            bucket_frames, FBANK_BINS,
+        )
+    if not np.isfinite(feature).all():
+        raise FrontendError("native FBank produced non-finite values")
     return feature.astype(np.float32)
 
 
@@ -93,11 +159,11 @@ def _mel_filterbank(n_fft: int = 512) -> np.ndarray:
 
 
 def _extract_fbank_numpy(waveform: np.ndarray) -> np.ndarray:
-    """Dependency-free fallback adapted from the validated CAM pipeline.
+    """Approximate offline reference retained only for unit/shape tests.
 
-    The previous dynamic-model fallback used ceil/padding. Fixed buckets use
-    Kaldi snip-edges semantics, so this variant deliberately uses floor and
-    yields exactly 98/298/498/998 frames for 1/3/5/10 seconds.
+    Production registration and verification never call this approximation.
+    The native Kaldi-compatible executable is mandatory instead of silently
+    switching feature definitions.
     """
 
     value = np.asarray(waveform, dtype=np.float32).reshape(-1)
@@ -123,22 +189,18 @@ def _extract_fbank_numpy(waveform: np.ndarray) -> np.ndarray:
     return feature.astype(np.float32)
 
 
-def extract_fbank(waveform: np.ndarray) -> np.ndarray:
-    feature = _extract_fbank_torchaudio(waveform)
-    if feature is not None:
-        return feature
-    return _extract_fbank_numpy(waveform)
-
-
 def wav_to_fixed_fbank(
-    *, wav_path: Path, bucket_frames: int, audio_seconds: int,
+    *, wav_path: Path, native_binary: Path, bucket_frames: int,
+    audio_seconds: int,
 ) -> np.ndarray:
-    try:
-        samples = read_pcm16_mono(wav_path)
-    except AudioCaptureError as exc:
-        raise FrontendError(str(exc)) from exc
-    samples = fixed_length_pcm(samples, audio_seconds)
-    feature = extract_fbank(normalize_waveform(samples))
+    """Extract fixed FBank with the required native Kaldi implementation."""
+
+    feature = _extract_fbank_native(
+        wav_path=wav_path,
+        native_binary=native_binary,
+        bucket_frames=bucket_frames,
+        audio_seconds=audio_seconds,
+    )
     if feature.shape != (bucket_frames, FBANK_BINS):
         raise FrontendError(
             f"frontend produced {feature.shape}; expected "

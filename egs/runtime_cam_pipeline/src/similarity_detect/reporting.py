@@ -9,8 +9,8 @@ def _mib(value: int) -> float:
     return value / (1024.0 * 1024.0)
 
 
-def _share(part: int, total: int) -> float:
-    return (part / total * 100.0) if total > 0 else 0.0
+def _optional_mib(value: int | None) -> str:
+    return "unavailable" if value is None else f"{_mib(value):.2f} MiB"
 
 
 def format_terminal_report(score: float, metrics: RuntimeMetrics) -> str:
@@ -24,14 +24,16 @@ def format_terminal_report(score: float, metrics: RuntimeMetrics) -> str:
         "=================================",
         "[report]",
         "Peak RAM",
-        f"- total RAM: {_mib(metrics.peak_rss_bytes):.2f} MiB",
         (
-            f"- weight 점유율: {_mib(metrics.weight_bytes):.2f} MiB "
-            f"({_share(metrics.weight_bytes, metrics.peak_rss_bytes):.2f}%)"
+            "- pipeline total peak: "
+            f"{_optional_mib(metrics.pipeline_total_peak_rss_bytes)}"
         ),
         (
-            f"- activation 점유율: {_mib(metrics.activation_bytes):.2f} MiB "
-            f"({_share(metrics.activation_bytes, metrics.peak_rss_bytes):.2f}%)"
+            "- Python/Torch peak: "
+            f"{_optional_mib(metrics.python_torch_peak_rss_bytes)}"
         ),
+        f"- C runtime peak: {_mib(metrics.peak_rss_bytes):.2f} MiB",
+        f"- logical weight: {_mib(metrics.weight_bytes):.2f} MiB",
+        f"- logical activation: {_mib(metrics.activation_bytes):.2f} MiB",
         f"RTF: {metrics.rtf:.6f}",
     ])

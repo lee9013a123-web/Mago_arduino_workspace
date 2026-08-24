@@ -59,7 +59,8 @@ def _sha256(path: Path) -> str:
 
 def enroll_speaker(
     *, repo_root: Path, pipeline_root: Path, profile: MicrophoneProfile,
-    speaker_folder: str, runtime_binary: Path, asset_manifest: Path,
+    speaker_folder: str, runtime_binary: Path, native_fbank_binary: Path,
+    asset_manifest: Path,
     recording_count: int = DEFAULT_RECORDINGS, countdown_seconds: int = 3,
     warmup: int = 0, repeat: int = 1, threads: int = 1,
     force: bool = False, output: Callable[[str], None] = print,
@@ -101,6 +102,7 @@ def enroll_speaker(
         )
         feature = wav_to_fixed_fbank(
             wav_path=wav_path,
+            native_binary=native_fbank_binary,
             bucket_frames=ENROLLMENT_BUCKET,
             audio_seconds=ENROLLMENT_SECONDS,
         )
@@ -147,6 +149,11 @@ def enroll_speaker(
             "manifest": str(asset_manifest),
             "bucket_selected_by": ENROLLMENT_BUCKET,
             "selection": describe_assets(result.assets),
+        },
+        "frontend": {
+            "backend": "kaldi-native-fbank",
+            "binary": str(native_fbank_binary),
+            "torch_required": False,
         },
         "utterances": utterances,
     }

@@ -130,6 +130,19 @@ def main() -> int:
     parser.add_argument("--mode", choices=("package", "windowed"), default="package")
     parser.add_argument("--runtime", type=_repo_path)
     parser.add_argument(
+        "--fbank",
+        type=_repo_path,
+        default=PIPELINE_ROOT / "build/native_fbank/campp_fbank",
+        help="native Kaldi-compatible frontend built by build_native_fbank.sh",
+    )
+    parser.add_argument(
+        "--fbank-license",
+        type=_repo_path,
+        default=(
+            PIPELINE_ROOT / ".deps/kaldi-native-fbank-v1.22.3/LICENSE"
+        ),
+    )
+    parser.add_argument(
         "--package-manifest",
         type=_repo_path,
         default=(
@@ -158,6 +171,11 @@ def main() -> int:
         runtime_output = OUTPUT_ROOT / "campp_runtime"
         runtime_sha256 = _copy(source_runtime, runtime_output, force=args.force)
         runtime_output.chmod(runtime_output.stat().st_mode | stat.S_IXUSR)
+        frontend_output = OUTPUT_ROOT / "campp_fbank"
+        frontend_sha256 = _copy(args.fbank, frontend_output, force=args.force)
+        frontend_output.chmod(frontend_output.stat().st_mode | stat.S_IXUSR)
+        frontend_license = OUTPUT_ROOT / "licenses/kaldi-native-fbank-LICENSE"
+        _copy(args.fbank_license, frontend_license, force=args.force)
         buckets = (
             _prepare_packages(args.package_manifest, force=args.force)
             if args.mode == "package"
@@ -171,6 +189,14 @@ def main() -> int:
             "runtime": {
                 "binary": "campp_runtime",
                 "sha256": runtime_sha256,
+            },
+            "frontend": {
+                "binary": "campp_fbank",
+                "sha256": frontend_sha256,
+                "backend": "kaldi-native-fbank",
+                "version": "1.22.3",
+                "torch_required": False,
+                "license": "licenses/kaldi-native-fbank-LICENSE",
             },
             "buckets": buckets,
         }
@@ -187,6 +213,7 @@ def main() -> int:
             "mode": args.mode,
             "pipeline_root": str(PIPELINE_ROOT),
             "runtime": str(runtime_output),
+            "frontend": str(frontend_output),
             "asset_manifest": str(manifest_path),
             "buckets": list(BUCKETS),
         }, ensure_ascii=False, indent=2))

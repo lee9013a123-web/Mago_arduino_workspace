@@ -41,6 +41,8 @@ class RuntimeMetrics:
     peak_rss_bytes: int
     weight_bytes: int
     activation_bytes: int
+    pipeline_total_peak_rss_bytes: int | None = None
+    python_torch_peak_rss_bytes: int | None = None
 
 
 @dataclass(frozen=True)

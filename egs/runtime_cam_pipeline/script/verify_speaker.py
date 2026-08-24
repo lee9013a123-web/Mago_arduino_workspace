@@ -19,6 +19,10 @@ from similarity_detect.scoring import (  # noqa: E402
     resolve_speaker_embedding,
 )
 from similarity_detect.verification import verify_speaker  # noqa: E402
+from voice_embedding.frontend import (  # noqa: E402
+    FrontendError,
+    validate_native_fbank,
+)
 from voice_embedding.audio import (  # noqa: E402
     AudioCaptureError,
     load_microphone_profile,
@@ -67,6 +71,13 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--fbank",
+        type=_pipeline_path,
+        default=(
+            PIPELINE_ROOT / "runtime/campp_fbank"
+        ),
+    )
+    parser.add_argument(
         "--asset-manifest",
         type=_pipeline_path,
         default=(
@@ -86,6 +97,7 @@ def main() -> int:
         require_pipeline_local(PIPELINE_ROOT, [
             args.microphone_config,
             args.runtime,
+            args.fbank,
             args.asset_manifest,
             template,
             *[
@@ -97,6 +109,7 @@ def main() -> int:
         capabilities = validate_runtime_capabilities(
             args.runtime, args.bucket, assets.mode,
         )
+        frontend_capabilities = validate_native_fbank(args.fbank)
         if args.dry_run:
             print(json.dumps({
                 "ready": True,
@@ -110,6 +123,8 @@ def main() -> int:
                 "assets": describe_assets(assets),
                 "runtime": str(args.runtime),
                 "runtime_capabilities": capabilities,
+                "frontend": str(args.fbank),
+                "frontend_capabilities": frontend_capabilities,
             }, ensure_ascii=False, indent=2))
             return 0
         verify_speaker(
@@ -119,6 +134,7 @@ def main() -> int:
             speaker_embedding=args.speaker_embedding,
             bucket_frames=args.bucket,
             runtime_binary=args.runtime,
+            native_fbank_binary=args.fbank,
             asset_manifest=args.asset_manifest,
             warmup=args.warmup,
             repeat=args.repeat,
@@ -128,6 +144,7 @@ def main() -> int:
         return 0
     except (
         AudioCaptureError,
+        FrontendError,
         RuntimePipelineError,
         SimilarityError,
         OSError,

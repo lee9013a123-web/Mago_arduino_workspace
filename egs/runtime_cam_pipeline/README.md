@@ -6,7 +6,7 @@ Final V3 C runtime에 전달해 192차원 speaker embedding과 cosine score를 �
 ## 처리 흐름
 
 ```text
-ALSA mic -> 16 kHz mono WAV -> Kaldi FBank + CMVN -> fixed bucket
+ALSA mic -> 16 kHz mono WAV -> native Kaldi FBank + CMN -> fixed bucket
          -> bucket plan + weights + schedule -> Final V3 C runtime
          -> L2 embedding -> cosine similarity
 ```
@@ -18,12 +18,28 @@ windowed 모드에서는 298 plan, weights, schedule이 한 번에 선택된다.
 
 ## 준비
 
-Python 환경에는 `numpy`가 필요하고 보드에는 ALSA `arecord`가 있어야 한다.
-`torch`와 `torchaudio`가 있으면 기존 검증 파이프라인과 동일한 Kaldi FBank를
-우선 사용하고, 없으면 기존 CAM 코드에서 가져온 NumPy fallback을 사용한다.
-fixed-bucket fallback은 Kaldi snip-edge frame 수에 맞게 조정되어 있다. 배포 전
-최종 정확도 검증은 `torchaudio` frontend로 수행하는 것을 권장한다. 먼저 장치
-이름을 확인한다.
+Python 환경에는 `numpy`가 필요하고 보드에는 ALSA `arecord`, CMake, C++17
+compiler가 있어야 한다. 배포 경로는 `torch`와 `torchaudio`를 import하지 않는다.
+FBank는 Apache-2.0
+[`kaldi-native-fbank`](https://github.com/csukuangfj/kaldi-native-fbank)
+v1.22.3을 고정해 만든 `campp_fbank`가 담당한다. Kaldi 원본과 이 경량 구현은
+모두 C++이며, 여기서는 전체 Kaldi toolkit을 내려받지 않는다.
+
+먼저 네이티브 frontend를 내려받아 빌드한다. 최초 실행에만 GitHub 접근이
+필요하며 소스는 ignored `.deps/`, 빌드 결과는 ignored `build/`에 남는다.
+
+```bash
+cd egs/runtime_cam_pipeline
+bash script/build_native_fbank.sh
+```
+
+Torch 의존성과 준비 상태는 무거운 package를 실제 import하지 않고 확인한다.
+
+```bash
+python3 script/check_dependencies.py
+```
+
+그 다음 장치 이름을 확인한다.
 
 ```bash
 python3 egs/runtime_cam_pipeline/script/list_microphones.py
@@ -47,6 +63,7 @@ python3 egs/runtime_cam_pipeline/script/prepare_runtime.py \
 
 ```text
 runtime/campp_runtime
+runtime/campp_fbank
 runtime/assets.json
 runtime/models/campp_sv_98.camppmodel
 runtime/models/campp_sv_298.camppmodel
@@ -108,8 +125,31 @@ python3 script/verify_speaker.py \
 ```
 
 버킷별 녹음 길이는 98=1초, 298=3초, 498=5초, 998=10초다. 결과는 cosine
-score, C runtime process peak RSS, logical weight bytes, activation bytes, RTF를
-터미널에 표시하고 `runs/inference/<timestamp>/report.json`에도 저장한다.
+score, pipeline/Python/C Runtime peak RSS, logical weight/activation bytes,
+RTF를 터미널에 표시하고 `runs/inference/<timestamp>/report.json`에도 저장한다.
+
+RAM 표의 의미는 다음과 같다.
+
+- `pipeline total peak`: 검증 Python 프로세스와 자식 프로세스(`arecord`,
+  `campp_fbank`, `campp_runtime`)의 current RSS 합을 10 ms마다 표본화한 최댓값
+- `Python/Torch peak`: 검증 Python 프로세스의 `VmHWM`; 배포 경로에는 Torch가
+  없으므로 실제로는 Python/NumPy peak
+- `C runtime peak`: C Runtime 프로세스 자체의 `VmHWM`
+- `logical weight`, `logical activation`: 모델 계약상 buffer byte 수이며 실제
+  resident memory 분해값은 아님
+
+프로세스 RSS 합은 공유 page를 프로세스별로 중복 계산할 수 있으므로 시스템 전체
+물리 메모리 사용량과 완전히 같은 값은 아니다.
+
+배포 전에 실제 녹음 WAV로 네이티브 결과와 Torchaudio/Kaldi 정답을 비교할 수
+있다. 이 검증 명령에서만 Torch/Torchaudio가 필요하며 보드 배포에는 포함하지
+않는다.
+
+```bash
+python3 script/validate_native_fbank.py \
+  --wav voice/recorded/lee/recording_01.wav \
+  --bucket 998
+```
 
 현재 threshold는 calibration되지 않았다. 따라서 `final score`는 유사도이며
 동일/상이 화자를 자동 판정하는 임계값으로 사용하면 안 된다.

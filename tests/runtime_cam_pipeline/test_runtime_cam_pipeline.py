@@ -20,6 +20,10 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from similarity_detect.reporting import format_terminal_report  # noqa: E402
+from similarity_detect.memory_monitor import (  # noqa: E402
+    ProcessTreeMemoryMonitor,
+    process_tree_pids,
+)
 from similarity_detect.scoring import (  # noqa: E402
     SimilarityError,
     cosine_similarity,
@@ -321,13 +325,49 @@ class ReportTest(unittest.TestCase):
                 peak_rss_bytes=20 * 1024 * 1024,
                 weight_bytes=8 * 1024 * 1024,
                 activation_bytes=2 * 1024 * 1024,
+                pipeline_total_peak_rss_bytes=50 * 1024 * 1024,
+                python_torch_peak_rss_bytes=30 * 1024 * 1024,
             ),
         )
         self.assertIn("final score: 0.750000", text)
-        self.assertIn("total RAM:", text)
-        self.assertIn("weight 점유율:", text)
-        self.assertIn("activation 점유율:", text)
+        self.assertIn("pipeline total peak: 50.00 MiB", text)
+        self.assertIn("Python/Torch peak: 30.00 MiB", text)
+        self.assertIn("C runtime peak: 20.00 MiB", text)
+        self.assertIn("logical weight: 8.00 MiB", text)
+        self.assertIn("logical activation: 2.00 MiB", text)
         self.assertIn("RTF: 0.500000", text)
+
+
+class PipelineMemoryMonitorTest(unittest.TestCase):
+    def test_process_tree_walks_descendants_once(self) -> None:
+        children = {10: (11, 12), 11: (13,), 12: (13,), 13: ()}
+        self.assertEqual(
+            process_tree_pids(10, lambda pid: children.get(pid, ())),
+            (10, 11, 12, 13),
+        )
+
+    def test_monitor_reports_aggregate_and_root_peak(self) -> None:
+        current = {10: (1000, 1500), 11: (2000, 2400)}
+        monitor = ProcessTreeMemoryMonitor(
+            10,
+            interval_seconds=1.0,
+            status_reader=lambda pid: current[pid],
+            children_reader=lambda pid: (11,) if pid == 10 else (),
+        )
+        monitor.start()
+        current[10] = (1200, 1700)
+        current[11] = (2500, 2700)
+        measurement = monitor.stop()
+        self.assertEqual(measurement.pipeline_total_peak_rss_bytes, 3700)
+        self.assertEqual(measurement.python_torch_peak_rss_bytes, 1700)
+
+    def test_runtime_source_has_no_torch_import(self) -> None:
+        offenders = []
+        for path in (PIPELINE / "src").rglob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            if "import torch" in text or "import torchaudio" in text:
+                offenders.append(path)
+        self.assertEqual(offenders, [])
 
 
 class WebTerminalTest(unittest.TestCase):

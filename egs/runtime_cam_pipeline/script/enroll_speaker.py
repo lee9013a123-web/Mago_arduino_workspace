@@ -19,6 +19,10 @@ from voice_embedding.audio import (  # noqa: E402
     load_microphone_profile,
 )
 from voice_embedding.enrollment import enroll_speaker  # noqa: E402
+from voice_embedding.frontend import (  # noqa: E402
+    FrontendError,
+    validate_native_fbank,
+)
 from voice_embedding.runtime import (  # noqa: E402
     describe_assets,
     require_pipeline_local,
@@ -55,6 +59,13 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--fbank",
+        type=_pipeline_path,
+        default=(
+            PIPELINE_ROOT / "runtime/campp_fbank"
+        ),
+    )
+    parser.add_argument(
         "--asset-manifest",
         type=_pipeline_path,
         default=(
@@ -74,6 +85,7 @@ def main() -> int:
         require_pipeline_local(PIPELINE_ROOT, [
             args.microphone_config,
             args.runtime,
+            args.fbank,
             args.asset_manifest,
             *[
                 path for path in (
@@ -84,6 +96,7 @@ def main() -> int:
         capabilities = validate_runtime_capabilities(
             args.runtime, 998, assets.mode,
         )
+        frontend_capabilities = validate_native_fbank(args.fbank)
         if args.dry_run:
             print(json.dumps({
                 "ready": True,
@@ -98,6 +111,8 @@ def main() -> int:
                 "assets": describe_assets(assets),
                 "runtime": str(args.runtime),
                 "runtime_capabilities": capabilities,
+                "frontend": str(args.fbank),
+                "frontend_capabilities": frontend_capabilities,
             }, ensure_ascii=False, indent=2))
             return 0
         metadata = enroll_speaker(
@@ -106,6 +121,7 @@ def main() -> int:
             profile=profile,
             speaker_folder=args.speaker_folder,
             runtime_binary=args.runtime,
+            native_fbank_binary=args.fbank,
             asset_manifest=args.asset_manifest,
             recording_count=args.recording_count,
             countdown_seconds=args.countdown,
@@ -119,7 +135,13 @@ def main() -> int:
             f"{PIPELINE_ROOT / metadata['mean_embedding']}"
         )
         return 0
-    except (AudioCaptureError, RuntimePipelineError, OSError, ValueError) as exc:
+    except (
+        AudioCaptureError,
+        FrontendError,
+        RuntimePipelineError,
+        OSError,
+        ValueError,
+    ) as exc:
         print(f"speaker enrollment failed: {exc}", file=sys.stderr)
         return 1
 
