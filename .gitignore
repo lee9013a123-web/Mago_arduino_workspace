@@ -67,9 +67,7 @@ runs/runtime/operator_replay/*
 !runs/runtime/operator_replay/README.md
 runs/runtime/pipelines/
 runs/model_packages/
-<<<<<<< HEAD
 runs/models/
-=======
 
 # Raw run artifacts under runs/ — regenerable by the pipeline scripts.
 # Generation-agnostic: applies to e7_98, e7_298, e7_498, e7_998 and any future bucket.
@@ -100,4 +98,10 @@ campp_v3_verify/
 # bucket별 operator profile은 18_remap_bucket_profile.py 로 재생성한다 (1.8MB/개).
 # results/**/operator_profile.json 규칙이 이미 덮지만 의도를 남긴다.
 results/profiling/e7_*/operator_profile.json
->>>>>>> a8c2566a75343c508f7d0b82f8d3179059faf42b
+
+# Deployment bundle exporter outputs (README/JSON metadata remain tracked)
+models/deploy/**/*.camppmodel
+models/deploy/**/campp_runtime
+
+# Regenerable backup archives
+archive/*.tar.gz
