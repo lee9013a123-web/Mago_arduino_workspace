@@ -62,15 +62,18 @@
 
     <div class="command-row">
       <input id="command" spellcheck="false" autocomplete="off"
-        value="python3 script/verify_speaker.py --mic-version arduino_default --speaker-embedding lee --bucket 298">
+        value="./runtime/campp_speaker_verify --mic-version arduino_default --speaker-embedding lee --bucket 298">
       <button id="run">실행</button>
       <button id="stop" disabled>중지</button>
       <button id="clear">지우기</button>
     </div>
 
     <div class="examples">
-      <button data-command="python3 script/verify_speaker.py --mic-version arduino_default --speaker-embedding lee --bucket 298">유사도 측정 예시</button>
-      <button data-command="python3 script/enroll_speaker.py --mic-version arduino_default --speaker-folder lee">화자 등록 예시</button>
+      <button data-command="./runtime/campp_speaker_verify --mic-version arduino_default --speaker-embedding lee --bucket 298">네이티브 유사도 측정</button>
+      <button data-command="python3 script/verify_speaker.py --c --mic-version arduino_default --speaker-embedding lee --bucket 298">C 비교 측정</button>
+      <button data-command="python3 script/verify_speaker.py --ort --mic-version arduino_default --speaker-embedding lee --bucket 298">ORT 비교 측정</button>
+      <button data-command="python3 script/enroll_speaker.py --c --mic-version arduino_default --speaker-folder lee">C 화자 등록</button>
+      <button data-command="python3 script/enroll_speaker.py --ort --mic-version arduino_default --speaker-folder lee">ORT 화자 등록</button>
       <button data-command="python3 script/list_microphones.py">마이크 목록</button>
     </div>
 

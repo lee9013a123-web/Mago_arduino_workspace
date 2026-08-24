@@ -30,6 +30,15 @@ from voice_embedding.runtime import (  # noqa: E402
     select_bucket_assets,
     validate_runtime_capabilities,
 )
+from voice_embedding_onnx.enrollment_onnx import (  # noqa: E402
+    enroll_speaker_onnx,
+)
+from voice_embedding_onnx.runtime_onnx import (  # noqa: E402
+    describe_ort_assets,
+    OrtPipelineError,
+    select_ort_assets,
+    validate_ort_capabilities,
+)
 
 
 def _pipeline_path(value: str) -> Path:
@@ -39,6 +48,9 @@ def _pipeline_path(value: str) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    backend = parser.add_mutually_exclusive_group()
+    backend.add_argument("--c", action="store_true", help="use Final V3 C Runtime")
+    backend.add_argument("--ort", action="store_true", help="use ONNX Runtime CPU")
     parser.add_argument("--mic-version", required=True)
     parser.add_argument("--speaker-folder", required=True)
     parser.add_argument("--recording-count", type=int, default=5)
@@ -66,6 +78,13 @@ def main() -> int:
         ),
     )
     parser.add_argument(
+        "--ort-asset-manifest",
+        type=_pipeline_path,
+        default=(
+            PIPELINE_ROOT / "runtime_onnx/assets.json"
+        ),
+    )
+    parser.add_argument(
         "--asset-manifest",
         type=_pipeline_path,
         default=(
@@ -77,6 +96,51 @@ def main() -> int:
     args = parser.parse_args()
     try:
         profile = load_microphone_profile(args.microphone_config, args.mic_version)
+        if args.ort:
+            ort_assets = select_ort_assets(args.ort_asset_manifest, 998)
+            require_pipeline_local(PIPELINE_ROOT, [
+                args.microphone_config,
+                args.ort_asset_manifest,
+                ort_assets.model,
+                ort_assets.frontend,
+            ])
+            frontend_capabilities = validate_native_fbank(ort_assets.frontend)
+            ort_capabilities = validate_ort_capabilities()
+            if args.dry_run:
+                print(json.dumps({
+                    "ready": True,
+                    "backend": "onnxruntime-cpu",
+                    "microphone": {
+                        "version": profile.version,
+                        "device": profile.device,
+                    },
+                    "speaker_folder": args.speaker_folder,
+                    "recording_count": args.recording_count,
+                    "recording_seconds": 10,
+                    "bucket_frames": 998,
+                    "assets": describe_ort_assets(ort_assets, 998),
+                    "frontend_capabilities": frontend_capabilities,
+                    "runtime_capabilities": ort_capabilities,
+                }, ensure_ascii=False, indent=2))
+                return 0
+            metadata = enroll_speaker_onnx(
+                pipeline_root=PIPELINE_ROOT,
+                profile=profile,
+                speaker_folder=args.speaker_folder,
+                native_fbank_binary=ort_assets.frontend,
+                asset_manifest=args.ort_asset_manifest,
+                recording_count=args.recording_count,
+                countdown_seconds=args.countdown,
+                warmup=args.warmup,
+                repeat=args.repeat,
+                threads=args.threads,
+                force=args.force,
+            )
+            print(
+                "ORT enrollment complete: "
+                f"{PIPELINE_ROOT / metadata['mean_embedding']}"
+            )
+            return 0
         assets = select_bucket_assets(
             repo_root=PIPELINE_ROOT,
             manifest_path=args.asset_manifest,
@@ -100,6 +164,7 @@ def main() -> int:
         if args.dry_run:
             print(json.dumps({
                 "ready": True,
+                "backend": "campp-c-runtime",
                 "microphone": {
                     "version": profile.version,
                     "device": profile.device,
@@ -138,6 +203,7 @@ def main() -> int:
     except (
         AudioCaptureError,
         FrontendError,
+        OrtPipelineError,
         RuntimePipelineError,
         OSError,
         ValueError,

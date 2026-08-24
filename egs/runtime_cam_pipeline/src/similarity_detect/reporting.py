@@ -23,17 +23,24 @@ def format_terminal_report(score: float, metrics: RuntimeMetrics) -> str:
         "=================================",
         "=================================",
         "[report]",
+        f"Backend: {metrics.backend_name}",
         "Peak RAM",
         (
             "- pipeline total peak: "
             f"{_optional_mib(metrics.pipeline_total_peak_rss_bytes)}"
         ),
         (
-            "- Python/Torch peak: "
-            f"{_optional_mib(metrics.python_torch_peak_rss_bytes)}"
+            "- Python host peak: "
+            f"{_optional_mib(metrics.python_host_peak_rss_bytes)}"
         ),
-        f"- C runtime peak: {_mib(metrics.peak_rss_bytes):.2f} MiB",
-        f"- logical weight: {_mib(metrics.weight_bytes):.2f} MiB",
-        f"- logical activation: {_mib(metrics.activation_bytes):.2f} MiB",
+        (
+            f"- {metrics.runtime_peak_label} peak: "
+            f"{_optional_mib(metrics.peak_rss_bytes)}"
+        ),
+        f"- {metrics.weight_label}: {_optional_mib(metrics.weight_bytes)}",
+        (
+            f"- {metrics.activation_label}: "
+            f"{_optional_mib(metrics.activation_bytes)}"
+        ),
         f"RTF: {metrics.rtf:.6f}",
     ])

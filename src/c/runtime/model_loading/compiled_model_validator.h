@@ -19,6 +19,7 @@
 #include "campp_runtime/operator_descriptor.h"
 #include "campp_runtime/status_code.h"
 #include "campp_runtime/tensor_descriptor.h"
+#include "integrity/sha256.h"
 
 struct CamppRuntimeModel;
 
@@ -38,11 +39,6 @@ typedef struct CamppPlanLayout {
  */
 CamppStatus campp_validate_plan(
     const CamppByteSpan *plan, CamppPlanLayout *out_layout);
-
-/* Package loader도 plan validator와 같은 SHA-256 구현을 재사용한다. */
-CamppStatus campp_validate_sha256(
-    const uint8_t *data, uint64_t size,
-    const uint8_t expected[CAMPP_PLAN_CHECKSUM_SIZE]);
 
 /* 표를 푼 뒤 descriptor 하나가 자기 규칙을 지키는지 본다. */
 CamppStatus campp_validate_tensor_descriptor(

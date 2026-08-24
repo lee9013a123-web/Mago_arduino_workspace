@@ -9,6 +9,7 @@ import json
 import os
 from pathlib import Path
 import re
+import signal
 import shlex
 import subprocess
 import sys
@@ -22,6 +23,7 @@ ALLOWED_SCRIPTS = frozenset({
     "verify_speaker.py",
     "list_microphones.py",
 })
+NATIVE_VERIFY_BINARY = "campp_speaker_verify"
 MAX_COMMAND_BYTES = 8192
 SHELL_CONTROL_TOKENS = frozenset({
     "|", "||", "&&", ";", "<", ">", ">>", "2>", "2>>", "&",
@@ -62,11 +64,41 @@ def parse_pipeline_command(
         tokens = shlex.split(command, posix=True)
     except ValueError as exc:
         raise WebTerminalError(f"cannot parse command: {exc}") from exc
-    if len(tokens) < 2:
-        raise WebTerminalError("expected: python3 script/<pipeline-script>.py ...")
-    executable_name = Path(tokens.pop(0)).name.lower()
+    if not tokens:
+        raise WebTerminalError("command has no executable")
+    requested_executable = tokens.pop(0)
+    executable_name = Path(requested_executable).name.lower()
+    for token in tokens:
+        if token in SHELL_CONTROL_TOKENS:
+            raise WebTerminalError("shell pipes, redirects, and chaining are blocked")
+        if "`" in token or "$(" in token:
+            raise WebTerminalError("shell substitutions are blocked")
+
+    if executable_name == NATIVE_VERIFY_BINARY:
+        binary = (pipeline_root / "runtime" / NATIVE_VERIFY_BINARY).resolve()
+        requested = Path(requested_executable)
+        requested = (
+            requested.resolve()
+            if requested.is_absolute()
+            else (pipeline_root / requested).resolve()
+        )
+        if requested != binary:
+            raise WebTerminalError(
+                f"native verifier must be invoked as ./runtime/{NATIVE_VERIFY_BINARY}"
+            )
+        if not binary.is_file() or not binary.is_relative_to(
+            pipeline_root.resolve()
+        ):
+            raise WebTerminalError(f"native verifier is missing: {binary}")
+        return ParsedCommand(
+            display=command.strip(),
+            argv=[str(binary), *tokens],
+        )
+
     if not re.fullmatch(r"python(?:3(?:\.\d+)?)?(?:\.exe)?", executable_name):
-        raise WebTerminalError("only python/python3 pipeline commands are allowed")
+        raise WebTerminalError(
+            "only the native verifier or approved Python utilities are allowed"
+        )
     if tokens and tokens[0] == "-u":
         tokens.pop(0)
     if not tokens or tokens[0].startswith("-"):
@@ -77,11 +109,6 @@ def parse_pipeline_command(
             f"script {script_name!r} is not allowed; expected "
             f"{sorted(ALLOWED_SCRIPTS)}"
         )
-    for token in tokens:
-        if token in SHELL_CONTROL_TOKENS:
-            raise WebTerminalError("shell pipes, redirects, and chaining are blocked")
-        if "`" in token or "$(" in token:
-            raise WebTerminalError("shell substitutions are blocked")
     script_path = (pipeline_root / "script" / script_name).resolve()
     if not script_path.is_file() or not script_path.is_relative_to(
         pipeline_root.resolve()
@@ -133,6 +160,7 @@ class CommandController:
                 encoding="utf-8",
                 errors="replace",
                 bufsize=1,
+                start_new_session=(os.name == "posix"),
             )
             running = RunningCommand(parsed=parsed, process=process)
             with self._state_lock:
@@ -155,11 +183,11 @@ class CommandController:
             if running.process.stdout is not None:
                 running.process.stdout.close()
             if running.process.poll() is None:
-                running.process.terminate()
+                self._terminate(running.process)
                 try:
                     running.process.wait(timeout=2.0)
                 except subprocess.TimeoutExpired:
-                    running.process.kill()
+                    self._kill(running.process)
                     running.process.wait()
             with self._state_lock:
                 if self._running is running:
@@ -171,8 +199,22 @@ class CommandController:
             running = self._running
         if running is None or running.process.poll() is not None:
             return False
-        running.process.terminate()
+        self._terminate(running.process)
         return True
+
+    @staticmethod
+    def _terminate(process: subprocess.Popen[str]) -> None:
+        if os.name == "posix":
+            os.killpg(process.pid, signal.SIGTERM)
+        else:
+            process.terminate()
+
+    @staticmethod
+    def _kill(process: subprocess.Popen[str]) -> None:
+        if os.name == "posix":
+            os.killpg(process.pid, signal.SIGKILL)
+        else:
+            process.kill()
 
 
 class PipelineWebServer(ThreadingHTTPServer):

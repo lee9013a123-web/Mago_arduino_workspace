@@ -64,7 +64,7 @@ def process_tree_pids(
 @dataclass(frozen=True)
 class PipelineMemoryMeasurement:
     pipeline_total_peak_rss_bytes: int | None
-    python_torch_peak_rss_bytes: int | None
+    python_host_peak_rss_bytes: int | None
     sampling_interval_ms: float
     sample_count: int
     total_semantics: str = "maximum sampled sum of process-tree RSS"
@@ -129,7 +129,7 @@ class ProcessTreeMemoryMonitor:
         _, python_peak = self._status_reader(self._root_pid)
         return PipelineMemoryMeasurement(
             pipeline_total_peak_rss_bytes=self._peak,
-            python_torch_peak_rss_bytes=python_peak,
+            python_host_peak_rss_bytes=python_peak,
             sampling_interval_ms=self._interval_seconds * 1000.0,
             sample_count=self._sample_count,
         )

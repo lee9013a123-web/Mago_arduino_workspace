@@ -39,10 +39,14 @@ class RuntimeMetrics:
     latency_mean_ms: float
     rtf: float
     peak_rss_bytes: int
-    weight_bytes: int
-    activation_bytes: int
+    weight_bytes: int | None
+    activation_bytes: int | None
     pipeline_total_peak_rss_bytes: int | None = None
-    python_torch_peak_rss_bytes: int | None = None
+    python_host_peak_rss_bytes: int | None = None
+    backend_name: str = "campp-c-runtime"
+    runtime_peak_label: str = "C runtime"
+    weight_label: str = "logical weight"
+    activation_label: str = "logical activation"
 
 
 @dataclass(frozen=True)

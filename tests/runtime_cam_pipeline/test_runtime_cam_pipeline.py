@@ -326,12 +326,12 @@ class ReportTest(unittest.TestCase):
                 weight_bytes=8 * 1024 * 1024,
                 activation_bytes=2 * 1024 * 1024,
                 pipeline_total_peak_rss_bytes=50 * 1024 * 1024,
-                python_torch_peak_rss_bytes=30 * 1024 * 1024,
+                python_host_peak_rss_bytes=30 * 1024 * 1024,
             ),
         )
         self.assertIn("final score: 0.750000", text)
         self.assertIn("pipeline total peak: 50.00 MiB", text)
-        self.assertIn("Python/Torch peak: 30.00 MiB", text)
+        self.assertIn("Python host peak: 30.00 MiB", text)
         self.assertIn("C runtime peak: 20.00 MiB", text)
         self.assertIn("logical weight: 8.00 MiB", text)
         self.assertIn("logical activation: 2.00 MiB", text)
@@ -359,7 +359,7 @@ class PipelineMemoryMonitorTest(unittest.TestCase):
         current[11] = (2500, 2700)
         measurement = monitor.stop()
         self.assertEqual(measurement.pipeline_total_peak_rss_bytes, 3700)
-        self.assertEqual(measurement.python_torch_peak_rss_bytes, 1700)
+        self.assertEqual(measurement.python_host_peak_rss_bytes, 1700)
 
     def test_runtime_source_has_no_torch_import(self) -> None:
         offenders = []
@@ -371,6 +371,33 @@ class PipelineMemoryMonitorTest(unittest.TestCase):
 
 
 class WebTerminalTest(unittest.TestCase):
+    def test_allows_native_speaker_verification_command(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            pipeline = Path(temporary)
+            binary = pipeline / "runtime/campp_speaker_verify"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"native placeholder")
+            parsed = parse_pipeline_command(
+                "./runtime/campp_speaker_verify --mic-version "
+                "arduino_default --speaker-embedding lee --bucket 298",
+                pipeline_root=pipeline,
+            )
+            self.assertEqual(parsed.argv[0], str(binary.resolve()))
+            self.assertNotIn("python", parsed.argv[0].lower())
+            self.assertIn("298", parsed.argv)
+
+    def test_rejects_native_verifier_outside_runtime_directory(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            pipeline = Path(temporary)
+            binary = pipeline / "runtime/campp_speaker_verify"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"native placeholder")
+            with self.assertRaises(WebTerminalError):
+                parse_pipeline_command(
+                    "campp_speaker_verify --bucket 298",
+                    pipeline_root=pipeline,
+                )
+
     def test_allows_pipeline_verification_command(self) -> None:
         parsed = parse_pipeline_command(
             "python3 script/verify_speaker.py --mic-version "

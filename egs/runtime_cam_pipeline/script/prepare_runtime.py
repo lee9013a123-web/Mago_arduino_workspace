@@ -17,6 +17,7 @@ from typing import Any
 PIPELINE_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PIPELINE_ROOT.parents[1]
 OUTPUT_ROOT = PIPELINE_ROOT / "runtime"
+ORT_OUTPUT_ROOT = PIPELINE_ROOT / "runtime_onnx"
 BUCKETS = (98, 298, 498, 998)
 AUDIO_SECONDS = {98: 1, 298: 3, 498: 5, 998: 10}
 
@@ -125,8 +126,60 @@ def _prepare_windowed(source_manifest: Path, *, force: bool) -> dict[str, dict]:
     return output
 
 
+def _prepare_ort(
+    *, model: Path, fbank: Path, fbank_license: Path, force: bool,
+) -> int:
+    model_output = ORT_OUTPUT_ROOT / "models/campplus_int8_static_qop.onnx"
+    model_sha256 = _copy(model, model_output, force=force)
+    frontend_output = ORT_OUTPUT_ROOT / "campp_fbank"
+    frontend_sha256 = _copy(fbank, frontend_output, force=force)
+    frontend_output.chmod(frontend_output.stat().st_mode | stat.S_IXUSR)
+    license_output = ORT_OUTPUT_ROOT / "licenses/kaldi-native-fbank-LICENSE"
+    _copy(fbank_license, license_output, force=force)
+    manifest = {
+        "schema_version": 1,
+        "format": "campp-onnx-pipeline-assets-v1",
+        "backend": "onnxruntime-cpu",
+        "provider": "CPUExecutionProvider",
+        "supported_buckets": list(BUCKETS),
+        "model": {
+            "path": model_output.relative_to(ORT_OUTPUT_ROOT).as_posix(),
+            "sha256": model_sha256,
+        },
+        "frontend": {
+            "binary": frontend_output.relative_to(ORT_OUTPUT_ROOT).as_posix(),
+            "sha256": frontend_sha256,
+            "backend": "kaldi-native-fbank",
+            "version": "1.22.3",
+            "license": license_output.relative_to(ORT_OUTPUT_ROOT).as_posix(),
+        },
+    }
+    ORT_OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
+    manifest_path = ORT_OUTPUT_ROOT / "assets.json"
+    temporary = manifest_path.with_suffix(".json.part")
+    temporary.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    os.replace(temporary, manifest_path)
+    print(json.dumps({
+        "ready": True,
+        "backend": "onnxruntime-cpu",
+        "pipeline_root": str(PIPELINE_ROOT),
+        "runtime_root": str(ORT_OUTPUT_ROOT),
+        "model": str(model_output),
+        "frontend": str(frontend_output),
+        "asset_manifest": str(manifest_path),
+        "buckets": list(BUCKETS),
+    }, ensure_ascii=False, indent=2))
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
+    backend = parser.add_mutually_exclusive_group()
+    backend.add_argument("--c", action="store_true", help="prepare C Runtime assets")
+    backend.add_argument("--ort", action="store_true", help="prepare ONNX Runtime assets")
     parser.add_argument("--mode", choices=("package", "windowed"), default="package")
     parser.add_argument("--runtime", type=_repo_path)
     parser.add_argument(
@@ -141,6 +194,19 @@ def main() -> int:
         default=(
             PIPELINE_ROOT / ".deps/kaldi-native-fbank-v1.22.3/LICENSE"
         ),
+    )
+    parser.add_argument(
+        "--speaker-verify",
+        type=_repo_path,
+        default=(
+            PIPELINE_ROOT / "build/native_pipeline/campp_speaker_verify"
+        ),
+        help="Python-free verification binary built by build_speaker_verify.sh",
+    )
+    parser.add_argument(
+        "--onnx-model",
+        type=_repo_path,
+        default=REPO_ROOT / "models/source/campplus_int8_static_qop.onnx",
     )
     parser.add_argument(
         "--package-manifest",
@@ -161,6 +227,15 @@ def main() -> int:
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
     try:
+        if args.ort:
+            if args.mode != "package":
+                raise PreparationError("ORT backend does not support --mode windowed")
+            return _prepare_ort(
+                model=args.onnx_model,
+                fbank=args.fbank,
+                fbank_license=args.fbank_license,
+                force=args.force,
+            )
         source_runtime = args.runtime
         if source_runtime is None:
             build = "final_v3_hybrid" if args.mode == "package" else "weight_streaming_98"
@@ -176,6 +251,11 @@ def main() -> int:
         frontend_output.chmod(frontend_output.stat().st_mode | stat.S_IXUSR)
         frontend_license = OUTPUT_ROOT / "licenses/kaldi-native-fbank-LICENSE"
         _copy(args.fbank_license, frontend_license, force=args.force)
+        verifier_output = OUTPUT_ROOT / "campp_speaker_verify"
+        verifier_sha256 = _copy(
+            args.speaker_verify, verifier_output, force=args.force,
+        )
+        verifier_output.chmod(verifier_output.stat().st_mode | stat.S_IXUSR)
         buckets = (
             _prepare_packages(args.package_manifest, force=args.force)
             if args.mode == "package"
@@ -198,6 +278,13 @@ def main() -> int:
                 "torch_required": False,
                 "license": "licenses/kaldi-native-fbank-LICENSE",
             },
+            "application": {
+                "binary": "campp_speaker_verify",
+                "sha256": verifier_sha256,
+                "backend": "native-cpp-orchestrator",
+                "python_required": False,
+                "numpy_required": False,
+            },
             "buckets": buckets,
         }
         OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
@@ -214,6 +301,7 @@ def main() -> int:
             "pipeline_root": str(PIPELINE_ROOT),
             "runtime": str(runtime_output),
             "frontend": str(frontend_output),
+            "speaker_verify": str(verifier_output),
             "asset_manifest": str(manifest_path),
             "buckets": list(BUCKETS),
         }, ensure_ascii=False, indent=2))

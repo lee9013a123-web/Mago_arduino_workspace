@@ -1,4 +1,4 @@
-"""One-shot microphone capture, embedding inference, and speaker scoring."""
+"""Microphone capture, native FBank, ORT inference, and speaker scoring."""
 
 from __future__ import annotations
 
@@ -8,55 +8,46 @@ import json
 from pathlib import Path
 from typing import Callable
 
-from voice_embedding.audio import (
-    MicrophoneProfile,
-    countdown_before_recording,
-    record_wav,
-)
+from similarity_detect.memory_monitor import ProcessTreeMemoryMonitor
+from similarity_detect.reporting import format_terminal_report
+from similarity_detect.scoring import cosine_similarity, load_embedding
+from voice_embedding.audio import MicrophoneProfile, countdown_before_recording, record_wav
 from voice_embedding.frontend import wav_to_fixed_fbank, write_feature
-from voice_embedding.runtime import (
-    AUDIO_SECONDS_BY_BUCKET,
-    RuntimePipelineError,
-    describe_assets,
-    run_embedding,
+from voice_embedding.runtime import AUDIO_SECONDS_BY_BUCKET
+from voice_embedding_onnx.runtime_onnx import (
+    OrtPipelineError,
+    describe_ort_assets,
+    run_embedding_onnx,
 )
 
-from .reporting import format_terminal_report
-from .memory_monitor import ProcessTreeMemoryMonitor
-from .scoring import (
-    cosine_similarity,
-    load_embedding,
-    resolve_speaker_embedding,
-)
+from .scoring_onnx import resolve_onnx_speaker_embedding
 
 
-def verify_speaker(
-    *, repo_root: Path, pipeline_root: Path, profile: MicrophoneProfile,
-    speaker_embedding: str, bucket_frames: int, runtime_binary: Path,
-    native_fbank_binary: Path, asset_manifest: Path, warmup: int = 0,
-    repeat: int = 1,
-    threads: int = 1, countdown_seconds: int = 3,
-    output: Callable[[str], None] = print,
+def verify_speaker_onnx(
+    *, pipeline_root: Path, profile: MicrophoneProfile, speaker_embedding: str,
+    bucket_frames: int, native_fbank_binary: Path, asset_manifest: Path,
+    warmup: int = 0, repeat: int = 1, threads: int = 1,
+    countdown_seconds: int = 3, output: Callable[[str], None] = print,
 ) -> dict:
     if bucket_frames not in AUDIO_SECONDS_BY_BUCKET:
-        raise RuntimePipelineError(f"unsupported bucket: {bucket_frames}")
-    template_path = resolve_speaker_embedding(pipeline_root, speaker_embedding)
+        raise OrtPipelineError(f"unsupported bucket: {bucket_frames}")
+    if countdown_seconds < 0:
+        raise OrtPipelineError("countdown seconds must not be negative")
+    template_path = resolve_onnx_speaker_embedding(pipeline_root, speaker_embedding)
     template = load_embedding(template_path)
     seconds = AUDIO_SECONDS_BY_BUCKET[bucket_frames]
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
-    run_root = pipeline_root / "runs/inference" / timestamp
+    run_root = pipeline_root / "runs_onnx/inference" / timestamp
     wav_path = run_root / f"query__{bucket_frames}.wav"
     feature_path = run_root / f"query__{bucket_frames}.f32"
     embedding_path = run_root / f"query_embedding__{bucket_frames}.f32"
     report_path = run_root / "report.json"
     run_root.mkdir(parents=True, exist_ok=False)
 
-    memory_monitor = ProcessTreeMemoryMonitor()
-    memory_monitor.start()
+    monitor = ProcessTreeMemoryMonitor()
+    monitor.start()
     try:
-        output(
-            f"Recording {seconds} seconds with microphone {profile.version!r}..."
-        )
+        output(f"Recording {seconds} seconds for ORT with {profile.version!r}...")
         countdown_before_recording(countdown_seconds, output)
         record_wav(profile=profile, output_path=wav_path, seconds=seconds)
         feature = wav_to_fixed_fbank(
@@ -66,9 +57,7 @@ def verify_speaker(
             audio_seconds=seconds,
         )
         write_feature(feature_path, feature)
-        result = run_embedding(
-            repo_root=repo_root,
-            runtime_binary=runtime_binary,
+        result = run_embedding_onnx(
             asset_manifest=asset_manifest,
             bucket_frames=bucket_frames,
             feature_path=feature_path,
@@ -79,18 +68,15 @@ def verify_speaker(
         )
         score = cosine_similarity(template, result.embedding)
     finally:
-        pipeline_memory = memory_monitor.stop()
+        pipeline_memory = monitor.stop()
     metrics = replace(
         result.metrics,
-        pipeline_total_peak_rss_bytes=(
-            pipeline_memory.pipeline_total_peak_rss_bytes
-        ),
-        python_host_peak_rss_bytes=(
-            pipeline_memory.python_host_peak_rss_bytes
-        ),
+        pipeline_total_peak_rss_bytes=pipeline_memory.pipeline_total_peak_rss_bytes,
+        python_host_peak_rss_bytes=pipeline_memory.python_host_peak_rss_bytes,
     )
     report = {
         "schema_version": 1,
+        "backend": "onnxruntime-cpu",
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "final_score": score,
         "threshold": None,
@@ -99,8 +85,9 @@ def verify_speaker(
         "microphone_version": profile.version,
         "bucket_frames": bucket_frames,
         "audio_seconds": seconds,
-        "runtime_assets": describe_assets(result.assets),
+        "runtime_assets": describe_ort_assets(result.assets, bucket_frames),
         "runtime_metrics": asdict(metrics),
+        "runtime_payload": result.runtime_payload,
         "memory_measurement": asdict(pipeline_memory),
         "frontend": {
             "backend": "kaldi-native-fbank",
