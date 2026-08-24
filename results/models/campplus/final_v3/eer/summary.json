@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-24T03:23:50.483470+00:00",
+  "trial_manifest": "benchmarks/campplus/manifests/trials.tsv",
+  "trial_manifest_sha256": "aa8b18b89a533470252df29121bf0c255a188c5144cb12a3e6b8b17bf0305691",
+  "reference_backend": "ort",
+  "configuration": {
+    "threshold_rule": "accept_if_score_greater_than_or_equal",
+    "p_target": 0.01,
+    "c_miss": 1.0,
+    "c_false_alarm": 1.0
+  },
+  "rows": [
+    {
+      "backend": "ort",
+      "bucket_frames": "98",
+      "trial_count": 780,
+      "target_count": 60,
+      "non_target_count": 720,
+      "eer_rate": 0.4,
+      "eer_percent": 40.0,
+      "eer_threshold": 0.14626265089924884,
+      "min_dcf": 0.01,
+      "min_dcf_normalized": 1.0
+    },
+    {
+      "backend": "ort",
+      "bucket_frames": "298",
+      "trial_count": 780,
+      "target_count": 60,
+      "non_target_count": 720,
+      "eer_rate": 0.05,
+      "eer_percent": 5.0,
+      "eer_threshold": 0.38283232556047403,
+      "min_dcf": 0.0034999999999999996,
+      "min_dcf_normalized": 0.35
+    },
+    {
+      "backend": "ort",
+      "bucket_frames": "498",
+      "trial_count": 780,
+      "target_count": 60,
+      "non_target_count": 720,
+      "eer_rate": 0.06666666666666667,
+      "eer_percent": 6.666666666666667,
+      "eer_threshold": 0.30539031295851077,
+      "min_dcf": 0.008666666666666668,
+      "min_dcf_normalized": 0.8666666666666668
+    },
+    {
+      "backend": "ort",
+      "bucket_frames": "998",
+      "trial_count": 780,
+      "target_count": 60,
+      "non_target_count": 720,
+      "eer_rate": 0.2763888888888889,
+      "eer_percent": 27.63888888888889,
+      "eer_threshold": 0.24173512923743806,
+      "min_dcf": 0.01,
+      "min_dcf_normalized": 1.0
+    },
+    {
+      "backend": "crt",
+      "bucket_frames": "98",
+      "trial_count": 780,
+      "target_count": 60,
+      "non_target_count": 720,
+      "eer_rate": 0.4,
+      "eer_percent": 40.0,
+      "eer_threshold": 0.1456939161439049,
+      "min_dcf": 0.01,
+      "min_dcf_normalized": 1.0
+    },
+    {
+      "backend": "crt",
+      "bucket_frames": "298",
+      "trial_count": 780,
+      "target_count": 60,
+      "non_target_count": 720,
+      "eer_rate": 0.05,
+      "eer_percent": 5.0,
+      "eer_threshold": 0.37962106361946335,
+      "min_dcf": 0.0034999999999999996,
+      "min_dcf_normalized": 0.35
+    },
+    {
+      "backend": "crt",
+      "bucket_frames": "498",
+      "trial_count": 780,
+      "target_count": 60,
+      "non_target_count": 720,
+      "eer_rate": 0.06944444444444445,
+      "eer_percent": 6.944444444444445,
+      "eer_threshold": 0.3030403042609633,
+      "min_dcf": 0.008666666666666668,
+      "min_dcf_normalized": 0.8666666666666668
+    },
+    {
+      "backend": "crt",
+      "bucket_frames": "998",
+      "trial_count": 780,
+      "target_count": 60,
+      "non_target_count": 720,
+      "eer_rate": 0.2833333333333333,
+      "eer_percent": 28.333333333333332,
+      "eer_threshold": 0.23942543685664955,
+      "min_dcf": 0.01,
+      "min_dcf_normalized": 1.0
+    }
+  ],
+  "comparisons": [
+    {
+      "bucket_frames": 98,
+      "reference_backend": "ort",
+      "candidate_backend": "crt",
+      "eer_delta_percentage_points": 0.0,
+      "normalized_min_dcf_delta": 0.0,
+      "score_max_abs_difference": 0.015821816852514797,
+      "score_mean_abs_difference": 0.0011981639530739972
+    },
+    {
+      "bucket_frames": 298,
+      "reference_backend": "ort",
+      "candidate_backend": "crt",
+      "eer_delta_percentage_points": 0.0,
+      "normalized_min_dcf_delta": 0.0,
+      "score_max_abs_difference": 0.02327010603336349,
+      "score_mean_abs_difference": 0.0031133394605955466
+    },
+    {
+      "bucket_frames": 498,
+      "reference_backend": "ort",
+      "candidate_backend": "crt",
+      "eer_delta_percentage_points": 0.2777777777777777,
+      "normalized_min_dcf_delta": 0.0,
+      "score_max_abs_difference": 0.0523665397248113,
+      "score_mean_abs_difference": 0.005354088452658924
+    },
+    {
+      "bucket_frames": 998,
+      "reference_backend": "ort",
+      "candidate_backend": "crt",
+      "eer_delta_percentage_points": 0.6944444444444429,
+      "normalized_min_dcf_delta": 0.0,
+      "score_max_abs_difference": 0.01708260121382832,
+      "score_mean_abs_difference": 0.004192858072057963
+    }
+  ]
+}

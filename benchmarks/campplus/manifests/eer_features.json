@@ -1,0 +1,4048 @@
+{
+  "schema_version": 1,
+  "protocol": "eer_780_trials",
+  "preprocessing": {
+    "implementation": "egs/pipeline_experiment/core.py::extract_fbank_torchaudio (torchaudio.compliance.kaldi.fbank)",
+    "source_dataset": "/home/arduino/workspace/data",
+    "concatenation": "없음. EER trial은 발화 단위가 독립이어야 하므로 runtime_features.json과 달리 wav를 이어붙이지 않는다.",
+    "crop_padding_policy": "offset 0에서 bucket 길이(1/3/5/10초)만큼 자르고, 원본이 짧으면 뒤를 zero-padding한다. padding 비율은 feature마다 `padding` 필드에 기록한다.",
+    "waveform_normalization": "int16 → float32 [-1,1], DC 평균 제거, peak를 0.95로 정규화, [-1,1] clip. crop/pad 이후의 파형에 적용한다.",
+    "fbank": {
+      "num_mel_bins": 80,
+      "sample_frequency": 16000,
+      "frame_length_ms": 25.0,
+      "frame_shift_ms": 10.0,
+      "dither": 0.0,
+      "energy_floor": 0.0,
+      "window_type": "hamming",
+      "use_energy": false,
+      "snip_edges": true
+    },
+    "cmvn": "time축 평균 감산 (feat - feat.mean(axis=0))",
+    "payload_layout": "[1, frames, 80] little-endian float32"
+  },
+  "padding_summary": {
+    "98": {
+      "inputs": 77,
+      "zero_padded_inputs": 0
+    },
+    "298": {
+      "inputs": 77,
+      "zero_padded_inputs": 0
+    },
+    "498": {
+      "inputs": 77,
+      "zero_padded_inputs": 20
+    },
+    "998": {
+      "inputs": 77,
+      "zero_padded_inputs": 32
+    }
+  },
+  "features": [
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_0",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_jonah_en_0.f32",
+      "sha256": "b6323bae39bd896e12505e9cccbc5644369b8fc929b08c87fb704aba1bc6bff0",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_jonah_en_0.f32",
+      "sha256": "9a92d3dbe195ec630dc95044a8bf00e902cbdb3da663e2a6e4cdad2a7b301286",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_0",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_jonah_en_0.f32",
+      "sha256": "d3573cdd76a1987583fd2c56b84426063499bfd20f3eb260a2777e5532c3d646",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_0",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_jonah_en_0.f32",
+      "sha256": "b6af291ebc6b2efee051b37e5a76fe83b6ace0b9f6e053cca1b5d283d017dd49",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_1",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_jonah_en_1.f32",
+      "sha256": "31ba40fe7a6788e95099919de17425409f599383758c18d9909fcd4d5eaed768",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_1",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_jonah_en_1.f32",
+      "sha256": "c3ab4c7e23f65dc3126a473f61834f1c768076b47058f3726ad93c8975875bb1",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_1",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_jonah_en_1.f32",
+      "sha256": "b433301ce32663ff80293a99fd53d88e8df538dc80254c4aa834c60087fbbd1e",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_1",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_jonah_en_1.f32",
+      "sha256": "9bb07e654fe5b6df6734e8ca2989216b98247c7ed94104489e22394621105e31",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_2",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_jonah_en_2.f32",
+      "sha256": "505fe16e95a6be6299fb5d3882919bd4c1df366b704aa4c4bc26e137cfa88418",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_2",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_jonah_en_2.f32",
+      "sha256": "a3d5f95c6fbb39a210905a1b85946741b68f287735f61698451bab5bc95ba289",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_2",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_jonah_en_2.f32",
+      "sha256": "18fb019c2f019a3abbf85126d97c7fd9c13446921e83bc742ef68e7343ac02d1",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_jonah_en_2",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_jonah_en_2.f32",
+      "sha256": "4a2cf54d035aa0daab10ecf9a3f057a94589b8931aef701e7b8a94a1aafee4bc",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_0",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_kim_en_0.f32",
+      "sha256": "f2e1456ed802d4a4b69bee27b2e414a36e67be7f5999986edf48dd03e9c0cb51",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_kim_en_0.f32",
+      "sha256": "b3672e73d921a76e36e3e55b63114c490e31fbb63501ce30c47dc08b60cf520f",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_0",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_kim_en_0.f32",
+      "sha256": "7cb295e3f2fbe10bb11aeffd26b875a8a7943f1cff57b47232ad0c4f3ace3227",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_0",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_kim_en_0.f32",
+      "sha256": "add98fbe5108213644dcea4a9fd199ee84d9d0e5a6cf2588ca8c45dabc74b562",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_1",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_kim_en_1.f32",
+      "sha256": "474285f8a417b05e5b052c185fef2a213414f32f3164cde5d27a1034c0952148",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_1",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_kim_en_1.f32",
+      "sha256": "f0492cb1fc2a66b257d72077fdfb0542e1ecd1c5e5d53c078ae363c050588482",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_1",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_kim_en_1.f32",
+      "sha256": "2ab6aab6a011c55366e73e28fdfe0c24aaefa8e462e9a372f3697e983246bb61",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_1",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_kim_en_1.f32",
+      "sha256": "ded0a5e4e4f2d926ba833d1cb88beaeeac6f999a499d49928c7caf6246c58530",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_2",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_kim_en_2.f32",
+      "sha256": "b9716505672f80eba39c9e6f6e9d5826f139cb0c8e585c2e0e7b0ea1283b0b15",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_2",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_kim_en_2.f32",
+      "sha256": "254e1c97669595532518feb489aef9682248cae654b151b4a9bb1e26f982ebe4",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_2",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_kim_en_2.f32",
+      "sha256": "6641315992bf02040baed95707ea2bf0b9b499d004a31a2da862eb4971d70352",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kim_en_2",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_kim_en_2.f32",
+      "sha256": "430077fc7aa740487b882dc7ff11d95722d4d0d2b51f2c258b0b1141511d1d0d",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_0",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_kiuk_en_0.f32",
+      "sha256": "c7d336a1c01cc3a476cf828cdad68a8f8ba20b4bc2a72bdc90e53383054504cf",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_kiuk_en_0.f32",
+      "sha256": "527c39e2904725acdf824b6c6ac9468bb25f25109e05d94c3856e5641dd76ac8",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_0",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_kiuk_en_0.f32",
+      "sha256": "5b12597a12f2258dc631d5fc6a38d036ef0ef6343384ff3c8caa3b1135ffbf1f",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_0",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_kiuk_en_0.f32",
+      "sha256": "0212246ab85e1d06b6be66e5a2c8dd276bdf8b7eda0f2dcc4345c094c82d5357",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_1",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_kiuk_en_1.f32",
+      "sha256": "f0113524d0bc20053c6cf5c59f0e535e659842f5a193f7cee873382ade097801",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_1",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_kiuk_en_1.f32",
+      "sha256": "61a5199180a7aff1f1592c1068ac874da9a374447f8979c404c033295a169b3f",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_1",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_kiuk_en_1.f32",
+      "sha256": "b2f089454a0d3e4b64bab528a527205aed17e41deb59bf000e15a15624239226",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_1",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_kiuk_en_1.f32",
+      "sha256": "9f093d76b3a75ab0c7f5a43efe6c79c2fb229d93c4afdac9256323d9ff6f738e",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_2",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_kiuk_en_2.f32",
+      "sha256": "cd3a98305ef4a3ec124627d40168739c41c485e5cf8f0bab4da13c7cb6fbec70",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_2",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_kiuk_en_2.f32",
+      "sha256": "42dfc4f5a267cb635a801fa3ff8375740073ee2069519b62bca982e5b2237f3b",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_2",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_kiuk_en_2.f32",
+      "sha256": "ebdb6d8d05698afc64526564dd7ca57bfa4b11778d800add4af4b84d724d119a",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_kiuk_en_2",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_kiuk_en_2.f32",
+      "sha256": "82463f20bf18217a6d5a069d05c04ea63712e3f5a063e10d116a8b55ecfd160c",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_0",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_ssh_en_0.f32",
+      "sha256": "f712c3624f0aa79fe435e3118d33ac1c8b4dbb298459edc6e18a147ef6928ff5",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_ssh_en_0.f32",
+      "sha256": "49c43559c5f7e2526f0f0ea6d0ae182406baeb4739c3d6dbd0e7247dd1de8108",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_0",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_ssh_en_0.f32",
+      "sha256": "330e4c014fff354b73a9803a4444a362014041a07d6c4d410fbfc88feceacb99",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_0",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_ssh_en_0.f32",
+      "sha256": "b77b88427992ab592c97a1521c26c07e7f1a2083bf6fd3f4699c85d91936d67c",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_1",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_ssh_en_1.f32",
+      "sha256": "82d9a3a4f0444e33fa8a1dad6f2d0f30514f7d3b1ae92c84624d163593bbbaf4",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_1",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_ssh_en_1.f32",
+      "sha256": "8f42569ceef6cf23b6f0f5c6458855edf5f4c6c1b3e5982dcc2188018a856c07",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_1",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_ssh_en_1.f32",
+      "sha256": "0ee34b63811ab65a445065862eed1239d168cb9497a1de78e357a48f97a42b8e",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_1",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_ssh_en_1.f32",
+      "sha256": "08f1a32cf4cfbe56ed627761edb1fdadfe4218d5595e2c462502e763372398f4",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_2",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/enroll__speaker_enroll_7sec_ssh_en_2.f32",
+      "sha256": "5c2adf46a881a3b020b405cffee72ea658186ca5b1df41d3520c22a28af9b6e4",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_2",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/enroll__speaker_enroll_7sec_ssh_en_2.f32",
+      "sha256": "489b521bbb7f945b660ee89dcfba63468f3692e129ba496c3b3a0d36a84d11a4",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_2",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/enroll__speaker_enroll_7sec_ssh_en_2.f32",
+      "sha256": "405b25bf80e80e27b7791f1523722ce476a3d49532197d5ccbeac37010b1d897",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "enroll__speaker_enroll_7sec_ssh_en_2",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/enroll__speaker_enroll_7sec_ssh_en_2.f32",
+      "sha256": "fd9659d6622e5030ba0e6156f810641070c757219c80287fc913e4703f9248e6",
+      "padding": {
+        "source_samples": 112000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 48000,
+        "zero_padded_ratio": 0.3
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00000",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00000.f32",
+      "sha256": "0a5714a06ecf4dfca2c6bc24fa661bcd7b26de4ef52099794be0bfd6091f18bf",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00000",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00000.f32",
+      "sha256": "bfc3bed780fb2f1af50f997ca5c9a7d97da96b10084db4d5ac7308ecce1ed687",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00000",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00000.f32",
+      "sha256": "6c0c53f2f45f7c899593d8ac1cf78bf617987c6cb3a0072340b46242728adef4",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00000",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00000.f32",
+      "sha256": "1b8f8c03d6e78e506bd3ff288d271e37a02d3e43d28433cb462767966e1218dc",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00001",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00001.f32",
+      "sha256": "4b21273b8d3ebb2afeaaee7eb7cddc373e8ecf98f5c6ce99e1c28ae0d9a7f0ec",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00001",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00001.f32",
+      "sha256": "b233aa7d965c93265703a949b85083d47f1a591f519ea38ef1e3464a5526618d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00001",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00001.f32",
+      "sha256": "5bd23b1bf50e5d70c3fb8a9335bddbf1c6c7fb0a00e59f5a443cfe87b3ea7e61",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00001",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00001.f32",
+      "sha256": "6336bfe1dff9ede8ca78add2f83c59ddb78693066ed4e9ad35304eddeb1a0e80",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00002",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00002.f32",
+      "sha256": "85cd3892ebd6d8902c2230c6e1ad8bfe17be7c7c40b66873d815edcaa808fc5f",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00002",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00002.f32",
+      "sha256": "4a36c2649d58889206a7ad901a10585fdb0c9404208aa9e2b2a73fd7a49007a7",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00002",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00002.f32",
+      "sha256": "a6f3ec204ddde9132409fbb587c00b70f9d14ae4f5b90f02fb856e5adf3db9a5",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00002",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00002.f32",
+      "sha256": "cb1a26275485b416f58e531a5cfe2fd590e54ac5294bf1cc4ec77fade753a7bc",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00003",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00003.f32",
+      "sha256": "762cfd86fd6f16adf19307c954b4e4b50b199849caa8af896425c187708c42e1",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00003",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00003.f32",
+      "sha256": "2521ceeedaa21a7244d35787716b86dcb282fcf5a1f3ea61cb5767685d77fcf3",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00003",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00003.f32",
+      "sha256": "47d4c11adf50afb4ade270d2e076c6f9c414f3dc39b798b600d91100d151b97e",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00003",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00003.f32",
+      "sha256": "c41bd9eb6ea48d6796b2e3ceba1cc9718d43c414965285afd5fdfde53e32f621",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00004",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00004.f32",
+      "sha256": "212ec898f563c345e4dbfa8c4ef62900c0ed70bdcd994830494d7ff8501810b7",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00004",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00004.f32",
+      "sha256": "6969b87011ff3d1e526e09cdd7a2b8a497103a4ef24b063f52898cbe23d3a38e",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00004",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00004.f32",
+      "sha256": "d4358e7aa3a237eb738fb40327f3174c2825e34a783eb90d626c5a6a35fb7d8d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00004",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00004.f32",
+      "sha256": "9ab496102ce7c6c67abf4c8143f67a99cf4f90929183fb2c43249ba2b5485f1f",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00005",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00005.f32",
+      "sha256": "a5b39dbf4703c4696243d73aacfaf77a6f1769ed8cfef473faf6169d0855c6fa",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00005",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00005.f32",
+      "sha256": "25fccf8460ebee50dac22e60c31012a8318e8defa587c3bc9c6d25fd6cfca333",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00005",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00005.f32",
+      "sha256": "77e81ff51a7d8e90c8ac4bdfc203cc43896ea933f8d064e600e829d83a2662b9",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00005",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00005.f32",
+      "sha256": "529475adae9a81ee93135d28ee56fe42efa5c4c6c958062bfdc5e42292894cbf",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00006",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00006.f32",
+      "sha256": "60ae63c7cb81d330081098234e373b8162d3754990b2f618784ec79666333981",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00006",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00006.f32",
+      "sha256": "1e3ae7630f112f746796918d22d5f30c58e52a4d67bab4d17b11fddb154ffc57",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00006",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00006.f32",
+      "sha256": "3bef075d39ef0a388ed86ae5434656140b5aa89ed1ee9b7474c6f494a12b6257",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00006",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00006.f32",
+      "sha256": "6ae91f8a9fad3b1718330f341f6ecc1eb8f3df70d1b5616d48e2d6857164449d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00007",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00007.f32",
+      "sha256": "0499c8adaa3ecefb375148c32dc515eade205f31c192aee2968d6503f7b6bb4c",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00007",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00007.f32",
+      "sha256": "26fb8d93d50adfe27bb7c9da853f8e6ffe63c34215f094c24fd539dc89cc9bbb",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00007",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00007.f32",
+      "sha256": "98c0bf789be204edec4afc6ab77d3a690946579c7b18e2df13ce92192bb2f95a",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00007",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00007.f32",
+      "sha256": "7633bd7d9a519b0a812eca3960da3757b67d2ecff8c9378a6a8de21f873ea118",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00008",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00008.f32",
+      "sha256": "a38f946e554a7b2bb17d08a1db44ab2bfbfb2fecc6a927e01af50802c04df613",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00008",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00008.f32",
+      "sha256": "abf9549d3cfe93494d852132ea7749267699bd77147a8782956ce98611f36f00",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00008",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00008.f32",
+      "sha256": "d9b3a46762ec937459014fa6aa4328e5c822c7ff4cde9a244d6a9c1c908f8c7a",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00008",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00008.f32",
+      "sha256": "f0c098bc071a038fbd335ca7b5b76df58beda6cab02eb3664ce5cfc59e646dd7",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00009",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00009.f32",
+      "sha256": "1dd2479e47c1627f2abec6711164744973394b8f48ab990a54c0d6e2f89506fc",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00009",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00009.f32",
+      "sha256": "7fdc3e26ee56c4d49db127503da6d33a75a3f84b9c6bacd173ebcd66bf48aab2",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00009",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00009.f32",
+      "sha256": "4444fa32084ec94562906d31560f9eec98da43be84082ec157dabd4eb5267300",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00009",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00009.f32",
+      "sha256": "24e44599063f57a6f48e25b3a9c081dd9af8ec2159eef035208490a46107d7d9",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00010",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00010.f32",
+      "sha256": "31cf2a9f9d9bcc8ca02ad19b1bd14862cc51a0abceaee24d77f6475096bc45b9",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00010",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00010.f32",
+      "sha256": "3a6c7f94129f746e8c5815c7a2f859b8e9f6bb85913e6fa78f7fa69c0b2586a0",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00010",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00010.f32",
+      "sha256": "9e13bf167a82fbbe5edfcf4e0deb37379a6271bbab653e68a055595bae3b84dd",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00010",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00010.f32",
+      "sha256": "1608eee76452df7b02cc3bb3f636fd6478527a16ed4609d7d7b36ceed6da8622",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00011",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00011.f32",
+      "sha256": "9aeb017479f0ff399b2f74d716280d7706b2941c08b9a0abc7f0891a85c8fd59",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00011",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00011.f32",
+      "sha256": "44b43024d3e21a651d3001ec7aee952754739b1fef5d39fe71135a1082379eb2",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00011",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00011.f32",
+      "sha256": "fabba657fd9ba6e0008c450466dd84832f8dc7e12aa77ef9537e2493d9c158e7",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00011",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00011.f32",
+      "sha256": "359cd29b4d365326ac1811b70ce1e47cbce383fcc1947bcd7dc8ab40a3afa135",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00012",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00012.f32",
+      "sha256": "b00799a3932ade57e2421ef3cb8a176d2b5ddf1ee7d88e2679c9e9ceb1b2b3bd",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00012",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00012.f32",
+      "sha256": "a0edaea552350f9941a118e84abd782468345d21473ed6cd985397ce3745773a",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00012",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00012.f32",
+      "sha256": "226488ffafc082e1e89731a24162fd1309c7d17d7b1e04c95554f94ef611682e",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00012",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00012.f32",
+      "sha256": "340362024ac57bcf7a70c83eb052b9395540a484c195a558945909be52656922",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00013",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00013.f32",
+      "sha256": "30b95d2d4e5a84720afef9b893a8c85c39503679d195160bfeb4cdb356bb6205",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00013",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00013.f32",
+      "sha256": "d25be14713fee01cd1fb9a2bad01dd945d6df0b9d222081e1899ed5164b103d7",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00013",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00013.f32",
+      "sha256": "cc3fccc9c5f087da29af4da236d8c1f0e8d7de3c43c9439def12a84c8e09fec8",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00013",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00013.f32",
+      "sha256": "c51291417c2a5e682c3c73dab225a43dcacdfdaaf73fb4fc92862d0bee43df37",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00014",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00014.f32",
+      "sha256": "a26faacc76158b4b3dd4d53bebd099cc39a61728edc06869142234adde8d45b9",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00014",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00014.f32",
+      "sha256": "61fd8d4c36b974b3f59a9cf72273dfad85996ea78681c894409ac25fb7bb0fce",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00014",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00014.f32",
+      "sha256": "2f18cf90aef4b63d3ebd80324808580b67def4304aa5a30c673dc1ee388f1098",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00014",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0000_speaker_0000_00014.f32",
+      "sha256": "6e48ea0168f24219a5c30e757a503b2d8a9dd4d3f4994b0ebb77d4d5788c3f7b",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00000",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00000.f32",
+      "sha256": "c3ef23a2856a918fb9614ebf850c5e3a1e16a90abecfbffc585bb0c74f28410b",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00000",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00000.f32",
+      "sha256": "0b752b84989e929fc4ffac66e42f4dcadd1b578678ce13b07832cca5ebf842b6",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00000",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00000.f32",
+      "sha256": "fb7442fbc010f63c43e785f4ce929796e67b35cde3e2218cf8848116b3d66660",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00000",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00000.f32",
+      "sha256": "9371e87b385963acd9d164728ab78381ec4656a3f8bfff3e858d75860b76f071",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00001",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00001.f32",
+      "sha256": "acd7d1ddf310c63d218c560790cd4bc11c131fd406ff18f1f988c71415e600f2",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00001",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00001.f32",
+      "sha256": "ece423cf7d47bc729ebb1b36d63d5ee079e50708d0c3005a8762919444e7e803",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00001",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00001.f32",
+      "sha256": "51f8d19afcee8fa118195c921d3ba94055e522b21c4fd6ef4a24a68bd4740d6a",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00001",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00001.f32",
+      "sha256": "550a0fecd6cca4f502109531ed1997a8cc1f62b69462d7d132a4765ab2dd40cd",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00002",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00002.f32",
+      "sha256": "6dbad1fd3e7526113d56341ef7afb848051bd6a6ced2b03137be607c27dabe3f",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00002",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00002.f32",
+      "sha256": "0b732519d6c94a79036de98ed40771261fc1fe5483dcad888903d7d7bd064420",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00002",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00002.f32",
+      "sha256": "ee30bb6ebee9942f101b9a18cf19f0d023c924c7da0605becc96ffeebf09f4fd",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00002",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00002.f32",
+      "sha256": "1f25e3f1664208e543d9b898228e719446a7dae6337a8f43e2c86786c6876a27",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00003",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00003.f32",
+      "sha256": "8c9083e26f5b68707c21b3c1d0361e277da10d7fa2842163e12d9e0e1e240e95",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00003",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00003.f32",
+      "sha256": "8b7d5030edefa306758ab3bfe86f41c8385c57d8fc832d2709146717018b68bd",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00003",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00003.f32",
+      "sha256": "d98d6116c79d0ce5342f67cc21eca74d2c5af307a1cf3cc607d30fa80e736c4f",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00003",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00003.f32",
+      "sha256": "2a229abaf14d09b8584361888ea44e64f7ffae804932f587804d9fdda70b6867",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00004",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00004.f32",
+      "sha256": "0aa5ba2cd23984b11b763fc8a22e8b13491b7edddd94310a134a070f1cb55343",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00004",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00004.f32",
+      "sha256": "e5703280ddf68d84b8b43a9e926648eac24386efea0cd9b491ef5225aeba6c2a",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00004",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00004.f32",
+      "sha256": "544318bc36daa0f1693a61c96f21e418bada665f310a2531b988a8728e7628ad",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00004",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00004.f32",
+      "sha256": "5ccc6cb5e71207676c73cf32f11bd61717ecc06ee2e89078906bee2a15a02175",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00005",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00005.f32",
+      "sha256": "6dcb96332ec14a4de4b96e10ad2eabbe3d53998e5367d51173eb90f27f02e4fa",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00005",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00005.f32",
+      "sha256": "ab635a79ae43400396f8490d3fd52dfebd93836c682c051aed3a6cb09976a031",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00005",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00005.f32",
+      "sha256": "54194fac00f41f63e685928e4cdae4a623bae2d1c13c69eaf4f6dbde7695a539",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00005",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00005.f32",
+      "sha256": "f732501feabbd2e7338e71423924f7424d9b13f0d7723c07c7d12916f4697c4b",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00006",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00006.f32",
+      "sha256": "83ec5ba76ec74ea48034a448d782ada73a85d72838fa6b655518c4e0c43130e8",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00006",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00006.f32",
+      "sha256": "988181097174254d91a28f140a0c7c86499f67e144f7b65b91d3e9b273e42a1e",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00006",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00006.f32",
+      "sha256": "838f47c8a9d39ee7c6099bf23621e99af08a684d07c6a76c70cb9a0eb90019d8",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00006",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00006.f32",
+      "sha256": "d938722858fd5e95cbd9cb43add7a9f45c247fb3be11afdf27334ccddcf06a6a",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00007",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00007.f32",
+      "sha256": "d8e0f3518e616c7b93c81cb5f8fc7279c637404ba86db7a5c6a464efcff2c84b",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00007",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00007.f32",
+      "sha256": "6d3a8f391bcafd64eb68c1ae1b98c1e523d846b2d220dc8aca3674c54b4e7c3e",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00007",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00007.f32",
+      "sha256": "dbee9872cc31786c7ef2520d17b6e47766961d0450b69812363bf92223b767ee",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00007",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00007.f32",
+      "sha256": "73edb77351229e1e6cd7ca4bd1c54d541fb5fec4f80d615388f57dfbdeb90cf9",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00008",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00008.f32",
+      "sha256": "4161da5535faf4b1bf1bb221954ceeedf3f736dd1b145ba40a70f6a0c46a8c60",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00008",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00008.f32",
+      "sha256": "dc78ab00b92611c5ba9fec773d0c63210fc33621a9c89d13a1aa4acc475f8982",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00008",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00008.f32",
+      "sha256": "dd3b2d4a0e22581a49af5e28e64acd6fb7001d665c02f2a69c7722b47843493d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00008",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00008.f32",
+      "sha256": "a27da498a87bd2e4f850ddea73612946880e82523e934cb49105ef7cc75e8434",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00009",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00009.f32",
+      "sha256": "ad03e13799fbf711c38d45d93c9ab95c745e3ac0c4408d95cae40c8fbe13e4f2",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00009",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00009.f32",
+      "sha256": "2e4b73931975e100ae6f66ccb64aa26629cff46bd49cadc0c43cb70350ea7c1c",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00009",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00009.f32",
+      "sha256": "4e9c4c295051519863680c5b1b53bd48a9db648f975d5dfb66d3e5e4406b7d30",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00009",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00009.f32",
+      "sha256": "6e259076da0d370537a9eb26c81f257f69ed93c80125dca5bd241ba34c628fc6",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00010",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00010.f32",
+      "sha256": "bd280925bd437a0f42e786706962311036e4aa3c1434df929c70e9fd7acb5a8d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00010",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00010.f32",
+      "sha256": "7cae536d973eda469ba8adb313e0afa4dc7b88c4700447a48f5cc895b39c9807",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00010",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00010.f32",
+      "sha256": "b3cead9e20424c77138f7effbf706794fa157b431c247ff6e3842b98ec143e17",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00010",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00010.f32",
+      "sha256": "0607c3921b3722546aa69474d3a94946a8251916701764d267b698dfa2225a12",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00011",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00011.f32",
+      "sha256": "3b4ddfcd305b3e91967ade2c8b5f5395e626c76247763a6fc2b28e9b01eb038f",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00011",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00011.f32",
+      "sha256": "b1d34ac8fe4accc582b0714962c23807da3ef52d0e994f49707af73c1fc7f9e8",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00011",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00011.f32",
+      "sha256": "f2ef09c05b318de978dc8f5aa72fd1d6030c7bdbd9b2671e8705253d4ad433d4",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00011",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00011.f32",
+      "sha256": "03ddadbd8c29c9ac52a8dd451a97e00830582d41670ad58a86efaac5af07d622",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00012",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00012.f32",
+      "sha256": "95b84e548e435e636d396127f408ff165a79fc0102044a6edd046846ea51f857",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00012",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00012.f32",
+      "sha256": "d2cef25cb01fb6201560d4f98d47f78b6a6d35285716d8dc56f5e19dafc58242",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00012",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00012.f32",
+      "sha256": "46b494e15439a311bbae06d1c9f26c41a5a0f435775ccb33267bd502649e134d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00012",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00012.f32",
+      "sha256": "45db2726adf9a12dc6a015a44d0f1699aa64b67cc35e84db6eaf61698e91101d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00013",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00013.f32",
+      "sha256": "61a4880372b2a8ab65ac22c59cf77b46e950a94ec7391eafa39d7132a10bfdcc",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00013",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00013.f32",
+      "sha256": "da97a1406e260d46489cbaa2084c9dfdea04059c0e450d33e302efa250e7a8bd",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00013",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00013.f32",
+      "sha256": "4c658d22f0221eda98403184bc78941bae3e35bd31d4653c6541811fcf2bae91",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00013",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00013.f32",
+      "sha256": "3818df822d8c71fbe349bf06b6d5d930daf558d0c1929a27759e1d56aa59d04c",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00014",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00014.f32",
+      "sha256": "aa29081407c5a0d53945b8788609caafe1d6d7f04a35e6a8be92ce41a9a9b01a",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00014",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00014.f32",
+      "sha256": "24c68b94dfbf0d3e94b50d807d157d2c8762817dc2ab5c5517c8f6627ff9384e",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00014",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00014.f32",
+      "sha256": "921716781aada63e49840dea75b07bc3d842775e2ee8e20986b0ec2485384e17",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00014",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0001_speaker_0001_00014.f32",
+      "sha256": "3beadfbccac52c03231705c91b2591c4b2cfff25b10dc285561b77435af99319",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00000",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00000.f32",
+      "sha256": "9b33fcb7c88b54ff841cc5970fbf69fa3689b8eab55039d9a192f7116c0fde79",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00000",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00000.f32",
+      "sha256": "bc3bb9ebacf21fea372e50d4a896de04e425b6fdfba8b330a2c2383e85d0ded5",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00000",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00000.f32",
+      "sha256": "23abb9f29c0036eeb3f884d8748dacd588fb2694ce7279c63c28646fbbcee5de",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00000",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00000.f32",
+      "sha256": "b669d1de0ee1889334a2963526fe208aabffa80eb91f947a5f79a4770504fe1d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00001",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00001.f32",
+      "sha256": "f9aad3b633e55b948835a8d5724539a8703924e2eb7b79c55a92f8380892c974",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00001",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00001.f32",
+      "sha256": "2d21c18b21c1a57ed24258ecfd72e5aac8ece87d3744bd15bb5255ab82c15b8a",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00001",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00001.f32",
+      "sha256": "98e5e83df444be1ba73aff4c7e8787a2eddc560bf581d3773539073e8098a2ac",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00001",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00001.f32",
+      "sha256": "499b4a13fe9c3079c322e89fe41c6ec5abeea442711aa9506972427998ade424",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00002",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00002.f32",
+      "sha256": "34cdb3ef04861fe3799900024ff531506e24b9708b3c9f92a8831c332b10e219",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00002",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00002.f32",
+      "sha256": "3f3c4a40218a4b4925db1734f117a19e32b1fc44804963c086951a4c27f21611",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00002",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00002.f32",
+      "sha256": "6f5cc7672e04fe791b8d61b66b62a3822fb30da81bd1c387f12737268cb9b94c",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00002",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00002.f32",
+      "sha256": "1838d0b2de8c87b6fe70f2ede78a3281817e1c396f9dbd20d853fbdc7be496fe",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00003",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00003.f32",
+      "sha256": "d5716e4bec1602d10860f39fc170bce294139f1cd0843ac66240b82cde22ad06",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00003",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00003.f32",
+      "sha256": "d8aed4bc96d5329dbcb79ca567a467109b21e0331322d4e72f8fe9954b2a2f65",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00003",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00003.f32",
+      "sha256": "8a2395ce27878ffc41eec57fb4250f842c032d61a702bd452b9553739abade9c",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00003",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00003.f32",
+      "sha256": "b5ace42dd17649bc22668ecd908d307ff7faee5bd32f9737b481d4ee7d485f73",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00004",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00004.f32",
+      "sha256": "feb9c44ac62f6617622d1a2ba7d84dbc05ba8e478e5844c18e1ea225b27a61aa",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00004",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00004.f32",
+      "sha256": "410cae9d95fe4eca43d344f56e6cacc3c16a5858e7a12f47c56efc2abaf075ad",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00004",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00004.f32",
+      "sha256": "0c6aac39c411a701216845c3320755bed4f268c7b9967b145b7bd85f7ec47eb0",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00004",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00004.f32",
+      "sha256": "330f299a9784b59dd1bc3ecff03b5dfe2deb79851f358f6ae8208bf90542fc8d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00005",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00005.f32",
+      "sha256": "553b816ce69bf07ee295673691dccd152e818bbe17c0d43cefaec82f438a4622",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00005",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00005.f32",
+      "sha256": "73990d0ef9d577c1239109b4b0d64029c75a26693c059817bcf11209ec56e3ea",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00005",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00005.f32",
+      "sha256": "ae34cb581badad366df8439a46e1cf217b1f6794023899d1660ac9a1ef42b757",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00005",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00005.f32",
+      "sha256": "43444e84afc1cf5617a0f589ffb1c71df75f48f18fecca1906977782f6db9b2e",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00006",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00006.f32",
+      "sha256": "ab885d430eae297cdd433c79444c339b1aae74af555650b558d6f26c4b51e599",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00006",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00006.f32",
+      "sha256": "bcd893cfc3026a8d431ec95dae9542aed158b5c2126402e1cefd3ff92bda3428",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00006",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00006.f32",
+      "sha256": "9baa78ced4a26b76a61601f4b74b1464360457e7c9efaf7a63e5b19e24757de2",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00006",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00006.f32",
+      "sha256": "d35ae7b5c8768e343b023f040b5cc78212d5a0f43e7902136b150d939760f4b8",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00007",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00007.f32",
+      "sha256": "36afea5984e49ed147429c285717bb846444a1389e81568bb87aa33e2d03334f",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00007",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00007.f32",
+      "sha256": "fecb0f0370211c3d9750c570649b175649ab4e093cf4df370914b664f38506e4",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00007",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00007.f32",
+      "sha256": "00ca9e0e002e5c1fd2cc34db4f0071172df63b8f682f6e1446afb56a53546096",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00007",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00007.f32",
+      "sha256": "a2423aadb1fda50496ccdccd291034ed6f08722626d79eb62ba470f018cb0ac4",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00008",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00008.f32",
+      "sha256": "00c2b6bca07924b6bcf4306238568ebe84a9a97ef992f02087346516424f2d2f",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00008",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00008.f32",
+      "sha256": "cba756895570ce616130da77ae3b13ac076616e217208ebd8fb0b686025b1e5c",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00008",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00008.f32",
+      "sha256": "5216d695e23cecd71e7b83f552a315dcbb36298cc632d3b58891fe5d3a0af027",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00008",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00008.f32",
+      "sha256": "83550abc8ccadd78f14fd87434ecf951eaccd32d6d804fb0ecaf3c28f363a45e",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00009",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00009.f32",
+      "sha256": "a6d20816dbd6bafacc561c8c3fdab5529e67aabb4037e50c953d200e2bd7d624",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00009",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00009.f32",
+      "sha256": "7829fcf29346f2e0e115bac0ef79569a188ead25fe5a238891d498bd566e90cb",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00009",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00009.f32",
+      "sha256": "32b8c0120e44a337ba2f7b50eeac1e867e5198d842b7c2792541e3e40fe85ba7",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00009",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00009.f32",
+      "sha256": "77a8b4eafee3891ba586875975ea76d128fb47e252d228dfdfeebe2af690e649",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00010",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00010.f32",
+      "sha256": "a5c6c9a0100fa7c78770503a28169ee6d5e74131d9bf885a8598898c2de2ff76",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00010",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00010.f32",
+      "sha256": "1c798d4bf7683ffccb1885a8454a7405976d926357183f32b1db69192d533692",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00010",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00010.f32",
+      "sha256": "926dfbf005f420ab6575517e44dbc2c7fdd15bbc4dea75c94195558c60ddb2fb",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00010",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00010.f32",
+      "sha256": "fd4708464cbcbe2c0ddf7c87f45386d1bb17d82ff397de0d904831f3f0a5c6ab",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00011",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00011.f32",
+      "sha256": "d34bb82e44399afb50b33c6126188f07a31726f863ecc3385d55533c7dc626a7",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00011",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00011.f32",
+      "sha256": "a35c62ca3e225cd7c58eea9da2a2a5f30b222b4507c3adf5051e067641488cb7",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00011",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00011.f32",
+      "sha256": "b5960fa96938b827a7c414415430a1cf18de05f9ee6585cdfc5cbf09901c3c6f",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00011",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00011.f32",
+      "sha256": "c923ea881dcaea7857a2c9376db1519ca0a65c9b37e628f80cb48da07855dd18",
+      "padding": {
+        "source_samples": 958464,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00012",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00012.f32",
+      "sha256": "e8948ba678018ef442e41367bfb3a844e811e508cf476a600f70cf677645a29b",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00012",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00012.f32",
+      "sha256": "c391456e8c9eef8ccb974f45b79cfae25bec4d89230d6b6ef6f1a7f42d866e3b",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00012",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00012.f32",
+      "sha256": "5dc1cfb72b48f69f7c36fdc3e6cfaded3025fdd6429eb5e84d7ad12475edcc0b",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00012",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00012.f32",
+      "sha256": "7f13520e9df796f553867371d1a26eb4fe22251e0f155a1c747d5ad0c557bc68",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00013",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00013.f32",
+      "sha256": "64f9924d330587c9f4b0f85c29cab50da781a13fd0c8bb94c5969055f76e4018",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00013",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00013.f32",
+      "sha256": "7a9d2d99a6f5073d49a8af8a2166e54f6e7492db049d41fd6ca2989fa19cab07",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00013",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00013.f32",
+      "sha256": "3763eecf57dfd241c0978e367c79a42ec94e8982e1d484916dd173224367846d",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00013",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00013.f32",
+      "sha256": "81af3da26aed32b7454aa1e79db6e6e294c4c1be5eef2e1b2947852e5fccef68",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00014",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00014.f32",
+      "sha256": "7c566c647dd5ab682d050fa997deee676d8db769fcf28a60e634f22ec5fe7c78",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00014",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00014.f32",
+      "sha256": "d2f2771b19e59464030f3f61be04222d8f804a29deb998662fe5545274adfd55",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00014",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00014.f32",
+      "sha256": "9103b1bf0f2e997c017b33bad0515d57351d50983f535428fde1ccdc181c1be1",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00014",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/negative__speaker_negative_unregistered_speaker_0002_speaker_0002_00014.f32",
+      "sha256": "9ca1486c6b8a94a34c127b8a3cdf5e15be14dad2bfe35c59d51329b72660e93c",
+      "padding": {
+        "source_samples": 960512,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_0",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_jonah_id_0.f32",
+      "sha256": "db6642d66953f267991629dd6f4c9a739fab5af6c9e7d7ee4b1f4931a6ce7bd6",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_jonah_id_0.f32",
+      "sha256": "895b5110fbe3974cb5013dc2b01995c3f2daae1646651e4ab0411fcbf35266d9",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_0",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_jonah_id_0.f32",
+      "sha256": "cc266db748e7f91bed42ed09a76a30495d1b07843e1327034f36ae9828fcacc9",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_0",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_jonah_id_0.f32",
+      "sha256": "d27f9ba9e5dafac3445d2fe861d07d47cb8c260b2dda6a2f60eb3b6468ce99a9",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_1",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_jonah_id_1.f32",
+      "sha256": "437fa00284342a9ecdb0c6e13d1a1ccc8301a952c7648fb60d559ef5dceee79d",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_1",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_jonah_id_1.f32",
+      "sha256": "2b2f05a3dc001c23ff32700e1ad9d87e7c4d32f4be6729ce8cdefb8e3cd255d6",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_1",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_jonah_id_1.f32",
+      "sha256": "eb6d8d47bc360c03296eb67911ca176c14e65a34a4dc927e1342bb338bd01858",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_1",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_jonah_id_1.f32",
+      "sha256": "e66cbe03332b9177cfe897a703e08bfd19cc9e26cb932f486d3e1b5d3f69fb40",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_2",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_jonah_id_2.f32",
+      "sha256": "b30f7624292c11381670ad6cfd594088388b0811b7d775fbfcf8c0a5da9dabfb",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_2",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_jonah_id_2.f32",
+      "sha256": "8b0784616b61ae348036a863fab8cb84c7529f5bf4062c01b51f10e033c02c3d",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_2",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_jonah_id_2.f32",
+      "sha256": "6d02faa1f2152cead47c61b2a301a12902d67cc2989d3f6735ba090aaa08b44e",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_2",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_jonah_id_2.f32",
+      "sha256": "4486a6882b4976c2cfc3da027e027591910e31943b7d53f546bbbc8a3b5dc715",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_3",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_jonah_id_3.f32",
+      "sha256": "b0d6272c04ef723906d71591732f2b928596bdb4f9de288ac7c6bba5f5b12625",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_3",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_jonah_id_3.f32",
+      "sha256": "340a3a63b6880ef44511b33f8794d8554e1a1832a3c659ad67092c12a0a346f4",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_3",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_jonah_id_3.f32",
+      "sha256": "cf5370bfa38c4e6a36c730b7568db3e4df6633d277c57a2f54914f6614db130b",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_3",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_jonah_id_3.f32",
+      "sha256": "a3fefdf7ae45ce7192f950fcd4971bc71aab0c7eef2638222a201ecba1d402fb",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_4",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_jonah_id_4.f32",
+      "sha256": "5add719ae10d037255a1cc9b63de30a63dca9a69ca9849ddd876c101929bd5c2",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_4",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_jonah_id_4.f32",
+      "sha256": "13b5921462c83f474c717717838196455923944e6ff4727ab8dd3db46e888524",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_4",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_jonah_id_4.f32",
+      "sha256": "d6057ff39a57cfb821ea07fa8170c06e8dfaa788b51a3e6c82937a9f5760e570",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_jonah_id_4",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_jonah_id_4.f32",
+      "sha256": "aeac3e8d4a053bbe8521d39d146a882253df67557e7ae3d76048c9ee1c3f192c",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_0",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kim_id_0.f32",
+      "sha256": "2042e502fb7645ddbb86ba2b399cc302d6755f1e917be7b92b8011c00e90737c",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kim_id_0.f32",
+      "sha256": "b28f39506566d031ccbccb4333c1b610b5c5d924ddf6a8e0343f137ded55f3e3",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_0",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kim_id_0.f32",
+      "sha256": "7b1689426863971e7a988c0d55107606323d8080d2802979b57e07914d7ef729",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_0",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kim_id_0.f32",
+      "sha256": "06f488662c61ff42b4cfb6150e29710951cd200d81f3315e645b6d8089f46f2f",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_1",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kim_id_1.f32",
+      "sha256": "34c7dc6f5ee529732f83342996dd67173cbae09375e8bab52e15f3716bb19da9",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_1",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kim_id_1.f32",
+      "sha256": "e9811229351e280f213f48657bedce019390fe3f7ed8f40a7a1e94e7bb2ffbf7",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_1",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kim_id_1.f32",
+      "sha256": "b276421fe89b189976fc48a280747428d1d449da47df40d2cad0fad36973cf13",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_1",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kim_id_1.f32",
+      "sha256": "92bbdde6e0238990c7ef6fe50989ee343c67c9c78a7c12d6136cd607f467ccc1",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_2",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kim_id_2.f32",
+      "sha256": "5bafe1b65286657f383b0212a30f12fd2f75603abf2db0f5c04b65c3879ac00d",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_2",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kim_id_2.f32",
+      "sha256": "cf6caee301fc24f5a996c2cecfd04f14c4944eefe564736236e514f3a6d23c42",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_2",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kim_id_2.f32",
+      "sha256": "d882000f9d1b4c61629f3bb7cff2007662b2c9a1b1a041b1dcca6c6f2c5ae113",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_2",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kim_id_2.f32",
+      "sha256": "2e5552463caade2d48ef882c8953df910a5b422217648412f563e572217743cc",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_3",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kim_id_3.f32",
+      "sha256": "8f998f5b09cf58cd186d58a494d85034db54f6a971e7c97825cd0eb2f3cece41",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_3",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kim_id_3.f32",
+      "sha256": "24bb5a44408f082c651c00700611da27d0d87afe848a8ac6e96b15ff962f1df0",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_3",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kim_id_3.f32",
+      "sha256": "76bd33a1c53dd30b333276711233180a7c44e20b6d83b4fb2f04779dae348ca4",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_3",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kim_id_3.f32",
+      "sha256": "f04f0aa93a39439bd379eb61d082f4f838d599a7302a5405c0d4f9353f76cc73",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_4",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kim_id_4.f32",
+      "sha256": "c639506357ea457062b975f97c8741e06d5e60eda21498baf095a93862ebe679",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_4",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kim_id_4.f32",
+      "sha256": "3a18e9375bd469bbef9cd14448d505394024b2ebc98e0e6d4f90b11bc81d4976",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_4",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kim_id_4.f32",
+      "sha256": "22e5821268b90c7a0ce1815fc927cca3534621ccf13aa9e1216734d7f8de579c",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kim_id_4",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kim_id_4.f32",
+      "sha256": "43c644c58e6812c54445f6a49fd44d148538a86b387b361edc7a51c1ee8b5050",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_0",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kiuk_id_0.f32",
+      "sha256": "1a36b958caa982eff1aabbd2b06b17d8365ea8380116b6df1fc1f5de226635a4",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kiuk_id_0.f32",
+      "sha256": "9c0e34dfde91ad4da6c7db48b033616731d71f64d29bbc2113d2e02ed0e19e76",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_0",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kiuk_id_0.f32",
+      "sha256": "bce993762a5d4b2711c88a48075c129fe6c9b7f78407d214928f3037c0babb4c",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_0",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kiuk_id_0.f32",
+      "sha256": "4a88c891fc5f399cf5a02288791d0f614ee36a6b5deadd6256351a33b222ba06",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_1",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kiuk_id_1.f32",
+      "sha256": "5b857472e1e5245c22afd18447653a72fad8eeb10916cf9b96a5713ca80b4e4f",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_1",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kiuk_id_1.f32",
+      "sha256": "7d67c3cb42ab07de9be24d1dba544729e39bcbe51b3191a52d2b9fdbd3dc9a1d",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_1",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kiuk_id_1.f32",
+      "sha256": "d0634c3265d1206f945a83c5f46036660c923f14cc4487600fa9d18e06501f34",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_1",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kiuk_id_1.f32",
+      "sha256": "f237a9abf79f918eb45886de01d5296ce1f8afa62e8f91eb6fddf3a2fd91ddc9",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_2",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kiuk_id_2.f32",
+      "sha256": "b48fe0e71a70cb343997c9f4d2fe6c14c5d8598b85165f0133cea462291bda65",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_2",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kiuk_id_2.f32",
+      "sha256": "111dc917b22f84001e2feb4404c84861d4c15554d7523540f01f33bb4b90dd36",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_2",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kiuk_id_2.f32",
+      "sha256": "e99fac879232a5ecd02715a90b6895f9e41761de250097e8c52d2e2206fa437b",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_2",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kiuk_id_2.f32",
+      "sha256": "435013a6a7fc2f94e52f99a068ecaa2ce430df7e803b71d0065f7839e63ce124",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_3",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kiuk_id_3.f32",
+      "sha256": "fa262234a0a4942b616d134c3713236ec42bd3e54f75272be35e4f1ed49c6b47",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_3",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kiuk_id_3.f32",
+      "sha256": "09bf013b506b30f0981a66465d86066adf8edf6dccc3e6e6cddf7c781036e215",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_3",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kiuk_id_3.f32",
+      "sha256": "77103689698ad2a9d2ae0ad647d5c4696871ca255bc5de977ff32fe221bd8255",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_3",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kiuk_id_3.f32",
+      "sha256": "50e73e9d900fb9e269c7922de2d0e2094fd0f16cc47b88287c430846cb54c3ba",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_4",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_kiuk_id_4.f32",
+      "sha256": "86b267a6bd17f91a33eaf668a50dae96916d1e15002d1e504441a66603e58779",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_4",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_kiuk_id_4.f32",
+      "sha256": "eba0b59ad5785d91b53ad9b6736df3ff01f30ce5301483b22719d902145e2fba",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_4",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_kiuk_id_4.f32",
+      "sha256": "5f9f9bd2d5aa4f3a131d13c8a4c37140508943bc16626e858b7b456f06c06a52",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_kiuk_id_4",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_kiuk_id_4.f32",
+      "sha256": "fe44a45135882e49d25977ed9597db10e5e979f54b50d8202d77fb9d9fb924f7",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_0",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_ssh_id_0.f32",
+      "sha256": "d6084087dd52f36363b8754d8816571b89666888abd4f87f5ee028811dfc0bf5",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_0",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_ssh_id_0.f32",
+      "sha256": "085e4b083032a82a12e5573e3c0c346dfa7dd6a460aba4a6f47e2bcb5344188f",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_0",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_ssh_id_0.f32",
+      "sha256": "f429615fcf49df201cd56c3b653c6c6480a021bbce9ac1a89e334ee30887b574",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_0",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_ssh_id_0.f32",
+      "sha256": "643f732fd3d34dcab4c14a4703046c612ed56ce4ea91baea3d5f65039d876d22",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_1",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_ssh_id_1.f32",
+      "sha256": "ee038cd2b05f3662ac6e03b94d0eba09cf129868b55ab8312630981e59efdb95",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_1",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_ssh_id_1.f32",
+      "sha256": "6d7bc7e7db87663fa53a40f6d980616c0955e8f75dbf33f7ddb85a5fbb407715",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_1",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_ssh_id_1.f32",
+      "sha256": "810dab65633c47dff27b6141e6af1ea31d1c9c029fda828eef83bb8413fe4fa1",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_1",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_ssh_id_1.f32",
+      "sha256": "065dcad229abdf8e4f058b8562d9654aa5f35c096d6c763db3498cdf1a7f7942",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_2",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_ssh_id_2.f32",
+      "sha256": "b48675314a9dca121192fca97003f3fba03b582fe4042260607d1142765d2ee5",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_2",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_ssh_id_2.f32",
+      "sha256": "f2c7141b24c7e3d4faf83aa59eadca064a05526821a33c1e08f53e0426b7457f",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_2",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_ssh_id_2.f32",
+      "sha256": "1cd7834cb4099e01928592804b8489b2ecafef2b3568f29d3e77a21965e48167",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_2",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_ssh_id_2.f32",
+      "sha256": "e290dda565f95c84e8861b824294a254c3b2f8f997b25b19aed7b3ef60d25ee9",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_3",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_ssh_id_3.f32",
+      "sha256": "d50abf86a7f433330e2077aa1cff9f4ff18fdc1bfe8142b4d09ec52ce2aa8ce0",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_3",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_ssh_id_3.f32",
+      "sha256": "fb455b433ec3087a563f3e49812b21da35bada707622543c3ed82ee645eaa8e6",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_3",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_ssh_id_3.f32",
+      "sha256": "9d3746777d781069e1e7d4b5f1e23ab612fee8888026070cdac40cb239421b68",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_3",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_ssh_id_3.f32",
+      "sha256": "217848f881266d7b3ecf6525d00f660ef65ed8d0825e8f24b4f05a840da4ed8f",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_4",
+      "bucket_frames": 98,
+      "audio_seconds": 1.0,
+      "path": "benchmarks/campplus/features/eer/98/positive__speaker_identify_3sec_positive_ssh_id_4.f32",
+      "sha256": "cf9f0ccf6dc33be4d36969ee54450739e05c0dd9c51b0bb5b09d2e3985bad2f3",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 16000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_4",
+      "bucket_frames": 298,
+      "audio_seconds": 3.0,
+      "path": "benchmarks/campplus/features/eer/298/positive__speaker_identify_3sec_positive_ssh_id_4.f32",
+      "sha256": "2642ec6f288185ebda096ed42de0100ec42c815ac748a58b7f54980d5df329ad",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 48000,
+        "zero_padded_samples": 0,
+        "zero_padded_ratio": 0.0
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_4",
+      "bucket_frames": 498,
+      "audio_seconds": 5.0,
+      "path": "benchmarks/campplus/features/eer/498/positive__speaker_identify_3sec_positive_ssh_id_4.f32",
+      "sha256": "57b029e4a4d8c6c34fc8e62fb2049561b701c4de7d0ccdaedd1efdb7000cf994",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 80000,
+        "zero_padded_samples": 32000,
+        "zero_padded_ratio": 0.4
+      }
+    },
+    {
+      "input_id": "positive__speaker_identify_3sec_positive_ssh_id_4",
+      "bucket_frames": 998,
+      "audio_seconds": 10.0,
+      "path": "benchmarks/campplus/features/eer/998/positive__speaker_identify_3sec_positive_ssh_id_4.f32",
+      "sha256": "1bc9a5da4ac238b51bab6542f5b8f6e9cbc5fa14096e52dee0f5cc80bc03aac3",
+      "padding": {
+        "source_samples": 48000,
+        "bucket_samples": 160000,
+        "zero_padded_samples": 112000,
+        "zero_padded_ratio": 0.7
+      }
+    }
+  ]
+}
