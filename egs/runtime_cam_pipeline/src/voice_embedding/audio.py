@@ -92,8 +92,13 @@ def countdown_before_recording(
 
 
 def _report_recording_progress(elapsed: int, seconds: int) -> None:
-    sys.stdout.write(f"\rrecording! {elapsed}/{seconds}s")
-    sys.stdout.flush()
+    message = f"recording! {elapsed}/{seconds}s"
+
+    if sys.stdout.isatty():
+        sys.stdout.write(f"\r{message}")
+        sys.stdout.flush()
+    else:
+        print(message, flush=True)
 
 
 def record_wav(
