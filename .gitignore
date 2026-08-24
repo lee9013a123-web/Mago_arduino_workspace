@@ -108,3 +108,9 @@ models/deploy/**/campp_runtime
 
 # Regenerable backup archives
 archive/*.tar.gz
+
+# EER 측정 산출물 — 전부 재생성 가능 (14_build_eer_features.py / 14_collect_eer_embeddings.py).
+# 특징 308개가 44.6MB, 임베딩까지 더하면 계속 커진다. manifest(JSON)는 sha256을
+# 담고 있어 재현에 필요하므로 추적을 유지한다.
+benchmarks/campplus/features/eer/
+runs/models/campplus/eer/
