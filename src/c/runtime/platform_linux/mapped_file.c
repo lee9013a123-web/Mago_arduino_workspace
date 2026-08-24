@@ -77,6 +77,24 @@ CamppStatus campp_mapped_file_advise_sequential(
         ? CAMPP_STATUS_OK : CAMPP_STATUS_FILE_READ_FAILED;
 }
 
+/* THP가 [always]면 파일 매핑이 2 MiB PMD로 backing된다.  그러면 128 KiB~512 KiB
+ * 단위 MADV_DONTNEED가 huge page를 쪼개지 못해 통째로 상주한 채 남는다.  windowing을
+ * 쓰려면 이 매핑만 huge page 대상에서 빼야 4 KiB 단위 반납이 실제로 먹는다. */
+CamppStatus campp_mapped_file_advise_no_huge_page(
+    const CamppMappedFile *mapping)
+{
+    if (mapping == NULL || !mapping->mapped || mapping->data == NULL) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+#ifdef MADV_NOHUGEPAGE
+    if (madvise((void *)(uintptr_t)mapping->data, mapping->size,
+                MADV_NOHUGEPAGE) != 0) {
+        return CAMPP_STATUS_FILE_READ_FAILED;
+    }
+#endif
+    return CAMPP_STATUS_OK;
+}
+
 CamppStatus campp_mapped_file_prefetch(
     const CamppMappedFile *mapping, uint64_t offset, uint64_t size)
 {

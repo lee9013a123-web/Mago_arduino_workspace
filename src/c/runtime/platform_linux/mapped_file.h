@@ -19,6 +19,9 @@ CamppStatus campp_mapped_file_open_readonly(
 void campp_mapped_file_close(CamppMappedFile *mapping);
 CamppStatus campp_mapped_file_advise_sequential(
     const CamppMappedFile *mapping);
+
+CamppStatus campp_mapped_file_advise_no_huge_page(
+    const CamppMappedFile *mapping);
 CamppStatus campp_mapped_file_prefetch(
     const CamppMappedFile *mapping, uint64_t offset, uint64_t size);
 CamppStatus campp_mapped_file_discard(

@@ -1,87 +1,129 @@
 {
-  "schema_version": 1,
-  "format": "campp-fixed-bucket-model-set-v1",
-  "package_format": "camppmodel-v1",
-  "selection_key": "feature_frames",
-  "supported_buckets": [
+  "schema_version": 2,
+  "model_name": "campp_sv_multibucket",
+  "buckets": [
     98,
     298,
     498,
     998
   ],
-  "runtime_external": true,
-  "runtime_requirements": {
-    "architecture": "aarch64",
-    "required_isa": [
-      "neon"
-    ],
-    "optimization_suite": "qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized",
-    "model_package_loader": "camppmodel-v1"
+  "package_size_bytes": 8848696,
+  "package_sha256": "becc97dcdac90984c8b57f312918c958dadd058472e556b64c4702468ced2c6d",
+  "weights_sha256": "d342b50a3275feb09dd477e944d3cb95b0f5261ea02bc5d183a6ae3ee48358aa",
+  "plan_sha256": {
+    "98": "1494f2fc6d2b50ea1024d3d1138eaa991a988b1aa9f86a19900345df45b9c437",
+    "298": "90130a434cd36ec4dee393085f8e2c21a4331893e8a030c438397d3d7997b51b",
+    "498": "d84e85a7683385851c6509802b6da0db42870ecd230b8775be3e31261605908a",
+    "998": "53e00aca23916561ef00157c4134023d7c8dc4a47cf4a09b0f0307b0d974f07b"
   },
-  "buckets": {
-    "98": {
-      "audio_seconds": 1.0,
-      "input_shape": [
-        1,
-        98,
-        80
-      ],
-      "output_shape": [
-        1,
-        192
-      ],
-      "model": "campp_sv_98.camppmodel",
-      "report": "campp_sv_98.json",
-      "size_bytes": 7765797,
-      "sha256": "2a918fe6146e7285b25cac18d2b9ff264783d645133aafd67c630cbbc55cd795"
-    },
-    "298": {
-      "audio_seconds": 3.0,
-      "input_shape": [
-        1,
-        298,
-        80
-      ],
-      "output_shape": [
-        1,
-        192
-      ],
-      "model": "campp_sv_298.camppmodel",
-      "report": "campp_sv_298.json",
-      "size_bytes": 7767909,
-      "sha256": "63dc1c59f8939f439de5a5977890b4f3f138d5e244a37e3ba66896d6a124cee2"
-    },
-    "498": {
-      "audio_seconds": 5.0,
-      "input_shape": [
-        1,
-        498,
-        80
-      ],
-      "output_shape": [
-        1,
-        192
-      ],
-      "model": "campp_sv_498.camppmodel",
-      "report": "campp_sv_498.json",
-      "size_bytes": 7767909,
-      "sha256": "dce8b9d3c6bb508d9f2ec6e4a63c228204d0201d4a01f51743c8abad6d762ee9"
-    },
-    "998": {
-      "audio_seconds": 10.0,
-      "input_shape": [
-        1,
-        998,
-        80
-      ],
-      "output_shape": [
-        1,
-        192
-      ],
-      "model": "campp_sv_998.camppmodel",
-      "report": "campp_sv_998.json",
-      "size_bytes": 7767909,
-      "sha256": "ee58c2828a245733642014b3f3f0f942674455c91ad215af46b9e8581c110c13"
-    }
+  "shared_weights": true,
+  "size_if_separate_files_bytes": 31556704,
+  "size_saved_bytes": 22708008,
+  "source_manifest_kind": "runtime_bundle",
+  "source_manifest_sha256": "1902db69716d078b08d04d89b799247fe2e4f71a29bea3a4265678aa44c9f6a1",
+  "optimization_suite": "qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+dequant_neon_combined+fused_dqrq_neon+remaining_optimized",
+  "contracts": {
+    "buckets": [
+      {
+        "bucket_frames": 98,
+        "input": {
+          "dtype": "float32",
+          "shape": [
+            1,
+            98,
+            80
+          ],
+          "layout": "contiguous_logical_tensor",
+          "byte_order": "little-endian"
+        },
+        "output": {
+          "dtype": "float32",
+          "shape": [
+            1,
+            192
+          ],
+          "layout": "contiguous_logical_tensor",
+          "byte_order": "little-endian"
+        },
+        "operator_count": 832,
+        "tensor_count": 3272
+      },
+      {
+        "bucket_frames": 298,
+        "input": {
+          "dtype": "float32",
+          "shape": [
+            1,
+            298,
+            80
+          ],
+          "layout": "contiguous_logical_tensor",
+          "byte_order": "little-endian"
+        },
+        "output": {
+          "dtype": "float32",
+          "shape": [
+            1,
+            192
+          ],
+          "layout": "contiguous_logical_tensor",
+          "byte_order": "little-endian"
+        },
+        "operator_count": 884,
+        "tensor_count": 3272
+      },
+      {
+        "bucket_frames": 498,
+        "input": {
+          "dtype": "float32",
+          "shape": [
+            1,
+            498,
+            80
+          ],
+          "layout": "contiguous_logical_tensor",
+          "byte_order": "little-endian"
+        },
+        "output": {
+          "dtype": "float32",
+          "shape": [
+            1,
+            192
+          ],
+          "layout": "contiguous_logical_tensor",
+          "byte_order": "little-endian"
+        },
+        "operator_count": 884,
+        "tensor_count": 3272
+      },
+      {
+        "bucket_frames": 998,
+        "input": {
+          "dtype": "float32",
+          "shape": [
+            1,
+            998,
+            80
+          ],
+          "layout": "contiguous_logical_tensor",
+          "byte_order": "little-endian"
+        },
+        "output": {
+          "dtype": "float32",
+          "shape": [
+            1,
+            192
+          ],
+          "layout": "contiguous_logical_tensor",
+          "byte_order": "little-endian"
+        },
+        "operator_count": 884,
+        "tensor_count": 3272
+      }
+    ],
+    "frontend_embedded": false,
+    "postprocess_embedded": false,
+    "threshold_calibrated": false,
+    "optimization_kernels_embedded": false
   }
 }

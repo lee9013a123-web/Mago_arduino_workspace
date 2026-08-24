@@ -312,6 +312,9 @@ CamppStatus campp_runtime_model_enable_weight_window(
     model->weight_page_size = page_size;
     model->weight_windowing_enabled = true;
     blocks = NULL;
+    /* huge page backing이면 부분 반납이 불가능하다.  windowing 전제 조건이다. */
+    status = campp_mapped_file_advise_no_huge_page(&model->weight_mapping);
+    if (status != CAMPP_STATUS_OK) return status;
     status = campp_mapped_file_advise_sequential(&model->weight_mapping);
     if (status != CAMPP_STATUS_OK) goto failed_enabled;
     for (index = 0u; index < block_count; ++index) {

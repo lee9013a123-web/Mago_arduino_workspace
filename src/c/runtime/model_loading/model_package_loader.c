@@ -130,7 +130,8 @@ static CamppStatus campp_package_parse(
     CAMPP_READ_PACKAGE_U64(CAMPP_MODEL_PACKAGE_RESERVED_TAIL_OFFSET, reserved_tail);
 #undef CAMPP_READ_PACKAGE_U32
 #undef CAMPP_READ_PACKAGE_U64
-    if (version != CAMPP_MODEL_PACKAGE_FORMAT_VERSION) {
+    if (version < CAMPP_MODEL_PACKAGE_MIN_READ_VERSION ||
+        version > CAMPP_MODEL_PACKAGE_FORMAT_VERSION) {
         return CAMPP_STATUS_UNSUPPORTED_VERSION;
     }
     if (header_size != CAMPP_MODEL_PACKAGE_HEADER_SIZE ||
@@ -165,6 +166,7 @@ static CamppStatus campp_package_parse(
     for (index = 0u; index < section_count; ++index) {
         CamppByteSpan entry;
         uint32_t type, section_flags;
+        int per_bucket;
         uint64_t offset, section_size, section_reserved;
         uint8_t checksum[CAMPP_MODEL_PACKAGE_CHECKSUM_SIZE];
 
@@ -191,12 +193,17 @@ static CamppStatus campp_package_parse(
         status = campp_span_read_u64(
             &entry, CAMPP_MODEL_SECTION_RESERVED_OFFSET, &section_reserved);
         if (status != CAMPP_STATUS_OK) return status;
-        if (type < CAMPP_MODEL_SECTION_EXECUTION_PLAN ||
-            type > CAMPP_MODEL_SECTION_POSTPROCESS_JSON ||
-            section_flags != 0u || section_reserved != 0u ||
+        /* v2는 per-bucket 타입이 반복될 수 있고 그 flags가 bucket을 담는다.
+         * 그 외 타입은 v1과 같이 한 번만, flags 0으로 엄격히 본다. */
+        per_bucket = version >= 2u && campp_model_section_is_per_bucket(type);
+        if (type < (uint32_t)CAMPP_MODEL_SECTION_TYPE_MIN ||
+            type > (uint32_t)CAMPP_MODEL_SECTION_TYPE_MAX ||
+            section_reserved != 0u ||
+            (!per_bucket && section_flags != 0u) ||
+            (per_bucket && section_flags == 0u) ||
             section_size == 0u || offset < payload_offset ||
             (offset % CAMPP_MODEL_PACKAGE_ALIGNMENT) != 0u ||
-            (seen_mask & (1u << type)) != 0u) {
+            (!per_bucket && (seen_mask & (1u << type)) != 0u)) {
             return CAMPP_STATUS_CORRUPT_PLAN;
         }
         status = campp_span_check(&package, offset, section_size);
@@ -214,9 +221,13 @@ static CamppStatus campp_package_parse(
             sections[index].bytes.data, sections[index].bytes.size, checksum);
         if (status != CAMPP_STATUS_OK) return status;
         seen_mask |= 1u << type;
-        if (type == CAMPP_MODEL_SECTION_EXECUTION_PLAN) {
-            *out_plan = sections[index];
-        } else if (type == CAMPP_MODEL_SECTION_PACKED_WEIGHTS) {
+        if (type == (uint32_t)CAMPP_MODEL_SECTION_EXECUTION_PLAN) {
+            /* per-bucket일 때는 헤더 bucket과 짝이 맞는 plan만 고른다.
+             * v1은 flags가 0이라 그대로 받는다. */
+            if (!per_bucket || section_flags == bucket) {
+                *out_plan = sections[index];
+            }
+        } else if (type == (uint32_t)CAMPP_MODEL_SECTION_PACKED_WEIGHTS) {
             *out_weights = sections[index];
         }
     }
