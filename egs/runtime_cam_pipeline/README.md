@@ -236,7 +236,7 @@ python3 script/validate_native_fbank.py \
 
 화자 등록 Python 명령은 아직 유지되며 `--dry-run`을 지원한다.
 
-## 가장 단순한 웹 터미널
+## 선택형 웹 콘솔
 
 웹 서버는 Python 표준 라이브러리만 사용한다. 다음 명령을 실행하고 같은 LAN의
 브라우저에서 `http://<arduino-ip>:8080`에 접속한다.
@@ -246,17 +246,24 @@ cd egs/runtime_cam_pipeline
 python3 script/run_web.py
 ```
 
-화면의 한 줄 입력칸에 기존 CLI를 그대로 넣고 실행하면 stdout과 stderr가 아래
-터미널 영역에 실시간 표시된다.
+화면에서 작업(등록/추론), 엔진(C Total/C Runtime/ORT), bucket 네 가지와 화자
+폴더명을 선택한다. 서버가 선택값을 검증한 뒤 승인된 CLI로 변환하므로 shell
+명령을 직접 조립할 필요가 없다. C Total은 완전 네이티브 추론 전용이며 화자
+등록은 C Runtime 또는 ORT를 선택한다. 등록 bucket은 998로 자동 고정된다.
+
+오른쪽에는 선택한 backend의 `voice/` 또는 `voice_onnx/` 화자 폴더와 녹음 개수,
+template 생성 여부가 표시된다. 추론이 끝나면 terminal 문자열을 final score,
+backend, RTF, pipeline/host/runtime peak, weight/activation 카드로 분리해 표시한다.
+원본 stdout/stderr는 접을 수 있는 실시간 터미널에서 그대로 확인할 수 있다.
 
 ```bash
 ./runtime/campp_speaker_verify --mic-version arduino_default --speaker-embedding lee --bucket 298
 python3 script/verify_speaker.py --ort --mic-version arduino_default --speaker-embedding lee --bucket 298
 ```
 
-웹 입력은 실제 shell이 아니다. 보안을 위해 네이티브 검증기와 다음 Python
-유틸리티만 허용하며 pipe,
-redirect, `&&`, command substitution은 거부한다.
+웹 실행은 실제 shell이 아니다. `/api/pipeline/run`은 구조화된 필드만 받고,
+기존 `/api/run`도 보안을 위해 네이티브 검증기와 다음 Python 유틸리티만
+허용한다. pipe, redirect, `&&`, command substitution은 거부한다.
 
 - `script/enroll_speaker.py`
 - `script/verify_speaker.py`

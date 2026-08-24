@@ -33,6 +33,8 @@ from similarity_detect.scoring import (  # noqa: E402
 from similarity_detect.web_terminal import (  # noqa: E402
     PipelineWebServer,
     WebTerminalError,
+    build_pipeline_action_command,
+    list_recorded_speakers,
     parse_pipeline_command,
 )
 from voice_embedding.audio import fixed_length_pcm  # noqa: E402
@@ -371,6 +373,53 @@ class PipelineMemoryMonitorTest(unittest.TestCase):
 
 
 class WebTerminalTest(unittest.TestCase):
+    def test_builds_structured_backend_commands(self) -> None:
+        native = build_pipeline_action_command({
+            "action": "verify",
+            "engine": "native",
+            "bucket": 298,
+            "speaker": "lee",
+            "microphone": "arduino_default",
+        })
+        self.assertTrue(native.startswith("./runtime/campp_speaker_verify"))
+        self.assertIn("--bucket 298", native)
+        ort = build_pipeline_action_command({
+            "action": "verify",
+            "engine": "ort",
+            "bucket": 98,
+            "speaker": "lee",
+        })
+        self.assertIn("script/verify_speaker.py --ort", ort)
+
+    def test_native_enrollment_is_rejected(self) -> None:
+        with self.assertRaises(WebTerminalError):
+            build_pipeline_action_command({
+                "action": "enroll",
+                "engine": "native",
+                "bucket": 998,
+                "speaker": "lee",
+            })
+
+    def test_lists_c_and_ort_speaker_folders(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            pipeline = Path(temporary)
+            c_recorded = pipeline / "voice/recorded/lee"
+            c_embedded = pipeline / "voice/embedded/lee"
+            ort_recorded = pipeline / "voice_onnx/recorded/kim"
+            c_recorded.mkdir(parents=True)
+            c_embedded.mkdir(parents=True)
+            ort_recorded.mkdir(parents=True)
+            (c_recorded / "recording_01.wav").write_bytes(b"wav")
+            (c_embedded / "mean_embedding.f32").write_bytes(b"embedding")
+            (ort_recorded / "recording_01.wav").write_bytes(b"wav")
+            speakers = list_recorded_speakers(pipeline)
+            self.assertEqual(speakers["c"], [{
+                "name": "lee", "recordings": 1, "enrolled": True,
+            }])
+            self.assertEqual(speakers["ort"], [{
+                "name": "kim", "recordings": 1, "enrolled": False,
+            }])
+
     def test_allows_native_speaker_verification_command(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             pipeline = Path(temporary)
@@ -444,6 +493,9 @@ class WebTerminalTest(unittest.TestCase):
             with urlopen(f"http://{host}:{port}/api/health", timeout=5) as response:
                 health = json.loads(response.read())
             self.assertTrue(health["ready"])
+            with urlopen(f"http://{host}:{port}/api/speakers", timeout=5) as response:
+                speakers = json.loads(response.read())
+            self.assertEqual(set(speakers["speakers"]), {"c", "ort"})
             request = Request(
                 f"http://{host}:{port}/api/run",
                 data=json.dumps({

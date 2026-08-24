@@ -24,6 +24,9 @@ ALLOWED_SCRIPTS = frozenset({
     "list_microphones.py",
 })
 NATIVE_VERIFY_BINARY = "campp_speaker_verify"
+PIPELINE_ENGINES = frozenset({"native", "c", "ort"})
+PIPELINE_ACTIONS = frozenset({"enroll", "verify"})
+PIPELINE_BUCKETS = frozenset({98, 298, 498, 998})
 MAX_COMMAND_BYTES = 8192
 SHELL_CONTROL_TOKENS = frozenset({
     "|", "||", "&&", ";", "<", ">", ">>", "2>", "2>>", "&",
@@ -48,6 +51,122 @@ class ParsedCommand:
 class RunningCommand:
     parsed: ParsedCommand
     process: subprocess.Popen[str]
+
+
+def _safe_ui_name(value: object, *, field: str) -> str:
+    if not isinstance(value, str):
+        raise WebTerminalError(f"{field} must be a string")
+    name = value.strip()
+    if not name or len(name) > 128:
+        raise WebTerminalError(f"{field} is empty or too long")
+    if any(character in name for character in ("/", "\\", "\0")) or any(
+        ord(character) < 32 for character in name
+    ):
+        raise WebTerminalError(f"{field} contains unsafe characters")
+    return name
+
+
+def build_pipeline_action_command(request: dict) -> str:
+    """Translate the structured web form into one approved CLI command."""
+    engine = request.get("engine")
+    action = request.get("action")
+    if engine not in PIPELINE_ENGINES:
+        raise WebTerminalError(f"unsupported engine: {engine!r}")
+    if action not in PIPELINE_ACTIONS:
+        raise WebTerminalError(f"unsupported action: {action!r}")
+    speaker = _safe_ui_name(request.get("speaker"), field="speaker folder")
+    microphone = _safe_ui_name(
+        request.get("microphone", "arduino_default"),
+        field="microphone version",
+    )
+
+    if action == "enroll":
+        if engine == "native":
+            raise WebTerminalError(
+                "C Total is inference-only; choose C Runtime for enrollment"
+            )
+        argv = [
+            "python3", "script/enroll_speaker.py",
+            "--ort" if engine == "ort" else "--c",
+            "--mic-version", microphone,
+            "--speaker-folder", speaker,
+        ]
+        return shlex.join(argv)
+
+    bucket = request.get("bucket")
+    if not isinstance(bucket, int) or isinstance(bucket, bool) or (
+        bucket not in PIPELINE_BUCKETS
+    ):
+        raise WebTerminalError(
+            "bucket must be one of 98, 298, 498, or 998"
+        )
+    if engine == "native":
+        argv = [
+            "./runtime/campp_speaker_verify",
+            "--mic-version", microphone,
+            "--speaker-embedding", speaker,
+            "--bucket", str(bucket),
+        ]
+    else:
+        argv = [
+            "python3", "script/verify_speaker.py",
+            "--ort" if engine == "ort" else "--c",
+            "--mic-version", microphone,
+            "--speaker-embedding", speaker,
+            "--bucket", str(bucket),
+        ]
+    return shlex.join(argv)
+
+
+def list_recorded_speakers(pipeline_root: Path) -> dict[str, list[dict]]:
+    """List pipeline-local speaker folders without following escaped links."""
+    boundary = pipeline_root.resolve()
+    groups = {
+        "c": (pipeline_root / "voice/recorded", pipeline_root / "voice/embedded"),
+        "ort": (
+            pipeline_root / "voice_onnx/recorded",
+            pipeline_root / "voice_onnx/embedded",
+        ),
+    }
+    payload: dict[str, list[dict]] = {}
+    for backend, (recorded_root, embedded_root) in groups.items():
+        names: set[str] = set()
+        for root in (recorded_root, embedded_root):
+            if not root.is_dir():
+                continue
+            for child in root.iterdir():
+                try:
+                    resolved = child.resolve()
+                except OSError:
+                    continue
+                if child.is_dir() and resolved.is_relative_to(boundary):
+                    names.add(child.name)
+        rows = []
+        for name in sorted(names, key=str.casefold):
+            recorded = recorded_root / name
+            embedded = embedded_root / name
+            try:
+                recorded_safe = (
+                    recorded.is_dir()
+                    and recorded.resolve().is_relative_to(boundary)
+                )
+                embedded_safe = (
+                    embedded.is_dir()
+                    and embedded.resolve().is_relative_to(boundary)
+                )
+            except OSError:
+                recorded_safe = False
+                embedded_safe = False
+            rows.append({
+                "name": name,
+                "recordings": len(list(recorded.glob("*.wav")))
+                if recorded_safe else 0,
+                "enrolled": embedded_safe and (
+                    embedded / "mean_embedding.f32"
+                ).is_file(),
+            })
+        payload[backend] = rows
+    return payload
 
 
 def parse_pipeline_command(
@@ -284,6 +403,10 @@ class PipelineRequestHandler(BaseHTTPRequestHandler):
                 "busy": self.server.controller.busy,
                 "allowed_scripts": sorted(ALLOWED_SCRIPTS),
             })
+        elif path == "/api/speakers":
+            self._send_json(HTTPStatus.OK, {
+                "speakers": list_recorded_speakers(self.server.pipeline_root),
+            })
         else:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
 
@@ -293,14 +416,17 @@ class PipelineRequestHandler(BaseHTTPRequestHandler):
             stopped = self.server.controller.stop()
             self._send_json(HTTPStatus.OK, {"stopped": stopped})
             return
-        if path != "/api/run":
+        if path not in {"/api/run", "/api/pipeline/run"}:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
             return
         try:
             request = self._read_json()
-            command = request.get("command")
-            if not isinstance(command, str):
-                raise WebTerminalError("request has no string command")
+            if path == "/api/pipeline/run":
+                command = build_pipeline_action_command(request)
+            else:
+                command = request.get("command")
+                if not isinstance(command, str):
+                    raise WebTerminalError("request has no string command")
             running = self.server.controller.start(command)
         except CommandBusyError as exc:
             self._send_json(HTTPStatus.CONFLICT, {"error": str(exc)})

@@ -3,147 +3,198 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CAM++ Runtime Terminal</title>
+  <title>CAM++ Speaker Console</title>
   <style>
     :root {
-      color-scheme: dark;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      background: #0b0d10;
-      color: #e7edf3;
+      color-scheme: dark; font-family: Inter, Pretendard, "Noto Sans KR", system-ui, sans-serif;
+      background: #090d12; color: #edf3f7; --surface: #10161d; --surface-2: #151d26;
+      --line: #273340; --muted: #8d9ba8; --green: #55dfa2;
+      --green-soft: rgba(85, 223, 162, .12); --blue: #66a8ff; --danger: #ff7a85;
     }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 24px; }
-    main { width: min(1100px, 100%); margin: 0 auto; }
-    h1 { margin: 0 0 8px; font-size: 22px; }
-    .hint { margin: 0 0 18px; color: #91a0ad; font: 14px system-ui, sans-serif; }
-    .command-row { display: grid; grid-template-columns: 1fr auto auto auto; gap: 8px; }
-    input, button {
-      border: 1px solid #303a43;
-      border-radius: 7px;
-      background: #12171d;
-      color: inherit;
-      min-height: 42px;
-      font: inherit;
-    }
-    input { width: 100%; padding: 9px 12px; }
-    button { padding: 8px 14px; cursor: pointer; }
-    button:hover:not(:disabled) { border-color: #5fdd9d; }
-    button:disabled { opacity: .45; cursor: not-allowed; }
-    #run { background: #15482f; }
-    #stop { background: #4b2020; }
-    .examples { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
-    .examples button { min-height: 32px; padding: 5px 10px; font-size: 12px; }
-    .status { margin: 8px 0; color: #65e0a3; font: 13px system-ui, sans-serif; }
-    pre {
-      margin: 0;
-      min-height: 60vh;
-      max-height: 72vh;
-      overflow: auto;
-      padding: 16px;
-      border: 1px solid #303a43;
-      border-radius: 8px;
-      background: #050708;
-      color: #d8f3dc;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-      line-height: 1.45;
-    }
-    @media (max-width: 760px) {
-      body { padding: 12px; }
-      .command-row { grid-template-columns: 1fr 1fr; }
-      .command-row input { grid-column: 1 / -1; }
-    }
+    body { margin: 0; min-width: 320px; background: radial-gradient(circle at 18% 0%, rgba(62,111,142,.16), transparent 32rem), #090d12; }
+    button, input, select { font: inherit; } button { cursor: pointer; }
+    button:disabled, input:disabled, select:disabled { opacity: .48; cursor: not-allowed; }
+    .topbar { min-height: 68px; border-bottom: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 28px; background: rgba(9,13,18,.88); backdrop-filter: blur(18px); }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; color: #07130e; background: var(--green); font-weight: 800; letter-spacing: -.06em; }
+    .brand h1 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -.01em; }
+    .brand p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+    .connection { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .connection-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 16px var(--green); }
+    .shell { width: min(1220px, 100%); margin: 0 auto; padding: 28px; }
+    .intro { margin-bottom: 22px; } .intro h2 { margin: 0 0 7px; font-size: clamp(23px,3vw,34px); font-weight: 650; letter-spacing: -.035em; }
+    .intro p { margin: 0; color: var(--muted); font-size: 14px; }
+    .workspace { display: grid; grid-template-columns: minmax(0,1.55fr) minmax(300px,.8fr); gap: 18px; align-items: start; }
+    .panel { border: 1px solid var(--line); background: rgba(16,22,29,.92); border-radius: 16px; overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+    .panel-head h3 { margin: 0; font-size: 14px; font-weight: 650; } .panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+    .controls { padding: 20px; display: grid; gap: 18px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field { display: grid; gap: 7px; } .field.full { grid-column: 1 / -1; }
+    .field label, .group-label { color: #bcc7d0; font-size: 12px; font-weight: 600; }
+    .field input, .field select { width: 100%; min-height: 44px; padding: 9px 11px; color: #edf3f7; background: #0c1117; border: 1px solid var(--line); border-radius: 9px; outline: none; }
+    .field input:focus, .field select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(85,223,162,.1); }
+    .field-note { color: var(--muted); font-size: 11px; }
+    .buckets { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+    .bucket { position: relative; } .bucket input { position: absolute; opacity: 0; pointer-events: none; }
+    .bucket label { display: grid; place-items: center; min-height: 44px; border: 1px solid var(--line); border-radius: 9px; background: #0c1117; color: #b9c5ce; font-size: 13px; cursor: pointer; }
+    .bucket input:checked + label { color: var(--green); border-color: var(--green); background: var(--green-soft); }
+    .bucket input:focus-visible + label { outline: 2px solid var(--blue); outline-offset: 2px; }
+    .command-preview { padding: 11px 12px; background: #090d12; border: 1px solid #202a34; border-radius: 9px; color: #a8b8c5; font: 12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; overflow-wrap: anywhere; }
+    .action-row { display: grid; grid-template-columns: 1fr auto; gap: 9px; }
+    .primary, .danger, .icon-button { min-height: 44px; border-radius: 9px; border: 1px solid var(--line); color: inherit; }
+    .primary { border-color: #48cb91; background: #37b87e; color: #06110c; font-weight: 700; }
+    .primary:hover:not(:disabled) { background: #55dfa2; }
+    .danger { padding: 0 15px; background: rgba(255,122,133,.1); border-color: rgba(255,122,133,.35); color: #ff9ca5; }
+    .icon-button { min-height: 32px; padding: 0 10px; color: var(--muted); font-size: 11px; background: #151d26; }
+    .icon-button:hover:not(:disabled) { border-color: #4b5d6d; }
+    .run-state { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 12px; min-height: 18px; }
+    .run-state.active { color: var(--green); }
+    .spinner { display: none; width: 12px; height: 12px; border: 2px solid rgba(85,223,162,.25); border-top-color: var(--green); border-radius: 50%; animation: spin .8s linear infinite; }
+    .run-state.active .spinner { display: block; } @keyframes spin { to { transform: rotate(360deg); } }
+    .terminal-wrap { border-top: 1px solid var(--line); }
+    .terminal-wrap summary { padding: 14px 20px; color: var(--muted); font-size: 12px; cursor: pointer; }
+    #terminal { margin: 0; min-height: 180px; max-height: 360px; overflow: auto; padding: 16px 20px; background: #070a0e; color: #b9e8cf; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; }
+    .rail { display: grid; gap: 18px; } .result-body { padding: 20px; }
+    .result-empty { min-height: 158px; display: grid; place-items: center; text-align: center; color: var(--muted); font-size: 13px; }
+    .score-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; }
+    .score { margin: 4px 0 14px; color: var(--green); font-size: 42px; font-weight: 700; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+    .backend-line { margin-bottom: 17px; color: #c6d0d8; font-size: 12px; overflow-wrap: anywhere; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .metric { min-height: 66px; padding: 11px; background: var(--surface-2); }
+    .metric span { display: block; color: var(--muted); font-size: 10px; margin-bottom: 5px; }
+    .metric strong { font-size: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
+    .status-chip { padding: 5px 8px; border-radius: 999px; background: var(--green-soft); color: var(--green); font-size: 11px; white-space: nowrap; }
+    .speaker-list { padding: 8px; display: grid; gap: 4px; max-height: 330px; overflow: auto; }
+    .speaker-row { width: 100%; display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 10px; padding: 10px; border: 0; border-radius: 9px; background: transparent; color: inherit; text-align: left; }
+    .speaker-row:hover { background: #18212a; }
+    .speaker-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #21302d; color: var(--green); font-weight: 700; }
+    .speaker-name { display: block; font-size: 13px; font-weight: 650; overflow-wrap: anywhere; }
+    .speaker-meta { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+    .speaker-state { color: var(--green); font-size: 10px; } .speaker-state.pending { color: #e6bf69; }
+    .speaker-empty { padding: 28px 14px; color: var(--muted); text-align: center; font-size: 12px; }
+    .error { color: var(--danger); }
+    @media (max-width: 880px) { .workspace { grid-template-columns: 1fr; } .rail { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .topbar { padding: 0 16px; } .brand p, .connection span { display: none; } .shell { padding: 20px 13px; } .form-grid, .rail { grid-template-columns: 1fr; } .field.full { grid-column: auto; } .buckets { grid-template-columns: 1fr 1fr; } .action-row { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <main>
-    <h1>CAM++ Runtime Terminal</h1>
-    <p class="hint">허용된 화자 등록·검증 명령의 출력만 실시간으로 표시합니다.</p>
-
-    <div class="command-row">
-      <input id="command" spellcheck="false" autocomplete="off"
-        value="./runtime/campp_speaker_verify --mic-version arduino_default --speaker-embedding lee --bucket 298">
-      <button id="run">실행</button>
-      <button id="stop" disabled>중지</button>
-      <button id="clear">지우기</button>
+  <header class="topbar">
+    <div class="brand"><div class="brand-mark">C+</div><div><h1>CAM++ Speaker Console</h1><p>On-device speaker verification</p></div></div>
+    <div class="connection"><i class="connection-dot"></i><span>Arduino 연결됨</span></div>
+  </header>
+  <main class="shell">
+    <section class="intro"><h2>화자를 등록하고 바로 확인하세요</h2><p>엔진과 음성 길이를 선택하면 녹음부터 임베딩, 유사도 계산까지 한 번에 실행합니다.</p></section>
+    <div class="workspace">
+      <section class="panel" aria-labelledby="run-title">
+        <div class="panel-head"><div><h3 id="run-title">실행 설정</h3><p>한 번에 하나의 마이크 작업만 실행됩니다.</p></div><span id="mode-chip" class="status-chip">추론</span></div>
+        <form id="pipeline-form" class="controls">
+          <div class="form-grid">
+            <div class="field"><label for="action">작업</label><select id="action"><option value="verify">유사도 추론</option><option value="enroll">화자 등록</option></select></div>
+            <div class="field"><label for="engine">실행 엔진</label><select id="engine"><option value="native">C Total · 완전 네이티브</option><option value="c">C Runtime · Python 비교</option><option value="ort">ONNX Runtime CPU</option></select><span id="engine-note" class="field-note">Python/NumPy 없이 전체 파이프라인을 실행합니다.</span></div>
+            <div class="field full"><span class="group-label">입력 버킷 · 녹음 길이</span><div class="buckets" id="buckets">
+              <div class="bucket"><input id="bucket-98" type="radio" name="bucket" value="98"><label for="bucket-98">98 · 1초</label></div>
+              <div class="bucket"><input id="bucket-298" type="radio" name="bucket" value="298" checked><label for="bucket-298">298 · 3초</label></div>
+              <div class="bucket"><input id="bucket-498" type="radio" name="bucket" value="498"><label for="bucket-498">498 · 5초</label></div>
+              <div class="bucket"><input id="bucket-998" type="radio" name="bucket" value="998"><label for="bucket-998">998 · 10초</label></div>
+            </div><span id="bucket-note" class="field-note">추론에 사용할 고정 frame 길이입니다.</span></div>
+            <div class="field"><label for="speaker">화자 폴더명</label><input id="speaker" value="lee" maxlength="128" autocomplete="off" placeholder="예: lee"></div>
+            <div class="field"><label for="microphone">마이크 버전</label><input id="microphone" value="arduino_default" maxlength="128" autocomplete="off"></div>
+          </div>
+          <div><span class="group-label">실행 명령 미리보기</span><div id="command-preview" class="command-preview"></div></div>
+          <div class="action-row"><button id="run" class="primary" type="submit">유사도 추론 시작</button><button id="stop" class="danger" type="button" disabled>중지</button></div>
+          <div id="run-state" class="run-state" aria-live="polite"><i class="spinner"></i><span>실행 준비 완료</span></div>
+        </form>
+        <details class="terminal-wrap"><summary>실시간 터미널 로그 보기</summary><pre id="terminal" aria-live="polite"></pre></details>
+      </section>
+      <aside class="rail">
+        <section class="panel" aria-labelledby="result-title"><div class="panel-head"><div><h3 id="result-title">최종 결과</h3><p id="result-context">측정 전</p></div><span id="result-status" class="status-chip">대기</span></div><div id="result" class="result-body" aria-live="polite"><div class="result-empty">추론이 끝나면 점수와<br>메모리·RTF가 표시됩니다.</div></div></section>
+        <section class="panel" aria-labelledby="speakers-title"><div class="panel-head"><div><h3 id="speakers-title">녹음된 화자</h3><p id="speaker-source">C Runtime 등록 폴더</p></div><button id="refresh-speakers" class="icon-button" type="button">새로고침</button></div><div id="speaker-list" class="speaker-list" aria-live="polite"></div></section>
+      </aside>
     </div>
-
-    <div class="examples">
-      <button data-command="./runtime/campp_speaker_verify --mic-version arduino_default --speaker-embedding lee --bucket 298">네이티브 유사도 측정</button>
-      <button data-command="python3 script/verify_speaker.py --c --mic-version arduino_default --speaker-embedding lee --bucket 298">C 비교 측정</button>
-      <button data-command="python3 script/verify_speaker.py --ort --mic-version arduino_default --speaker-embedding lee --bucket 298">ORT 비교 측정</button>
-      <button data-command="python3 script/enroll_speaker.py --c --mic-version arduino_default --speaker-folder lee">C 화자 등록</button>
-      <button data-command="python3 script/enroll_speaker.py --ort --mic-version arduino_default --speaker-folder lee">ORT 화자 등록</button>
-      <button data-command="python3 script/list_microphones.py">마이크 목록</button>
-    </div>
-
-    <div id="status" class="status">대기</div>
-    <pre id="terminal" aria-live="polite"></pre>
   </main>
   <script>
-    const command = document.querySelector('#command');
-    const runButton = document.querySelector('#run');
-    const stopButton = document.querySelector('#stop');
-    const clearButton = document.querySelector('#clear');
-    const terminal = document.querySelector('#terminal');
-    const status = document.querySelector('#status');
-    let running = false;
-
+    const form = document.querySelector('#pipeline-form'), action = document.querySelector('#action'), engine = document.querySelector('#engine');
+    const speaker = document.querySelector('#speaker'), microphone = document.querySelector('#microphone'), runButton = document.querySelector('#run');
+    const stopButton = document.querySelector('#stop'), terminal = document.querySelector('#terminal'), runState = document.querySelector('#run-state');
+    const commandPreview = document.querySelector('#command-preview'), modeChip = document.querySelector('#mode-chip'), engineNote = document.querySelector('#engine-note');
+    const bucketNote = document.querySelector('#bucket-note'), result = document.querySelector('#result'), resultStatus = document.querySelector('#result-status');
+    const resultContext = document.querySelector('#result-context'), speakerList = document.querySelector('#speaker-list'), speakerSource = document.querySelector('#speaker-source');
+    const refreshSpeakers = document.querySelector('#refresh-speakers'), nativeOption = engine.querySelector('option[value="native"]');
+    let running = false, lastVerifyBucket = '298', speakerGroups = {c: [], ort: []};
+    function selectedBucket() { return document.querySelector('input[name="bucket"]:checked')?.value || '298'; }
+    function shellQuote(value) { return /^[A-Za-z0-9_.-]+$/.test(value) ? value : `'${value.replaceAll("'", "'\\''")}'`; }
+    function commandForSelection() {
+      const name = shellQuote(speaker.value.trim() || '<화자>'), mic = shellQuote(microphone.value.trim() || 'arduino_default');
+      if (action.value === 'enroll') return `python3 script/enroll_speaker.py ${engine.value === 'ort' ? '--ort' : '--c'} --mic-version ${mic} --speaker-folder ${name}`;
+      const bucket = selectedBucket();
+      if (engine.value === 'native') return `./runtime/campp_speaker_verify --mic-version ${mic} --speaker-embedding ${name} --bucket ${bucket}`;
+      return `python3 script/verify_speaker.py ${engine.value === 'ort' ? '--ort' : '--c'} --mic-version ${mic} --speaker-embedding ${name} --bucket ${bucket}`;
+    }
+    function updateControls() {
+      const enrolling = action.value === 'enroll'; nativeOption.disabled = enrolling;
+      if (enrolling && engine.value === 'native') engine.value = 'c';
+      document.querySelectorAll('input[name="bucket"]').forEach(input => { input.disabled = enrolling || running; });
+      if (enrolling) document.querySelector('#bucket-998').checked = true;
+      modeChip.textContent = enrolling ? '등록 · 998 고정' : '추론'; runButton.textContent = enrolling ? '화자 등록 시작' : '유사도 추론 시작';
+      bucketNote.textContent = enrolling ? '화자 등록은 10초 음성 5개와 998-frame 모델로 고정됩니다.' : '추론에 사용할 고정 frame 길이입니다.';
+      engineNote.textContent = {native:'Python/NumPy 없이 전체 파이프라인을 실행합니다.',c:'Python host에서 동일한 Final V3 C Runtime을 호출합니다.',ort:'ONNX Runtime CPU 기준 경로로 실행합니다.'}[engine.value];
+      commandPreview.textContent = commandForSelection(); speakerSource.textContent = engine.value === 'ort' ? 'ONNX Runtime 등록 폴더' : 'C Runtime 등록 폴더'; renderSpeakers();
+    }
     function setRunning(value) {
-      running = value;
-      runButton.disabled = value;
-      stopButton.disabled = !value;
-      command.disabled = value;
-      status.textContent = value ? '실행 중' : '대기';
+      running = value; form.querySelectorAll('input, select').forEach(control => { control.disabled = value; }); runButton.disabled = value; stopButton.disabled = !value; refreshSpeakers.disabled = value;
+      runState.classList.toggle('active', value); runState.querySelector('span').textContent = value ? '마이크와 추론 엔진을 실행하고 있습니다…' : '실행 준비 완료'; if (!value) updateControls();
     }
-
-    function append(text) {
-      terminal.textContent += text;
-      terminal.scrollTop = terminal.scrollHeight;
+    function appendTerminal(text) { terminal.textContent += text; terminal.scrollTop = terminal.scrollHeight; }
+    function lineValue(text, pattern) { const match = text.match(pattern); return match ? match[1].trim() : 'unavailable'; }
+    function showResult(text, actionName, succeeded) {
+      if (!succeeded) { resultStatus.textContent = '실패'; resultStatus.classList.add('error'); result.innerHTML = '<div class="result-empty error">실행에 실패했습니다.<br>터미널 로그를 확인하세요.</div>'; return; }
+      resultStatus.classList.remove('error'); resultStatus.textContent = '완료';
+      if (actionName === 'enroll') { resultContext.textContent = `${speaker.value.trim()} · 화자 등록`; result.innerHTML = '<div class="result-empty">화자 등록이 완료되었습니다.<br>오른쪽 목록에서 등록 상태를 확인하세요.</div>'; return; }
+      const score = lineValue(text,/final score:\s*(-?[0-9.]+)/i), parsedBackend = lineValue(text,/Backend:\s*([^\r\n]+)/i), backend = parsedBackend === 'unavailable' ? {native:'native-cpp-orchestrator + campp-c-runtime',c:'campp-c-runtime',ort:'onnxruntime-cpu'}[engine.value] : parsedBackend, rtf = lineValue(text,/RTF:\s*([^\r\n]+)/i);
+      const pipeline = lineValue(text,/pipeline total peak:\s*([^\r\n]+)/i), host = lineValue(text,/(?:Python|native) host peak:\s*([^\r\n]+)/i);
+      const runtime = lineValue(text,/(?:C runtime|ORT process) peak:\s*([^\r\n]+)/i), weight = lineValue(text,/(?:logical weight|ONNX model file):\s*([^\r\n]+)/i), activation = lineValue(text,/logical activation:\s*([^\r\n]+)/i);
+      resultContext.textContent = `${speaker.value.trim()} · bucket ${selectedBucket()}`; result.replaceChildren();
+      const label = Object.assign(document.createElement('div'),{className:'score-label',textContent:'Final cosine score'}), scoreNode = Object.assign(document.createElement('div'),{className:'score',textContent:score});
+      const backendNode = Object.assign(document.createElement('div'),{className:'backend-line',textContent:`Backend · ${backend}`}), metrics = Object.assign(document.createElement('div'),{className:'metrics'});
+      [['RTF',rtf],['Pipeline peak',pipeline],['Host peak',host],['Runtime peak',runtime],['Weight',weight],['Activation',activation]].forEach(([name,value]) => {
+        const metric = Object.assign(document.createElement('div'),{className:'metric'}), caption = Object.assign(document.createElement('span'),{textContent:name}), strong = Object.assign(document.createElement('strong'),{textContent:value}); metric.append(caption,strong); metrics.append(metric);
+      }); result.append(label,scoreNode,backendNode,metrics);
     }
-
-    async function runCommand() {
-      if (running || !command.value.trim()) return;
-      setRunning(true);
-      append('\n');
+    function renderSpeakers() {
+      const rows = speakerGroups[engine.value === 'ort' ? 'ort' : 'c'] || []; speakerList.replaceChildren();
+      if (!rows.length) { speakerList.append(Object.assign(document.createElement('div'),{className:'speaker-empty',textContent:'아직 녹음된 화자가 없습니다.'})); return; }
+      rows.forEach(row => {
+        const button = Object.assign(document.createElement('button'),{type:'button',className:'speaker-row'}); button.addEventListener('click',() => { speaker.value = row.name; commandPreview.textContent = commandForSelection(); });
+        const avatar = Object.assign(document.createElement('span'),{className:'speaker-avatar',textContent:[...row.name][0]?.toUpperCase() || '?'}), body = document.createElement('span');
+        body.append(Object.assign(document.createElement('span'),{className:'speaker-name',textContent:row.name}),Object.assign(document.createElement('span'),{className:'speaker-meta',textContent:`녹음 ${row.recordings}개`}));
+        button.append(avatar,body,Object.assign(document.createElement('span'),{className:`speaker-state${row.enrolled ? '' : ' pending'}`,textContent:row.enrolled ? '등록됨' : '미완료'})); speakerList.append(button);
+      });
+    }
+    async function loadSpeakers() {
+      try { const response = await fetch('/api/speakers',{cache:'no-store'}); if (!response.ok) throw new Error('화자 목록을 불러오지 못했습니다.'); const payload = await response.json(); speakerGroups = payload.speakers || {c:[],ort:[]}; renderSpeakers(); }
+      catch (error) { speakerList.replaceChildren(Object.assign(document.createElement('div'),{className:'speaker-empty error',textContent:error.message})); }
+    }
+    async function runPipeline(event) {
+      event.preventDefault(); if (running) return;
+      if (!speaker.value.trim()) { speaker.focus(); runState.querySelector('span').textContent = '화자 폴더명을 입력하세요.'; return; }
+      const requestedAction = action.value, payload = {action:requestedAction,engine:engine.value,bucket:Number(selectedBucket()),speaker:speaker.value.trim(),microphone:microphone.value.trim()};
+      terminal.textContent = ''; resultStatus.classList.remove('error'); resultStatus.textContent = '실행 중'; resultContext.textContent = `${payload.speaker} · ${requestedAction === 'enroll' ? '등록' : `bucket ${payload.bucket}`}`; result.innerHTML = '<div class="result-empty">마이크 입력과 추론 결과를 기다리는 중입니다…</div>'; setRunning(true);
+      let output = '', succeeded = false;
       try {
-        const response = await fetch('/api/run', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({command: command.value.trim()}),
-        });
-        if (!response.ok) {
-          const message = await response.text();
-          throw new Error(message);
-        }
-        if (!response.body) throw new Error('streaming response is unavailable');
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder('utf-8');
-        while (true) {
-          const {value, done} = await reader.read();
-          if (done) break;
-          append(decoder.decode(value, {stream: true}));
-        }
-        append(decoder.decode());
-      } catch (error) {
-        append(`\n[web error] ${error.message}\n`);
-      } finally {
-        setRunning(false);
-      }
+        const response = await fetch('/api/pipeline/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+        if (!response.ok) { const body = await response.json().catch(() => ({error:response.statusText})); throw new Error(body.error || '실행 요청이 거부되었습니다.'); }
+        if (!response.body) throw new Error('스트리밍 응답을 사용할 수 없습니다.'); const reader = response.body.getReader(), decoder = new TextDecoder('utf-8');
+        while (true) { const {value,done} = await reader.read(); if (done) break; const chunk = decoder.decode(value,{stream:true}); output += chunk; appendTerminal(chunk); }
+        const tail = decoder.decode(); output += tail; appendTerminal(tail); succeeded = /\[process exited with code 0\]/.test(output);
+      } catch (error) { output += `\n[web error] ${error.message}\n`; appendTerminal(`\n[web error] ${error.message}\n`); }
+      finally { setRunning(false); showResult(output,requestedAction,succeeded); await loadSpeakers(); }
     }
-
-    runButton.addEventListener('click', runCommand);
-    command.addEventListener('keydown', event => {
-      if (event.key === 'Enter') runCommand();
-    });
-    stopButton.addEventListener('click', async () => {
-      await fetch('/api/stop', {method: 'POST'});
-      status.textContent = '중지 요청됨';
-    });
-    clearButton.addEventListener('click', () => { terminal.textContent = ''; });
-    document.querySelectorAll('[data-command]').forEach(button => {
-      button.addEventListener('click', () => { command.value = button.dataset.command; });
-    });
+    form.addEventListener('submit',runPipeline); stopButton.addEventListener('click',async () => { await fetch('/api/stop',{method:'POST'}); runState.querySelector('span').textContent = '중지 요청을 보냈습니다.'; });
+    action.addEventListener('change',() => { if (action.value === 'enroll') lastVerifyBucket = selectedBucket(); else document.querySelector(`#bucket-${lastVerifyBucket}`).checked = true; updateControls(); }); engine.addEventListener('change',updateControls); speaker.addEventListener('input',updateControls); microphone.addEventListener('input',updateControls);
+    document.querySelectorAll('input[name="bucket"]').forEach(input => input.addEventListener('change',() => { if (action.value === 'verify') lastVerifyBucket = input.value; updateControls(); }));
+    refreshSpeakers.addEventListener('click',loadSpeakers); updateControls(); loadSpeakers();
   </script>
 </body>
 </html>

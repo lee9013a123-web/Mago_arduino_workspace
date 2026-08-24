@@ -797,6 +797,7 @@ int main(int argc, char **argv) {
                   << "=================================\n"
                   << "=================================\n"
                   << "[report]\n"
+                  << "Backend: native-cpp-orchestrator + campp-c-runtime\n"
                   << "Peak RAM\n"
                   << "- pipeline total peak: " << Mib(pipeline_peak) << "\n"
                   << "- native host peak: " << Mib(host_peak) << "\n"
