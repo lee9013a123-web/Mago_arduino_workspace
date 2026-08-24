@@ -1,14 +1,17 @@
 # Runtime CAM speaker-verification pipeline
 
 Arduino/QRB2210의 ALSA microphone에서 음성을 녹음하고, 고정-frame FBank를
-Final V3 C runtime에 전달해 192차원 speaker embedding과 cosine score를 만든다.
+Final V3 C runtime 또는 ONNX Runtime CPU에 전달해 192차원 speaker embedding과
+cosine score를 만든다. 같은 등록·검증 명령에서 `--c`와 `--ort`로 backend를
+선택하며, 둘 다 생략하면 기존 호환성을 위해 C backend를 사용한다.
 
 ## 처리 흐름
 
 ```text
 ALSA mic -> 16 kHz mono WAV -> native Kaldi FBank + CMN -> fixed bucket
-         -> bucket plan + weights + schedule -> Final V3 C runtime
-         -> L2 embedding -> cosine similarity
+         +-> bucket package/plan -> Final V3 C runtime -+
+         +-> dynamic ONNX model -> ORT CPU -------------+
+                                                        -> cosine similarity
 ```
 
 버킷은 섞어 쓰지 않는다. 기본 package 모드에서 `--bucket 298`이면 298
@@ -47,7 +50,8 @@ bash script/build_speaker_verify.sh
 Torch 의존성과 준비 상태는 무거운 package를 실제 import하지 않고 확인한다.
 
 ```bash
-python3 script/check_dependencies.py
+python3 script/check_dependencies.py --c
+python3 script/check_dependencies.py --ort
 ```
 
 그 다음 장치 이름을 확인한다.
@@ -99,6 +103,33 @@ python3 egs/runtime_cam_pipeline/script/prepare_runtime.py \
 배포 모드다. package는 모델 직접 실행, windowed는 더 낮은 weight RSS를 위한
 plan+weights+schedule 실행이다.
 
+### ONNX Runtime 준비
+
+ORT용 모델, FBank, manifest도 모두 `runtime_cam_pipeline` 내부에 복사한다.
+
+```bash
+cd egs/runtime_cam_pipeline
+python3 -m pip install -r requirements_onnx.txt
+python3 script/prepare_runtime.py --ort --force
+python3 script/check_dependencies.py --ort --require-ready
+```
+
+준비 결과는 다음과 같다.
+
+```text
+runtime_onnx/assets.json
+runtime_onnx/campp_fbank
+runtime_onnx/models/campplus_int8_static_qop.onnx
+runtime_onnx/licenses/kaldi-native-fbank-LICENSE
+```
+
+ONNX 모델은 dynamic frame 입력을 받으므로 모델 파일은 하나다. `--bucket`은
+98/298/498/998 중 입력 frame 수와 녹음 시간을 고르며, ORT가 실제로 그 shape의
+`feature` 입력과 192차원 `embedding` 출력을 사용했는지 매 실행 검증한다.
+모델과 FBank는 `assets.json`의 SHA-256으로 검사한다. ORT Python package 자체는
+시스템 환경에 설치되어 있어야 하지만 모델·실행 산출물은 pipeline 밖을 참조하지
+않는다.
+
 ## 화자 등록
 
 다음 명령은 10초 음성을 5번 연속 녹음한다. 각 녹음은 998-frame 모델로
@@ -108,6 +139,12 @@ embedding을 만들며, 개별 L2 normalization 후 평균하고 다시 L2 norma
 ```bash
 cd egs/runtime_cam_pipeline
 python3 script/enroll_speaker.py \
+  --c \
+  --mic-version arduino_default \
+  --speaker-folder lee
+
+python3 script/enroll_speaker.py \
+  --ort \
   --mic-version arduino_default \
   --speaker-folder lee
 ```
@@ -120,6 +157,11 @@ voice/embedded/lee/recording_01.f32 ... recording_05.f32
 voice/embedded/lee/mean_embedding.f32
 voice/embedded/lee/enrollment.json
 ```
+
+ORT 등록은 같은 구조를 `voice_onnx/recorded/lee`와
+`voice_onnx/embedded/lee`에 저장한다. C와 ORT template은 수치 계약이 다를 수
+있으므로 서로 대신 읽지 않는다. 임의의 backend로 검증하기 전에 해당 backend로
+화자 등록을 한 번 수행해야 한다.
 
 재등록은 기존 결과를 실수로 덮지 않는다. 의도적으로 다시 만들 때만
 `--force`를 붙인다.
@@ -141,6 +183,27 @@ cd egs/runtime_cam_pipeline
 두었지만 제품 실행 경로로 사용하지 않는다. 실제 녹음 없이 네이티브 경로를
 검사하려면 `--dry-run`을 붙이고, 기존 WAV로 재현하려면 pipeline 내부 WAV를
 `--input-wav voice/recorded/...wav`로 전달한다.
+
+Python 비교 경로에서는 동일한 명령 인자로 C와 ORT를 선택한다.
+
+```bash
+python3 script/verify_speaker.py \
+  --c \
+  --mic-version arduino_default \
+  --speaker-embedding lee \
+  --bucket 298
+
+python3 script/verify_speaker.py \
+  --ort \
+  --mic-version arduino_default \
+  --speaker-embedding lee \
+  --bucket 298
+```
+
+ORT 결과는 `runs_onnx/inference`, C Python 결과는 `runs/inference`에 저장된다.
+ORT 보고서의 `ORT process peak`는 ONNX Runtime 자식 프로세스 peak RSS이고,
+`ONNX model file`은 파일 크기다. ORT가 정확한 logical activation byte를
+공개하지 않으므로 해당 줄은 추정값 대신 `unavailable`로 표시한다.
 
 버킷별 녹음 길이는 98=1초, 298=3초, 498=5초, 998=10초다. 결과는 cosine
 score, pipeline/native host/C Runtime peak RSS, logical weight/activation bytes,
@@ -188,6 +251,7 @@ python3 script/run_web.py
 
 ```bash
 ./runtime/campp_speaker_verify --mic-version arduino_default --speaker-embedding lee --bucket 298
+python3 script/verify_speaker.py --ort --mic-version arduino_default --speaker-embedding lee --bucket 298
 ```
 
 웹 입력은 실제 shell이 아니다. 보안을 위해 네이티브 검증기와 다음 Python
