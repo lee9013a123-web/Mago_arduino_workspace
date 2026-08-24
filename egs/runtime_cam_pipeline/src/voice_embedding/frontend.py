@@ -44,6 +44,8 @@ def validate_native_fbank(binary: Path) -> dict[str, object]:
             f"native FBank binary is missing: {binary}; run "
             "script/build_native_fbank.sh and script/prepare_runtime.py"
         )
+    # cwd를 바꿔 실행하므로 argv[0]도 절대 경로여야 한다.
+    binary = binary.resolve()
     completed = subprocess.run(
         [str(binary), "--version"],
         cwd=binary.parent,
@@ -80,6 +82,11 @@ def _extract_fbank_native(
     validate_native_fbank(native_binary)
     if not wav_path.is_file():
         raise FrontendError(f"input WAV is missing: {wav_path}")
+    # 아래 subprocess는 cwd를 바이너리 디렉터리로 바꾼다. 상대 경로를 그대로
+    # 넘기면 자식 프로세스가 엉뚱한 기준으로 해석해 "cannot open input WAV"로
+    # 실패한다 -- 부모에서 한 is_file() 검사는 통과한 뒤라 원인이 드러나지 않는다.
+    wav_path = wav_path.resolve()
+    native_binary = native_binary.resolve()
     with tempfile.TemporaryDirectory(
         prefix="campp_fbank_", dir=wav_path.parent,
     ) as temporary:
