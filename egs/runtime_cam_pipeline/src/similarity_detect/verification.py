@@ -13,6 +13,7 @@ from voice_embedding.frontend import wav_to_fixed_fbank, write_feature
 from voice_embedding.runtime import (
     AUDIO_SECONDS_BY_BUCKET,
     RuntimePipelineError,
+    describe_assets,
     run_embedding,
 )
 
@@ -73,11 +74,7 @@ def verify_speaker(
         "microphone_version": profile.version,
         "bucket_frames": bucket_frames,
         "audio_seconds": seconds,
-        "runtime_assets": {
-            "plan": str(result.assets.plan),
-            "weights": str(result.assets.weights),
-            "schedule": str(result.assets.schedule),
-        },
+        "runtime_assets": describe_assets(result.assets),
         "runtime_metrics": asdict(result.metrics),
         "artifacts": {
             "wav": str(wav_path),

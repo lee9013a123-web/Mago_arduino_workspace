@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 import sys
 import tempfile
@@ -17,7 +18,12 @@ if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
 from similarity_detect.reporting import format_terminal_report  # noqa: E402
-from similarity_detect.scoring import cosine_similarity, load_embedding  # noqa: E402
+from similarity_detect.scoring import (  # noqa: E402
+    SimilarityError,
+    cosine_similarity,
+    load_embedding,
+    resolve_speaker_embedding,
+)
 from voice_embedding.audio import fixed_length_pcm  # noqa: E402
 from voice_embedding.enrollment import (  # noqa: E402
     aggregate_embeddings,
@@ -30,6 +36,7 @@ from voice_embedding.frontend import (  # noqa: E402
 from voice_embedding.runtime import (  # noqa: E402
     RuntimeMetrics,
     RuntimePipelineError,
+    require_pipeline_local,
     run_embedding,
     select_bucket_assets,
 )
@@ -64,6 +71,35 @@ class AudioFrontendTest(unittest.TestCase):
 
 
 class RuntimeAssetSelectionTest(unittest.TestCase):
+    def test_pipeline_local_package_selection(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            pipeline = Path(temporary)
+            runtime_root = pipeline / "runtime"
+            model = runtime_root / "models/campp_sv_298.camppmodel"
+            model.parent.mkdir(parents=True)
+            model.write_bytes(b"package")
+            checksum = hashlib.sha256(b"package").hexdigest()
+            manifest = runtime_root / "assets.json"
+            manifest.write_text(json.dumps({
+                "format": "campp-runtime-pipeline-assets-v1",
+                "mode": "package",
+                "buckets": {
+                    "298": {
+                        "model": "models/campp_sv_298.camppmodel",
+                        "sha256": checksum,
+                    }
+                },
+            }), encoding="utf-8")
+            selected = select_bucket_assets(
+                repo_root=pipeline,
+                manifest_path=manifest,
+                bucket_frames=298,
+            )
+            self.assertEqual(selected.mode, "package")
+            self.assertEqual(selected.model, model)
+            self.assertIsNone(selected.schedule)
+            require_pipeline_local(pipeline, [manifest, model])
+
     def test_bucket_selects_one_coherent_asset_set(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -174,6 +210,65 @@ class RuntimeAssetSelectionTest(unittest.TestCase):
             self.assertIn("windowed", seen)
             self.assertAlmostEqual(result.metrics.rtf, 0.5)
 
+    def test_runtime_executes_pipeline_local_camppmodel(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            pipeline = Path(temporary)
+            runtime_root = pipeline / "runtime"
+            model = runtime_root / "models/campp_sv_298.camppmodel"
+            model.parent.mkdir(parents=True)
+            model.write_bytes(b"package")
+            manifest = runtime_root / "assets.json"
+            manifest.write_text(json.dumps({
+                "format": "campp-runtime-pipeline-assets-v1",
+                "mode": "package",
+                "buckets": {
+                    "298": {
+                        "model": "models/campp_sv_298.camppmodel",
+                        "sha256": hashlib.sha256(b"package").hexdigest(),
+                    }
+                },
+            }), encoding="utf-8")
+            runtime = runtime_root / "campp_runtime"
+            runtime.write_bytes(b"executable placeholder")
+            feature = pipeline / "feature.f32"
+            np.zeros((298, 80), dtype="<f4").tofile(feature)
+            embedding = pipeline / "embedding.f32"
+            seen: list[str] = []
+
+            def fake_run(command: list[str], **kwargs: object) -> object:
+                seen.extend(command)
+                self.assertEqual(kwargs.get("cwd"), runtime_root)
+                np.ones(192, dtype="<f4").tofile(embedding)
+                payload = {
+                    "model": {"bucket_frames": 298, "weight_bytes": 8000},
+                    "configuration": {"weight_mode": "malloc"},
+                    "optimization_bucket_policy": "layer_hybrid_v3",
+                    "warm": {"timings_ms": [600.0]},
+                    "memory": {
+                        "after_measurement": {"peak_rss_bytes": 20000},
+                        "activation_bytes": 2000,
+                    },
+                }
+                return type("Completed", (), {
+                    "returncode": 0,
+                    "stdout": json.dumps(payload),
+                    "stderr": "",
+                })()
+
+            with patch("voice_embedding.runtime.subprocess.run", fake_run):
+                result = run_embedding(
+                    repo_root=pipeline,
+                    runtime_binary=runtime,
+                    asset_manifest=manifest,
+                    bucket_frames=298,
+                    feature_path=feature,
+                    embedding_output=embedding,
+                )
+            self.assertIn("--model", seen)
+            self.assertIn(str(model), seen)
+            self.assertNotIn("--plan", seen)
+            self.assertAlmostEqual(result.metrics.rtf, 0.2)
+
 
 class EmbeddingTest(unittest.TestCase):
     def test_aggregate_and_cosine(self) -> None:
@@ -197,6 +292,16 @@ class EmbeddingTest(unittest.TestCase):
         with self.assertRaises(RuntimePipelineError):
             validate_speaker_folder("../speaker")
         self.assertEqual(validate_speaker_folder("화자_01"), "화자_01")
+
+    def test_external_speaker_embedding_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            pipeline = root / "pipeline"
+            pipeline.mkdir()
+            external = root / "outside.f32"
+            np.ones(192, dtype="<f4").tofile(external)
+            with self.assertRaises(SimilarityError):
+                resolve_speaker_embedding(pipeline, str(external))
 
 
 class ReportTest(unittest.TestCase):

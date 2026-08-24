@@ -50,12 +50,19 @@ def cosine_similarity(reference: np.ndarray, candidate: np.ndarray) -> float:
 
 
 def resolve_speaker_embedding(pipeline_root: Path, value: str) -> Path:
+    boundary = pipeline_root.resolve()
     candidate = Path(value)
-    if candidate.is_file():
-        return candidate.resolve()
-    relative = pipeline_root / candidate
+    relative = candidate if candidate.is_absolute() else pipeline_root / candidate
     if relative.is_file():
-        return relative.resolve()
+        resolved = relative.resolve()
+        if not resolved.is_relative_to(boundary):
+            raise SimilarityError(
+                f"speaker embedding must stay inside {boundary}: {resolved}"
+            )
+        return resolved
+    embedded_file = pipeline_root / "voice/embedded" / value
+    if embedded_file.is_file():
+        return embedded_file.resolve()
     speaker_template = pipeline_root / "voice/embedded" / value / "mean_embedding.f32"
     if speaker_template.is_file():
         return speaker_template.resolve()

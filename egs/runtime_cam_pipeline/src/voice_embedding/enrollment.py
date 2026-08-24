@@ -14,7 +14,7 @@ import numpy as np
 
 from .audio import MicrophoneProfile, record_wav
 from .frontend import wav_to_fixed_fbank, write_feature
-from .runtime import EmbeddingResult, RuntimePipelineError, run_embedding
+from .runtime import RuntimePipelineError, describe_assets, run_embedding
 
 
 ENROLLMENT_BUCKET = 998
@@ -152,7 +152,8 @@ def enroll_speaker(
         "mean_embedding_sha256": _sha256(template_path),
         "runtime_assets": {
             "manifest": str(asset_manifest),
-            "plan_weight_schedule_selected_by": ENROLLMENT_BUCKET,
+            "bucket_selected_by": ENROLLMENT_BUCKET,
+            "selection": describe_assets(result.assets),
         },
         "utterances": utterances,
     }

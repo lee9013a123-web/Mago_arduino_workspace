@@ -11,9 +11,10 @@ ALSA mic -> 16 kHz mono WAV -> Kaldi FBank + CMVN -> fixed bucket
          -> L2 embedding -> cosine similarity
 ```
 
-버킷은 섞어 쓰지 않는다. `--bucket 298`이면 manifest의 298 plan, 298 weights,
-298 schedule이 한 번에 선택되며 C runtime이 실제로 298 plan을 로드했는지 다시
-검사한다.
+버킷은 섞어 쓰지 않는다. 기본 package 모드에서 `--bucket 298`이면 298
+`.camppmodel`이 선택된다. 이 파일 안에는 298 plan과 weights가 들어 있다.
+windowed 모드에서는 298 plan, weights, schedule이 한 번에 선택된다. 어느
+모드든 C runtime이 실제로 298 plan을 로드했는지 다시 검사한다.
 
 ## 준비
 
@@ -31,12 +32,43 @@ python3 egs/runtime_cam_pipeline/script/list_microphones.py
 결과에 맞게 `configs/microphones.json`에 microphone version과 ALSA device를
 추가한다. 기본 `arduino_default`는 ALSA `default` device를 사용한다.
 
-버킷별 plan/weights/schedule과 weight-streaming runtime을 준비한다.
+### 독립 실행 디렉터리 준비
+
+기본 package 모드는 버킷별 `.camppmodel`을 직접 실행한다.
+
+```bash
+bash scripts/4_profill/05_build_final_v3.sh
+python3 scripts/5_model/11_build_bucket_models.py --force
+python3 egs/runtime_cam_pipeline/script/prepare_runtime.py \
+  --mode package --force
+```
+
+준비가 끝나면 다음 파일이 모두 이 디렉터리 아래에 존재한다.
+
+```text
+runtime/campp_runtime
+runtime/assets.json
+runtime/models/campp_sv_98.camppmodel
+runtime/models/campp_sv_298.camppmodel
+runtime/models/campp_sv_498.camppmodel
+runtime/models/campp_sv_998.camppmodel
+```
+
+이후 등록과 추론은 저장소의 `build/`, `runs/`, `models/`를 참조하지 않는다.
+`runtime_cam_pipeline` 디렉터리만 보드의 다른 위치로 복사해도 실행할 수 있다.
+
+weight schedule과 약 1 MiB window를 사용하려면 대신 다음을 준비한다.
 
 ```bash
 python3 scripts/5_model/08_build_weight_streaming.py --force
 bash scripts/5_model/09_build_weight_streaming_98.sh
+python3 egs/runtime_cam_pipeline/script/prepare_runtime.py \
+  --mode windowed --force
 ```
+
+`.camppmodel-v1`에는 schedule section이 없으므로 package와 windowed는 서로 다른
+배포 모드다. package는 모델 직접 실행, windowed는 더 낮은 weight RSS를 위한
+plan+weights+schedule 실행이다.
 
 ## 화자 등록
 
@@ -45,7 +77,8 @@ embedding을 만들며, 개별 L2 normalization 후 평균하고 다시 L2 norma
 `mean_embedding.f32`를 저장한다.
 
 ```bash
-python3 egs/runtime_cam_pipeline/script/enroll_speaker.py \
+cd egs/runtime_cam_pipeline
+python3 script/enroll_speaker.py \
   --mic-version arduino_default \
   --speaker-folder lee
 ```
@@ -67,7 +100,8 @@ voice/embedded/lee/enrollment.json
 등록 폴더 이름 또는 직접 embedding 파일을 선택할 수 있다.
 
 ```bash
-python3 egs/runtime_cam_pipeline/script/verify_speaker.py \
+cd egs/runtime_cam_pipeline
+python3 script/verify_speaker.py \
   --mic-version arduino_default \
   --speaker-embedding lee \
   --bucket 298
