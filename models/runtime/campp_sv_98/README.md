@@ -6,8 +6,9 @@ Git에 넣지 않고 다음 명령으로 재현한다.
 ```bash
 python3 scripts/5_model/01_build_model_bin.py --force
 python3 scripts/5_model/02_verify_model_bin.py \
-  --expect-plan runs/runtime/kernel_optimization/e7/bundle/execution_plans/plan_98.bin \
-  --expect-weights runs/runtime/kernel_optimization/e7/bundle/weights.bin
+  --bucket-frames 98 \
+  --expect-plan runs/models/campplus/final_v3/weight_residency/98/plan_98.bin \
+  --expect-weights runs/models/campplus/final_v3/weight_residency/98/weights_98.bin
 ```
 
 이 모델은 `[1,98,80]` float32 FBank를 받아 `[1,192]` float32 speaker embedding을

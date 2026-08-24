@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prove .camppmodel and split plan/weights execute bitwise identically."""
+"""Prove one bucket package and its split plan/weights are bitwise identical."""
 
 from __future__ import annotations
 
@@ -23,11 +23,10 @@ from runtime_model_package.format import (  # noqa: E402
     ModelPackageSectionType,
     verify_model_package,
 )
-
-
-FINAL_98_SUITE = (
-    "qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+"
-    "dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
+from runtime_model_package.packager import (  # noqa: E402
+    AUDIO_SECONDS_BY_BUCKET,
+    FINAL_98_SUITE,
+    SUPPORTED_BUCKET_FRAMES,
 )
 
 
@@ -79,8 +78,11 @@ def _run(command: list[str]) -> None:
 
 
 def main() -> int:
-    bundle = ROOT / "runs/runtime/kernel_optimization/e7/bundle"
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--bucket-frames", type=int, choices=SUPPORTED_BUCKET_FRAMES,
+        default=98,
+    )
     parser.add_argument(
         "--binary", type=_path,
         default=(
@@ -88,10 +90,7 @@ def main() -> int:
             / "campp_runtime_benchmark_final"
         ),
     )
-    parser.add_argument(
-        "--model", type=_path,
-        default=ROOT / "models/runtime/campp_sv_98/campp_sv_98.camppmodel",
-    )
+    parser.add_argument("--model", type=_path)
     parser.add_argument(
         "--dump-binary", type=_path,
         default=(
@@ -99,34 +98,41 @@ def main() -> int:
             / "campp_reference_dump_final"
         ),
     )
-    parser.add_argument(
-        "--plan", type=_path,
-        default=bundle / "execution_plans/plan_98.bin",
-    )
-    parser.add_argument("--weights", type=_path, default=bundle / "weights.bin")
-    parser.add_argument(
-        "--input", type=_path,
-        default=(
-            ROOT / "benchmarks/campplus/features"
-            / "multi__speaker_0000__98.f32"
-        ),
-    )
-    parser.add_argument(
-        "--runs-dir", type=_path,
-        default=ROOT / "runs/model_packages/campp_sv_98/validation",
-    )
-    parser.add_argument(
-        "--output", type=_path,
-        default=ROOT / "results/model_packages/campp_sv_98_validation.json",
-    )
+    parser.add_argument("--plan", type=_path)
+    parser.add_argument("--weights", type=_path)
+    parser.add_argument("--input", type=_path)
+    parser.add_argument("--runs-dir", type=_path)
+    parser.add_argument("--output", type=_path)
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
     try:
+        bucket = args.bucket_frames
+        static_root = (
+            ROOT / "runs/models/campplus/final_v3/weight_residency"
+            / str(bucket)
+        )
+        model = args.model or (
+            ROOT / "models/runtime/campp_sv_multibucket"
+            / f"campp_sv_{bucket}.camppmodel"
+        )
+        plan = args.plan or static_root / f"plan_{bucket}.bin"
+        weights = args.weights or static_root / f"weights_{bucket}.bin"
+        feature = args.input or (
+            ROOT / "benchmarks/campplus/features"
+            / f"multi__speaker_0000__{bucket}.f32"
+        )
+        runs_dir = args.runs_dir or (
+            ROOT / "runs/model_packages"
+            / f"campp_sv_{bucket}/validation"
+        )
+        output = args.output or (
+            ROOT / "results/model_packages"
+            / f"campp_sv_{bucket}_validation.json"
+        )
         missing = [
             path for path in (
-                args.binary, args.dump_binary, args.model, args.plan,
-                args.weights, args.input
+                args.binary, args.dump_binary, model, plan, weights, feature
             )
             if not path.is_file()
         ]
@@ -134,12 +140,16 @@ def main() -> int:
             raise ModelPackageError(
                 "missing files:\n  " + "\n  ".join(str(path) for path in missing)
             )
-        package = verify_model_package(args.model)
+        package = verify_model_package(model)
+        if package.bucket_frames != bucket:
+            raise ModelPackageError(
+                f"package bucket mismatch: {package.bucket_frames} != {bucket}"
+            )
         metadata = package.json_section(
             ModelPackageSectionType.MODEL_METADATA_JSON
         )
         if metadata.get("optimization_suite") != FINAL_98_SUITE:
-            raise ModelPackageError("model package suite is not Final-98 V3")
+            raise ModelPackageError("model package suite is not Final V3")
         capabilities = _run_json([str(args.binary), "--capabilities"])
         if capabilities.get("model_package_format") != "camppmodel-v1":
             raise ModelPackageError("runtime has no camppmodel-v1 loader")
@@ -149,44 +159,44 @@ def main() -> int:
             print(json.dumps({
                 "ready": True,
                 "binary": str(args.binary),
-                "model": str(args.model),
+                "model": str(model),
                 "bucket_frames": package.bucket_frames,
             }, ensure_ascii=False, indent=2))
             return 0
-        if args.output.exists() and not args.force:
+        if output.exists() and not args.force:
             raise ModelPackageError("output exists; use --force")
-        args.runs_dir.mkdir(parents=True, exist_ok=True)
-        split_embedding = args.runs_dir / "split_embedding.f32"
-        package_embedding = args.runs_dir / "package_embedding.f32"
+        runs_dir.mkdir(parents=True, exist_ok=True)
+        split_embedding = runs_dir / "split_embedding.f32"
+        package_embedding = runs_dir / "package_embedding.f32"
         common = [
-            "--input", str(args.input),
-            "--audio-seconds", "1",
+            "--input", str(feature),
+            "--audio-seconds", str(AUDIO_SECONDS_BY_BUCKET[bucket]),
             "--warmup", "0",
             "--repeat", "1",
             "--threads", "1",
         ]
         split_result = _run_json([
             str(args.binary),
-            "--plan", str(args.plan),
-            "--weights", str(args.weights),
+            "--plan", str(plan),
+            "--weights", str(weights),
             *common,
             "--embedding-output", str(split_embedding),
         ])
         package_result = _run_json([
             str(args.binary),
-            "--model", str(args.model),
+            "--model", str(model),
             *common,
             "--embedding-output", str(package_embedding),
         ])
-        split_prefix = args.runs_dir / "split_retained"
-        package_prefix = args.runs_dir / "package_retained"
+        split_prefix = runs_dir / "split_retained"
+        package_prefix = runs_dir / "package_retained"
         _run([
-            str(args.dump_binary), str(args.plan), str(args.weights),
-            str(args.input), str(split_prefix),
+            str(args.dump_binary), str(plan), str(weights),
+            str(feature), str(split_prefix),
         ])
         _run([
-            str(args.dump_binary), "--model", str(args.model),
-            str(args.input), str(package_prefix),
+            str(args.dump_binary), "--model", str(model),
+            str(feature), str(package_prefix),
         ])
         split_bytes = split_embedding.read_bytes()
         package_bytes = package_embedding.read_bytes()
@@ -204,8 +214,8 @@ def main() -> int:
         report = {
             "schema_version": 1,
             "backend": "cpu_aarch64_o4i4_final",
-            "bucket_frames": 98,
-            "input": str(args.input),
+            "bucket_frames": bucket,
+            "input": str(feature),
             "comparison": "split_plan_weights_vs_camppmodel_v1",
             "tolerance": {"kind": "bitwise", "atol": 0.0, "rtol": 0.0},
             "embedding_bytes": len(split_bytes),
@@ -222,8 +232,8 @@ def main() -> int:
                 and retained_bitwise and retained_index_identical
             ),
         }
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
             newline="\n",

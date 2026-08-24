@@ -11,8 +11,9 @@
 
 #define CAMPP_WS_HEADER_SIZE 64u
 #define CAMPP_WS_RECORD_SIZE 40u
-#define CAMPP_WS_VERSION 1u
+#define CAMPP_WS_VERSION 2u
 #define CAMPP_WS_USED 1u
+#define CAMPP_WS_PREFETCH_AFTER 2u
 
 #define CAMPP_WS_VERSION_OFFSET 8u
 #define CAMPP_WS_HEADER_SIZE_OFFSET 12u
@@ -83,7 +84,7 @@ static CamppStatus campp_build_event_table(
     const CamppWeightResidencyBlock *blocks,
     uint32_t block_count,
     uint32_t operator_count,
-    bool prefetch,
+    CamppWeightResidencyEvent event_type,
     uint32_t **out_offsets,
     uint32_t **out_indices)
 {
@@ -104,9 +105,15 @@ static CamppStatus campp_build_event_table(
         return CAMPP_STATUS_OUT_OF_MEMORY;
     }
     for (block_id = 0u; block_id < block_count; ++block_id) {
-        operator_id = prefetch
-            ? blocks[block_id].prefetch_operator
-            : blocks[block_id].last_operator;
+        bool selected = event_type == CAMPP_WEIGHT_EVENT_EVICT ||
+            (event_type == CAMPP_WEIGHT_EVENT_PREFETCH_BEFORE &&
+             !blocks[block_id].prefetch_after_operator) ||
+            (event_type == CAMPP_WEIGHT_EVENT_PREFETCH_AFTER &&
+             blocks[block_id].prefetch_after_operator);
+        if (!selected) continue;
+        operator_id = event_type == CAMPP_WEIGHT_EVENT_EVICT
+            ? blocks[block_id].last_operator
+            : blocks[block_id].prefetch_operator;
         offsets[operator_id + 1u] += 1u;
     }
     for (operator_id = 0u; operator_id < operator_count; ++operator_id) {
@@ -114,9 +121,15 @@ static CamppStatus campp_build_event_table(
         cursor[operator_id] = offsets[operator_id];
     }
     for (block_id = 0u; block_id < block_count; ++block_id) {
-        operator_id = prefetch
-            ? blocks[block_id].prefetch_operator
-            : blocks[block_id].last_operator;
+        bool selected = event_type == CAMPP_WEIGHT_EVENT_EVICT ||
+            (event_type == CAMPP_WEIGHT_EVENT_PREFETCH_BEFORE &&
+             !blocks[block_id].prefetch_after_operator) ||
+            (event_type == CAMPP_WEIGHT_EVENT_PREFETCH_AFTER &&
+             blocks[block_id].prefetch_after_operator);
+        if (!selected) continue;
+        operator_id = event_type == CAMPP_WEIGHT_EVENT_EVICT
+            ? blocks[block_id].last_operator
+            : blocks[block_id].prefetch_operator;
         indices[cursor[operator_id]] = block_id;
         cursor[operator_id] += 1u;
     }
@@ -256,13 +269,20 @@ CamppStatus campp_runtime_model_enable_weight_window(
         status = campp_checked_add_u64(
             blocks[index].file_offset, blocks[index].byte_size, &end);
         if (status != CAMPP_STATUS_OK) goto failed;
-        if (blocks[index].block_id != index || flags != CAMPP_WS_USED ||
+        blocks[index].prefetch_after_operator =
+            (flags & CAMPP_WS_PREFETCH_AFTER) != 0u;
+        if (blocks[index].block_id != index ||
+            (flags & CAMPP_WS_USED) == 0u ||
+            (flags & ~(CAMPP_WS_USED | CAMPP_WS_PREFETCH_AFTER)) != 0u ||
             record_reserved != 0u ||
             blocks[index].first_operator > blocks[index].last_operator ||
             blocks[index].last_operator >= operator_count ||
             blocks[index].prefetch_operator >= operator_count ||
             blocks[index].prefetch_operator >
                 blocks[index].first_operator ||
+            (blocks[index].prefetch_after_operator &&
+             blocks[index].prefetch_operator >=
+                blocks[index].first_operator) ||
             blocks[index].file_offset % page_size != 0u ||
             blocks[index].byte_size == 0u ||
             blocks[index].byte_size % page_size != 0u ||
@@ -273,11 +293,17 @@ CamppStatus campp_runtime_model_enable_weight_window(
         prior_end = end;
     }
     status = campp_build_event_table(
-        blocks, block_count, operator_count, true,
+        blocks, block_count, operator_count,
+        CAMPP_WEIGHT_EVENT_PREFETCH_BEFORE,
         &model->weight_prefetch_offsets, &model->weight_prefetch_indices);
     if (status != CAMPP_STATUS_OK) goto failed;
     status = campp_build_event_table(
-        blocks, block_count, operator_count, false,
+        blocks, block_count, operator_count,
+        CAMPP_WEIGHT_EVENT_PREFETCH_AFTER,
+        &model->weight_postfetch_offsets, &model->weight_postfetch_indices);
+    if (status != CAMPP_STATUS_OK) goto failed;
+    status = campp_build_event_table(
+        blocks, block_count, operator_count, CAMPP_WEIGHT_EVENT_EVICT,
         &model->weight_evict_offsets, &model->weight_evict_indices);
     if (status != CAMPP_STATUS_OK) goto failed;
 
@@ -295,6 +321,13 @@ CamppStatus campp_runtime_model_enable_weight_window(
                 model->weight_blocks[index].file_offset,
                 model->weight_blocks[index].byte_size);
             if (status != CAMPP_STATUS_OK) goto failed_enabled;
+            if (model->weight_event_hook != NULL) {
+                model->weight_event_hook(
+                    model->weight_event_hook_user_data,
+                    0u,
+                    CAMPP_WEIGHT_EVENT_PREFETCH_BEFORE,
+                    &model->weight_blocks[index]);
+            }
         }
     }
     free(bytes);
@@ -305,11 +338,15 @@ failed_enabled:
     free(model->weight_blocks);
     free(model->weight_prefetch_offsets);
     free(model->weight_prefetch_indices);
+    free(model->weight_postfetch_offsets);
+    free(model->weight_postfetch_indices);
     free(model->weight_evict_offsets);
     free(model->weight_evict_indices);
     model->weight_blocks = NULL;
     model->weight_prefetch_offsets = NULL;
     model->weight_prefetch_indices = NULL;
+    model->weight_postfetch_offsets = NULL;
+    model->weight_postfetch_indices = NULL;
     model->weight_evict_offsets = NULL;
     model->weight_evict_indices = NULL;
     model->weight_block_count = 0u;
@@ -317,10 +354,14 @@ failed_enabled:
 failed:
     free(model->weight_prefetch_offsets);
     free(model->weight_prefetch_indices);
+    free(model->weight_postfetch_offsets);
+    free(model->weight_postfetch_indices);
     free(model->weight_evict_offsets);
     free(model->weight_evict_indices);
     model->weight_prefetch_offsets = NULL;
     model->weight_prefetch_indices = NULL;
+    model->weight_postfetch_offsets = NULL;
+    model->weight_postfetch_indices = NULL;
     model->weight_evict_offsets = NULL;
     model->weight_evict_indices = NULL;
     free(blocks);
@@ -349,6 +390,13 @@ CamppStatus campp_runtime_model_weight_before_operator(
         CamppStatus status = campp_mapped_file_prefetch(
             &model->weight_mapping, block->file_offset, block->byte_size);
         if (status != CAMPP_STATUS_OK) return status;
+        if (model->weight_event_hook != NULL) {
+            model->weight_event_hook(
+                model->weight_event_hook_user_data,
+                operator_id,
+                CAMPP_WEIGHT_EVENT_PREFETCH_BEFORE,
+                block);
+        }
     }
     return CAMPP_STATUS_OK;
 }
@@ -374,6 +422,29 @@ CamppStatus campp_runtime_model_weight_after_operator(
         CamppStatus status = campp_mapped_file_discard(
             &model->weight_mapping, block->file_offset, block->byte_size);
         if (status != CAMPP_STATUS_OK) return status;
+        if (model->weight_event_hook != NULL) {
+            model->weight_event_hook(
+                model->weight_event_hook_user_data,
+                operator_id,
+                CAMPP_WEIGHT_EVENT_EVICT,
+                block);
+        }
+    }
+    begin = model->weight_postfetch_offsets[operator_id];
+    end = model->weight_postfetch_offsets[operator_id + 1u];
+    for (event = begin; event < end; ++event) {
+        const CamppWeightResidencyBlock *block =
+            &model->weight_blocks[model->weight_postfetch_indices[event]];
+        CamppStatus status = campp_mapped_file_prefetch(
+            &model->weight_mapping, block->file_offset, block->byte_size);
+        if (status != CAMPP_STATUS_OK) return status;
+        if (model->weight_event_hook != NULL) {
+            model->weight_event_hook(
+                model->weight_event_hook_user_data,
+                operator_id,
+                CAMPP_WEIGHT_EVENT_PREFETCH_AFTER,
+                block);
+        }
     }
     if (operator_id + 1u == model->operator_count) {
         uint32_t block_id;
@@ -386,8 +457,25 @@ CamppStatus campp_runtime_model_weight_after_operator(
                     block->file_offset,
                     block->byte_size);
                 if (status != CAMPP_STATUS_OK) return status;
+                if (model->weight_event_hook != NULL) {
+                    model->weight_event_hook(
+                        model->weight_event_hook_user_data,
+                        operator_id,
+                        CAMPP_WEIGHT_EVENT_CYCLE_RESET,
+                        block);
+                }
             }
         }
     }
     return CAMPP_STATUS_OK;
+}
+
+void campp_runtime_model_set_weight_event_hook(
+    CamppRuntimeModel *model,
+    CamppWeightResidencyEventHook hook,
+    void *user_data)
+{
+    if (model == NULL) return;
+    model->weight_event_hook = hook;
+    model->weight_event_hook_user_data = user_data;
 }

@@ -15,6 +15,7 @@ from runtime_bundle_exporter.planner.weight_streaming_planner import (  # noqa: 
     WEIGHT_SCHEDULE_HEADER_SIZE,
     WEIGHT_SCHEDULE_MAGIC,
     WEIGHT_SCHEDULE_RECORD_SIZE,
+    WEIGHT_SCHEDULE_VERSION,
     build_windowed_weight_plan,
 )
 from tests.runtime import test_weight_residency_planner as residency_fixture  # noqa: E402
@@ -69,6 +70,7 @@ class WeightStreamingPlannerTests(unittest.TestCase):
             "<8s6I4Q", result.schedule_bytes[:WEIGHT_SCHEDULE_HEADER_SIZE]
         )
         self.assertEqual(header[0], WEIGHT_SCHEDULE_MAGIC)
+        self.assertEqual(header[1], WEIGHT_SCHEDULE_VERSION)
         self.assertEqual(header[3], 98)
         self.assertEqual(header[4], 64)
         self.assertEqual(header[5], len(result.blocks))
@@ -77,6 +79,14 @@ class WeightStreamingPlannerTests(unittest.TestCase):
             WEIGHT_SCHEDULE_HEADER_SIZE
             + len(result.blocks) * WEIGHT_SCHEDULE_RECORD_SIZE,
         )
+        second_record = struct.unpack(
+            "<6I2Q",
+            result.schedule_bytes[
+                WEIGHT_SCHEDULE_HEADER_SIZE + WEIGHT_SCHEDULE_RECORD_SIZE:
+                WEIGHT_SCHEDULE_HEADER_SIZE + 2 * WEIGHT_SCHEDULE_RECORD_SIZE
+            ],
+        )
+        self.assertEqual(second_record[4], 3)
 
     def test_block_lifetimes_cover_every_used_constant_once(self) -> None:
         result = build_windowed_weight_plan(
@@ -105,11 +115,19 @@ class WeightStreamingPlannerTests(unittest.TestCase):
                 block.last_operator,
                 max(entry.last_use_operator for entry in entries),
             )
-            expected_prefetch = (
-                0 if block_id == 0
-                else result.blocks[block_id - 1].first_operator
-            )
+            expected_prefetch = 0
             self.assertEqual(block.prefetch_operator, expected_prefetch)
+            self.assertEqual(
+                block.prefetch_after_operator,
+                block_id == 1,
+            )
+        self.assertLessEqual(
+            result.scheduled_window_peak["block_count"], 2
+        )
+        self.assertEqual(
+            result.double_buffer_bound_bytes,
+            result.scheduled_window_peak["byte_size"],
+        )
 
 
 if __name__ == "__main__":

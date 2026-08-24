@@ -25,10 +25,11 @@ from .weight_residency_planner import (
 
 
 WEIGHT_SCHEDULE_MAGIC = b"CAMPPWS1"
-WEIGHT_SCHEDULE_VERSION = 1
+WEIGHT_SCHEDULE_VERSION = 2
 WEIGHT_SCHEDULE_HEADER_SIZE = 64
 WEIGHT_SCHEDULE_RECORD_SIZE = 40
 WEIGHT_SCHEDULE_USED = 1
+WEIGHT_SCHEDULE_PREFETCH_AFTER_OPERATOR = 2
 
 
 def _align(value: int, alignment: int) -> int:
@@ -52,6 +53,7 @@ class WeightStreamingBlock:
     first_operator: int
     last_operator: int
     prefetch_operator: int
+    prefetch_after_operator: bool
     tensor_ids: tuple[int, ...]
 
     def to_dict(self) -> dict[str, Any]:
@@ -63,8 +65,73 @@ class WeightStreamingBlock:
             "first_operator": self.first_operator,
             "last_operator": self.last_operator,
             "prefetch_operator": self.prefetch_operator,
+            "prefetch_phase": (
+                "after_operator" if self.prefetch_after_operator
+                else "before_operator"
+            ),
             "tensor_ids": list(self.tensor_ids),
         }
+
+
+def _scheduled_window_peak(
+    blocks: Sequence[WeightStreamingBlock], operator_count: int,
+) -> dict[str, Any]:
+    """Simulate runtime event order and return the advised-window peak."""
+
+    by_id = {block.block_id: block for block in blocks}
+    resident: set[int] = {
+        block.block_id for block in blocks if block.first_operator == 0
+    }
+    peak_bytes = 0
+    peak_ids: tuple[int, ...] = ()
+    peak_operator = 0
+    peak_phase = "initial"
+
+    def observe(operator_id: int, phase: str) -> None:
+        nonlocal peak_bytes, peak_ids, peak_operator, peak_phase
+        current = sum(by_id[block_id].byte_size for block_id in resident)
+        if current > peak_bytes:
+            peak_bytes = current
+            peak_ids = tuple(sorted(resident))
+            peak_operator = operator_id
+            peak_phase = phase
+
+    observe(0, "initial")
+    for operator_id in range(operator_count):
+        for block in blocks:
+            if (
+                not block.prefetch_after_operator
+                and block.prefetch_operator == operator_id
+            ):
+                resident.add(block.block_id)
+        observe(operator_id, "before_operator")
+        missing = [
+            block.block_id for block in blocks
+            if block.first_operator == operator_id
+            and block.block_id not in resident
+        ]
+        if missing:
+            raise WeightResidencyPlanError(
+                f"blocks are not prefetched before first use: {missing}"
+            )
+        for block in blocks:
+            if block.last_operator == operator_id:
+                resident.discard(block.block_id)
+        for block in blocks:
+            if (
+                block.prefetch_after_operator
+                and block.prefetch_operator == operator_id
+            ):
+                resident.add(block.block_id)
+        observe(operator_id, "after_operator")
+
+    return {
+        "byte_size": peak_bytes,
+        "block_count": len(peak_ids),
+        "block_ids": list(peak_ids),
+        "operator_id": peak_operator,
+        "phase": peak_phase,
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -102,11 +169,21 @@ class WindowedWeightPlan:
         return max((block.byte_size for block in self.blocks), default=0)
 
     @property
-    def double_buffer_bound_bytes(self) -> int:
+    def largest_two_blocks_bytes(self) -> int:
         sizes = sorted(
             (block.byte_size for block in self.blocks), reverse=True
         )
         return sum(sizes[:2])
+
+    @property
+    def scheduled_window_peak(self) -> dict[str, Any]:
+        return _scheduled_window_peak(self.blocks, self.operator_count)
+
+    @property
+    def double_buffer_bound_bytes(self) -> int:
+        """Compatibility field; now reflects the actual event simulation."""
+
+        return int(self.scheduled_window_peak["byte_size"])
 
     @property
     def theoretical_weight_rss_reduction_bytes(self) -> int:
@@ -134,7 +211,9 @@ class WindowedWeightPlan:
             "logical_weight_bytes": self.logical_weight_bytes,
             "output_weight_bytes": len(self.weight_bytes),
             "max_block_bytes": self.max_block_bytes,
+            "largest_two_blocks_bytes": self.largest_two_blocks_bytes,
             "double_buffer_bound_bytes": self.double_buffer_bound_bytes,
+            "scheduled_window_peak": self.scheduled_window_peak,
             "theoretical_weight_rss_reduction_bytes": (
                 self.theoretical_weight_rss_reduction_bytes
             ),
@@ -168,7 +247,10 @@ def _build_schedule_bytes(
             block.first_operator,
             block.last_operator,
             block.prefetch_operator,
-            WEIGHT_SCHEDULE_USED,
+            WEIGHT_SCHEDULE_USED | (
+                WEIGHT_SCHEDULE_PREFETCH_AFTER_OPERATOR
+                if block.prefetch_after_operator else 0
+            ),
             0,
             block.file_offset,
             block.byte_size,
@@ -259,7 +341,6 @@ def build_windowed_weight_plan(
     descriptors = list(loaded.tensors)
     remapped_entries: list[StaticWeightEntry] = []
     blocks: list[WeightStreamingBlock] = []
-    prior_first_operator = 0
     for block_id, entries in enumerate(block_groups):
         block_offset = _align(len(output), page_size)
         output.extend(b"\0" * (block_offset - len(output)))
@@ -295,7 +376,22 @@ def build_windowed_weight_plan(
             int(entry.last_use_operator) for entry in entries
             if entry.last_use_operator is not None
         )
-        prefetch_operator = 0 if block_id == 0 else prior_first_operator
+        if block_id == 0:
+            prefetch_operator = 0
+            prefetch_after_operator = False
+        elif block_id == 1:
+            prefetch_operator = 0
+            prefetch_after_operator = first_operator > 0
+        else:
+            oldest_release = blocks[block_id - 2].last_operator
+            if oldest_release < first_operator:
+                prefetch_operator = oldest_release
+                prefetch_after_operator = True
+            else:
+                # Three truly overlapping lifetimes cannot be reduced by
+                # scheduling.  Prefetch immediately before first use.
+                prefetch_operator = first_operator
+                prefetch_after_operator = False
         blocks.append(WeightStreamingBlock(
             block_id=block_id,
             file_offset=block_offset,
@@ -304,9 +400,9 @@ def build_windowed_weight_plan(
             first_operator=first_operator,
             last_operator=last_operator,
             prefetch_operator=prefetch_operator,
+            prefetch_after_operator=prefetch_after_operator,
             tensor_ids=tuple(tensor_ids),
         ))
-        prior_first_operator = first_operator
 
     # Unused constants remain valid for loader validation but never fault into
     # the process during normal inference and therefore need no schedule block.

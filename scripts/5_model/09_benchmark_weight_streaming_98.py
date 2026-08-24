@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gate bucket-98 mmap weight windows against the incumbent Final V3."""
+"""Gate one bucket's mmap weight window against the incumbent Final V3."""
 
 from __future__ import annotations
 
@@ -18,11 +18,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_BUNDLE = ROOT / "runs/runtime/kernel_optimization/e7/bundle"
 DEFAULT_CANDIDATE = (
-    ROOT / "runs/models/campplus/final_v3/weight_streaming/98"
+    ROOT / "runs/models/campplus/final_v3/weight_streaming"
 )
 DEFAULT_RESULTS = (
-    ROOT / "results/models/campplus/final_v3/weight_streaming/98"
+    ROOT / "results/models/campplus/final_v3/weight_streaming"
 )
+DEFAULT_STATIC = ROOT / "runs/models/campplus/final_v3/weight_residency"
 DEFAULT_CANDIDATE_BINARY = (
     ROOT / "build/profill/weight_streaming_98/campp_runtime_benchmark_final"
 )
@@ -35,9 +36,7 @@ DEFAULT_CANDIDATE_DUMP_BINARY = (
 DEFAULT_BASELINE_DUMP_BINARY = (
     ROOT / "build/profill/final_v3_hybrid/campp_reference_dump_final"
 )
-DEFAULT_FEATURE = (
-    ROOT / "benchmarks/campplus/features/multi__speaker_0000__98.f32"
-)
+AUDIO_SECONDS = {98: 1.0, 298: 3.0, 498: 5.0, 998: 10.0}
 PROTOCOLS = {
     "quick": {"warmup": 2, "repeat": 10},
     "official": {"warmup": 20, "repeat": 100},
@@ -153,7 +152,8 @@ def _run_dump(command: list[str], prefix: Path) -> dict:
 def _command(
     *, binary: Path, plan: Path, weights: Path, feature: Path,
     embedding: Path, mode: str | None, schedule: Path | None,
-    warmup: int, repeat: int, cpu: int | None,
+    warmup: int, repeat: int, cpu: int | None, audio_seconds: float,
+    trace_weight_events: bool = False,
 ) -> list[str]:
     command = [str(binary)]
     if cpu is not None and shutil.which("taskset") is not None:
@@ -162,7 +162,7 @@ def _command(
         "--plan", str(plan),
         "--weights", str(weights),
         "--input", str(feature),
-        "--audio-seconds", "1",
+        "--audio-seconds", str(audio_seconds),
         "--warmup", str(warmup),
         "--repeat", str(repeat),
         "--threads", "1",
@@ -172,14 +172,20 @@ def _command(
         command.extend(["--weight-mode", mode])
     if schedule is not None:
         command.extend(["--weight-schedule", str(schedule)])
+    if trace_weight_events:
+        command.append("--trace-weight-events")
     return command
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", type=_path, default=DEFAULT_BUNDLE)
+    parser.add_argument("--static-root", type=_path, default=DEFAULT_STATIC)
     parser.add_argument("--candidate", type=_path, default=DEFAULT_CANDIDATE)
     parser.add_argument("--results", type=_path, default=DEFAULT_RESULTS)
+    parser.add_argument(
+        "--bucket-frames", type=int, choices=tuple(AUDIO_SECONDS), default=98
+    )
     parser.add_argument(
         "--baseline-binary", type=_path, default=DEFAULT_BASELINE_BINARY
     )
@@ -194,7 +200,7 @@ def main() -> int:
         "--candidate-dump-binary", type=_path,
         default=DEFAULT_CANDIDATE_DUMP_BINARY,
     )
-    parser.add_argument("--feature", type=_path, default=DEFAULT_FEATURE)
+    parser.add_argument("--feature", type=_path)
     parser.add_argument("--mode", choices=PROTOCOLS, default="quick")
     parser.add_argument("--cpu", type=int, default=0)
     parser.add_argument("--max-p50-regression-pct", type=float, default=1.0)
@@ -202,18 +208,35 @@ def main() -> int:
     parser.add_argument("--min-peak-rss-reduction-bytes", type=int,
                         default=5_500_000)
     parser.add_argument("--preflight-only", action="store_true")
+    parser.add_argument("--trace-weight-events", action="store_true")
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
 
     try:
         protocol = PROTOCOLS[args.mode]
-        source_plan = args.bundle / "execution_plans/plan_98.bin"
-        source_weights = args.bundle / "weights.bin"
-        candidate_plan = args.candidate / "plan_98.bin"
-        candidate_weights = args.candidate / "weights_98.bin"
-        schedule = args.candidate / "weight_schedule_98.bin"
+        bucket = args.bucket_frames
+        audio_seconds = AUDIO_SECONDS[bucket]
+        bundle_plan = args.bundle / f"execution_plans/plan_{bucket}.bin"
+        bundle_weights = args.bundle / "weights.bin"
+        if bundle_plan.is_file() and bundle_weights.is_file():
+            source_plan = bundle_plan
+            source_weights = bundle_weights
+        else:
+            source_plan = args.static_root / str(bucket) / f"plan_{bucket}.bin"
+            source_weights = (
+                args.static_root / str(bucket) / f"weights_{bucket}.bin"
+            )
+        candidate_dir = args.candidate / str(bucket)
+        result_dir = args.results / str(bucket)
+        candidate_plan = candidate_dir / f"plan_{bucket}.bin"
+        candidate_weights = candidate_dir / f"weights_{bucket}.bin"
+        schedule = candidate_dir / f"weight_schedule_{bucket}.bin"
+        feature = args.feature or (
+            ROOT / "benchmarks/campplus/features"
+            / f"multi__speaker_0000__{bucket}.f32"
+        )
         required = (
-            args.baseline_binary, args.candidate_binary, args.feature,
+            args.baseline_binary, args.candidate_binary, feature,
             args.baseline_dump_binary, args.candidate_dump_binary,
             source_plan, source_weights,
             candidate_plan, candidate_weights, schedule,
@@ -229,10 +252,16 @@ def main() -> int:
             raise WeightStreamingBenchmarkError(
                 "runtime does not expose mmap weight modes"
             )
+        if args.trace_weight_events and capabilities.get(
+            "weight_event_trace"
+        ) is not True:
+            raise WeightStreamingBenchmarkError(
+                "runtime does not expose weight event tracing"
+            )
         if args.preflight_only:
             print(json.dumps({
                 "ready": True,
-                "bucket_frames": 98,
+                "bucket_frames": bucket,
                 "protocol": protocol,
                 "variants": [
                     "v3_full", "stream_full", "stream_mmap", "stream_windowed"
@@ -240,25 +269,65 @@ def main() -> int:
             }, ensure_ascii=False, indent=2))
             return 0
 
-        output_json = args.results / f"benchmark_{args.mode}.json"
-        raw_dir = args.candidate / "benchmark" / args.mode
+        output_json = result_dir / f"benchmark_{args.mode}.json"
+        raw_dir = candidate_dir / "benchmark" / args.mode
         if output_json.exists() and not args.force:
             raise WeightStreamingBenchmarkError("output exists; use --force")
         raw_dir.mkdir(parents=True, exist_ok=True)
+        trace_summary = None
+        if args.trace_weight_events:
+            trace_embedding = raw_dir / "trace_stream_windowed.f32"
+            trace_payload = _run(_command(
+                binary=args.candidate_binary,
+                plan=candidate_plan,
+                weights=candidate_weights,
+                feature=feature,
+                embedding=trace_embedding,
+                mode="windowed",
+                schedule=schedule,
+                warmup=1,
+                repeat=1,
+                cpu=args.cpu,
+                audio_seconds=audio_seconds,
+                trace_weight_events=True,
+            ))
+            trace_document = trace_payload.get("weight_event_trace", {})
+            trace_events = trace_document.get("events", [])
+            if not isinstance(trace_events, list) or not trace_events:
+                raise WeightStreamingBenchmarkError(
+                    "weight event trace is empty"
+                )
+            peak_event = max(
+                trace_events,
+                key=lambda item: int(item.get("process_peak_rss_bytes", 0)),
+            )
+            trace_summary = {
+                "event_count": len(trace_events),
+                "dropped": trace_document.get("dropped"),
+                "first_peak_event": peak_event,
+                "raw_result": (
+                    raw_dir / "weight_event_trace.json"
+                ).as_posix(),
+                "diagnostic_only": True,
+            }
+            (raw_dir / "weight_event_trace.json").write_text(
+                json.dumps(trace_payload, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8", newline="\n",
+            )
         baseline_retained_prefix = raw_dir / "retained_v3_full"
         windowed_retained_prefix = raw_dir / "retained_stream_windowed"
         baseline_retained = _run_dump([
             str(args.baseline_dump_binary),
             str(source_plan),
             str(source_weights),
-            str(args.feature),
+            str(feature),
             str(baseline_retained_prefix),
         ], baseline_retained_prefix)
         windowed_retained = _run_dump([
             str(args.candidate_dump_binary),
             str(candidate_plan),
             str(candidate_weights),
-            str(args.feature),
+            str(feature),
             str(windowed_retained_prefix),
             "--weight-mode", "windowed",
             "--weight-schedule", str(schedule),
@@ -294,15 +363,16 @@ def main() -> int:
                 binary=binary,
                 plan=plan,
                 weights=weights,
-                feature=args.feature,
+                feature=feature,
                 embedding=embedding,
                 mode=weight_mode,
                 schedule=schedule_path,
                 warmup=protocol["warmup"],
                 repeat=protocol["repeat"],
                 cpu=args.cpu,
+                audio_seconds=audio_seconds,
             ))
-            if payload.get("model", {}).get("bucket_frames") != 98:
+            if payload.get("model", {}).get("bucket_frames") != bucket:
                 raise WeightStreamingBenchmarkError("runtime bucket mismatch")
             summary = _timing_summary(payload, protocol["repeat"])
             memory = payload["memory"]["after_measurement"]
@@ -312,7 +382,7 @@ def main() -> int:
                 "first_ms": payload["lifecycle"]["first_inference_ms"],
                 "current_rss_bytes": memory["current_rss_bytes"],
                 "peak_rss_bytes": memory["peak_rss_bytes"],
-                "rtf_p50": summary["p50_ms"] / 1000.0,
+                "rtf_p50": summary["p50_ms"] / (audio_seconds * 1000.0),
                 "runtime_weight_mode": payload["configuration"].get(
                     "weight_mode", "malloc"
                 ),
@@ -358,12 +428,14 @@ def main() -> int:
         result = {
             "schema_version": 1,
             "ready": gate,
-            "bucket_frames": 98,
+            "bucket_frames": bucket,
+            "audio_seconds": audio_seconds,
             "mode": args.mode,
             "comparison": "final_v3_full_vs_page_windowed_mmap",
+            "weight_event_trace": trace_summary,
             "retained_tensor_validation": {
                 "backend": "cpu_aarch64_o4i4_final_v3",
-                "input": args.feature.name,
+                "input": feature.name,
                 "tolerance": {"kind": "bitwise", "atol": 0.0, "rtol": 0.0},
                 "tensor_count": baseline_retained["tensor_count"],
                 "index_identical": retained_index_identical,
@@ -391,7 +463,7 @@ def main() -> int:
             },
             "variants": rows,
         }
-        args.results.mkdir(parents=True, exist_ok=True)
+        result_dir.mkdir(parents=True, exist_ok=True)
         output_json.write_text(
             json.dumps(result, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8", newline="\n",

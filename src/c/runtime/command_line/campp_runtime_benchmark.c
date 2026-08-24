@@ -45,6 +45,7 @@ typedef struct BenchmarkOptions {
     uint32_t repeat;
     uint32_t requested_threads;
     double audio_seconds;
+    int trace_weight_events;
 } BenchmarkOptions;
 
 typedef struct MemorySnapshot {
@@ -58,6 +59,30 @@ typedef struct FaultSnapshot {
     uint64_t major_faults;
     int available;
 } FaultSnapshot;
+
+typedef struct WeightMappingSnapshot {
+    uint64_t rss_bytes;
+    uint64_t pss_bytes;
+    int available;
+} WeightMappingSnapshot;
+
+typedef struct WeightEventTraceRecord {
+    uint32_t operator_id;
+    uint32_t block_id;
+    CamppWeightResidencyEvent event;
+    uint64_t file_offset;
+    uint64_t byte_size;
+    MemorySnapshot process_memory;
+    WeightMappingSnapshot mapping_memory;
+} WeightEventTraceRecord;
+
+typedef struct WeightEventTrace {
+    const CamppRuntimeModel *model;
+    WeightEventTraceRecord *records;
+    uint32_t count;
+    uint32_t capacity;
+    uint32_t dropped;
+} WeightEventTrace;
 
 static FaultSnapshot read_fault_snapshot(void)
 {
@@ -142,7 +167,7 @@ static void usage(const char *program)
         "--audio-seconds N --warmup N --repeat N --threads N "
         "[--embedding-output embedding.f32] "
         "[--weight-mode malloc|mmap|windowed] "
-        "[--weight-schedule schedule.bin]\n",
+        "[--weight-schedule schedule.bin] [--trace-weight-events]\n",
         program);
 }
 
@@ -165,6 +190,10 @@ static int parse_options(int argc, char **argv, BenchmarkOptions *options)
         if (strcmp(name, "--help") == 0 || strcmp(name, "-h") == 0) {
             usage(argv[0]);
             return 2;
+        }
+        if (strcmp(name, "--trace-weight-events") == 0) {
+            options->trace_weight_events = 1;
+            continue;
         }
         if (index + 1 >= argc) {
             fprintf(stderr, "missing value for %s\n", name);
@@ -243,6 +272,11 @@ static int parse_options(int argc, char **argv, BenchmarkOptions *options)
         fprintf(
             stderr,
             "windowed mode requires exactly one --weight-schedule\n");
+        return 1;
+    }
+    if (options->trace_weight_events &&
+        strcmp(options->weight_mode, "windowed") != 0) {
+        fprintf(stderr, "weight event tracing requires windowed mode\n");
         return 1;
     }
     /* cpu_reference backend에는 아직 worker pool이 없다. */
@@ -368,6 +402,80 @@ static MemorySnapshot read_memory_snapshot(void)
     return result;
 }
 
+static WeightMappingSnapshot read_weight_mapping_snapshot(
+    const CamppMappedFile *mapping)
+{
+    WeightMappingSnapshot result;
+    FILE *file;
+    char line[512];
+    uintptr_t target;
+    int selected = 0;
+
+    memset(&result, 0, sizeof(result));
+    if (mapping == NULL || !mapping->mapped || mapping->data == NULL) {
+        return result;
+    }
+    file = fopen("/proc/self/smaps", "rb");
+    if (file == NULL) return result;
+    target = (uintptr_t)mapping->data;
+    while (fgets(line, sizeof(line), file) != NULL) {
+        unsigned long long begin;
+        unsigned long long end;
+        unsigned long long kibibytes;
+        if (sscanf(line, "%llx-%llx", &begin, &end) == 2) {
+            if (selected) break;
+            selected = target >= (uintptr_t)begin && target < (uintptr_t)end;
+            continue;
+        }
+        if (!selected) continue;
+        if (sscanf(line, "Rss: %llu kB", &kibibytes) == 1) {
+            result.rss_bytes = (uint64_t)kibibytes * 1024u;
+            result.available = 1;
+        } else if (sscanf(line, "Pss: %llu kB", &kibibytes) == 1) {
+            result.pss_bytes = (uint64_t)kibibytes * 1024u;
+            result.available = 1;
+        }
+    }
+    fclose(file);
+    return result;
+}
+
+static void trace_weight_event(
+    void *user_data,
+    uint32_t operator_id,
+    CamppWeightResidencyEvent event,
+    const CamppWeightResidencyBlock *block)
+{
+    WeightEventTrace *trace = (WeightEventTrace *)user_data;
+    WeightEventTraceRecord *record;
+
+    if (trace == NULL || block == NULL || trace->count >= trace->capacity) {
+        if (trace != NULL) trace->dropped += 1u;
+        return;
+    }
+    record = &trace->records[trace->count++];
+    memset(record, 0, sizeof(*record));
+    record->operator_id = operator_id;
+    record->block_id = block->block_id;
+    record->event = event;
+    record->file_offset = block->file_offset;
+    record->byte_size = block->byte_size;
+    record->process_memory = read_memory_snapshot();
+    record->mapping_memory = read_weight_mapping_snapshot(
+        &trace->model->weight_mapping);
+}
+
+static const char *weight_event_name(CamppWeightResidencyEvent event)
+{
+    switch (event) {
+    case CAMPP_WEIGHT_EVENT_PREFETCH_BEFORE: return "prefetch_before";
+    case CAMPP_WEIGHT_EVENT_EVICT: return "evict";
+    case CAMPP_WEIGHT_EVENT_PREFETCH_AFTER: return "prefetch_after";
+    case CAMPP_WEIGHT_EVENT_CYCLE_RESET: return "cycle_reset";
+    default: return "unknown";
+    }
+}
+
 static void print_json_string(const char *value)
 {
     const unsigned char *cursor = (const unsigned char *)value;
@@ -475,6 +583,7 @@ int main(int argc, char **argv)
     MemorySnapshot memory_after_measurement;
     FaultSnapshot faults_after_warmup;
     FaultSnapshot faults_after_measurement;
+    WeightEventTrace weight_trace;
     uint64_t process_started;
     uint64_t model_started;
     uint64_t model_finished;
@@ -501,8 +610,13 @@ int main(int argc, char **argv)
         fputs(
             ",\"weight_residency_modes\":[\"malloc\",\"mmap\",\"windowed\"]",
             stdout);
+        fputs(",\"weight_event_trace\":true", stdout);
+        fputs(",\"weight_streaming_bundle_format\":"
+              "\"directory-sidecar-v1\"", stdout);
 #else
         fputs(",\"weight_residency_modes\":[\"malloc\"]", stdout);
+        fputs(",\"weight_event_trace\":false", stdout);
+        fputs(",\"weight_streaming_bundle_format\":null", stdout);
 #endif
 #if defined(CAMPP_ENABLE_FINAL_CANDIDATE_SUITE)
         fputs(",\"optimization_suite\":\"final\","
@@ -540,6 +654,7 @@ int main(int argc, char **argv)
 
     memset(&model, 0, sizeof(model));
     memset(&context, 0, sizeof(context));
+    memset(&weight_trace, 0, sizeof(weight_trace));
     model_started = monotonic_ns();
     if (options.model_path != NULL) {
         status = campp_runtime_model_load_package(options.model_path, &model);
@@ -549,6 +664,18 @@ int main(int argc, char **argv)
     } else {
         status = campp_runtime_model_load_mapped(
             options.plan_path, options.weights_path, &model);
+        if (status == CAMPP_STATUS_OK && options.trace_weight_events) {
+            weight_trace.capacity = 4096u;
+            weight_trace.records = (WeightEventTraceRecord *)calloc(
+                weight_trace.capacity, sizeof(*weight_trace.records));
+            if (weight_trace.records == NULL) {
+                status = CAMPP_STATUS_OUT_OF_MEMORY;
+            } else {
+                weight_trace.model = &model;
+                campp_runtime_model_set_weight_event_hook(
+                    &model, trace_weight_event, &weight_trace);
+            }
+        }
         if (status == CAMPP_STATUS_OK &&
             strcmp(options.weight_mode, "windowed") == 0) {
             status = campp_runtime_model_enable_weight_window(
@@ -628,6 +755,10 @@ int main(int argc, char **argv)
         }
         if (iteration == 0u) {
             first_inference_ms = elapsed_ms(started, monotonic_ns());
+            if (options.trace_weight_events) {
+                campp_runtime_model_set_weight_event_hook(
+                    &model, NULL, NULL);
+            }
         }
     }
     memory_after_warmup = read_memory_snapshot();
@@ -643,6 +774,10 @@ int main(int argc, char **argv)
             goto cleanup;
         }
         timings[iteration] = elapsed_ms(started, monotonic_ns());
+        if (iteration == 0u && options.warmup == 0u &&
+            options.trace_weight_events) {
+            campp_runtime_model_set_weight_event_hook(&model, NULL, NULL);
+        }
     }
     if (options.warmup == 0u) {
         first_inference_ms = timings[0];
@@ -768,6 +903,36 @@ int main(int argc, char **argv)
         faults_after_measurement.major_faults -
             faults_after_warmup.major_faults);
     printf(
+        "\"weight_event_trace\":{\"enabled\":%s,"
+        "\"diagnostic_only\":true,\"dropped\":%" PRIu32
+        ",\"events\":[",
+        options.trace_weight_events ? "true" : "false",
+        weight_trace.dropped);
+    for (iteration = 0u; iteration < weight_trace.count; ++iteration) {
+        const WeightEventTraceRecord *record = &weight_trace.records[iteration];
+        printf(
+            "%s{\"operator_id\":%" PRIu32
+            ",\"block_id\":%" PRIu32 ",\"event\":",
+            iteration == 0u ? "" : ",",
+            record->operator_id,
+            record->block_id);
+        print_json_string(weight_event_name(record->event));
+        printf(
+            ",\"file_offset\":%" PRIu64
+            ",\"byte_size\":%" PRIu64
+            ",\"process_rss_bytes\":%" PRIu64
+            ",\"process_peak_rss_bytes\":%" PRIu64
+            ",\"mapping_rss_bytes\":%" PRIu64
+            ",\"mapping_pss_bytes\":%" PRIu64 "}",
+            record->file_offset,
+            record->byte_size,
+            record->process_memory.current_rss_bytes,
+            record->process_memory.peak_rss_bytes,
+            record->mapping_memory.rss_bytes,
+            record->mapping_memory.pss_bytes);
+    }
+    fputs("]},", stdout);
+    printf(
         "\"embedding\":{\"tensor_id\":%" PRIu32
         ",\"dtype\":%u,\"shape\":[",
         model.output_tensor_ids[0], output_view->dtype);
@@ -790,6 +955,8 @@ int main(int argc, char **argv)
     exit_code = 0;
 
 cleanup:
+    campp_runtime_model_set_weight_event_hook(&model, NULL, NULL);
+    free(weight_trace.records);
     free(timings);
     free(input_data);
     campp_runtime_context_release(&context);

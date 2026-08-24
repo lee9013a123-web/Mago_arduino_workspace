@@ -32,9 +32,23 @@ typedef struct CamppWeightResidencyBlock {
     uint32_t first_operator;
     uint32_t last_operator;
     uint32_t prefetch_operator;
+    bool prefetch_after_operator;
     uint64_t file_offset;
     uint64_t byte_size;
 } CamppWeightResidencyBlock;
+
+typedef enum CamppWeightResidencyEvent {
+    CAMPP_WEIGHT_EVENT_PREFETCH_BEFORE = 1,
+    CAMPP_WEIGHT_EVENT_EVICT = 2,
+    CAMPP_WEIGHT_EVENT_PREFETCH_AFTER = 3,
+    CAMPP_WEIGHT_EVENT_CYCLE_RESET = 4
+} CamppWeightResidencyEvent;
+
+typedef void (*CamppWeightResidencyEventHook)(
+    void *user_data,
+    uint32_t operator_id,
+    CamppWeightResidencyEvent event,
+    const CamppWeightResidencyBlock *block);
 
 /* 한 bucket의 실행 계획과 그 계획이 참조하는 weight 전체. */
 typedef struct CamppRuntimeModel {
@@ -50,14 +64,18 @@ typedef struct CamppRuntimeModel {
     bool owns_weights;
     CamppMappedFile weight_mapping;
 
-    /* Optional 98-bucket mmap window schedule. */
+    /* Optional bucket-specific mmap window schedule. */
     CamppWeightResidencyBlock *weight_blocks;
     uint32_t weight_block_count;
     uint32_t weight_page_size;
     uint32_t *weight_prefetch_offsets;
     uint32_t *weight_prefetch_indices;
+    uint32_t *weight_postfetch_offsets;
+    uint32_t *weight_postfetch_indices;
     uint32_t *weight_evict_offsets;
     uint32_t *weight_evict_indices;
+    CamppWeightResidencyEventHook weight_event_hook;
+    void *weight_event_hook_user_data;
     bool weight_windowing_enabled;
 
     /* --- header에서 읽은 값 --- */
@@ -104,12 +122,22 @@ CamppStatus campp_runtime_model_load(
 CamppStatus campp_runtime_model_load_mapped(
     const char *plan_path, const char *weights_path, CamppRuntimeModel *model);
 
+/* Select <root>/<bucket>/plan, weights, and schedule as one sidecar package. */
+CamppStatus campp_runtime_model_load_weight_streaming_bundle(
+    const char *root_path,
+    uint32_t bucket_frames,
+    CamppRuntimeModel *model);
+
 CamppStatus campp_runtime_model_enable_weight_window(
     CamppRuntimeModel *model, const char *schedule_path);
 CamppStatus campp_runtime_model_weight_before_operator(
     const CamppRuntimeModel *model, uint32_t operator_id);
 CamppStatus campp_runtime_model_weight_after_operator(
     const CamppRuntimeModel *model, uint32_t operator_id);
+void campp_runtime_model_set_weight_event_hook(
+    CamppRuntimeModel *model,
+    CamppWeightResidencyEventHook hook,
+    void *user_data);
 
 /* Versioned .camppmodel container에서 plan과 weights를 함께 로드한다. */
 CamppStatus campp_runtime_model_load_package(

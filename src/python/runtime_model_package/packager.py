@@ -1,4 +1,4 @@
-"""Build the fixed-bucket CAM++ speaker-embedding model container."""
+"""Build one fixed-bucket CAM++ speaker-embedding model container."""
 
 from __future__ import annotations
 
@@ -29,6 +29,14 @@ FINAL_98_SUITE = (
     "qconv_layer_hybrid_v3+fused_layer_hybrid_v3+bn_v2_spatial2+"
     "dequant_neon_combined+fused_dqrq_neon+remaining_optimized"
 )
+
+SUPPORTED_BUCKET_FRAMES = (98, 298, 498, 998)
+AUDIO_SECONDS_BY_BUCKET = {
+    98: 1.0,
+    298: 3.0,
+    498: 5.0,
+    998: 10.0,
+}
 
 
 def sha256_file(path: Path) -> str:
@@ -92,21 +100,30 @@ def _source_manifest_kind(manifest: Mapping[str, Any]) -> str:
     return "runtime_bundle"
 
 
-def build_final_98_package(
+def build_final_bucket_package(
     *,
+    bucket_frames: int,
     plan_path: Path,
     weights_path: Path,
     source_manifest_path: Path,
-    model_name: str = "campp_sv_98",
+    model_name: str | None = None,
     optimization_suite: str = FINAL_98_SUITE,
 ) -> tuple[bytes, dict[str, Any]]:
+    if bucket_frames not in SUPPORTED_BUCKET_FRAMES:
+        raise ModelPackageError(
+            f"unsupported model bucket: {bucket_frames}; "
+            f"expected one of {SUPPORTED_BUCKET_FRAMES}"
+        )
+    if model_name is None:
+        model_name = f"campp_sv_{bucket_frames}"
     if not plan_path.is_file() or not weights_path.is_file():
         raise ModelPackageError("plan or weights file is missing")
     source_manifest = _load_json(source_manifest_path)
     plan = read_execution_plan(plan_path)
-    if plan.header.bucket_frames != 98:
+    if plan.header.bucket_frames != bucket_frames:
         raise ModelPackageError(
-            f"Final-98 package requires bucket 98, got {plan.header.bucket_frames}"
+            "model package bucket differs from execution plan: "
+            f"{bucket_frames} != {plan.header.bucket_frames}"
         )
 
     inputs = [
@@ -121,17 +138,27 @@ def build_final_98_package(
         raise ModelPackageError("speaker embedding model requires one input/output")
     input_contract = _tensor_contract(inputs[0])
     output_contract = _tensor_contract(outputs[0])
-    if input_contract["dtype"] != "float32" or input_contract["shape"] != [1, 98, 80]:
-        raise ModelPackageError(f"unexpected Final-98 input: {input_contract}")
+    expected_input_shape = [1, bucket_frames, 80]
+    if (input_contract["dtype"] != "float32" or
+            input_contract["shape"] != expected_input_shape):
+        raise ModelPackageError(
+            f"unexpected bucket-{bucket_frames} input: {input_contract}"
+        )
     if output_contract["dtype"] != "float32" or output_contract["shape"] != [1, 192]:
         raise ModelPackageError(f"unexpected embedding output: {output_contract}")
 
     plan_sha256 = sha256_file(plan_path)
     weights_sha256 = sha256_file(weights_path)
-    expected_plan = _source_manifest_hash(source_manifest, "plan", 98)
-    expected_weights = _source_manifest_hash(source_manifest, "weights", 98)
+    expected_plan = _source_manifest_hash(
+        source_manifest, "plan", bucket_frames
+    )
+    expected_weights = _source_manifest_hash(
+        source_manifest, "weights", bucket_frames
+    )
     if expected_plan != plan_sha256:
-        raise ModelPackageError("plan_98 SHA-256 differs from source manifest")
+        raise ModelPackageError(
+            f"plan_{bucket_frames} SHA-256 differs from source manifest"
+        )
     if expected_weights != weights_sha256:
         raise ModelPackageError("weights SHA-256 differs from source manifest")
 
@@ -152,14 +179,15 @@ def build_final_98_package(
         "schema_version": 1,
         "model_name": model_name,
         "model_kind": "speaker_embedding",
-        "deployment_scope": "qrb2210_bucket_98",
+        "deployment_scope": f"qrb2210_bucket_{bucket_frames}",
         "target": {
             "architecture": "aarch64",
             "device": "QRB2210",
             "required_isa": ["neon"],
             "backend": "cpu_aarch64_o4i4_final",
         },
-        "bucket_frames": 98,
+        "bucket_frames": bucket_frames,
+        "audio_seconds": AUDIO_SECONDS_BY_BUCKET[bucket_frames],
         "input": input_contract,
         "output": output_contract,
         "optimization_suite": optimization_suite,
@@ -193,7 +221,7 @@ def build_final_98_package(
             "snip_edges": True,
         },
         "cmvn": "subtract_time_axis_mean_per_mel_bin",
-        "model_input_frames": 98,
+        "model_input_frames": bucket_frames,
         "long_audio_windowing": "external_pipeline_policy_not_calibrated",
         "short_audio_padding": "external_pipeline_policy_not_calibrated",
     }
@@ -233,7 +261,9 @@ def build_final_98_package(
             canonical_json_bytes(postprocess),
         ),
     ]
-    package = build_model_package(bucket_frames=98, sections=sections)
+    package = build_model_package(
+        bucket_frames=bucket_frames, sections=sections
+    )
     loaded = read_model_package(package)
     if loaded.sections[ModelPackageSectionType.EXECUTION_PLAN] != plan_bytes:
         raise ModelPackageError("packed execution plan did not round-trip")
@@ -242,7 +272,8 @@ def build_final_98_package(
     report = {
         "schema_version": 1,
         "model_name": model_name,
-        "bucket_frames": 98,
+        "bucket_frames": bucket_frames,
+        "audio_seconds": AUDIO_SECONDS_BY_BUCKET[bucket_frames],
         "package_size_bytes": len(package),
         "package_sha256": hashlib.sha256(package).hexdigest(),
         "plan_sha256": plan_sha256,
@@ -259,3 +290,23 @@ def build_final_98_package(
         },
     }
     return package, report
+
+
+def build_final_98_package(
+    *,
+    plan_path: Path,
+    weights_path: Path,
+    source_manifest_path: Path,
+    model_name: str = "campp_sv_98",
+    optimization_suite: str = FINAL_98_SUITE,
+) -> tuple[bytes, dict[str, Any]]:
+    """Backward-compatible wrapper for existing Final-98 callers."""
+
+    return build_final_bucket_package(
+        bucket_frames=98,
+        plan_path=plan_path,
+        weights_path=weights_path,
+        source_manifest_path=source_manifest_path,
+        model_name=model_name,
+        optimization_suite=optimization_suite,
+    )

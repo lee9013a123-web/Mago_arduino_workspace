@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify a .camppmodel container and its Final-98 contracts."""
+"""Verify one fixed-bucket .camppmodel and its deployment contracts."""
 
 from __future__ import annotations
 
@@ -20,6 +20,9 @@ from runtime_model_package.format import (  # noqa: E402
     ModelPackageSectionType,
     verify_model_package,
 )
+from runtime_model_package.packager import (  # noqa: E402
+    SUPPORTED_BUCKET_FRAMES,
+)
 
 
 def _path(value: str) -> Path:
@@ -35,11 +38,19 @@ def main() -> int:
     )
     parser.add_argument("--expect-plan", type=_path)
     parser.add_argument("--expect-weights", type=_path)
+    parser.add_argument(
+        "--bucket-frames", type=int, choices=SUPPORTED_BUCKET_FRAMES,
+    )
     args = parser.parse_args()
     try:
         package = verify_model_package(args.model)
-        if package.bucket_frames != 98:
-            raise ModelPackageError("model is not bucket 98")
+        bucket = package.bucket_frames
+        if bucket not in SUPPORTED_BUCKET_FRAMES:
+            raise ModelPackageError(f"unsupported model bucket: {bucket}")
+        if args.bucket_frames is not None and bucket != args.bucket_frames:
+            raise ModelPackageError(
+                f"model bucket mismatch: {bucket} != {args.bucket_frames}"
+            )
         metadata = package.json_section(
             ModelPackageSectionType.MODEL_METADATA_JSON
         )
@@ -49,12 +60,16 @@ def main() -> int:
         postprocess = package.json_section(
             ModelPackageSectionType.POSTPROCESS_CONTRACT_JSON
         )
-        if metadata.get("input", {}).get("shape") != [1, 98, 80]:
+        if metadata.get("bucket_frames") != bucket:
+            raise ModelPackageError("metadata bucket differs from package header")
+        if metadata.get("input", {}).get("shape") != [1, bucket, 80]:
             raise ModelPackageError("invalid model input contract")
         if metadata.get("output", {}).get("shape") != [1, 192]:
             raise ModelPackageError("invalid model output contract")
         if frontend.get("implemented_in_model") is not False:
             raise ModelPackageError("frontend implementation boundary is unclear")
+        if frontend.get("model_input_frames") != bucket:
+            raise ModelPackageError("frontend bucket differs from package header")
         if postprocess.get("decision_threshold") is not None:
             raise ModelPackageError("uncalibrated threshold must not be frozen")
         for path, section_type, name in (

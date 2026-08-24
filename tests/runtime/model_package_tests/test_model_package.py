@@ -20,8 +20,10 @@ from runtime_model_package.format import (  # noqa: E402
     read_model_package,
 )
 from runtime_model_package.packager import (  # noqa: E402
+    SUPPORTED_BUCKET_FRAMES,
     _source_manifest_hash,
     build_final_98_package,
+    build_final_bucket_package,
 )
 
 
@@ -146,6 +148,36 @@ class ModelPackageTests(unittest.TestCase):
         self.assertEqual(
             report["source_manifest_kind"], "bucket_static_weight_plan"
         )
+
+    def test_all_static_bucket_contracts(self) -> None:
+        base = ROOT / "runs/models/campplus/final_v3/weight_residency"
+        required = [
+            base / str(bucket) / name.format(bucket=bucket)
+            for bucket in SUPPORTED_BUCKET_FRAMES
+            for name in (
+                "plan_{bucket}.bin",
+                "weights_{bucket}.bin",
+                "weight_plan_{bucket}.json",
+            )
+        ]
+        if not all(path.is_file() for path in required):
+            self.skipTest("generated multibucket weight plans are unavailable")
+        for bucket in SUPPORTED_BUCKET_FRAMES:
+            with self.subTest(bucket=bucket):
+                root = base / str(bucket)
+                payload, report = build_final_bucket_package(
+                    bucket_frames=bucket,
+                    plan_path=root / f"plan_{bucket}.bin",
+                    weights_path=root / f"weights_{bucket}.bin",
+                    source_manifest_path=root / f"weight_plan_{bucket}.json",
+                )
+                package = read_model_package(payload)
+                metadata = package.json_section(
+                    ModelPackageSectionType.MODEL_METADATA_JSON
+                )
+                self.assertEqual(package.bucket_frames, bucket)
+                self.assertEqual(metadata["input"]["shape"], [1, bucket, 80])
+                self.assertEqual(report["bucket_frames"], bucket)
 
 
 if __name__ == "__main__":

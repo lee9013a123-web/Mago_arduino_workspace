@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pack Final-98 plan, weights, and future pipeline contracts into one model."""
+"""Pack one fixed-bucket Final V3 model into a camppmodel-v1 file."""
 
 from __future__ import annotations
 
@@ -17,7 +17,8 @@ if str(PYTHON_SRC) not in sys.path:
 from runtime_model_package.format import ModelPackageError  # noqa: E402
 from runtime_model_package.packager import (  # noqa: E402
     FINAL_98_SUITE,
-    build_final_98_package,
+    SUPPORTED_BUCKET_FRAMES,
+    build_final_bucket_package,
 )
 
 
@@ -27,45 +28,56 @@ def _path(value: str) -> Path:
 
 
 def main() -> int:
-    bundle = ROOT / "runs/runtime/kernel_optimization/e7/bundle"
-    output = ROOT / "models/runtime/campp_sv_98/campp_sv_98.camppmodel"
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--plan", type=_path,
-        default=bundle / "execution_plans/plan_98.bin",
+        "--bucket-frames", type=int, choices=SUPPORTED_BUCKET_FRAMES,
+        default=98,
     )
-    parser.add_argument("--weights", type=_path, default=bundle / "weights.bin")
-    parser.add_argument(
-        "--source-manifest", type=_path, default=bundle / "manifest.json"
-    )
-    parser.add_argument("--output", type=_path, default=output)
-    parser.add_argument(
-        "--report", type=_path, default=output.with_suffix(".json")
-    )
-    parser.add_argument("--model-name", default="campp_sv_98")
+    parser.add_argument("--plan", type=_path)
+    parser.add_argument("--weights", type=_path)
+    parser.add_argument("--source-manifest", type=_path)
+    parser.add_argument("--output", type=_path)
+    parser.add_argument("--report", type=_path)
+    parser.add_argument("--model-name")
     parser.add_argument("--optimization-suite", default=FINAL_98_SUITE)
     parser.add_argument("--force", action="store_true")
     args = parser.parse_args()
     try:
-        if (args.output.exists() or args.report.exists()) and not args.force:
+        bucket = args.bucket_frames
+        source_root = (
+            ROOT / "runs/models/campplus/final_v3/weight_residency"
+            / str(bucket)
+        )
+        output_root = ROOT / "models/runtime" / f"campp_sv_{bucket}"
+        output = args.output or output_root / f"campp_sv_{bucket}.camppmodel"
+        report_path = args.report or output.with_suffix(".json")
+        plan = args.plan or source_root / f"plan_{bucket}.bin"
+        weights = args.weights or source_root / f"weights_{bucket}.bin"
+        source_manifest = (
+            args.source_manifest
+            or source_root / f"weight_plan_{bucket}.json"
+        )
+        model_name = args.model_name or f"campp_sv_{bucket}"
+        if (output.exists() or report_path.exists()) and not args.force:
             raise ModelPackageError("output exists; use --force")
-        package, report = build_final_98_package(
-            plan_path=args.plan,
-            weights_path=args.weights,
-            source_manifest_path=args.source_manifest,
-            model_name=args.model_name,
+        package, report = build_final_bucket_package(
+            bucket_frames=bucket,
+            plan_path=plan,
+            weights_path=weights,
+            source_manifest_path=source_manifest,
+            model_name=model_name,
             optimization_suite=args.optimization_suite,
         )
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_bytes(package)
-        args.report.parent.mkdir(parents=True, exist_ok=True)
-        args.report.write_text(
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(package)
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(
             json.dumps(report, ensure_ascii=False, indent=2) + "\n",
             encoding="utf-8",
             newline="\n",
         )
-        print(f"model:  {args.output}")
-        print(f"report: {args.report}")
+        print(f"model:  {output}")
+        print(f"report: {report_path}")
         print(f"sha256: {report['package_sha256']}")
         return 0
     except (ModelPackageError, OSError, ValueError) as exc:

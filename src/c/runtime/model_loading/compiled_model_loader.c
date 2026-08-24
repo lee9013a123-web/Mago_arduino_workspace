@@ -19,6 +19,7 @@
  * 방식과 같다. 덕분에 형식에 목록을 하나 더 둘 필요가 없다.
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -396,6 +397,8 @@ void campp_runtime_model_release(CamppRuntimeModel *model)
     free(model->weight_blocks);
     free(model->weight_prefetch_offsets);
     free(model->weight_prefetch_indices);
+    free(model->weight_postfetch_offsets);
+    free(model->weight_postfetch_indices);
     free(model->weight_evict_offsets);
     free(model->weight_evict_indices);
     if (model->owns_plan_bytes) {
@@ -551,6 +554,65 @@ CamppStatus campp_runtime_model_load_mapped(
     }
     model->weight_mapping = mapping;
     return CAMPP_STATUS_OK;
+}
+
+CamppStatus campp_runtime_model_load_weight_streaming_bundle(
+    const char *root_path,
+    uint32_t bucket_frames,
+    CamppRuntimeModel *model)
+{
+#if !defined(CAMPP_ENABLE_WEIGHT_STREAMING)
+    (void)root_path;
+    (void)bucket_frames;
+    (void)model;
+    return CAMPP_STATUS_NOT_IMPLEMENTED;
+#else
+    CamppRuntimeModel staging;
+    char plan_path[4096];
+    char weights_path[4096];
+    char schedule_path[4096];
+    int plan_length;
+    int weights_length;
+    int schedule_length;
+    CamppStatus status;
+
+    if (root_path == NULL || bucket_frames == 0u || model == NULL) {
+        return CAMPP_STATUS_INVALID_ARGUMENT;
+    }
+    plan_length = snprintf(
+        plan_path, sizeof(plan_path), "%s/%" PRIu32 "/plan_%" PRIu32 ".bin",
+        root_path, bucket_frames, bucket_frames);
+    weights_length = snprintf(
+        weights_path, sizeof(weights_path),
+        "%s/%" PRIu32 "/weights_%" PRIu32 ".bin",
+        root_path, bucket_frames, bucket_frames);
+    schedule_length = snprintf(
+        schedule_path, sizeof(schedule_path),
+        "%s/%" PRIu32 "/weight_schedule_%" PRIu32 ".bin",
+        root_path, bucket_frames, bucket_frames);
+    if (plan_length < 0 || (size_t)plan_length >= sizeof(plan_path) ||
+        weights_length < 0 || (size_t)weights_length >= sizeof(weights_path) ||
+        schedule_length < 0 ||
+        (size_t)schedule_length >= sizeof(schedule_path)) {
+        return CAMPP_STATUS_BUFFER_OVERFLOW;
+    }
+    memset(&staging, 0, sizeof(staging));
+    status = campp_runtime_model_load_mapped(
+        plan_path, weights_path, &staging);
+    if (status != CAMPP_STATUS_OK) return status;
+    status = campp_runtime_model_enable_weight_window(
+        &staging, schedule_path);
+    if (status != CAMPP_STATUS_OK) {
+        campp_runtime_model_release(&staging);
+        return status;
+    }
+    if (staging.bucket_frames != bucket_frames) {
+        campp_runtime_model_release(&staging);
+        return CAMPP_STATUS_BUCKET_MISMATCH;
+    }
+    *model = staging;
+    return CAMPP_STATUS_OK;
+#endif
 }
 
 CamppStatus campp_runtime_model_tensor(

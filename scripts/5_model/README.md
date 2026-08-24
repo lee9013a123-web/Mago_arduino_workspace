@@ -123,19 +123,21 @@ results/models/campplus/final_v3/weight_residency/summary.json
 results/models/campplus/final_v3/weight_residency/validation.json
 ```
 
-## Bucket-98 mmap weight window experiment
+## Multibucket mmap weight window experiment
 
-이 단계는 기존 Final V3 바이너리를 덮어쓰지 않는다. 98 전용 weights를 Operator
+이 단계는 기존 Final V3 바이너리를 덮어쓰지 않는다. bucket 전용 weights를 Operator
 최초 사용 순서의 4 KiB block으로 만들고, 별도 candidate binary에서만 read-only
 `mmap`, 다음 block `POSIX_FADV_WILLNEED`, 마지막 사용 후 `MADV_DONTNEED`를
 적용한다. Tensor마다 `pread`하거나 kernel pointer를 복사하지 않는다.
 
 ```bash
-python3 scripts/5_model/08_build_weight_streaming_98.py --force
+python3 scripts/5_model/08_build_weight_streaming.py \
+  --bucket-frames 98 298 498 998 --force
 bash scripts/5_model/09_build_weight_streaming_98.sh
-python3 scripts/5_model/09_benchmark_weight_streaming_98.py --preflight-only
-python3 scripts/5_model/09_benchmark_weight_streaming_98.py \
-  --mode quick --force
+python3 scripts/5_model/10_benchmark_weight_streaming_multibucket.py \
+  --preflight-only
+python3 scripts/5_model/10_benchmark_weight_streaming_multibucket.py \
+  --mode quick --trace-weight-events --force
 ```
 
 기존 V3가 아직 빌드되지 않은 보드에서만 먼저 다음을 실행한다.
@@ -147,14 +149,45 @@ bash scripts/4_profill/05_build_final_v3.sh
 비교 mode는 기존 V3 full-resident, 같은 candidate layout의 malloc, 전체 mmap,
 windowed mmap 네 가지다. Quick gate는 V3 대비 embedding bitwise, warm p50 1%,
 p95 3% 이내, Peak RSS 5.5 MB 이상 감소, 측정 구간 major fault 0을 모두 요구한다.
-성능 측정 전에 고정 입력 한 개의 모든 retained Tensor도 기존 V3와 bitwise로
+성능 측정 전에 각 bucket 고정 입력 한 개의 모든 retained Tensor도 기존 V3와 bitwise로
 비교한다. build script는 소스·flag hash가 같으면 두 candidate binary를 재사용한다.
-통과 전에는 final model package나 298/498/998로 확장하지 않는다.
+event trace는 별도 진단 process에서만 실행하여 공식 latency와 Peak gate를 오염시키지
+않는다. runtime은 오래된 block을 먼저 `DONTNEED`한 뒤 다음 block에 `WILLNEED`를
+호출한다. C pipeline은 `campp_runtime_model_load_weight_streaming_bundle(root,
+bucket_frames, model)`로 sidecar root에서 bucket별 세 파일을 함께 선택할 수 있다.
 
 ```text
-runs/models/campplus/final_v3/weight_streaming/98/plan_98.bin
-runs/models/campplus/final_v3/weight_streaming/98/weights_98.bin
-runs/models/campplus/final_v3/weight_streaming/98/weight_schedule_98.bin
-results/models/campplus/final_v3/weight_streaming/98/plan.json
-results/models/campplus/final_v3/weight_streaming/98/benchmark_quick.json
+runs/models/campplus/final_v3/weight_streaming/<bucket>/plan_<bucket>.bin
+runs/models/campplus/final_v3/weight_streaming/<bucket>/weights_<bucket>.bin
+runs/models/campplus/final_v3/weight_streaming/<bucket>/weight_schedule_<bucket>.bin
+runs/models/campplus/final_v3/weight_streaming/weight_streaming_manifest.json
+results/models/campplus/final_v3/weight_streaming/<bucket>/plan.json
+results/models/campplus/final_v3/weight_streaming/benchmark_multibucket_quick.json
 ```
+
+## Deployable fixed-bucket model set
+
+현재 C package loader의 v1 ABI는 package 하나당 bucket 하나를 로드한다. 포맷을
+임의로 확장하지 않고 98/298/498/998용 package를 각각 생성하며, 작은 manifest가
+feature frame 수와 package를 연결한다.
+
+```bash
+python3 scripts/5_model/11_build_bucket_models.py --force
+
+python3 scripts/5_model/12_run_bucket_model.py \
+  --input benchmarks/campplus/features/multi__speaker_0000__498.f32 \
+  --embedding-output runs/model_packages/example_498_embedding.f32 \
+  --preflight-only
+
+python3 scripts/5_model/12_run_bucket_model.py \
+  --input benchmarks/campplus/features/multi__speaker_0000__498.f32 \
+  --embedding-output runs/model_packages/example_498_embedding.f32
+
+python3 scripts/5_model/13_validate_bucket_models.py --preflight-only
+python3 scripts/5_model/13_validate_bucket_models.py --force
+```
+
+선택기는 `[1,T,80]` float32 payload 크기에서 `T`를 계산하고 package SHA, 내부
+bucket/input shape, runtime의 `camppmodel-v1` 지원과 Final V3 suite가 모두 맞아야
+실행한다. `.camppmodel` 방식은 full-resident weights이며, windowed mmap이 필요하면
+앞 절의 sidecar 방식을 사용한다.

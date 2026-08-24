@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Build the bucket-98 mmap candidate without overwriting the incumbent V3.
+# Build the multibucket mmap candidate without overwriting the incumbent V3.
 
 set -euo pipefail
 
@@ -51,4 +51,4 @@ if [[ -n "${build_signature}" ]]; then
     printf '%s\n' "${build_signature}" > "${STAMP}"
 fi
 
-echo "Weight streaming candidate build complete: ${BUILD_DIR}"
+echo "Multibucket weight streaming candidate build complete: ${BUILD_DIR}"
